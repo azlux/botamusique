@@ -3,18 +3,19 @@
 
 ======
 
-Botamusique is a bot for mumble who have for purpose to allow users to listen music together with his audio output.
-Predicted functionnality will be the one you could expect from a classic music player.
+Botamusique is a mumble bot which goal is to allow users to listen music together with its audio output.
+Predicted functionnalities will be the one you could expect from any classic music player.
 
 
 1.TODO list
 
 ### TODOLIST
+
 #### Features
 - [ ] Next song
-- [ ] previous
-- [ ] randomiser, play a folder.)
-- [ ] He look for songs previously downloaded in a folder by users.
+- [ ] Previous song
+- [ ] Randomizer
+- [ ] Looking for songs previously downloaded in a folder by users.
 
 #### Commands
 - [ ] list
@@ -26,7 +27,7 @@ Predicted functionnality will be the one you could expect from a classic music p
 - [ ] skip
 - [ ] stop
 - [ ] joinme
+- [ ] away
 
-#### Futur
-Eventually a web interface will be added to make it easier to use.
-
+#### Future
+A web interface could eventually be added to make it easier to use.
