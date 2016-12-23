@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+<a href="."><h5>Refresh</h5></a>
+<br>
+
+<div id="playlist">
+    Current Playing :
+    {% if current_music %}
+    {{ current_music }}
+    {% else %}
+    No music
+    {% endif %}
+    <br>
+    Playlist :
+    <form method="post"><input type=text value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
+
+    <ul>
+        {% for m in playlist %}
+        <li>{{ m }}
+            <form method="post"><input type=text value={{ m }} name="delete_music" hidden><input type="submit" value="X"></form>
+        </li>
+        {% endfor %}
+    </ul>
+    <br>
+    {% for dir in all_files %}
+    {{ dir }}
+    <form method="post"><input type=text value={{ dir }} name="add_folder" hidden><input type="submit" value="add all folder"></form>
+    <br>
+    <ul>
+
+        {% for m in all_files[dir] %}
+        <li>
+            <form method="post"><input type=text value="{{ dir }}/{{ m }}" name="add_music" hidden><input type="submit" value={{ m }}></form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endfor %}
+
+
+</div>
+<div id="browser">
+
+</div>
+<div id="upload">
+
+</div>
+</body>
+</html>

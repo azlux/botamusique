@@ -6,28 +6,36 @@
 Botamusique is a mumble bot which goal is to allow users to listen music together with its audio output.
 Predicted functionnalities will be the one you could expect from any classic music player.
 
+1. Who to start
+You need to create a folder for all your music. Organize your music by subfolder.
+The main folder need to be declare into the config (with a '/' at the end)
 
-1.TODO list
+
+2.TODO list
 
 ### TODOLIST
 
 #### Features
 - [ ] Next song
 - [ ] Previous song
-- [ ] Randomizer
+- [x] Randomizer
 - [ ] Looking for songs previously downloaded in a folder by users.
 
-#### Commands
-- [ ] list
-- [ ] play
-- [ ] playfolder
-- [ ] list
-- [ ] random
-- [ ] volume
-- [ ] skip
-- [ ] stop
-- [ ] joinme
-- [ ] away
+#### Commands with the interface
+- [x] list
+- [x] play
+- [x] playfolder
+- [x] random
 
-#### Future
-A web interface could eventually be added to make it easier to use.
+#### Commands by message to the bot
+- [x] volume
+- [ ] skip
+- [x] stop
+- [x] joinme
+- [x] away
+
+#### Web Interface
+- [x] Primary functions
+- [ ] CSS
+
+The web interface listen the 8181 port !
