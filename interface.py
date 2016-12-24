@@ -23,7 +23,10 @@ def index():
         if 'add_folder' in request.form and ".." not in request.form['add_folder']:
             var.playlist.extend(files[request.form['add_folder']])
         elif 'delete_music' in request.form:
-            var.playlist.remove(request.form['delete_music'])
+            try:
+                var.playlist.remove(request.form['delete_music'])
+            except ValueError:
+                pass
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
