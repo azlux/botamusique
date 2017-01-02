@@ -130,7 +130,6 @@ class MumbleBot:
                     self.mumble.users[text.actor].send_message('<br>'.join(files))
                 else:
                     self.mumble.users[text.actor].send_message(self.config.get('strings', 'no_file'))
-
             else:
                 self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_command'))
 
@@ -168,7 +167,6 @@ class MumbleBot:
                 time.sleep(0.1)
 
             if (self.thread is None or not raw_music) and len(var.playlist) != 0:
-                print("plop")
                 var.current_music = var.playlist[0]
                 var.playlist.pop(0)
                 self.launch_play_file()

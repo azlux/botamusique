@@ -3,6 +3,8 @@
     <meta charset="UTF-8">
     <title></title>
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <META HTTP-EQUIV="Expires" CONTENT="-1">
 </head>
 <body>
 <a href="."><h5>Refresh</h5></a>
@@ -22,7 +24,7 @@
     <ul>
         {% for m in playlist %}
         <li>{{ m }}
-            <form method="post"><input type=text value={{ m }} name="delete_music" hidden><input type="submit" value="X"></form>
+            <form method="post"><input type=text value="{{ m }}" name="delete_music" hidden><input type="submit" value="X"></form>
         </li>
         {% endfor %}
     </ul>
@@ -32,10 +34,9 @@
     <form method="post"><input type=text value={{ dir }} name="add_folder" hidden><input type="submit" value="add all folder"></form>
     <br>
     <ul>
-
         {% for m in all_files[dir] %}
         <li>
-            <form method="post"><input type=text value="{{ dir }}/{{ m }}" name="add_music" hidden><input type="submit" value={{ m }}></form>
+            <form method="post"><input type=text value="{{ dir }}/{{ m }}" name="add_music" hidden><input type="submit" value="{{ m }}"></form>
         </li>
         {% endfor %}
     </ul>
