@@ -7,6 +7,7 @@ Botamusique is a mumble bot which goal is to allow users to listen music togethe
 Predicted functionnalities will be the one you could expect from any classic music player.
 
 1. Where to start
+
 You need to create a folder for all your music. Organize your music by subfolder.
 The main folder need to be declare into the config (with a '/' at the end)
 
@@ -59,4 +60,3 @@ The bot listen to the 8181 port so you should redirect to this one in you NAT co
 - [x] Primary functions
 - [ ] CSS
 
-The web interface listen the 8181 port !
