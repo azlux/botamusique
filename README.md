@@ -13,18 +13,18 @@ The main folder need to be declare into the config (with a '/' at the end)
 
 #### Installation
 1. You need python 3 with opuslib and protobuf (look at the requirement of pymumble)
-   (Hint pyenv is a good start to get the requirements, search pyenv-installer)
 2. The Bot use ffmpeg, so you know what you have to do if ffmpeg aren't in your package manager. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
 commands (don't forget the sudo mode):
 ```
+apt-get install python3-pip
 pip3 install opuslib
 pip3 install protobuf
 pip3 install flask
 apt-get install ffmpeg
-git clone --recurse-submodules https://github.com/azlux/MumbleRadioPlayer.git
-cd ./MumbleRadioPlayer
-chmod +x ./mumbleRadioPlayer.py
+git clone --recurse-submodules https://github.com/azlux/botamusique.git
+cd ./botamusique
+chmod +x ./mumbleBot.py
 ```
 
 #### Starting the bot
