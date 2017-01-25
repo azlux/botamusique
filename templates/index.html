@@ -9,7 +9,17 @@
 <body>
 <a href="."><h5>Refresh</h5></a>
 <br>
-
+<div id="download">
+    <form action="./download" method="post" enctype="multipart/form-data">
+        <input type="file" name="music_file" value="Browse Music file"/>
+        <select name="directory">
+            {% for dir in all_files %}
+            <option value={{ dir }}>{{ dir }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Upload"/>
+    </form>
+</div>
 <div id="playlist">
     Current Playing :
     {% if current_music %}

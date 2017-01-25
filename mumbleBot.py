@@ -31,14 +31,18 @@ class MumbleBot:
 
         args = parser.parse_args()
         self.volume = self.config.getfloat('bot', 'volume')
+
         self.channel = args.channel
         var.current_music = None
         var.playlist = []
         var.user = args.user
         var.music_folder = self.config.get('bot', 'music_folder')
+        var.is_proxified = self.config.getboolean("bot", "is_proxified")
         self.exit = False
         self.nb_exit = 0
         self.thread = None
+
+        interface.init_proxy()
 
         t = threading.Thread(target=start_web_interface)
         t.daemon = True

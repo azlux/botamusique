@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import variables as var
 import os.path
 from os import listdir
 import random
+from werkzeug.utils import secure_filename
 
 
 class ReverseProxied(object):
@@ -46,7 +47,12 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
-web.wsgi_app = ReverseProxied(web.wsgi_app)
+
+
+def init_proxy():
+    global web
+    if var.is_proxified:
+        web.wsgi_app = ReverseProxied(web.wsgi_app)
 
 
 @web.route("/", methods=['GET', 'POST'])
@@ -81,8 +87,29 @@ def index():
                            current_music=current_music,
                            user=var.user,
                            playlist=var.playlist,
-                           all_files=files
-                           )
+                           all_files=files)
+
+
+@web.route('/download', methods=["POST"])
+def download():
+    print(request.form)
+
+    file = request.files['music_file']
+    if not file:
+        return redirect("./", code=406)
+    elif file.filename == '':
+        return redirect("./", code=406)
+    elif '..' in request.form['directory']:
+        return redirect("./", code=406)
+
+    if file.name == "music_file" and "audio" in file.headers.to_list()[1][1]:
+        web.config['UPLOAD_FOLDER'] = var.music_folder + request.form['directory']
+        filename = secure_filename(file.filename)
+        print(filename)
+        file.save(os.path.join(web.config['UPLOAD_FOLDER'], filename))
+        return redirect("./", code=302)
+    else:
+        return redirect("./", code=409)
 
 
 if __name__ == '__main__':
