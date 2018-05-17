@@ -64,14 +64,14 @@ def index():
         files[director] = [f for f in listdir(folder_path + director) if os.path.isfile(os.path.join(folder_path + director, f))]
 
     if request.method == 'POST':
-        if 'add_music' in request.form and ".." not in request.form['add_music']:
-            var.playlist.append(request.form['add_music'])
+        if 'add_file' in request.form and ".." not in request.form['add_music']:
+            var.playlist.append((request.form['type'], request.form['add_music']))
         if 'add_folder' in request.form and ".." not in request.form['add_folder']:
-            dir_files = [request.form['add_folder'] + '/' + i for i in files[request.form['add_folder']]]
+            dir_files = [("file", request.form['add_folder'] + '/' + i) for i in files[request.form['add_folder']]]
             var.playlist.extend(dir_files)
         elif 'delete_music' in request.form:
             try:
-                var.playlist.remove(request.form['delete_music'])
+                var.playlist.remove("file", request.form['delete_music'])
             except ValueError:
                 pass
         elif 'action' in request.form:
