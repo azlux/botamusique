@@ -95,7 +95,7 @@ class MumbleBot:
         self.nb_exit += 1
 
     def message_received(self, text):
-        message = text.message
+        message = text.message.strip()
         if message[0] == '!':
             message = message[1:].split(' ', 1)
             if len(message) > 0:
