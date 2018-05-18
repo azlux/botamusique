@@ -114,12 +114,17 @@ class MumbleBot:
                 path = os.path.abspath(os.path.join(music_folder, parameter))
                 if path.startswith(music_folder):
                     if os.path.isfile(path):
-                        self.launch_play_file(path)
+                        #self.launch_play_file(path)
+                        filename = path.replace(music_folder, '')
+                        var.playlist.append(["file", filename])
                     else:
                         # try to do a partial match
-                        matches = [file for file in self.__get_recursive_filelist_sorted(music_folder) if parameter in file]
-                        if len(matches) == 1:
-                            self.launch_play_file(music_folder + matches[0])
+                        matches = [file for file in self.__get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
+                        if len(matches) == 0:
+                            self.mumble.users[text.actor].send_message(self.config.get('strings', 'no_file'))
+                        elif len(matches) == 1:
+                            #self.launch_play_file(music_folder + matches[0])
+                            var.playlist.append(["file", matches[0]])
                         else:
                             msg = self.config.get('strings', 'multiple_matches') + '<br />'
                             msg += '<br />'.join(matches)
