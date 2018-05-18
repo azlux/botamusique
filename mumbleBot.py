@@ -110,9 +110,20 @@ class MumbleBot:
 
             if command == self.config.get('command', 'play_file') and parameter:
                 music_folder = self.config.get('bot', 'music_folder')
+                # sanitize "../" and so on
                 path = os.path.abspath(os.path.join(music_folder, parameter))
-                if path.startswith(music_folder) and os.path.isfile(path):
-                    self.launch_play_file(path)
+                if path.startswith(music_folder):
+                    if os.path.isfile(path):
+                        self.launch_play_file(path)
+                    else:
+                        # try to do a partial match
+                        matches = [file for file in self.__get_recursive_filelist_sorted(music_folder) if parameter in file]
+                        if len(matches) == 1:
+                            self.launch_play_file(music_folder + matches[0])
+                        else:
+                            msg = self.config.get('strings', 'multiple_matches') + '<br />'
+                            msg += '<br />'.join(matches)
+                            self.mumble.users[text.actor].send_message(msg)
                 else:
                     self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_file'))
 
@@ -164,8 +175,26 @@ class MumbleBot:
                 var.current_music = var.playlist[0]
                 var.playlist.pop(0)
                 self.launch_next()
+            elif command == self.config.get('command', 'list'):
+                folder_path = self.config.get('bot', 'music_folder')
+
+                files = self.__get_recursive_filelist_sorted(folder_path)
+                if files :
+                    self.mumble.users[text.actor].send_message('<br>'.join(files))
+                else :
+                     self.mumble.users[text.actor].send_message(self.config.get('strings', 'no_file'))
             else:
                 self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_command'))
+
+    def launch_play_file(self, path):
+        self.stop()
+        if self.config.getboolean('debug', 'ffmpeg'):
+            ffmpeg_debug = "debug"
+        else:
+            ffmpeg_debug = "warning"
+        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        self.playing = True
 
     def is_admin(self, user):
         username = self.mumble.users[user]['name']
@@ -271,6 +300,22 @@ class MumbleBot:
         if not channel:
             channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
         channel.send_text_message(msg)
+
+    def __get_recursive_filelist_sorted(self, path):
+        filelist = []
+        for root, dirs, files in os.walk(path):
+            relroot = root.replace(path, '')
+            if relroot in self.config.get('bot', 'ignored_folders'):
+                continue
+            if len(relroot):
+                relroot += '/'
+            for file in files:
+                if file in self.config.get('bot', 'ignored_files'):
+                    continue
+                filelist.append(relroot + file)
+
+        filelist.sort()
+        return filelist
 
 
 def start_web_interface():
