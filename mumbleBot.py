@@ -109,11 +109,10 @@ class MumbleBot:
             print(command + ' - ' + parameter + ' by ' + self.mumble.users[text.actor]['name'])
 
             if command == self.config.get('command', 'play_file') and parameter:
-                path = self.config.get('bot', 'music_folder') + parameter
-                if "/" in parameter:
-                    self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_file'))
-                elif os.path.isfile(path):
-                    var.playlist.append(["file", path])
+                music_folder = self.config.get('bot', 'music_folder')
+                path = os.path.abspath(os.path.join(music_folder, parameter))
+                if path.startswith(music_folder) and os.path.isfile(path):
+                    self.launch_play_file(path)
                 else:
                     self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_file'))
 
@@ -275,7 +274,7 @@ class MumbleBot:
 
 
 def start_web_interface():
-    interface.web.run(port=8181, host="0.0.0.0")
+    interface.web.run(port=8181, host="127.0.0.1")
 
 
 if __name__ == '__main__':
