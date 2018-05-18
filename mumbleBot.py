@@ -188,6 +188,16 @@ class MumbleBot:
                     self.mumble.users[text.actor].send_message('<br>'.join(files))
                 else :
                      self.mumble.users[text.actor].send_message(self.config.get('strings', 'no_file'))
+
+            elif command == self.config.get('command', 'queue'):
+                if len(var.playlist) == 0:
+                    msg = self.config.get('strings', 'queue_empty')
+                else:
+                    msg = self.config.get('strings', 'queue_contents') + '<br />'
+                    for (type, path) in var.playlist:
+                        msg += '({}) {}<br />'.format(type, path)
+
+                self.send_msg_channel(msg)
             else:
                 self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_command'))
 
