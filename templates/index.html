@@ -15,7 +15,7 @@
             {%- if files %}
                 {% for file in files %}
                 <!--<li>{{ file }}</li>-->
-                <li><form method="post"><input type=text value="{{ subdirpath }}/{{ file }}" name="add_file" hidden><input type="submit" value="{{ file }}"></form></li>
+                <li><form method="post"><input type=text value="{{ subdirpath }}/{{ file }}" name="add_file" hidden><input type="submit" value="Add">&nbsp;&nbsp;{{ file }}</form></li>
                 {% endfor %}
             {%- endif %}
         </ul>
@@ -34,6 +34,7 @@
 <body>
 <a href="."><h5>Refresh</h5></a>
 <br>
+{% if False %}
 <div id="download">
     <form action="./download" method="post" enctype="multipart/form-data">
         <input type="file" name="music_file" value="Browse Music file"/>
@@ -45,6 +46,7 @@
         <input type="submit" value="Upload"/>
     </form>
 </div>
+{% endif %}
 <div id="playlist">
     Current Playing :
     {% if current_music %}
