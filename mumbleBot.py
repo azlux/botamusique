@@ -18,23 +18,17 @@ import variables as var
 import hashlib
 import youtube_dl
 import media
+import util
 
 
 class MumbleBot:
-    def __init__(self):
+    def __init__(self, args):
         signal.signal(signal.SIGINT, self.ctrl_caught)
 
         self.config = configparser.ConfigParser(interpolation=None)
         self.config.read("configuration.ini", encoding='latin-1')
 
-        parser = argparse.ArgumentParser(description='Bot for playing radio stream on Mumble')
-        parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="The server's hostame of a mumble server")
-        parser.add_argument("-u", "--user", dest="user", type=str, required=True, help="Username you wish, Default=abot")
-        parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Password if server requires one")
-        parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the mumble server")
-        parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default chanel for the bot")
 
-        args = parser.parse_args()
         self.volume = self.config.getfloat('bot', 'volume')
 
         self.channel = args.channel
@@ -64,11 +58,11 @@ class MumbleBot:
         self.nb_exit = 0
         self.thread = None
 
-        interface.init_proxy()
-
-        # t = threading.Thread(target=start_web_interface)
-        # t.daemon = True
-        # t.start()
+        if args.wi_addr:
+            interface.init_proxy()
+            tt = threading.Thread(target=start_web_interface, args=(args.wi_addr, args.wi_port))
+            tt.daemon = True
+            tt.start()
 
         self.mumble = pymumble.Mumble(args.host, user=args.user, port=args.port, password=args.password,
                                       debug=self.config.getboolean('debug', 'mumbleConnection'))
@@ -114,16 +108,14 @@ class MumbleBot:
                 path = os.path.abspath(os.path.join(music_folder, parameter))
                 if path.startswith(music_folder):
                     if os.path.isfile(path):
-                        #self.launch_play_file(path)
                         filename = path.replace(music_folder, '')
                         var.playlist.append(["file", filename])
                     else:
                         # try to do a partial match
-                        matches = [file for file in self.__get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
+                        matches = [file for file in util.get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
                         if len(matches) == 0:
                             self.mumble.users[text.actor].send_message(self.config.get('strings', 'no_file'))
                         elif len(matches) == 1:
-                            #self.launch_play_file(music_folder + matches[0])
                             var.playlist.append(["file", matches[0]])
                         else:
                             msg = self.config.get('strings', 'multiple_matches') + '<br />'
@@ -183,7 +175,7 @@ class MumbleBot:
             elif command == self.config.get('command', 'list'):
                 folder_path = self.config.get('bot', 'music_folder')
 
-                files = self.__get_recursive_filelist_sorted(folder_path)
+                files = util.get_recursive_filelist_sorted(folder_path)
                 if files :
                     self.mumble.users[text.actor].send_message('<br>'.join(files))
                 else :
@@ -248,8 +240,8 @@ class MumbleBot:
 
         command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
-        var.current_music.append(title)
-        var.current_music.append(path)
+        #var.current_music[2] = title
+        #var.current_music[3] = path
 
     def download_music(self, url):
         url_hash = hashlib.md5(url.encode()).hexdigest()
@@ -316,26 +308,25 @@ class MumbleBot:
             channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
         channel.send_text_message(msg)
 
-    def __get_recursive_filelist_sorted(self, path):
-        filelist = []
-        for root, dirs, files in os.walk(path):
-            relroot = root.replace(path, '')
-            if relroot in self.config.get('bot', 'ignored_folders'):
-                continue
-            if len(relroot):
-                relroot += '/'
-            for file in files:
-                if file in self.config.get('bot', 'ignored_files'):
-                    continue
-                filelist.append(relroot + file)
 
-        filelist.sort()
-        return filelist
-
-
-def start_web_interface():
-    interface.web.run(port=8181, host="127.0.0.1")
+def start_web_interface(addr, port):
+    print('Starting web interface on {}:{}'.format(addr, port))
+    interface.web.run(port=port, host=addr)
 
 
 if __name__ == '__main__':
-    botamusique = MumbleBot()
+    parser = argparse.ArgumentParser(description='Bot for playing radio stream on Mumble')
+
+    # Mumble arguments
+    parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="The server's hostame of a mumble server")
+    parser.add_argument("-u", "--user", dest="user", type=str, required=True, help="Username you wish, Default=abot")
+    parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Password if server requires one")
+    parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the mumble server")
+    parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default chanel for the bot")
+
+    # web interface arguments
+    parser.add_argument('--wi-port', dest='wi_port', type=int, default=8181, help='Listening port of the web interface')
+    parser.add_argument('--wi-addr', dest='wi_addr', type=str, default=None, help='Listening address of the web interface')
+
+    args = parser.parse_args()
+    botamusique = MumbleBot(args)

@@ -1,3 +1,28 @@
+{% macro dirlisting(path='') -%}
+    <ul>
+    {% for subdirname in music_library.get_subdirs(path) %}
+        {%- set subdirpath = path + subdirname + '/' %}
+        <li>{{ subdirname }}/ <form method="post"><input type=text value={{ subdirpath }} name="add_folder" hidden><input type="submit" value="Add all tracks from this folder"></form>
+            <form method="post"><input type=text value={{ subdirpath }} name="add_folder_recursively" hidden><input type="submit" value="Add all tracks from this folder (recursively)"></form></li>
+        {%- set subdirs = music_library.get_subdirs(subdirpath) %}
+        {%- if subdirs %}
+            {%- for subdir in subdirs %}
+                {{- dirlisting(subdirpath) -}}
+            {%- endfor %}
+        {%- endif %}
+        <ul>
+            {%- set files = music_library.get_files(subdirpath) %}
+            {%- if files %}
+                {% for file in files %}
+                <!--<li>{{ file }}</li>-->
+                <li><form method="post"><input type=text value="{{ subdirpath }}/{{ file }}" name="add_file" hidden><input type="submit" value="{{ file }}"></form></li>
+                {% endfor %}
+            {%- endif %}
+        </ul>
+    {% endfor %}
+    </ul>
+{%- endmacro %}
+
 <!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
@@ -38,19 +63,8 @@
         </li>
         {% endfor %}
     </ul>
-    <br>
-    {% for dir in all_files %}
-    {{ dir }}
-    <form method="post"><input type=text value={{ dir }} name="add_folder" hidden><input type="submit" value="add all folder"></form>
-    <br>
-    <ul>
-        {% for m in all_files[dir] %}
-        <li>
-            <form method="post"><input type=text value="{{ dir }}/{{ m }}" name="add_music" hidden><input type="submit" value="{{ m }}"></form>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endfor %}
+    <h2>Music library:</h2>
+    {{ dirlisting() }}
 
 
 </div>
