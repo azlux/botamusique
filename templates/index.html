@@ -2,8 +2,21 @@
     <ul>
     {% for subdirname in music_library.get_subdirs(path) %}
         {%- set subdirpath = path + subdirname + '/' %}
-        <li>{{ subdirname }}/ <form method="post"><input type="text" value="{{ subdirpath }}" name="add_folder" hidden><input type="submit" value="Add all tracks from this folder"></form>
-            <form method="post"><input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden><input type="submit" value="Add all tracks from this folder (recursively)"></form></li>
+        <li class="directory">
+            <span>{{ subdirname }}/&nbsp;</span>
+            <form method="post" class="directory form1">
+                <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
+                <input type="submit" value="Add all tracks from this folder">
+            </form>
+            <form method="post" class="directory form2">
+                <input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden>
+                <input type="submit" value="Add all tracks from this folder (recursively)">
+            </form>
+            <form action="./download" method="get" class="directory form3">
+                <input type="text" value="{{ subdirpath }}" name="directory" hidden>
+                <input type="submit" value="Download entire directory">
+            </form>
+        </li>
         {%- set subdirs = music_library.get_subdirs(subdirpath) %}
         {%- if subdirs %}
             {%- for subdir in subdirs %}
@@ -14,8 +27,17 @@
             {%- set files = music_library.get_files(subdirpath) %}
             {%- if files %}
                 {% for file in files %}
-                <!--<li>{{ file }}</li>-->
-                <li><form method="post"><input type="text" value="{{ subdirpath }}/{{ file }}" name="add_file" hidden><input type="submit" value="Add">&nbsp;&nbsp;{{ file }}</form></li>
+                <li class="file">
+                    <form method="post" class="file file_add">
+                        <input type="text" value="{{ subdirpath }}{{ file }}" name="add_file" hidden>
+                        <input type="submit" value="Add">
+                    </form>
+                    <form action="./download" method="get"  class="file file_download">
+                        <input type="text" value="{{ subdirpath }}{{ file }}" name="file" hidden>
+                        <input type="submit" value="Download">
+                        &nbsp;{{ file }}
+                    </form>
+                </li>
                 {% endfor %}
             {%- endif %}
         </ul>
@@ -34,19 +56,24 @@
 <body>
 <a href="."><h5>Refresh</h5></a>
 <br>
-{% if False %}
-<div id="download">
-    <form action="./download" method="post" enctype="multipart/form-data">
-        <input type="file" name="music_file" value="Browse Music file"/>
-        <select name="directory">
-            {% for dir in all_files %}
-            <option value={{ dir }}>{{ dir }}</option>
+
+<div id="upload">
+    <form action="./upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" value="Browse Music file"/>
+        Upload into
+        <input list="targetdirs" id="targetdir" name="targetdir" placeholder="uploads" />
+        <datalist id="targetdirs">
+            <option value="uploads">
+            {% for dir in music_library.get_subdirs_recursively() %}
+            <option value="{{ dir }}">
             {% endfor %}
-        </select>
+        </datalist>
         <input type="submit" value="Upload"/>
     </form>
 </div>
-{% endif %}
+
+<br />
+
 <div id="playlist">
     Current Playing :
     {% if current_music %}
@@ -54,7 +81,7 @@
     {% else %}
     No music
     {% endif %}
-    <br>
+    <br />
     Playlist :
     <form method="post"><input type="text" value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
 
@@ -66,6 +93,11 @@
         {% endfor %}
     </ul>
     <h2>Music library:</h2>
+    <form action="./download" method="get" class="directory">
+        <input type="text" value="./" name="directory" hidden>
+        <input type="submit" value="Download entire music library">
+    </form>
+    <br />
     {{ dirlisting() }}
 
 

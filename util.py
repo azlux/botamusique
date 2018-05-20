@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
 import configparser
+import hashlib
 import os
 import variables as var
+import zipfile
 
 __CONFIG = configparser.ConfigParser(interpolation=None)
 __CONFIG.read("configuration.ini", encoding='latin-1')
@@ -22,6 +24,36 @@ def get_recursive_filelist_sorted(path):
 
     filelist.sort()
     return filelist
+
+# - zips all files of the given zippath (must be a directory)
+# - returns the absolute path of the created zip file
+# - zip file will be in the applications tmp folder (according to configuration)
+# - format of the filename itself = prefix_hash.zip
+#       - prefix can be controlled by the caller
+#       - hash is a sha1 of the string representation of the directories' contents (which are
+#           zipped)
+def zipdir(zippath, zipname_prefix=None):
+    zipname = __CONFIG.get('bot', 'tmp_folder')
+    if zipname_prefix and '../' not in zipname_prefix:
+        zipname += zipname_prefix.strip().replace('/', '_') + '_'
+
+    files = get_recursive_filelist_sorted(zippath)
+    hash = hashlib.sha1((str(files).encode())).hexdigest()
+    zipname += hash + '.zip'
+
+    if os.path.exists(zipname):
+        return zipname
+
+    zipf = zipfile.ZipFile(zipname, 'w', zipfile.ZIP_DEFLATED)
+
+    for file in files:
+        filepath = os.path.dirname(file)
+        file_to_add = os.path.join(zippath, file)
+        add_file_as = os.path.relpath(os.path.join(zippath, file), os.path.join(zippath, '..'))
+        zipf.write(file_to_add, add_file_as)
+
+    zipf.close()
+    return zipname
 
 class Dir(object):
     def __init__(self, name):
@@ -55,6 +87,22 @@ class Dir(object):
         else:
             subdirs = self.subdirs
 
+        return subdirs
+
+    def get_subdirs_recursively(self, path=None):
+        subdirs = []
+        if path and path != '':
+            subdir = path.split('/')[0]
+            if subdir in self.subdirs:
+                searchpath = '/'.join(path.split('/')[1::])
+                subdirs = self.subdirs[subdir].get_subdirs_recursively(searchpath)
+        else:
+            subdirs = list(self.subdirs.keys())
+
+            for key, val in self.subdirs.items():
+                subdirs.extend(map(lambda subdir: key + '/' + subdir,val.get_subdirs_recursively()))
+
+        subdirs.sort()
         return subdirs
 
     def get_files(self, path=None):
