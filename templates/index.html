@@ -2,8 +2,8 @@
     <ul>
     {% for subdirname in music_library.get_subdirs(path) %}
         {%- set subdirpath = path + subdirname + '/' %}
-        <li>{{ subdirname }}/ <form method="post"><input type=text value={{ subdirpath }} name="add_folder" hidden><input type="submit" value="Add all tracks from this folder"></form>
-            <form method="post"><input type=text value={{ subdirpath }} name="add_folder_recursively" hidden><input type="submit" value="Add all tracks from this folder (recursively)"></form></li>
+        <li>{{ subdirname }}/ <form method="post"><input type="text" value="{{ subdirpath }}" name="add_folder" hidden><input type="submit" value="Add all tracks from this folder"></form>
+            <form method="post"><input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden><input type="submit" value="Add all tracks from this folder (recursively)"></form></li>
         {%- set subdirs = music_library.get_subdirs(subdirpath) %}
         {%- if subdirs %}
             {%- for subdir in subdirs %}
@@ -15,7 +15,7 @@
             {%- if files %}
                 {% for file in files %}
                 <!--<li>{{ file }}</li>-->
-                <li><form method="post"><input type=text value="{{ subdirpath }}/{{ file }}" name="add_file" hidden><input type="submit" value="Add">&nbsp;&nbsp;{{ file }}</form></li>
+                <li><form method="post"><input type="text" value="{{ subdirpath }}/{{ file }}" name="add_file" hidden><input type="submit" value="Add">&nbsp;&nbsp;{{ file }}</form></li>
                 {% endfor %}
             {%- endif %}
         </ul>
@@ -56,12 +56,12 @@
     {% endif %}
     <br>
     Playlist :
-    <form method="post"><input type=text value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
+    <form method="post"><input type="text" value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
 
     <ul>
         {% for m in playlist %}
         <li>{{ m }}
-            <form method="post"><input type=text value="{{ m }}" name="delete_music" hidden><input type="submit" value="X"></form>
+            <form method="post"><input type="text" value="{{ m }}" name="delete_music" hidden><input type="submit" value="X"></form>
         </li>
         {% endfor %}
     </ul>
