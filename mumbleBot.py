@@ -160,16 +160,33 @@ class MumbleBot:
                     self.send_msg_channel(self.config.get('strings', 'current_volume') % int(self.volume * 100))
 
             elif command == self.config.get('command', 'current_music'):
-                if var.current_music is not None:
-                    if var.current_music[0] == "radio":
-                        self.send_msg_channel(media.get_radio_title(var.current_music[1]) + " sur " + var.current_music[2])
+                if var.current_music:
+                    source = var.current_music[0]
+                    if source == "radio":
+                        reply = "[radio] {title} sur {url}".format(
+                            title=media.get_radio_title(var.current_music[1]),
+                            url=var.current_music[2]
+                        )
+                    elif source == "url":
+                        reply = "[url] {title} (<a href=\"{url}\">{url}</a>)".format(
+                            title=var.current_music[2],
+                            url=var.current_music[1]
+                        )
+                    elif source == "file":
+                        reply = "[file] {title}".format(title=var.current_music[2])
                     else:
-                        self.send_msg_channel(var.current_music[2] + "<br />" + var.current_music[1])
+                        reply = "(?)[{}] {} {}".format(
+                            var.current_music[0],
+                            var.current_music[1],
+                            var.current_music[2],
+                        )
                 else:
-                    self.mumble.users[text.actor].send_message(self.config.get('strings', 'not_playing'))
+                    reply = self.config.get('strings', 'not_playing')
+
+                self.mumble.users[text.actor].send_message(reply)
 
             elif command == self.config.get('command', 'next'):
-                var.current_music = var.playlist[0]
+                var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
                 var.playlist.pop(0)
                 self.launch_next()
             elif command == self.config.get('command', 'list'):
@@ -240,8 +257,8 @@ class MumbleBot:
 
         command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
-        #var.current_music[2] = title
-        #var.current_music[3] = path
+        var.current_music[2] = title
+        var.current_music[3] = path
 
     def download_music(self, url):
         url_hash = hashlib.md5(url.encode()).hexdigest()
@@ -285,7 +302,7 @@ class MumbleBot:
                 time.sleep(0.1)
 
             if (self.thread is None or not raw_music) and len(var.playlist) != 0:
-                var.current_music = var.playlist[0]
+                var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
                 var.playlist.pop(0)
                 self.launch_next()
 

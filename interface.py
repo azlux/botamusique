@@ -8,6 +8,7 @@ from os import listdir
 import random
 from werkzeug.utils import secure_filename
 import errno
+import media
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the
@@ -96,7 +97,25 @@ def index():
             if action == "randomize":
                 random.shuffle(var.playlist)
     if var.current_music:
-        current_music = var.current_music[len(var.music_folder):]
+        source = var.current_music[0]
+        if source == "radio":
+            current_music = "[radio] {title} sur {url}".format(
+                title=media.get_radio_title(var.current_music[1]),
+                url=var.current_music[2]
+            )
+        elif source == "url":
+            current_music = "[url] {title} (<a href=\"{url}\">{url}</a>)".format(
+                title=var.current_music[2],
+                url=var.current_music[1]
+            )
+        elif source == "file":
+            current_music = "[file] {title}".format(title=var.current_music[2])
+        else:
+            current_music = "(?)[{}] {} {}".format(
+                var.current_music[0],
+                var.current_music[1],
+                var.current_music[2],
+            )
     else:
         current_music = None
 
