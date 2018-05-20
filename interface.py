@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, send_file
 import variables as var
 import util
 import os.path
@@ -148,6 +148,36 @@ def upload():
         return redirect("./", code=302)
     else:
         return redirect("./", code=409)
+
+@web.route('/download', methods=["GET"])
+def download():
+    if 'file' in request.args:
+        requested_file = request.args['file']
+        if '../' not in requested_file:
+            folder_path = var.music_folder
+            files = util.get_recursive_filelist_sorted(var.music_folder)
+
+            if requested_file in files:
+                filepath = os.path.join(folder_path, requested_file)
+                try:
+                    return send_file(filepath, as_attachment=True)
+                except Exception as e:
+                    self.log.exception(e)
+                    self.Error(400)
+    elif 'directory' in request.args:
+        requested_dir = request.args['directory']
+        folder_path = var.music_folder
+        requested_dir_fullpath = os.path.abspath(os.path.join(folder_path, requested_dir)) + '/'
+        if requested_dir_fullpath.startswith(folder_path):
+            prefix = secure_filename(os.path.relpath(requested_dir_fullpath, folder_path))
+            zipfile = util.zipdir(requested_dir_fullpath, requested_dir)
+            try:
+                return send_file(zipfile, as_attachment=True)
+            except Exception as e:
+                self.log.exception(e)
+                self.Error(400)
+
+    return redirect("./", code=400)
 
 
 if __name__ == '__main__':
