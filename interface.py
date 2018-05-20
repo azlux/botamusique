@@ -169,8 +169,11 @@ def download():
         folder_path = var.music_folder
         requested_dir_fullpath = os.path.abspath(os.path.join(folder_path, requested_dir)) + '/'
         if requested_dir_fullpath.startswith(folder_path):
-            prefix = secure_filename(os.path.relpath(requested_dir_fullpath, folder_path))
-            zipfile = util.zipdir(requested_dir_fullpath, requested_dir)
+            if os.path.samefile(requested_dir_fullpath, folder_path):
+                prefix = 'all'
+            else:
+                prefix = secure_filename(os.path.relpath(requested_dir_fullpath, folder_path))
+            zipfile = util.zipdir(requested_dir_fullpath, prefix)
             try:
                 return send_file(zipfile, as_attachment=True)
             except Exception as e:

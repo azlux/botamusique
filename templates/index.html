@@ -92,6 +92,11 @@
         {% endfor %}
     </ul>
     <h2>Music library:</h2>
+    <form action="./download" method="get" class="directory">
+        <input type="text" value="./" name="directory" hidden>
+        <input type="submit" value="Download entire music library">
+    </form>
+    <br />
     {{ dirlisting() }}
 
 
