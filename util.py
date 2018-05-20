@@ -46,31 +46,36 @@ class Dir(object):
         return True
 
     def get_subdirs(self, path=None):
+        subdirs = []
         if path and path != '':
             subdir = path.split('/')[0]
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
-                return self.subdirs[subdir].get_subdirs(searchpath)
+                subdirs = self.subdirs[subdir].get_subdirs(searchpath)
         else:
-            return self.subdirs
+            subdirs = self.subdirs
 
+        return subdirs
 
     def get_files(self, path=None):
+        files = []
         if path and path != '':
             subdir = path.split('/')[0]
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
-                return self.subdirs[subdir].get_files(searchpath)
+                files = self.subdirs[subdir].get_files(searchpath)
         else:
-            return self.files
+            files = self.files
+
+        return files
 
     def get_files_recursively(self, path=None):
-        print('in get_files_recursively', path)
+        files = []
         if path and path != '':
             subdir = path.split('/')[0]
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
-                return self.subdirs[subdir].get_files_recursively(searchpath)
+                files = self.subdirs[subdir].get_files_recursively(searchpath)
         else:
             files = self.files
 
