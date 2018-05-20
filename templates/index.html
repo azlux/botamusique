@@ -14,8 +14,17 @@
             {%- set files = music_library.get_files(subdirpath) %}
             {%- if files %}
                 {% for file in files %}
-                <!--<li>{{ file }}</li>-->
-                <li><form method="post"><input type="text" value="{{ subdirpath }}/{{ file }}" name="add_file" hidden><input type="submit" value="Add">&nbsp;&nbsp;{{ file }}</form></li>
+                <li class="file">
+                    <form method="post" class="file file_add">
+                        <input type="text" value="{{ subdirpath }}/{{ file }}" name="add_file" hidden>
+                        <input type="submit" value="Add">
+                    </form>
+                    <form action="./download" method="get"  class="file file_download">
+                        <input type="text" value="{{ subdirpath }}/{{ file }}" name="file" hidden>
+                        <input type="submit" value="Download">
+                        &nbsp;{{ file }}
+                    </form>
+                </li>
                 {% endfor %}
             {%- endif %}
         </ul>

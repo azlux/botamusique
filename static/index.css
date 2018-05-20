@@ -1,0 +1,23 @@
+/* necessary to place both forms/buttons next to each other */
+li.file {
+    clear: both;
+    list-style-position: outside;
+}
+
+/* necessary to place both forms/buttons next to each other */
+form.file {
+    /* Float both forms to the left */
+    float: left;
+}
+
+form.file.file_add {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+/* necessary to place both forms/buttons next to each other */
+form.file.file_download {
+    clear: right;
+    /* with some space to the left of the second form */
+    margin-right: 20px;
+}
