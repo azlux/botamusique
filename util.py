@@ -57,6 +57,22 @@ class Dir(object):
 
         return subdirs
 
+    def get_subdirs_recursively(self, path=None):
+        subdirs = []
+        if path and path != '':
+            subdir = path.split('/')[0]
+            if subdir in self.subdirs:
+                searchpath = '/'.join(path.split('/')[1::])
+                subdirs = self.subdirs[subdir].get_subdirs_recursively(searchpath)
+        else:
+            subdirs = list(self.subdirs.keys())
+
+            for key, val in self.subdirs.items():
+                subdirs.extend(map(lambda subdir: key + '/' + subdir,val.get_subdirs_recursively()))
+
+        subdirs.sort()
+        return subdirs
+
     def get_files(self, path=None):
         files = []
         if path and path != '':

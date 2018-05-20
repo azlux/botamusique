@@ -34,19 +34,23 @@
 <body>
 <a href="."><h5>Refresh</h5></a>
 <br>
-{% if False %}
-<div id="download">
-    <form action="./download" method="post" enctype="multipart/form-data">
-        <input type="file" name="music_file" value="Browse Music file"/>
-        <select name="directory">
-            {% for dir in all_files %}
-            <option value={{ dir }}>{{ dir }}</option>
+
+<div id="upload">
+    <form action="./upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" value="Browse Music file"/>
+        Upload into
+        <input list="targetdirs" id="targetdir" name="targetdir" />
+        <datalist id="targetdirs">
+            {% for dir in music_library.get_subdirs_recursively() %}
+            <option value="{{ dir }}">
             {% endfor %}
-        </select>
+        </datalist>
         <input type="submit" value="Upload"/>
     </form>
 </div>
-{% endif %}
+
+<br />
+
 <div id="playlist">
     Current Playing :
     {% if current_music %}
@@ -54,7 +58,7 @@
     {% else %}
     No music
     {% endif %}
-    <br>
+    <br />
     Playlist :
     <form method="post"><input type="text" value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
 

@@ -7,6 +7,7 @@ import os.path
 from os import listdir
 import random
 from werkzeug.utils import secure_filename
+import errno
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the
@@ -107,23 +108,43 @@ def index():
                            music_library=music_library)
 
 
-@web.route('/download', methods=["POST"])
-def download():
-    print(request.form)
-
-    file = request.files['music_file']
+@web.route('/upload', methods=["POST"])
+def upload():
+    file = request.files['file']
     if not file:
         return redirect("./", code=406)
-    elif file.filename == '':
-        return redirect("./", code=406)
-    elif '..' in request.form['directory']:
+
+    filename = secure_filename(file.filename).strip()
+    if filename == '':
         return redirect("./", code=406)
 
-    if file.name == "music_file" and "audio" in file.headers.to_list()[1][1]:
-        web.config['UPLOAD_FOLDER'] = var.music_folder + request.form['directory']
-        filename = secure_filename(file.filename)
-        print(filename)
-        file.save(os.path.join(web.config['UPLOAD_FOLDER'], filename))
+    targetdir = request.form['targetdir'].strip()
+    if targetdir == '':
+        targetdir = 'uploads/'
+    elif '..' in targetdir:
+        return redirect("./", code=406)
+
+    print('Uploading file:')
+    print('filename:', filename)
+    print('targetdir:', targetdir)
+    print('mimetype:', file.mimetype)
+
+    if "audio" in file.mimetype:
+        storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
+        if not storagepath.startswith(var.music_folder):
+            return redirect("./", code=406)
+
+        try:
+            os.makedirs(storagepath)
+        except OSError as ee:
+            if ee.errno != errno.EEXIST:
+                return redirect("./", code=500)
+
+        filepath = os.path.join(storagepath, filename)
+        if os.path.exists(filepath):
+            return redirect("./", code=406)
+
+        file.save(filepath)
         return redirect("./", code=302)
     else:
         return redirect("./", code=409)
