@@ -121,13 +121,13 @@ def upload():
     targetdir = request.form['targetdir'].strip()
     if targetdir == '':
         targetdir = 'uploads/'
-    elif '..' in targetdir:
+    elif '../' in targetdir:
         return redirect("./", code=406)
 
-    print('Uploading file:')
-    print('filename:', filename)
-    print('targetdir:', targetdir)
-    print('mimetype:', file.mimetype)
+    #print('Uploading file:')
+    #print('filename:', filename)
+    #print('targetdir:', targetdir)
+    #print('mimetype:', file.mimetype)
 
     if "audio" in file.mimetype:
         storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))

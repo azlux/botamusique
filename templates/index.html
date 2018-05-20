@@ -61,8 +61,9 @@
     <form action="./upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file" value="Browse Music file"/>
         Upload into
-        <input list="targetdirs" id="targetdir" name="targetdir" />
+        <input list="targetdirs" id="targetdir" name="targetdir" placeholder="uploads" />
         <datalist id="targetdirs">
+            <option value="uploads">
             {% for dir in music_library.get_subdirs_recursively() %}
             <option value="{{ dir }}">
             {% endfor %}
