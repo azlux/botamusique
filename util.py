@@ -84,6 +84,7 @@ class Dir(object):
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
                 subdirs = self.subdirs[subdir].get_subdirs(searchpath)
+                subdirs = list(map(lambda subsubdir: os.path.join(subdir, subsubdir), subdirs))
         else:
             subdirs = self.subdirs
 
