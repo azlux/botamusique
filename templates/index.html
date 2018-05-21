@@ -1,7 +1,7 @@
 {% macro dirlisting(dir, path='') -%}
     <ul>
     {% for subdirname, subdirobj in dir.get_subdirs().items() %}
-        {%- set subdirpath = path + subdirname + '/' %}
+        {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
         <li class="directory">
             <span>{{ subdirname }}/&nbsp;</span>
             <form method="post" class="directory form1">
@@ -19,22 +19,23 @@
         </li>
         {{- dirlisting(subdirobj, subdirpath) -}}
     {% endfor %}
-        {%- set files = dir.get_files() %}
-        {%- if files %}
-            {% for file in files %}
-            <li class="file">
-                <form method="post" class="file file_add">
-                    <input type="text" value="{{ subdirpath }}{{ file }}" name="add_file" hidden>
-                    <input type="submit" value="Add">
-                </form>
-                <form action="./download" method="get"  class="file file_download">
-                    <input type="text" value="{{ subdirpath }}{{ file }}" name="file" hidden>
-                    <input type="submit" value="Download">
-                    &nbsp;{{ file }}
-                </form>
-            </li>
-            {% endfor %}
-        {%- endif %}
+    {%- set files = dir.get_files() %}
+    {%- if files %}
+        {% for file in files %}
+        {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
+        <li class="file">
+            <form method="post" class="file file_add">
+                <input type="text" value="{{ filepath }}" name="add_file" hidden>
+                <input type="submit" value="Add">
+            </form>
+            <form action="./download" method="get"  class="file file_download">
+                <input type="text" value="{{ filepath }}" name="file" hidden>
+                <input type="submit" value="Download">
+                &nbsp;{{ file }}
+            </form>
+        </li>
+        {% endfor %}
+    {%- endif %}
     </ul>
 {%- endmacro %}
 
@@ -89,9 +90,13 @@
         {% endfor %}
     </ul>
     <h2>Music library:</h2>
-    <form action="./download" method="get" class="directory">
+    <form action="./download" method="get" class="directory form1">
         <input type="text" value="./" name="directory" hidden>
         <input type="submit" value="Download entire music library">
+    </form>
+    <form method="post" class="directory form3">
+        <input type="text" value="./" name="add_folder_recursively" hidden>
+        <input type="submit" value="Add all tracks from music library (recursively)">
     </form>
     <br />
     {{ dirlisting(music_library) }}

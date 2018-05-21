@@ -61,8 +61,10 @@ def zipdir(zippath, zipname_prefix=None):
     return zipname
 
 class Dir(object):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, path):
+        self.name = os.path.basename(path.strip('/'))
+        self.fullpath = path
+        print(self.name, self.fullpath)
         self.subdirs = {}
         self.files = []
 
@@ -76,7 +78,7 @@ class Dir(object):
             if subdir in self.subdirs:
                 self.subdirs[subdir].add_file(file)
             else:
-                self.subdirs[subdir] = Dir(subdir)
+                self.subdirs[subdir] = Dir(os.path.join(self.fullpath, subdir))
                 self.subdirs[subdir].add_file(file)
         else:
             self.files.append(file)
@@ -84,7 +86,7 @@ class Dir(object):
 
     def get_subdirs(self, path=None):
         subdirs = []
-        if path and path != '':
+        if path and path != '' and path != './':
             subdir = path.split('/')[0]
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
@@ -97,7 +99,7 @@ class Dir(object):
 
     def get_subdirs_recursively(self, path=None):
         subdirs = []
-        if path and path != '':
+        if path and path != '' and path != './':
             subdir = path.split('/')[0]
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
@@ -113,7 +115,7 @@ class Dir(object):
 
     def get_files(self, path=None):
         files = []
-        if path and path != '':
+        if path and path != '' and path != './':
             subdir = path.split('/')[0]
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
@@ -125,7 +127,7 @@ class Dir(object):
 
     def get_files_recursively(self, path=None):
         files = []
-        if path and path != '':
+        if path and path != '' and path != './':
             subdir = path.split('/')[0]
             if subdir in self.subdirs:
                 searchpath = '/'.join(path.split('/')[1::])
