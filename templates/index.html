@@ -77,7 +77,10 @@
 <div id="playlist">
     Currently Playing :
     {% if current_music %}
-    {{ current_music|safe }}
+    {{ current_music[0] }} {{ current_music[1] }}
+    {% if current_music[2] %}
+        (<a href="{{ current_music[2] }}">{{ current_music[2] }}</a>)
+    {% endif %}
     {% else %}
     No music
     {% endif %}
