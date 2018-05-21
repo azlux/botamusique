@@ -98,21 +98,29 @@ def index():
                 random.shuffle(var.playlist)
     if var.current_music:
         source = var.current_music[0]
+        # format for current_music below:
+        # (sourcetype, title, url or None)
         if source == "radio":
-            current_music = "[radio] {title} sur {url}".format(
-                title=media.get_radio_title(var.current_music[1]),
-                url=var.current_music[2]
+            current_music = (
+                "[radio]",
+                media.get_radio_title(var.current_music[1]),
+                var.current_music[2]
             )
         elif source == "url":
-            current_music = "[url] {title} (<a href=\"{url}\">{url}</a>)".format(
-                title=var.current_music[2],
-                url=var.current_music[1]
+            current_music = (
+                "[url]",
+                var.current_music[2],
+                var.current_music[1]
             )
         elif source == "file":
-            current_music = "[file] {title}".format(title=var.current_music[2])
+            current_music = (
+                "[file]",
+                var.current_music[2],
+                None
+            )
         else:
-            current_music = "(?)[{}] {} {}".format(
-                var.current_music[0],
+            current_music = (
+                "(??)[" + var.current_music[0] + "]",
                 var.current_music[1],
                 var.current_music[2],
             )
