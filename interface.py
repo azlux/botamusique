@@ -128,11 +128,12 @@ def index():
         current_music = None
 
     return render_template('index.html',
-                           current_music=current_music,
-                           user=var.user,
-                           playlist=var.playlist,
-                           all_files=files,
-                           music_library=music_library)
+                            all_files=files,
+                            current_music=current_music,
+                            music_library=music_library,
+                            os=os,
+                            playlist=var.playlist,
+                            user=var.user)
 
 
 @web.route('/upload', methods=["POST"])
