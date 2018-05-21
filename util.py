@@ -2,6 +2,7 @@
 
 import configparser
 import hashlib
+import magic
 import os
 import variables as var
 import zipfile
@@ -20,7 +21,11 @@ def get_recursive_filelist_sorted(path):
         for file in files:
             if file in __CONFIG.get('bot', 'ignored_files'):
                 continue
-            filelist.append(relroot + file)
+
+            fullpath = os.path.join(path, relroot, file)
+            mime = magic.from_file(fullpath, mime=True)
+            if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
+                filelist.append(relroot + file)
 
     filelist.sort()
     return filelist
