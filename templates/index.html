@@ -1,6 +1,6 @@
-{% macro dirlisting(path='') -%}
+{% macro dirlisting(dir, path='') -%}
     <ul>
-    {% for subdirname in music_library.get_subdirs(path) %}
+    {% for subdirname, subdirobj in dir.get_subdirs().items() %}
         {%- set subdirpath = path + subdirname + '/' %}
         <li class="directory">
             <span>{{ subdirname }}/&nbsp;</span>
@@ -17,31 +17,24 @@
                 <input type="submit" value="Download entire directory">
             </form>
         </li>
-        {%- set subdirs = music_library.get_subdirs(subdirpath) %}
-        {%- if subdirs %}
-            {%- for subdir in subdirs %}
-                {{- dirlisting(subdirpath) -}}
-            {%- endfor %}
-        {%- endif %}
-        <ul>
-            {%- set files = music_library.get_files(subdirpath) %}
-            {%- if files %}
-                {% for file in files %}
-                <li class="file">
-                    <form method="post" class="file file_add">
-                        <input type="text" value="{{ subdirpath }}{{ file }}" name="add_file" hidden>
-                        <input type="submit" value="Add">
-                    </form>
-                    <form action="./download" method="get"  class="file file_download">
-                        <input type="text" value="{{ subdirpath }}{{ file }}" name="file" hidden>
-                        <input type="submit" value="Download">
-                        &nbsp;{{ file }}
-                    </form>
-                </li>
-                {% endfor %}
-            {%- endif %}
-        </ul>
+        {{- dirlisting(subdirobj, subdirpath) -}}
     {% endfor %}
+        {%- set files = dir.get_files() %}
+        {%- if files %}
+            {% for file in files %}
+            <li class="file">
+                <form method="post" class="file file_add">
+                    <input type="text" value="{{ subdirpath }}{{ file }}" name="add_file" hidden>
+                    <input type="submit" value="Add">
+                </form>
+                <form action="./download" method="get"  class="file file_download">
+                    <input type="text" value="{{ subdirpath }}{{ file }}" name="file" hidden>
+                    <input type="submit" value="Download">
+                    &nbsp;{{ file }}
+                </form>
+            </li>
+            {% endfor %}
+        {%- endif %}
     </ul>
 {%- endmacro %}
 
@@ -101,7 +94,7 @@
         <input type="submit" value="Download entire music library">
     </form>
     <br />
-    {{ dirlisting() }}
+    {{ dirlisting(music_library) }}
 
 
 </div>
