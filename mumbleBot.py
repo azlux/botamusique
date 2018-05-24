@@ -22,13 +22,10 @@ import util
 
 
 class MumbleBot:
-    def __init__(self, args):
+    def __init__(self, args, config):
         signal.signal(signal.SIGINT, self.ctrl_caught)
 
-        self.config = configparser.ConfigParser(interpolation=None)
-        self.config.read("configuration.ini", encoding='latin-1')
-
-
+        self.config = config
         self.volume = self.config.getfloat('bot', 'volume')
 
         self.channel = args.channel
@@ -332,7 +329,11 @@ def start_web_interface(addr, port):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Bot for playing radio stream on Mumble')
+    global __CONFIG
+    parser = argparse.ArgumentParser(description='Bot for playing music on Mumble')
+
+    # General arguments
+    parser.add_argument("--config", dest='config', type=str, default='configuration.ini', help='Load configuration from this file. Default: configuration.ini')
 
     # Mumble arguments
     parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="The server's hostame of a mumble server")
@@ -346,4 +347,10 @@ if __name__ == '__main__':
     parser.add_argument('--wi-addr', dest='wi_addr', type=str, default=None, help='Listening address of the web interface')
 
     args = parser.parse_args()
-    botamusique = MumbleBot(args)
+    __CONFIG = configparser.ConfigParser(interpolation=None)
+    parsed_configs = __CONFIG.read(args.config, encoding='latin-1')
+    if len(parsed_configs) == 0:
+        print('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)
+        sys.exit()
+
+    botamusique = MumbleBot(args, __CONFIG)

@@ -1,16 +1,14 @@
 #!/usr/bin/python3
 
-import configparser
 import hashlib
 import magic
 import os
 import variables as var
 import zipfile
 
-__CONFIG = configparser.ConfigParser(interpolation=None)
-__CONFIG.read("configuration.ini", encoding='latin-1')
-
 def get_recursive_filelist_sorted(path):
+    global __CONFIG
+
     filelist = []
     for root, dirs, files in os.walk(path):
         relroot = root.replace(path, '')
@@ -38,6 +36,8 @@ def get_recursive_filelist_sorted(path):
 #       - hash is a sha1 of the string representation of the directories' contents (which are
 #           zipped)
 def zipdir(zippath, zipname_prefix=None):
+    global __CONFIG
+
     zipname = __CONFIG.get('bot', 'tmp_folder')
     if zipname_prefix and '../' not in zipname_prefix:
         zipname += zipname_prefix.strip().replace('/', '_') + '_'
