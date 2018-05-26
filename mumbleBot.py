@@ -330,7 +330,7 @@ def start_web_interface(addr, port):
 
 if __name__ == '__main__':
     global __CONFIG
-    parser = argparse.ArgumentParser(description='Bot for playing music on Mumble')
+    parser = argparse.ArgumentParser(description='Bot for playing radio stream on Mumble')
 
     # General arguments
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini', help='Load configuration from this file. Default: configuration.ini')
