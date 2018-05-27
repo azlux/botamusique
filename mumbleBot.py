@@ -313,7 +313,7 @@ class MumbleBot:
                     var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
                     var.playlist.pop(0)
                     self.launch_next()
-                elif len(var.playlist) == 0 and var.current_music:
+                else:
                     var.current_music = None
 
         while self.mumble.sound_output.get_buffer_size() > 0:
