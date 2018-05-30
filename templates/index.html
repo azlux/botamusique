@@ -84,7 +84,7 @@
 
     <ul>
         {% for m in playlist %}
-        <li>{{ m }}
+        <li>{{ m[0], m[1] }}
             <form method="post"><input type="text" value="{{ m }}" name="delete_music" hidden><input type="submit" value="X"></form>
         </li>
         {% endfor %}
