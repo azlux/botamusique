@@ -60,7 +60,6 @@ class Dir(object):
     def __init__(self, path):
         self.name = os.path.basename(path.strip('/'))
         self.fullpath = path
-        print(self.name, self.fullpath)
         self.subdirs = {}
         self.files = []
 
