@@ -88,10 +88,10 @@ def index():
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
         elif 'delete_music' in request.form:
-            try:
-                var.playlist.remove("file", request.form['delete_music'])
-            except ValueError:
-                pass
+            for item in var.playlist:
+                if str(item) == request.form['delete_music']:
+                    var.playlist.remove(item)
+                    break
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
