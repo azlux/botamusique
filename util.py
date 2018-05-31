@@ -9,7 +9,7 @@ import zipfile
 def get_recursive_filelist_sorted(path):
     filelist = []
     for root, dirs, files in os.walk(path):
-        relroot = root.replace(path, '')
+        relroot = root.replace(path, '', 1)
         if relroot != '' and relroot in var.config.get('bot', 'ignored_folders'):
             continue
         if len(relroot):
@@ -60,13 +60,12 @@ class Dir(object):
     def __init__(self, path):
         self.name = os.path.basename(path.strip('/'))
         self.fullpath = path
-        print(self.name, self.fullpath)
         self.subdirs = {}
         self.files = []
 
     def add_file(self, file):
         if file.startswith(self.name + '/'):
-            file = file.replace(self.name + '/', '')
+            file = file.replace(self.name + '/', '', 1)
 
         if '/' in file:
             # This file is in a subdir
