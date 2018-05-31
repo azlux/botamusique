@@ -73,7 +73,7 @@ class MumbleBot:
         self.nb_exit = 0
         self.thread = None
 
-        if args.web_interace:
+        if self.config.getboolean("bot", "web_interface"):
             interface.init_proxy()
             t = threading.Thread(target=start_web_interface)
             t.daemon = True
@@ -241,9 +241,8 @@ class MumbleBot:
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             for i in range(2):
                 try:
-                    info_dict = ydl.extract_info(url, download=False)
+                    info_dict = ydl.extract_info(url)
                     video_title = info_dict['title']
-                    ydl.download([url])
                 except youtube_dl.utils.DownloadError:
                     pass
                 else:

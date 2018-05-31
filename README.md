@@ -24,12 +24,10 @@ The main folder need to be declare into the config (with a '/' at the end)
 commands (don't forget the sudo mode):
 ```
 apt-get install python3-pip
-pip3 install opuslib
-pip3 install protobuf
-pip3 install flask
 apt-get install ffmpeg
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
 cd ./botamusique
+pip3 install -r requirements.txt
 chmod +x ./mumbleBot.py
 ```
 
