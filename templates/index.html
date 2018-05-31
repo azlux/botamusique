@@ -20,10 +20,24 @@
         <input type="submit" value="Upload"/>
     </form>
 </div>
+<div id="url">
+    Add Youtube/Soundcloud URL :
+    <form method="post">
+        <input type=text name="add_url">
+        <input type="submit" value="Add URL">
+    </form>
+</div>
+<div id="radio">
+    Add Radio URL :
+    <form method="post">
+        <input type=text name="add_radio">
+        <input type="submit" value="Add Radio">
+    </form>
+</div>
 <div id="playlist">
     Current Playing :
     {% if current_music %}
-    {{ current_music }}
+    {{ current_music[0] }} > {{ current_music[2] }}
     {% else %}
     No music
     {% endif %}
@@ -33,8 +47,8 @@
 
     <ul>
         {% for m in playlist %}
-        <li>{{ m }}
-            <form method="post"><input type=text value="{{ m }}" name="delete_music" hidden><input type="submit" value="X"></form>
+        <li>{{ m[0] }} - {{ m[1] }}
+            <form method="post"><input type=text value="{{ m }}" name="delete_music" type="file" hidden><input type="submit" value="X"></form>
         </li>
         {% endfor %}
     </ul>

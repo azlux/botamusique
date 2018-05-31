@@ -64,27 +64,30 @@ def index():
         files[director] = [f for f in listdir(folder_path + director) if os.path.isfile(os.path.join(folder_path + director, f))]
 
     if request.method == 'POST':
-        if 'add_file' in request.form and ".." not in request.form['add_music']:
-            var.playlist.append((request.form['type'], request.form['add_music']))
+        if 'add_music' in request.form and ".." not in request.form['add_music']:
+            var.playlist.append(['file', request.form['add_music']])
+
+        if 'add_url' in request.form :
+            var.playlist.append(['url', request.form['add_url']])
+
+        if 'add_radio' in request.form:
+            var.playlist.append(['radio', request.form['add_radio']])
+
         if 'add_folder' in request.form and ".." not in request.form['add_folder']:
-            dir_files = [("file", request.form['add_folder'] + '/' + i) for i in files[request.form['add_folder']]]
+            dir_files = [["file", request.form['add_folder'] + '/' + i] for i in files[request.form['add_folder']]]
             var.playlist.extend(dir_files)
         elif 'delete_music' in request.form:
             try:
-                var.playlist.remove("file", request.form['delete_music'])
+                var.playlist.remove(["file", request.form['delete_music']])
             except ValueError:
                 pass
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
                 random.shuffle(var.playlist)
-    if var.current_music:
-        current_music = var.current_music[len(var.music_folder):]
-    else:
-        current_music = None
 
     return render_template('index.html',
-                           current_music=current_music,
+                           current_music=var.current_music,
                            user=var.user,
                            playlist=var.playlist,
                            all_files=files)

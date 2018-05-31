@@ -18,7 +18,7 @@ def get_radio_server_description(url):
         response = urllib.request.urlopen(request)
         data = json.loads(response.read().decode("utf-8"))
         title_server = data['servertitle']
-        logging.debug("TITLE FOUND SHOUTCAST: " + title_server)
+        logging.info("TITLE FOUND SHOUTCAST: " + title_server)
     except urllib.error.HTTPError:
         pass
     except http.client.BadStatusLine:
@@ -30,9 +30,9 @@ def get_radio_server_description(url):
         try:
             request = urllib.request.Request(url_icecast)
             response = urllib.request.urlopen(request)
-            data = json.loads(response.read().decode('utf-8',errors='ignore'),strict=False)
+            data = json.loads(response.read().decode('utf-8', errors='ignore'), strict=False)
             title_server = data['icestats']['source'][0]['server_name'] + ' - ' + data['icestats']['source'][0]['server_description']
-            logging.debug("TITLE FOUND ICECAST: " + title_server)
+            logging.info("TITLE FOUND ICECAST: " + title_server)
             if not title_server:
                 title_server = url
         except urllib.error.URLError:
@@ -55,7 +55,7 @@ def get_radio_title(url):
 
             metadata_length = struct.unpack('B', response.read(1))[0] * 16  # length byte
             metadata = response.read(metadata_length).rstrip(b'\0')
-            logging.debug(metadata)
+            logging.info(metadata)
             # extract title from the metadata
             m = re.search(br"StreamTitle='([^']*)';", metadata)
             if m:
@@ -65,3 +65,14 @@ def get_radio_title(url):
     except (urllib.error.URLError, urllib.error.HTTPError):
         pass
     return 'Impossible to get the music title'
+
+
+def get_url(string):
+    if string.startswith('http'):
+        return string
+    p = re.compile('href="(.+)"', re.IGNORECASE)
+    res = re.search(p, string)
+    if res:
+        return res.group(1)
+    else:
+        return False
