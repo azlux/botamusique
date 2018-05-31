@@ -23,8 +23,9 @@ The main folder need to be declare into the config (with a '/' at the end)
 
 commands (don't forget the sudo mode):
 ```
-apt-get install python3-pip
-apt-get install ffmpeg
+apt install python3-pip
+apt install ffmpeg
+apt install youtube-dl
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
 cd ./botamusique
 pip3 install -r requirements.txt
@@ -32,7 +33,7 @@ chmod +x ./mumbleBot.py
 ```
 
 #### Starting the bot
-./mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL
+`./mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL`
 
 The bot listen to the 8181 port so you should redirect to this one in you NAT configuration to let others peoples access the web interface. (DISABLED)
 
@@ -41,26 +42,4 @@ The bot listen to the 8181 port so you should redirect to this one in you NAT co
 
 ### TODOLIST
 
-#### Features
-- [x] Next song
-- [x] Randomizer
-- [ ]Graphical interface
-
-#### Commands with the interface (disabled)
-- [x] list
-- [x] play
-- [x] playfolder
-- [x] random
-
-#### Commands by message to the bot
-- [x] volume
-- [x] next
-- [x] stop
-- [x] joinme
-- [x] away
-- [x] help
-
-#### Web Interface (disabled for now)
-- [x] Primary functions
-- [ ] CSS
-
+Check the issue #3
