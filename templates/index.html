@@ -1,3 +1,44 @@
+{% macro dirlisting(dir, path='') -%}
+    <ul>
+    {% for subdirname, subdirobj in dir.get_subdirs().items() %}
+        {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
+        <li class="directory">
+            <span>{{ subdirname }}/&nbsp;</span>
+            <form method="post" class="directory form1">
+                <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
+                <input type="submit" value="Add all tracks from this folder">
+            </form>
+            <form method="post" class="directory form2">
+                <input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden>
+                <input type="submit" value="Add all tracks from this folder (recursively)">
+            </form>
+            <form action="./download" method="get" class="directory form3">
+                <input type="text" value="{{ subdirpath }}" name="directory" hidden>
+                <input type="submit" value="Download entire directory">
+            </form>
+        </li>
+        {{- dirlisting(subdirobj, subdirpath) -}}
+    {% endfor %}
+    {%- set files = dir.get_files() %}
+    {%- if files %}
+        {% for file in files %}
+        {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
+        <li class="file">
+            <form method="post" class="file file_add">
+                <input type="text" value="{{ filepath }}" name="add_file" hidden>
+                <input type="submit" value="Add">
+            </form>
+            <form action="./download" method="get"  class="file file_download">
+                <input type="text" value="{{ filepath }}" name="file" hidden>
+                <input type="submit" value="Download">
+                &nbsp;{{ file }}
+            </form>
+        </li>
+        {% endfor %}
+    {%- endif %}
+    </ul>
+{%- endmacro %}
+
 <!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
@@ -9,17 +50,22 @@
 <body>
 <a href="."><h5>Refresh</h5></a>
 <br>
-<div id="download">
-    <form action="./download" method="post" enctype="multipart/form-data">
-        <input type="file" name="music_file" value="Browse Music file"/>
-        <select name="directory">
-            {% for dir in all_files %}
-            <option value={{ dir }}>{{ dir }}</option>
+
+<div id="upload">
+    <form action="./upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" value="Browse Music file"/>
+        Upload into
+        <input list="targetdirs" id="targetdir" name="targetdir" placeholder="uploads" />
+        <datalist id="targetdirs">
+            <option value="uploads">
+            {% for dir in music_library.get_subdirs_recursively() %}
+            <option value="{{ dir }}">
             {% endfor %}
-        </select>
+        </datalist>
         <input type="submit" value="Upload"/>
     </form>
 </div>
+
 <div id="url">
     Add Youtube/Soundcloud URL :
     <form method="post">
@@ -34,37 +80,39 @@
         <input type="submit" value="Add Radio">
     </form>
 </div>
+
 <div id="playlist">
-    Current Playing :
+    Currently Playing :
     {% if current_music %}
-    {{ current_music[0] }} > {{ current_music[2] }}
+    {{ current_music[0] }} {{ current_music[1] }}
+    {% if current_music[2] %}
+        (<a href="{{ current_music[2] }}">{{ current_music[2] }}</a>)
+    {% endif %}
     {% else %}
     No music
     {% endif %}
-    <br>
+    <br />
     Playlist :
-    <form method="post"><input type=text value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
+    <form method="post"><input type="text" value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
 
     <ul>
         {% for m in playlist %}
         <li>{{ m[0] }} - {{ m[1] }}
-            <form method="post"><input type=text value="{{ m }}" name="delete_music" type="file" hidden><input type="submit" value="X"></form>
+            <form method="post"><input type="text" value="{{ m }}" name="delete_music" hidden><input type="submit" value="X"></form>
         </li>
         {% endfor %}
     </ul>
-    <br>
-    {% for dir in all_files %}
-    {{ dir }}
-    <form method="post"><input type=text value={{ dir }} name="add_folder" hidden><input type="submit" value="add all folder"></form>
-    <br>
-    <ul>
-        {% for m in all_files[dir] %}
-        <li>
-            <form method="post"><input type=text value="{{ dir }}/{{ m }}" name="add_music" hidden><input type="submit" value="{{ m }}"></form>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endfor %}
+    <h2>Music library:</h2>
+    <form action="./download" method="get" class="directory form1">
+        <input type="text" value="./" name="directory" hidden>
+        <input type="submit" value="Download entire music library">
+    </form>
+    <form method="post" class="directory form3">
+        <input type="text" value="./" name="add_folder_recursively" hidden>
+        <input type="submit" value="Add all tracks from music library (recursively)">
+    </form>
+    <br />
+    {{ dirlisting(music_library) }}
 
 
 </div>

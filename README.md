@@ -1,4 +1,17 @@
 # botamusique
+
+**Info:**
+
+> This is a fork of the official repository (located [here](https://github.com/azlux/botamusique)).
+We are working on various features for our own version of the bot. However, we will
+regularly merge upstream changes and will also create pull requests to merge back our
+features to the upstream repo at some point.
+
+The remainder of this readme is from the original repo.
+Note that the ToDo list at the end of the Readme is **outdated** and **not applicable** for this repository.
+
+---
+
 [Version Française ici](README.fr.md)
 
 ======

@@ -1,0 +1,53 @@
+/* necessary to place both forms/buttons next to each other */
+li.file {
+    clear: both;
+    list-style-position: outside;
+}
+
+/* necessary to place both forms/buttons next to each other */
+form.file {
+    /* Float both forms to the left */
+    float: left;
+}
+
+form.file.file_add {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+/* necessary to place both forms/buttons next to each other */
+form.file.file_download {
+    clear: right;
+    /* with some space to the left of the second form */
+    margin-right: 20px;
+}
+
+/* necessary to place all forms/buttons of the directory entries next to each other */
+li.directory {
+    clear: both;
+    list-style-position: outside;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+li.directory span {
+    float: left;
+}
+
+form.directory {
+    float: left;
+}
+
+form.directory.form1 {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+form.directory.form2 {
+    margin-right: 5px;
+}
+
+form.directory.form3 {
+    clear: right;
+    margin-right: 5px;
+}
