@@ -69,7 +69,7 @@ def index():
     if request.method == 'POST':
         print(request.form)
         if 'add_file' in request.form and ".." not in request.form['add_file']:
-            item = ('file', request.form['add_file'], datetime.now())
+            item = ('file', request.form['add_file'], datetime.now().timestamp())
             var.playlist.append(item)
         if ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']) :
             try:
@@ -85,7 +85,7 @@ def index():
                 files = music_library.get_files_recursively(folder)
             else:
                 files = music_library.get_files(folder)
-            files = list(map(lambda file: ('file', folder + '/' + file, datetime.now()), files))
+            files = list(map(lambda file: ('file', folder + '/' + file, datetime.now().timestamp()), files))
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
         elif 'delete_music' in request.form:
