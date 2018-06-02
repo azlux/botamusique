@@ -71,7 +71,8 @@ def index():
         if 'add_file' in request.form and ".." not in request.form['add_file']:
             item = ('file', request.form['add_file'], datetime.now().timestamp())
             var.playlist.append(item)
-        if ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']) :
+
+        elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']) :
             try:
                 folder = request.form['add_folder']
             except:
@@ -88,6 +89,13 @@ def index():
             files = list(map(lambda file: ('file', os.path.join(folder, file), datetime.now().timestamp()), files))
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
+
+        elif 'add_url' in request.form :
+            var.playlist.append(['url', request.form['add_url']])
+
+        elif 'add_radio' in request.form:
+            var.playlist.append(['radio', request.form['add_radio']])
+
         elif 'delete_music' in request.form:
             for item in var.playlist:
                 if str(item[2]) == request.form['delete_music']:
@@ -97,6 +105,7 @@ def index():
             action = request.form['action']
             if action == "randomize":
                 random.shuffle(var.playlist)
+
     if var.current_music:
         source = var.current_music[0]
         # format for current_music below:
