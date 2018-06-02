@@ -54,14 +54,16 @@ class MumbleBot:
 
         var.user = args.user
         var.music_folder = var.config.get('bot', 'music_folder')
-        var.is_proxified = var.config.getboolean("bot", "is_web_proxified")
+        var.is_proxified = var.config.getboolean("webinterface", "is_web_proxified")
         self.exit = False
         self.nb_exit = 0
         self.thread = None
 
-        if var.config.getboolean("bot", "web_interface"):
+        if var.config.getboolean("webinterface", "enabled"):
+            wi_addr = var.config.get("webinterface", "listening_addr")
+            wi_port = var.config.getint("webinterface", "listening_port")
             interface.init_proxy()
-            tt = threading.Thread(target=start_web_interface, args=(args.wi_addr, args.wi_port))
+            tt = threading.Thread(target=start_web_interface, args=(wi_addr, wi_port))
             tt.daemon = True
             tt.start()
 
@@ -354,10 +356,6 @@ if __name__ == '__main__':
     parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Password if server requires one")
     parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the mumble server")
     parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default chanel for the bot")
-
-    # web interface arguments
-    parser.add_argument('--wi-port', dest='wi_port', type=int, default=8181, help='Listening port of the web interface')
-    parser.add_argument('--wi-addr', dest='wi_addr', type=str, default=None, help='Listening address of the web interface')
 
     args = parser.parse_args()
     config = configparser.ConfigParser(interpolation=None)
