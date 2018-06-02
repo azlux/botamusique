@@ -90,7 +90,7 @@ def index():
             var.playlist.extend(files)
         elif 'delete_music' in request.form:
             for item in var.playlist:
-                if str(item) == request.form['delete_music']:
+                if str(item[2]) == request.form['delete_music']:
                     var.playlist.remove(item)
                     break
         elif 'action' in request.form:
