@@ -85,7 +85,7 @@ def index():
                 files = music_library.get_files_recursively(folder)
             else:
                 files = music_library.get_files(folder)
-            files = list(map(lambda file: ('file', folder + '/' + file, datetime.now().timestamp()), files))
+            files = list(map(lambda file: ('file', os.path.join(folder, file), datetime.now().timestamp()), files))
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
         elif 'delete_music' in request.form:
