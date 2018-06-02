@@ -3,6 +3,7 @@
 from flask import Flask, render_template, request, redirect, send_file
 import variables as var
 import util
+from datetime import datetime
 import os.path
 from os import listdir
 import random
@@ -68,7 +69,7 @@ def index():
     if request.method == 'POST':
         print(request.form)
         if 'add_file' in request.form and ".." not in request.form['add_file']:
-            item = ('file', request.form['add_file'])
+            item = ('file', request.form['add_file'], datetime.now().timestamp())
             var.playlist.append(item)
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']) :
@@ -85,13 +86,7 @@ def index():
                 files = music_library.get_files_recursively(folder)
             else:
                 files = music_library.get_files(folder)
-            files = list(map(
-              lambda file: (
-                'file',
-                os.path.join(folder, file)
-              ),
-              files
-            ))
+            files = list(map(lambda file: ('file', os.path.join(folder, file), datetime.now().timestamp()), files))
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
 
@@ -102,10 +97,10 @@ def index():
             var.playlist.append(['radio', request.form['add_radio']])
 
         elif 'delete_music' in request.form:
-            try:
-                var.playlist.remove(["file", request.form['delete_music']])
-            except ValueError:
-                pass
+            for item in var.playlist:
+                if str(item[2]) == request.form['delete_music']:
+                    var.playlist.remove(item)
+                    break
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
