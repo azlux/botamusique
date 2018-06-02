@@ -18,6 +18,7 @@ import variables as var
 import hashlib
 import youtube_dl
 import media
+import logging
 import util
 
 class MumbleBot:
@@ -27,6 +28,12 @@ class MumbleBot:
         self.volume = var.config.getfloat('bot', 'volume')
         self.channel = args.channel
         var.current_music = None
+
+        FORMAT = '%(asctime)s: %(message)s'
+        if args.quiet:
+            logging.basicConfig(format=FORMAT, level=logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
+        else:
+            logging.basicConfig(format=FORMAT, level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
 
         ######
         ## Format of the Playlist :
@@ -47,12 +54,12 @@ class MumbleBot:
 
         var.user = args.user
         var.music_folder = var.config.get('bot', 'music_folder')
-        var.is_proxified = var.config.getboolean("bot", "is_proxified")
+        var.is_proxified = var.config.getboolean("bot", "is_web_proxified")
         self.exit = False
         self.nb_exit = 0
         self.thread = None
 
-        if args.wi_addr:
+        if var.config.getboolean("bot", "web_interface"):
             interface.init_proxy()
             tt = threading.Thread(target=start_web_interface, args=(args.wi_addr, args.wi_port))
             tt.daemon = True
@@ -74,11 +81,11 @@ class MumbleBot:
         self.loop()
 
     def ctrl_caught(self, signal, frame):
-        print("\ndeconnection asked")
+        logging.info("\ndeconnection asked")
         self.exit = True
         self.stop()
         if self.nb_exit > 1:
-            print("Forced Quit")
+            logging.info("Forced Quit")
             sys.exit(0)
         self.nb_exit += 1
 
@@ -94,7 +101,7 @@ class MumbleBot:
             else:
                 return
 
-            print(command + ' - ' + parameter + ' by ' + self.mumble.users[text.actor]['name'])
+            logging.info(command + ' - ' + parameter + ' by ' + self.mumble.users[text.actor]['name'])
 
             if command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
@@ -122,6 +129,8 @@ class MumbleBot:
                 var.playlist.append(["url", parameter])
 
             elif command == var.config.get('command', 'play_radio') and parameter:
+                if var.config.has_option('radio', parameter):
+                    parameter = var.config.get('radio', parameter)
                 var.playlist.append(["radio", parameter])
 
             elif command == var.config.get('command', 'help'):
@@ -180,9 +189,14 @@ class MumbleBot:
                 self.mumble.users[text.actor].send_message(reply)
 
             elif command == var.config.get('command', 'next'):
-                var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
-                var.playlist.pop(0)
-                self.launch_next()
+                if var.playlist:
+                    var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
+                    var.playlist.pop(0)
+                    self.launch_next()
+                else:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'queue_empty'))
+                    self.stop()
+
             elif command == var.config.get('command', 'list'):
                 folder_path = var.config.get('bot', 'music_folder')
 
@@ -226,9 +240,9 @@ class MumbleBot:
         path = ""
         title = ""
         if var.current_music[0] == "url":
-            regex = re.compile("<a href=\"(.*?)\"")
-            m = regex.match(var.current_music[1])
-            url = m.group(1)
+            url = media.get_url(var.current_music[1])
+            if not url:
+                return
             path, title = self.download_music(url)
             var.current_music[1] = url
 
@@ -237,9 +251,9 @@ class MumbleBot:
             title = var.current_music[1]
 
         elif var.current_music[0] == "radio":
-            regex = re.compile("<a href=\"(.*?)\"")
-            m = regex.match(var.current_music[1])
-            url = m.group(1)
+            url = media.get_url(var.current_music[1])
+            if not url:
+                return
             var.current_music[1] = url
             path = url
             title = media.get_radio_server_description(url)
@@ -249,7 +263,7 @@ class MumbleBot:
         else:
             ffmpeg_debug = "warning"
 
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        command = ["/usr/bin/ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         var.current_music[2] = title
         var.current_music[3] = path
@@ -271,9 +285,8 @@ class MumbleBot:
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             for i in range(2):
                 try:
-                    info_dict = ydl.extract_info(url, download=False)
+                    info_dict = ydl.extract_info(url)
                     video_title = info_dict['title']
-                    ydl.download([url])
                 except youtube_dl.utils.DownloadError:
                     pass
                 else:
@@ -295,10 +308,13 @@ class MumbleBot:
             else:
                 time.sleep(0.1)
 
-            if (self.thread is None or not raw_music) and len(var.playlist) != 0:
-                var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
-                var.playlist.pop(0)
-                self.launch_next()
+            if self.thread is None or not raw_music:
+                if len(var.playlist) != 0:
+                    var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
+                    var.playlist.pop(0)
+                    self.launch_next()
+                elif len(var.playlist) == 0 and var.current_music:
+                    var.current_music = None
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             time.sleep(0.01)
@@ -326,10 +342,11 @@ def start_web_interface(addr, port):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Bot for playing radio stream on Mumble')
+    parser = argparse.ArgumentParser(description='Bot for playing music on Mumble')
 
     # General arguments
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini', help='Load configuration from this file. Default: configuration.ini')
+    parser.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Only Error logs")
 
     # Mumble arguments
     parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="The server's hostame of a mumble server")

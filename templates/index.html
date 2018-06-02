@@ -66,7 +66,20 @@
     </form>
 </div>
 
-<br />
+<div id="url">
+    Add Youtube/Soundcloud URL :
+    <form method="post">
+        <input type=text name="add_url">
+        <input type="submit" value="Add URL">
+    </form>
+</div>
+<div id="radio">
+    Add Radio URL :
+    <form method="post">
+        <input type=text name="add_radio">
+        <input type="submit" value="Add Radio">
+    </form>
+</div>
 
 <div id="playlist">
     Currently Playing :
@@ -84,7 +97,7 @@
 
     <ul>
         {% for m in playlist %}
-        <li>{{ m }}
+        <li>{{ m[0] }} - {{ m[1] }}
             <form method="post"><input type="text" value="{{ m }}" name="delete_music" hidden><input type="submit" value="X"></form>
         </li>
         {% endfor %}

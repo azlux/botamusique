@@ -1,3 +1,4 @@
+
 [submodule "pymumble"]
 	path = pymumble
-	url = https://github.com/azlux/pymumble
+	url = git://github.com/azlux/pymumble.git

@@ -19,7 +19,13 @@ Note that the ToDo list at the end of the Readme is **outdated** and **not appli
 Botamusique is a mumble bot which goal is to allow users to listen music together with its audio output.
 Predicted functionnalities will be the one you could expect from any classic music player.
 
-1. Where to start
+Bot the can play :
+- Radio url
+- Youtube/Soundcloud URL (everything supported by youtube-dl)
+- Local folder (disabled, I need to work on the web interface)
+
+#### Web interface
+* Disable * I need to work on it. Since I use this bot for radio, youtube/soundcloud and folder music, the web interace isn't ready.
 
 You need to create a folder for all your music. Organize your music by subfolder.
 The main folder need to be declare into the config (with a '/' at the end)
@@ -30,46 +36,23 @@ The main folder need to be declare into the config (with a '/' at the end)
 
 commands (don't forget the sudo mode):
 ```
-apt-get install python3-pip
-pip3 install opuslib
-pip3 install protobuf
-pip3 install flask
-apt-get install ffmpeg
+apt install python3-pip
+apt install ffmpeg
+apt install youtube-dl
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
 cd ./botamusique
+pip3 install -r requirements.txt
 chmod +x ./mumbleBot.py
 ```
 
 #### Starting the bot
-./mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL
+`./mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL`
 
-The bot listen to the 8181 port so you should redirect to this one in you NAT configuration to let others peoples access the web interface.
+The bot listen to the 8181 port so you should redirect to this one in you NAT configuration to let others peoples access the web interface. (DISABLED)
 
 
 2.TODO list
 
 ### TODOLIST
 
-#### Features
-- [ ] Next song
-- [ ] Previous song
-- [x] Randomizer
-- [ ] Looking for songs previously downloaded in a folder by users.
-
-#### Commands with the interface
-- [x] list
-- [x] play
-- [x] playfolder
-- [x] random
-
-#### Commands by message to the bot
-- [x] volume
-- [ ] skip
-- [x] stop
-- [x] joinme
-- [x] away
-
-#### Web Interface
-- [x] Primary functions
-- [ ] CSS
-
+Check the issue #3
