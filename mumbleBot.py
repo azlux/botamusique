@@ -20,6 +20,10 @@ import youtube_dl
 import media
 import logging
 import util
+import base64
+from PIL import Image
+from io import BytesIO
+
 
 class MumbleBot:
     def __init__(self, args):
@@ -248,6 +252,16 @@ class MumbleBot:
             path, title = self.download_music(url)
             var.current_music[1] = url
 
+            im = Image.open(var.config.get('bot', 'tmp_folder') + hashlib.md5(url.encode()).hexdigest() + '.jpg')
+            im.thumbnail((100, 100), Image.ANTIALIAS)
+            buffer = BytesIO()
+            im.save(buffer, format="JPEG")
+            thumbnail_base64 = base64.b64encode(buffer.getvalue())
+            thumbnail_html = '<img - src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
+
+            logging.debug(thumbnail_html)
+            self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
+
         elif var.current_music[0] == "file":
             path = var.config.get('bot', 'music_folder') + var.current_music[1]
             title = var.current_music[1]
@@ -277,6 +291,7 @@ class MumbleBot:
             'format': 'bestaudio/best',
             'outtmpl': path,
             'noplaylist': True,
+            'writethumbnail': True,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
