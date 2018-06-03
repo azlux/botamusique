@@ -19,26 +19,13 @@ import hashlib
 import youtube_dl
 import media
 import logging
-
+import util
 
 class MumbleBot:
-    def __init__(self):
+    def __init__(self, args):
         signal.signal(signal.SIGINT, self.ctrl_caught)
 
-        self.config = configparser.ConfigParser(interpolation=None)
-        self.config.read("configuration.ini", encoding='latin-1')
-
-        parser = argparse.ArgumentParser(description='Bot for playing radio stream on Mumble')
-        parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="The server's hostame of a mumble server")
-        parser.add_argument("-u", "--user", dest="user", type=str, required=True, help="Username you wish, Default=abot")
-        parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Password if server requires one")
-        parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the mumble server")
-        parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default chanel for the bot")
-        parser.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Only Error logs")
-
-        args = parser.parse_args()
-        self.volume = self.config.getfloat('bot', 'volume')
-
+        self.volume = var.config.getfloat('bot', 'volume')
         self.channel = args.channel
         var.current_music = None
 
@@ -66,21 +53,22 @@ class MumbleBot:
         var.playlist = []
 
         var.user = args.user
-        var.music_folder = self.config.get('bot', 'music_folder')
-        var.is_proxified = self.config.getboolean("bot", "is_web_proxified")
-
+        var.music_folder = var.config.get('bot', 'music_folder')
+        var.is_proxified = var.config.getboolean("webinterface", "is_web_proxified")
         self.exit = False
         self.nb_exit = 0
         self.thread = None
 
-        if self.config.getboolean("bot", "web_interface"):
+        if var.config.getboolean("webinterface", "enabled"):
+            wi_addr = var.config.get("webinterface", "listening_addr")
+            wi_port = var.config.getint("webinterface", "listening_port")
             interface.init_proxy()
-            t = threading.Thread(target=start_web_interface)
-            t.daemon = True
-            t.start()
+            tt = threading.Thread(target=start_web_interface, args=(wi_addr, wi_port))
+            tt.daemon = True
+            tt.start()
 
         self.mumble = pymumble.Mumble(args.host, user=args.user, port=args.port, password=args.password,
-                                      debug=self.config.getboolean('debug', 'mumbleConnection'))
+                                      debug=var.config.getboolean('debug', 'mumbleConnection'))
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
         self.mumble.set_codec_profile("audio")
@@ -104,7 +92,7 @@ class MumbleBot:
         self.nb_exit += 1
 
     def message_received(self, text):
-        message = text.message
+        message = text.message.strip()
         if message[0] == '!':
             message = message[1:].split(' ', 1)
             if len(message) > 0:
@@ -117,76 +105,134 @@ class MumbleBot:
 
             logging.info(command + ' - ' + parameter + ' by ' + self.mumble.users[text.actor]['name'])
 
-            if command == self.config.get('command', 'play_file') and parameter:
-                path = self.config.get('bot', 'music_folder') + parameter
-                if "/" in parameter:
-                    self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_file'))
-                elif os.path.isfile(path):
-                    var.playlist.append(["file", path])
+            if command == var.config.get('command', 'play_file') and parameter:
+                music_folder = var.config.get('bot', 'music_folder')
+                # sanitize "../" and so on
+                path = os.path.abspath(os.path.join(music_folder, parameter))
+                if path.startswith(music_folder):
+                    if os.path.isfile(path):
+                        filename = path.replace(music_folder, '')
+                        var.playlist.append(["file", filename])
+                    else:
+                        # try to do a partial match
+                        matches = [file for file in util.get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
+                        if len(matches) == 0:
+                            self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_file'))
+                        elif len(matches) == 1:
+                            var.playlist.append(["file", matches[0]])
+                        else:
+                            msg = var.config.get('strings', 'multiple_matches') + '<br />'
+                            msg += '<br />'.join(matches)
+                            self.mumble.users[text.actor].send_message(msg)
                 else:
-                    self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_file'))
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_file'))
 
-            elif command == self.config.get('command', 'play_url') and parameter:
+            elif command == var.config.get('command', 'play_url') and parameter:
                 var.playlist.append(["url", parameter])
 
-            elif command == self.config.get('command', 'play_radio') and parameter:
-                if self.config.has_option('radio', parameter):
-                    parameter = self.config.get('radio', parameter)
+            elif command == var.config.get('command', 'play_radio') and parameter:
+                if var.config.has_option('radio', parameter):
+                    parameter = var.config.get('radio', parameter)
                 var.playlist.append(["radio", parameter])
 
-            elif command == self.config.get('command', 'help'):
-                self.send_msg_channel(self.config.get('strings', 'help'))
+            elif command == var.config.get('command', 'help'):
+                self.send_msg_channel(var.config.get('strings', 'help'))
 
-            elif command == self.config.get('command', 'stop'):
+            elif command == var.config.get('command', 'stop'):
                 self.stop()
 
-            elif command == self.config.get('command', 'kill'):
+            elif command == var.config.get('command', 'kill'):
                 if self.is_admin(text.actor):
                     self.stop()
                     self.exit = True
                 else:
-                    self.mumble.users[text.actor].send_message(self.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
 
-            elif command == self.config.get('command', 'stop_and_getout'):
+            elif command == var.config.get('command', 'stop_and_getout'):
                 self.stop()
                 if self.channel:
                     self.mumble.channels.find_by_name(self.channel).move_in()
 
-            elif command == self.config.get('command', 'joinme'):
+            elif command == var.config.get('command', 'joinme'):
                 self.mumble.users.myself.move_in(self.mumble.users[text.actor]['channel_id'])
 
-            elif command == self.config.get('command', 'volume'):
+            elif command == var.config.get('command', 'volume'):
                 if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
                     self.volume = float(float(parameter) / 100)
-                    self.send_msg_channel(self.config.get('strings', 'change_volume') % (
+                    self.send_msg_channel(var.config.get('strings', 'change_volume') % (
                         int(self.volume * 100), self.mumble.users[text.actor]['name']))
                 else:
-                    self.send_msg_channel(self.config.get('strings', 'current_volume') % int(self.volume * 100))
+                    self.send_msg_channel(var.config.get('strings', 'current_volume') % int(self.volume * 100))
 
-            elif command == self.config.get('command', 'current_music'):
-                if var.current_music is not None:
-                    if var.current_music[0] == "radio":
-                        self.send_msg_channel(media.get_radio_title(var.current_music[1]) + " sur " + var.current_music[2])
+            elif command == var.config.get('command', 'current_music'):
+                if var.current_music:
+                    source = var.current_music[0]
+                    if source == "radio":
+                        reply = "[radio] {title} sur {url}".format(
+                            title=media.get_radio_title(var.current_music[1]),
+                            url=var.current_music[2]
+                        )
+                    elif source == "url":
+                        reply = "[url] {title} (<a href=\"{url}\">{url}</a>)".format(
+                            title=var.current_music[2],
+                            url=var.current_music[1]
+                        )
+                    elif source == "file":
+                        reply = "[file] {title}".format(title=var.current_music[2])
                     else:
-                        self.send_msg_channel(var.current_music[2] + "<br />" + var.current_music[1])
+                        reply = "(?)[{}] {} {}".format(
+                            var.current_music[0],
+                            var.current_music[1],
+                            var.current_music[2],
+                        )
                 else:
-                    self.mumble.users[text.actor].send_message(self.config.get('strings', 'not_playing'))
+                    reply = var.config.get('strings', 'not_playing')
 
-            elif command == self.config.get('command', 'next'):
+                self.mumble.users[text.actor].send_message(reply)
+
+            elif command == var.config.get('command', 'next'):
                 if var.playlist:
-                    var.current_music = var.playlist[0]
+                    var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
                     var.playlist.pop(0)
                     self.launch_next()
                 else:
-                    self.mumble.users[text.actor].send_message(self.config.get('strings', 'empty_playlist'))
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'queue_empty'))
                     self.stop()
 
+            elif command == var.config.get('command', 'list'):
+                folder_path = var.config.get('bot', 'music_folder')
+
+                files = util.get_recursive_filelist_sorted(folder_path)
+                if files :
+                    self.mumble.users[text.actor].send_message('<br>'.join(files))
+                else :
+                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_file'))
+
+            elif command == var.config.get('command', 'queue'):
+                if len(var.playlist) == 0:
+                    msg = var.config.get('strings', 'queue_empty')
+                else:
+                    msg = var.config.get('strings', 'queue_contents') + '<br />'
+                    for (type, path) in var.playlist:
+                        msg += '({}) {}<br />'.format(type, path)
+
+                self.send_msg_channel(msg)
             else:
-                self.mumble.users[text.actor].send_message(self.config.get('strings', 'bad_command'))
+                self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command'))
+
+    def launch_play_file(self, path):
+        self.stop()
+        if var.config.getboolean('debug', 'ffmpeg'):
+            ffmpeg_debug = "debug"
+        else:
+            ffmpeg_debug = "warning"
+        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        self.playing = True
 
     def is_admin(self, user):
         username = self.mumble.users[user]['name']
-        list_admin = self.config.get('bot', 'admin').split(';')
+        list_admin = var.config.get('bot', 'admin').split(';')
         if username in list_admin:
             return True
         else:
@@ -203,7 +249,7 @@ class MumbleBot:
             var.current_music[1] = url
 
         elif var.current_music[0] == "file":
-            path = self.config.get('bot', 'music_folder') + var.current_music[1]
+            path = var.config.get('bot', 'music_folder') + var.current_music[1]
             title = var.current_music[1]
 
         elif var.current_music[0] == "radio":
@@ -214,19 +260,19 @@ class MumbleBot:
             path = url
             title = media.get_radio_server_description(url)
 
-        if self.config.getboolean('debug', 'ffmpeg'):
+        if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
         else:
             ffmpeg_debug = "warning"
 
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        command = ["/usr/bin/ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
-        var.current_music.append(title)
-        var.current_music.append(path)
+        var.current_music[2] = title
+        var.current_music[3] = path
 
     def download_music(self, url):
         url_hash = hashlib.md5(url.encode()).hexdigest()
-        path = self.config.get('bot', 'tmp_folder') + url_hash + ".mp3"
+        path = var.config.get('bot', 'tmp_folder') + url_hash + ".mp3"
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': path,
@@ -266,10 +312,10 @@ class MumbleBot:
 
             if self.thread is None or not raw_music:
                 if len(var.playlist) != 0:
-                    var.current_music = var.playlist[0]
+                    var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
                     var.playlist.pop(0)
                     self.launch_next()
-                elif len(var.playlist) == 0 and var.current_music:
+                else:
                     var.current_music = None
 
         while self.mumble.sound_output.get_buffer_size() > 0:
@@ -284,7 +330,7 @@ class MumbleBot:
             var.playlist = []
 
     def set_comment(self):
-        self.mumble.users.myself.comment(self.config.get('bot', 'comment'))
+        self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
 
     def send_msg_channel(self, msg, channel=None):
         if not channel:
@@ -292,9 +338,31 @@ class MumbleBot:
         channel.send_text_message(msg)
 
 
-def start_web_interface():
-    interface.web.run(port=8181, host="0.0.0.0")
+def start_web_interface(addr, port):
+    print('Starting web interface on {}:{}'.format(addr, port))
+    interface.web.run(port=port, host=addr)
 
 
 if __name__ == '__main__':
-    botamusique = MumbleBot()
+    parser = argparse.ArgumentParser(description='Bot for playing music on Mumble')
+
+    # General arguments
+    parser.add_argument("--config", dest='config', type=str, default='configuration.ini', help='Load configuration from this file. Default: configuration.ini')
+    parser.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Only Error logs")
+
+    # Mumble arguments
+    parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="The server's hostame of a mumble server")
+    parser.add_argument("-u", "--user", dest="user", type=str, required=True, help="Username you wish, Default=abot")
+    parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Password if server requires one")
+    parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the mumble server")
+    parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default chanel for the bot")
+
+    args = parser.parse_args()
+    config = configparser.ConfigParser(interpolation=None)
+    parsed_configs = config.read(args.config, encoding='latin-1')
+    if len(parsed_configs) == 0:
+        print('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)
+        sys.exit()
+
+    var.config = config
+    botamusique = MumbleBot(args)

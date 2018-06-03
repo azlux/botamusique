@@ -1,12 +1,15 @@
 #!/usr/bin/python3
 
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, send_file
 import variables as var
+import util
+from datetime import datetime
 import os.path
 from os import listdir
 import random
 from werkzeug.utils import secure_filename
-
+import errno
+import media
 
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the
@@ -58,62 +61,165 @@ def init_proxy():
 @web.route("/", methods=['GET', 'POST'])
 def index():
     folder_path = var.music_folder
-    files = {}
-    dirs = [f for f in listdir(folder_path) if os.path.isdir(os.path.join(folder_path, f))]
-    for director in dirs:
-        files[director] = [f for f in listdir(folder_path + director) if os.path.isfile(os.path.join(folder_path + director, f))]
+    files = util.get_recursive_filelist_sorted(var.music_folder)
+    music_library = util.Dir(folder_path)
+    for file in files:
+        music_library.add_file(file)
 
     if request.method == 'POST':
-        if 'add_music' in request.form and ".." not in request.form['add_music']:
-            var.playlist.append(['file', request.form['add_music']])
+        print(request.form)
+        if 'add_file' in request.form and ".." not in request.form['add_file']:
+            item = ('file', request.form['add_file'], datetime.now().timestamp())
+            var.playlist.append(item)
 
-        if 'add_url' in request.form :
+        elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']) :
+            try:
+                folder = request.form['add_folder']
+            except:
+                folder = request.form['add_folder_recursively']
+
+            if not folder.endswith('/'):
+                folder += '/'
+
+            print('folder:', folder)
+            if 'add_folder_recursively' in request.form:
+                files = music_library.get_files_recursively(folder)
+            else:
+                files = music_library.get_files(folder)
+            files = list(map(lambda file: ('file', os.path.join(folder, file), datetime.now().timestamp()), files))
+            print('Adding to playlist: ', files)
+            var.playlist.extend(files)
+
+        elif 'add_url' in request.form :
             var.playlist.append(['url', request.form['add_url']])
 
-        if 'add_radio' in request.form:
+        elif 'add_radio' in request.form:
             var.playlist.append(['radio', request.form['add_radio']])
 
-        if 'add_folder' in request.form and ".." not in request.form['add_folder']:
-            dir_files = [["file", request.form['add_folder'] + '/' + i] for i in files[request.form['add_folder']]]
-            var.playlist.extend(dir_files)
         elif 'delete_music' in request.form:
-            try:
-                var.playlist.remove(["file", request.form['delete_music']])
-            except ValueError:
-                pass
+            for item in var.playlist:
+                if str(item[2]) == request.form['delete_music']:
+                    var.playlist.remove(item)
+                    break
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
                 random.shuffle(var.playlist)
 
+    if var.current_music:
+        source = var.current_music[0]
+        # format for current_music below:
+        # (sourcetype, title, url or None)
+        if source == "radio":
+            current_music = (
+                "[radio]",
+                media.get_radio_title(var.current_music[1]),
+                var.current_music[2]
+            )
+        elif source == "url":
+            current_music = (
+                "[url]",
+                var.current_music[2],
+                var.current_music[1]
+            )
+        elif source == "file":
+            current_music = (
+                "[file]",
+                var.current_music[2],
+                None
+            )
+        else:
+            current_music = (
+                "(??)[" + var.current_music[0] + "]",
+                var.current_music[1],
+                var.current_music[2],
+            )
+    else:
+        current_music = None
+
     return render_template('index.html',
-                           current_music=var.current_music,
-                           user=var.user,
-                           playlist=var.playlist,
-                           all_files=files)
+                            all_files=files,
+                            current_music=current_music,
+                            music_library=music_library,
+                            os=os,
+                            playlist=var.playlist,
+                            user=var.user)
 
 
-@web.route('/download', methods=["POST"])
-def download():
-    print(request.form)
-
-    file = request.files['music_file']
+@web.route('/upload', methods=["POST"])
+def upload():
+    file = request.files['file']
     if not file:
         return redirect("./", code=406)
-    elif file.filename == '':
-        return redirect("./", code=406)
-    elif '..' in request.form['directory']:
+
+    filename = secure_filename(file.filename).strip()
+    if filename == '':
         return redirect("./", code=406)
 
-    if file.name == "music_file" and "audio" in file.headers.to_list()[1][1]:
-        web.config['UPLOAD_FOLDER'] = var.music_folder + request.form['directory']
-        filename = secure_filename(file.filename)
-        print(filename)
-        file.save(os.path.join(web.config['UPLOAD_FOLDER'], filename))
+    targetdir = request.form['targetdir'].strip()
+    if targetdir == '':
+        targetdir = 'uploads/'
+    elif '../' in targetdir:
+        return redirect("./", code=406)
+
+    #print('Uploading file:')
+    #print('filename:', filename)
+    #print('targetdir:', targetdir)
+    #print('mimetype:', file.mimetype)
+
+    if "audio" in file.mimetype:
+        storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
+        if not storagepath.startswith(var.music_folder):
+            return redirect("./", code=406)
+
+        try:
+            os.makedirs(storagepath)
+        except OSError as ee:
+            if ee.errno != errno.EEXIST:
+                return redirect("./", code=500)
+
+        filepath = os.path.join(storagepath, filename)
+        if os.path.exists(filepath):
+            return redirect("./", code=406)
+
+        file.save(filepath)
         return redirect("./", code=302)
     else:
         return redirect("./", code=409)
 
+@web.route('/download', methods=["GET"])
+def download():
+    if 'file' in request.args:
+        requested_file = request.args['file']
+        if '../' not in requested_file:
+            folder_path = var.music_folder
+            files = util.get_recursive_filelist_sorted(var.music_folder)
+
+            if requested_file in files:
+                filepath = os.path.join(folder_path, requested_file)
+                try:
+                    return send_file(filepath, as_attachment=True)
+                except Exception as e:
+                    self.log.exception(e)
+                    self.Error(400)
+    elif 'directory' in request.args:
+        requested_dir = request.args['directory']
+        folder_path = var.music_folder
+        requested_dir_fullpath = os.path.abspath(os.path.join(folder_path, requested_dir)) + '/'
+        if requested_dir_fullpath.startswith(folder_path):
+            if os.path.samefile(requested_dir_fullpath, folder_path):
+                prefix = 'all'
+            else:
+                prefix = secure_filename(os.path.relpath(requested_dir_fullpath, folder_path))
+            zipfile = util.zipdir(requested_dir_fullpath, prefix)
+            try:
+                return send_file(zipfile, as_attachment=True)
+            except Exception as e:
+                self.log.exception(e)
+                self.Error(400)
+
+    return redirect("./", code=400)
+
 
 if __name__ == '__main__':
-    web.run(port=8181, host="0.0.0.0")
+    web.run(port=8181, host="127.0.0.1")
