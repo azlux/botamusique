@@ -3,3 +3,4 @@ protobuf==3.4.0
 flask
 youtube-dl
 python-magic
+Pillow
