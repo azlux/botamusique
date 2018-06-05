@@ -36,6 +36,14 @@ chmod +x ./mumbleBot.py
 
 The bot listen to the 8181 port so you should redirect to this one in you NAT configuration to let others peoples access the web interface. (DISABLED)
 
+#### Custom commands
+You can copy the file `configuration.default.ini` to `configuration.ini` and customize all variable.
+you have the section :
+- bot : basic configuration of the bot : comment, folder, volume at start ....
+- command : you can customize the command you want for each action (if you put `help = helpme` , the bot will response to `!helpme` )
+- readio : here you can have a list of default radio ( I can play a jazz radio with the command `!radio jazz`)
+- strings : you can customize all string the bot can say.
+
 
 2.TODO list
 

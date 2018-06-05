@@ -374,7 +374,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     config = configparser.ConfigParser(interpolation=None)
-    parsed_configs = config.read(args.config, encoding='latin-1')
+    parsed_configs = config.read(['configuration.default.ini', args.config], encoding='latin-1')
+
     if len(parsed_configs) == 0:
         print('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)
         sys.exit()
