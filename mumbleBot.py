@@ -279,7 +279,7 @@ class MumbleBot:
         else:
             ffmpeg_debug = "warning"
 
-        command = ["/usr/bin/env ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        command = ["/usr/bin/ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         var.current_music[2] = title
         var.current_music[3] = path
