@@ -6,6 +6,7 @@ import os
 import variables as var
 import zipfile
 
+
 def get_recursive_filelist_sorted(path):
     filelist = []
     for root, dirs, files in os.walk(path):
@@ -19,12 +20,17 @@ def get_recursive_filelist_sorted(path):
                 continue
 
             fullpath = os.path.join(path, relroot, file)
+            if not os.access(fullpath, os.R_OK):
+                print("coucou")
+                continue
+
             mime = magic.from_file(fullpath, mime=True)
             if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
                 filelist.append(relroot + file)
 
     filelist.sort()
     return filelist
+
 
 # - zips all files of the given zippath (must be a directory)
 # - returns the absolute path of the created zip file
@@ -55,6 +61,7 @@ def zipdir(zippath, zipname_prefix=None):
 
     zipf.close()
     return zipname
+
 
 class Dir(object):
     def __init__(self, path):
@@ -103,7 +110,7 @@ class Dir(object):
             subdirs = list(self.subdirs.keys())
 
             for key, val in self.subdirs.items():
-                subdirs.extend(map(lambda subdir: key + '/' + subdir,val.get_subdirs_recursively()))
+                subdirs.extend(map(lambda subdir: key + '/' + subdir, val.get_subdirs_recursively()))
 
         subdirs.sort()
         return subdirs
@@ -131,13 +138,13 @@ class Dir(object):
             files = self.files
 
             for key, val in self.subdirs.items():
-                files.extend(map(lambda file: key + '/' + file,val.get_files_recursively()))
+                files.extend(map(lambda file: key + '/' + file, val.get_files_recursively()))
 
         return files
 
     def render_text(self, ident=0):
         print('{}{}/'.format(' ' * (ident * 4), self.name))
         for key, val in self.subdirs.items():
-            val.render_text(ident+1)
+            val.render_text(ident + 1)
         for file in self.files:
             print('{}{}'.format(' ' * ((ident + 1)) * 4, file))
