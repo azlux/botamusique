@@ -207,10 +207,10 @@ class MumbleBot:
                 folder_path = var.config.get('bot', 'music_folder')
 
                 files = util.get_recursive_filelist_sorted(folder_path)
-                if files :
+                if files:
                     self.mumble.users[text.actor].send_message('<br>'.join(files))
-                else :
-                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_file'))
+                else:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_file'))
 
             elif command == var.config.get('command', 'queue'):
                 if len(var.playlist) == 0:
@@ -252,12 +252,15 @@ class MumbleBot:
             path, title = self.download_music(url)
             var.current_music[1] = url
 
-            im = Image.open(var.config.get('bot', 'tmp_folder') + hashlib.md5(url.encode()).hexdigest() + '.jpg')
-            im.thumbnail((100, 100), Image.ANTIALIAS)
-            buffer = BytesIO()
-            im.save(buffer, format="JPEG")
-            thumbnail_base64 = base64.b64encode(buffer.getvalue())
-            thumbnail_html = '<img - src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
+            path_thumbnail = var.config.get('bot', 'tmp_folder') + hashlib.md5(url.encode()).hexdigest() + '.jpg'
+            thumbnail_html = ""
+            if os.path.isfile(path_thumbnail):
+                im = Image.open(path_thumbnail)
+                im.thumbnail((100, 100), Image.ANTIALIAS)
+                buffer = BytesIO()
+                im.save(buffer, format="JPEG")
+                thumbnail_base64 = base64.b64encode(buffer.getvalue())
+                thumbnail_html = '<img - src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
 
             logging.debug(thumbnail_html)
             self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
