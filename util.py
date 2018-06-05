@@ -21,7 +21,6 @@ def get_recursive_filelist_sorted(path):
 
             fullpath = os.path.join(path, relroot, file)
             if not os.access(fullpath, os.R_OK):
-                print("coucou")
                 continue
 
             mime = magic.from_file(fullpath, mime=True)
@@ -54,8 +53,12 @@ def zipdir(zippath, zipname_prefix=None):
     zipf = zipfile.ZipFile(zipname, 'w', zipfile.ZIP_DEFLATED)
 
     for file in files:
-        filepath = os.path.dirname(file)
         file_to_add = os.path.join(zippath, file)
+        if not os.access(file_to_add, os.R_OK):
+            continue
+        if file in var.config.get('bot', 'ignored_files'):
+            continue
+
         add_file_as = os.path.relpath(os.path.join(zippath, file), os.path.join(zippath, '..'))
         zipf.write(file_to_add, add_file_as)
 

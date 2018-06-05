@@ -11,6 +11,7 @@ from werkzeug.utils import secure_filename
 import errno
 import media
 
+
 class ReverseProxied(object):
     '''Wrap the application in this middleware and configure the
     front-end server to add these headers, to let you quietly bind
@@ -72,7 +73,7 @@ def index():
             item = ('file', request.form['add_file'], datetime.now().timestamp())
             var.playlist.append(item)
 
-        elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']) :
+        elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
                 folder = request.form['add_folder']
             except:
@@ -90,7 +91,7 @@ def index():
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
 
-        elif 'add_url' in request.form :
+        elif 'add_url' in request.form:
             var.playlist.append(['url', request.form['add_url']])
 
         elif 'add_radio' in request.form:
@@ -138,12 +139,12 @@ def index():
         current_music = None
 
     return render_template('index.html',
-                            all_files=files,
-                            current_music=current_music,
-                            music_library=music_library,
-                            os=os,
-                            playlist=var.playlist,
-                            user=var.user)
+                           all_files=files,
+                           current_music=current_music,
+                           music_library=music_library,
+                           os=os,
+                           playlist=var.playlist,
+                           user=var.user)
 
 
 @web.route('/upload', methods=["POST"])
@@ -162,10 +163,10 @@ def upload():
     elif '../' in targetdir:
         return redirect("./", code=406)
 
-    #print('Uploading file:')
-    #print('filename:', filename)
-    #print('targetdir:', targetdir)
-    #print('mimetype:', file.mimetype)
+    # print('Uploading file:')
+    # print('filename:', filename)
+    # print('targetdir:', targetdir)
+    # print('mimetype:', file.mimetype)
 
     if "audio" in file.mimetype:
         storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
@@ -186,6 +187,7 @@ def upload():
         return redirect("./", code=302)
     else:
         return redirect("./", code=409)
+
 
 @web.route('/download', methods=["GET"])
 def download():
