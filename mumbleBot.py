@@ -249,6 +249,7 @@ class MumbleBot:
             url = media.get_url(var.current_music[1])
             if not url:
                 return
+            media.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
             path, title = self.download_music(url)
             var.current_music[1] = url
 
@@ -295,6 +296,7 @@ class MumbleBot:
             'outtmpl': path,
             'noplaylist': True,
             'writethumbnail': True,
+            'updatetime': False,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
