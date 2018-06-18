@@ -1,4 +1,4 @@
-current_music = ("", "")
+current_music = None
 playlist = []
 user = ""
 music_folder = ""

@@ -69,7 +69,7 @@ def index():
     if request.method == 'POST':
         print(request.form)
         if 'add_file' in request.form and ".." not in request.form['add_file']:
-            item = ('file', request.form['add_file'], datetime.now().timestamp())
+            item = ('file', request.form['add_file'], 'Web')
             var.playlist.append(item)
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
@@ -86,15 +86,15 @@ def index():
                 files = music_library.get_files_recursively(folder)
             else:
                 files = music_library.get_files(folder)
-            files = list(map(lambda file: ('file', os.path.join(folder, file), datetime.now().timestamp()), files))
+            files = list(map(lambda file: ('file', os.path.join(folder, file), 'Web'), files))
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
 
         elif 'add_url' in request.form:
-            var.playlist.append(['url', request.form['add_url']])
+            var.playlist.append(['url', request.form['add_url'], "Web"])
 
         elif 'add_radio' in request.form:
-            var.playlist.append(['radio', request.form['add_radio']])
+            var.playlist.append(['radio', request.form['add_radio'], "Web"])
 
         elif 'delete_music' in request.form:
             for item in var.playlist:
@@ -107,32 +107,32 @@ def index():
                 random.shuffle(var.playlist)
 
     if var.current_music:
-        source = var.current_music[0]
+        source = var.current_music['type']
         # format for current_music below:
         # (sourcetype, title, url or None)
         if source == "radio":
             current_music = (
                 "[radio]",
-                media.get_radio_title(var.current_music[1]),
-                var.current_music[2]
+                media.get_radio_title(var.current_music['path']),
+                var.current_music['title']
             )
         elif source == "url":
             current_music = (
                 "[url]",
-                var.current_music[2],
-                var.current_music[1]
+                var.current_music['title'],
+                var.current_music['path']
             )
         elif source == "file":
             current_music = (
                 "[file]",
-                var.current_music[2],
+                var.current_music['title'],
                 None
             )
         else:
             current_music = (
-                "(??)[" + var.current_music[0] + "]",
-                var.current_music[1],
-                var.current_music[2],
+                "(??)[" + var.current_music['type'] + "]",
+                var.current_music['path'],
+                var.current_music['title'],
             )
     else:
         current_music = None

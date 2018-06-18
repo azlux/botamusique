@@ -28,7 +28,7 @@ class MumbleBot:
 
         self.volume = var.config.getfloat('bot', 'volume')
         self.channel = args.channel
-        var.current_music = None
+        var.current_music = {}
 
         FORMAT = '%(asctime)s: %(message)s'
         if args.quiet:
@@ -38,18 +38,20 @@ class MumbleBot:
 
         ######
         ## Format of the Playlist :
-        ## [("<type>","<path>")]
-        ## [("<radio>","<luna>"), ("<youtube>","<url>")]
+        ## [("<type>","<path/url>")]
         ## types : file, radio, url
         ######
 
         ######
         ## Format of the current_music variable
+        # var.current_music = { "type" : str,
+        #                        "path" : str,
+        #                        "title" : str,
+        #                        "user" : str }
         # len(var.current_music) = 4
-        # var.current_music[0] = <Type>
-        # var.current_music[1] = <url> if url of radio
-        # var.current_music[2] = <title>
-        # var.current_music[3] = <path> if url or file
+        # var.current_music["type"] = <Type>
+        # var.current_music["path"] = <url> if youtube/radio, <path> if file
+        # var.current_music["title"] = <title>
 
         var.playlist = []
 
@@ -113,6 +115,7 @@ class MumbleBot:
 
     def message_received(self, text):
         message = text.message.strip()
+        user = self.mumble.users[text.actor]['name']
         if message[0] == '!':
             message = message[1:].split(' ', 1)
             if len(message) > 0:
@@ -123,7 +126,7 @@ class MumbleBot:
             else:
                 return
 
-            logging.info(command + ' - ' + parameter + ' by ' + self.mumble.users[text.actor]['name'])
+            logging.info(command + ' - ' + parameter + ' by ' + user)
 
             if command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
@@ -132,14 +135,14 @@ class MumbleBot:
                 if path.startswith(music_folder):
                     if os.path.isfile(path):
                         filename = path.replace(music_folder, '')
-                        var.playlist.append(["file", filename])
+                        var.playlist.append(["file", filename, user])
                     else:
                         # try to do a partial match
                         matches = [file for file in util.get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
                         if len(matches) == 0:
                             self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_file'))
                         elif len(matches) == 1:
-                            var.playlist.append(["file", matches[0]])
+                            var.playlist.append(["file", matches[0], user])
                         else:
                             msg = var.config.get('strings', 'multiple_matches') + '<br />'
                             msg += '<br />'.join(matches)
@@ -148,12 +151,12 @@ class MumbleBot:
                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_file'))
 
             elif command == var.config.get('command', 'play_url') and parameter:
-                var.playlist.append(["url", parameter])
+                var.playlist.append(["url", parameter, user])
 
             elif command == var.config.get('command', 'play_radio') and parameter:
                 if var.config.has_option('radio', parameter):
                     parameter = var.config.get('radio', parameter)
-                var.playlist.append(["radio", parameter])
+                var.playlist.append(["radio", parameter, user])
 
             elif command == var.config.get('command', 'help'):
                 self.send_msg_channel(var.config.get('strings', 'help'))
@@ -186,24 +189,29 @@ class MumbleBot:
 
             elif command == var.config.get('command', 'current_music'):
                 if var.current_music:
-                    source = var.current_music[0]
+                    source = var.current_music["type"]
                     if source == "radio":
-                        reply = "[radio] {title} sur {url}".format(
-                            title=media.get_radio_title(var.current_music[1]),
-                            url=var.current_music[2]
+                        reply = "[radio] {title} on {url} by {user}".format(
+                            title=media.get_radio_title(var.current_music["path"]),
+                            url=var.current_music["title"],
+                            user=var.current_music["user"]
                         )
                     elif source == "url":
-                        reply = "[url] {title} (<a href=\"{url}\">{url}</a>)".format(
-                            title=var.current_music[2],
-                            url=var.current_music[1]
+                        reply = "[url] {title} (<a href=\"{url}\">{url}</a>) by {user}".format(
+                            title=var.current_music["title"],
+                            url=var.current_music["path"],
+                            user=var.current_music["user"]
                         )
                     elif source == "file":
-                        reply = "[file] {title}".format(title=var.current_music[2])
+                        reply = "[file] {title} by {user}".format(
+                            title=var.current_music["title"],
+                            user=var.current_music["user"])
                     else:
-                        reply = "(?)[{}] {} {}".format(
-                            var.current_music[0],
-                            var.current_music[1],
-                            var.current_music[2],
+                        reply = "(?)[{}] {} {} by {}".format(
+                            var.current_music["type"],
+                            var.current_music["path"],
+                            var.current_music["title"],
+                            var.current_music["user"]
                         )
                 else:
                     reply = var.config.get('strings', 'not_playing')
@@ -212,7 +220,10 @@ class MumbleBot:
 
             elif command == var.config.get('command', 'next'):
                 if var.playlist:
-                    var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
+                    var.current_music = {'type': var.playlist[0][0],
+                                         'path': var.playlist[0][1],
+                                         'title': None,
+                                         'user': var.playlist[0][2]}
                     var.playlist.pop(0)
                     self.launch_next()
                 else:
@@ -237,6 +248,10 @@ class MumbleBot:
                         msg += '({}) {}<br />'.format(type, path)
 
                 self.send_msg_channel(msg)
+
+            elif command == var.config.get('command', 'repeat'):
+                var.playlist.append([var.current_music["type"], var.current_music["path"], var.current_music["user"]])
+
             else:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command'))
 
@@ -261,13 +276,13 @@ class MumbleBot:
     def launch_next(self):
         path = ""
         title = ""
-        if var.current_music[0] == "url":
-            url = media.get_url(var.current_music[1])
+        if var.current_music["type"] == "url":
+            url = media.get_url(var.current_music["path"])
             if not url:
                 return
             media.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
             path, title = self.download_music(url)
-            var.current_music[1] = url
+            var.current_music["path"] = url
 
             path_thumbnail = var.config.get('bot', 'tmp_folder') + hashlib.md5(url.encode()).hexdigest() + '.jpg'
             thumbnail_html = ""
@@ -282,15 +297,15 @@ class MumbleBot:
             logging.debug(thumbnail_html)
             self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
 
-        elif var.current_music[0] == "file":
-            path = var.config.get('bot', 'music_folder') + var.current_music[1]
-            title = var.current_music[1]
+        elif var.current_music["type"] == "file":
+            path = var.config.get('bot', 'music_folder') + var.current_music["path"]
+            title = var.current_music["path"]
 
-        elif var.current_music[0] == "radio":
-            url = media.get_url(var.current_music[1])
+        elif var.current_music["type"] == "radio":
+            url = media.get_url(var.current_music["path"])
             if not url:
                 return
-            var.current_music[1] = url
+            var.current_music["path"] = url
             path = url
             title = media.get_radio_server_description(url)
 
@@ -301,8 +316,7 @@ class MumbleBot:
 
         command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
-        var.current_music[2] = title
-        var.current_music[3] = path
+        var.current_music["title"] = title
 
     def download_music(self, url):
         url_hash = hashlib.md5(url.encode()).hexdigest()
@@ -348,7 +362,7 @@ class MumbleBot:
 
             if self.thread is None or not raw_music:
                 if len(var.playlist) != 0:
-                    var.current_music = [var.playlist[0][0], var.playlist[0][1], None, None]
+                    var.current_music = {'type': var.playlist[0][0], 'path': var.playlist[0][1], 'user': var.playlist[0][2]}
                     var.playlist.pop(0)
                     self.launch_next()
                 else:
