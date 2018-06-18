@@ -62,6 +62,7 @@ class MumbleBot:
         self.exit = False
         self.nb_exit = 0
         self.thread = None
+        self.playing = False
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
