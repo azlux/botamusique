@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-from __future__ import unicode_literals
 
-import re
 import threading
 import time
 import sys
@@ -11,7 +9,6 @@ import audioop
 import subprocess as sp
 import argparse
 import os.path
-from os import listdir
 import pymumble.pymumble_py3 as pymumble
 import interface
 import variables as var
