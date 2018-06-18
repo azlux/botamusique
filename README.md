@@ -22,9 +22,8 @@ The main folder needs to be declared in the config (with a '/' at the end)
 
 Example installation commands for Debian and Ubuntu:
 ```
-# apt install python3-pip python3-venv
+# apt install python3-venv
 # apt install ffmpeg
-# apt install youtube-dl
 $ git clone --recurse-submodules https://github.com/azlux/botamusique.git
 $ cd botamusique
 $ python -m venv venv
