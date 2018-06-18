@@ -87,7 +87,7 @@ class MumbleBot:
         self.loop()
 
     def ctrl_caught(self, signal, frame):
-        logging.info("\ndeconnection asked")
+        logging.info("\nSIGINT caught, quitting")
         self.exit = True
         self.stop()
         if self.nb_exit > 1:
@@ -371,11 +371,11 @@ if __name__ == '__main__':
     parser.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Only Error logs")
 
     # Mumble arguments
-    parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="The server's hostame of a mumble server")
-    parser.add_argument("-u", "--user", dest="user", type=str, required=True, help="Username you wish, Default=abot")
-    parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Password if server requires one")
-    parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the mumble server")
-    parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default chanel for the bot")
+    parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="Hostname of the Mumble server")
+    parser.add_argument("-u", "--user", dest="user", type=str, required=True, help="Username for the bot, Default=abot")
+    parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Server password, if required")
+    parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the Mumble server")
+    parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default channel for the bot")
 
     args = parser.parse_args()
     config = configparser.ConfigParser(interpolation=None)
