@@ -26,7 +26,7 @@ Example installation commands for Debian and Ubuntu:
 # apt install ffmpeg
 $ git clone --recurse-submodules https://github.com/azlux/botamusique.git
 $ cd botamusique
-$ python -m venv venv
+$ python3 -m venv venv
 $ venv/bin/pip install -r requirements.txt
 ```
 
