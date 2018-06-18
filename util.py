@@ -150,4 +150,4 @@ class Dir(object):
         for key, val in self.subdirs.items():
             val.render_text(ident + 1)
         for file in self.files:
-            print('{}{}'.format(' ' * ((ident + 1)) * 4, file))
+            print('{}{}'.format(' ' * (ident + 1) * 4, file))

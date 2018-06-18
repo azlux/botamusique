@@ -5,7 +5,6 @@ import variables as var
 import util
 from datetime import datetime
 import os.path
-from os import listdir
 import random
 from werkzeug.utils import secure_filename
 import errno

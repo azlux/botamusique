@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-from __future__ import unicode_literals
 
-import re
 import threading
 import time
 import sys
@@ -11,7 +9,6 @@ import audioop
 import subprocess as sp
 import argparse
 import os.path
-from os import listdir
 import pymumble.pymumble_py3 as pymumble
 import interface
 import variables as var
@@ -62,6 +59,7 @@ class MumbleBot:
         self.exit = False
         self.nb_exit = 0
         self.thread = None
+        self.playing = False
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -105,7 +103,7 @@ class MumbleBot:
         self.loop()
 
     def ctrl_caught(self, signal, frame):
-        logging.info("\ndeconnection asked")
+        logging.info("\nSIGINT caught, quitting")
         self.exit = True
         self.stop()
         if self.nb_exit > 1:
@@ -389,11 +387,11 @@ if __name__ == '__main__':
     parser.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Only Error logs")
 
     # Mumble arguments
-    parser.add_argument("-s", "--server", dest="host", type=str, help="The server's hostame of a mumble server")
-    parser.add_argument("-u", "--user", dest="user", type=str, help="Username you wish, Default=abot")
-    parser.add_argument("-P", "--password", dest="password", type=str, help="Password if server requires one")
-    parser.add_argument("-p", "--port", dest="port", type=int, help="Port for the mumble server")
-    parser.add_argument("-c", "--channel", dest="channel", type=str, help="Default chanel for the bot")
+    parser.add_argument("-s", "--server", dest="host", type=str, help="Hostname of the Mumble server")
+    parser.add_argument("-u", "--user", dest="user", type=str, help="Username for the bot")
+    parser.add_argument("-P", "--password", dest="password", type=str, help="Server password, if required")
+    parser.add_argument("-p", "--port", dest="port", type=int, help="Port for the Mumble server")
+    parser.add_argument("-c", "--channel", dest="channel", type=str, help="Default channel for the bot")
 
     args = parser.parse_args()
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
