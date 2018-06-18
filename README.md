@@ -20,19 +20,19 @@ The main folder needs to be declared in the config (with a '/' at the end)
 1. You need python 3 with opuslib and protobuf (look at the requirement of pymumble)
 2. The Bot uses ffmpeg, so you know what you have to do if ffmpeg isn't in your package manager. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
-commands (don't forget the sudo mode):
+Example installation commands for Debian and Ubuntu:
 ```
-apt install python3-pip
-apt install ffmpeg
-apt install youtube-dl
-git clone --recurse-submodules https://github.com/azlux/botamusique.git
-cd ./botamusique
-pip3 install -r requirements.txt
-chmod +x ./mumbleBot.py
+# apt install python3-pip python3-venv
+# apt install ffmpeg
+# apt install youtube-dl
+$ git clone --recurse-submodules https://github.com/azlux/botamusique.git
+$ cd botamusique
+$ python -m venv venv
+$ venv/bin/pip install -r requirements.txt
 ```
 
 #### Starting the bot
-`./mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL`
+`$ venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL`
 
 The bot listen to the 8181 port so you should redirect to this one in you NAT configuration to let others peoples access the web interface. (DISABLED)
 
