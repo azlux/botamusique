@@ -27,6 +27,7 @@ Example installation commands for Debian and Ubuntu:
 $ git clone --recurse-submodules https://github.com/azlux/botamusique.git
 $ cd botamusique
 $ python3 -m venv venv
+$ venv/bin/pip install wheel
 $ venv/bin/pip install -r requirements.txt
 ```
 
