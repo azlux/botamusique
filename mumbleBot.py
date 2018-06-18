@@ -69,7 +69,25 @@ class MumbleBot:
             tt.daemon = True
             tt.start()
 
-        self.mumble = pymumble.Mumble(args.host, user=args.user, port=args.port, password=args.password,
+        if args.host:
+            host = args.host
+        else:
+            host = var.config.get("server", "host")
+        if args.port:
+            port = args.port
+        else:
+            port = var.config.getint("server", "port")
+        if args.password:
+            password = args.password
+        else:
+            password = var.config.get("server", "password")
+
+        if args.user:
+            user = args.user
+        else:
+            user = var.config.get("bot", "user")
+
+        self.mumble = pymumble.Mumble(host, user=user, port=port, password=password,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'))
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
@@ -369,14 +387,14 @@ if __name__ == '__main__':
     parser.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Only Error logs")
 
     # Mumble arguments
-    parser.add_argument("-s", "--server", dest="host", type=str, required=True, help="Hostname of the Mumble server")
-    parser.add_argument("-u", "--user", dest="user", type=str, required=True, help="Username for the bot, Default=abot")
-    parser.add_argument("-P", "--password", dest="password", type=str, default="", help="Server password, if required")
-    parser.add_argument("-p", "--port", dest="port", type=int, default=64738, help="Port for the Mumble server")
-    parser.add_argument("-c", "--channel", dest="channel", type=str, default="", help="Default channel for the bot")
+    parser.add_argument("-s", "--server", dest="host", type=str, help="Hostname of the Mumble server")
+    parser.add_argument("-u", "--user", dest="user", type=str, help="Username for the bot")
+    parser.add_argument("-P", "--password", dest="password", type=str, help="Server password, if required")
+    parser.add_argument("-p", "--port", dest="port", type=int, help="Port for the Mumble server")
+    parser.add_argument("-c", "--channel", dest="channel", type=str, help="Default channel for the bot")
 
     args = parser.parse_args()
-    config = configparser.ConfigParser(interpolation=None)
+    config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
     parsed_configs = config.read(['configuration.default.ini', args.config], encoding='latin-1')
 
     if len(parsed_configs) == 0:
