@@ -325,7 +325,7 @@ class MumbleBot:
         mp3 = path.replace(".%(ext)s", ".mp3")
         if os.path.isfile(mp3):
             audio = EasyID3(mp3)
-            video_title = audio["title"]
+            video_title = audio["title"][0]
         else:
             ydl_opts = {
                 'format': 'bestaudio/best',
