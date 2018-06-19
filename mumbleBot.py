@@ -295,7 +295,8 @@ class MumbleBot:
                 thumbnail_html = '<img - src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
 
             logging.debug(thumbnail_html)
-            self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
+            if var.config.getboolean('bot', 'announce_current_music'):
+                self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
 
         elif var.current_music["type"] == "file":
             path = var.config.get('bot', 'music_folder') + var.current_music["path"]
