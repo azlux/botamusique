@@ -184,6 +184,7 @@ class MumbleBot:
                     self.volume = float(float(parameter) / 100)
                     self.send_msg_channel(var.config.get('strings', 'change_volume') % (
                         int(self.volume * 100), self.mumble.users[text.actor]['name']))
+                    var.config.set('bot', 'volume', self.volume)
                 else:
                     self.send_msg_channel(var.config.get('strings', 'current_volume') % int(self.volume * 100))
 
@@ -372,6 +373,9 @@ class MumbleBot:
             time.sleep(0.01)
         time.sleep(0.5)
 
+        if self.exit:
+            util.write_config()
+
     def stop(self):
         if self.thread:
             var.current_music = None
@@ -408,8 +412,9 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--channel", dest="channel", type=str, help="Default channel for the bot")
 
     args = parser.parse_args()
+    var.configfile = args.config
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
-    parsed_configs = config.read(['configuration.default.ini', args.config], encoding='latin-1')
+    parsed_configs = config.read(['configuration.default.ini', var.configfile], encoding='latin-1')
 
     if len(parsed_configs) == 0:
         print('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)

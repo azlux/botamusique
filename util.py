@@ -66,6 +66,11 @@ def zipdir(zippath, zipname_prefix=None):
     return zipname
 
 
+def write_config():
+    with open(var.configfile, 'w') as f:
+        var.config.write(f)
+
+
 class Dir(object):
     def __init__(self, path):
         self.name = os.path.basename(path.strip('/'))
