@@ -320,7 +320,7 @@ class MumbleBot:
 
     def download_music(self, url):
         url_hash = hashlib.md5(url.encode()).hexdigest()
-        path = var.config.get('bot', 'tmp_folder') + url_hash + ".mp3"
+        path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': path,
@@ -343,7 +343,7 @@ class MumbleBot:
                     pass
                 else:
                     break
-        return path, video_title
+        return path.replace(".%(ext)s", ".mp3"), video_title
 
     def loop(self):
         raw_music = ""
