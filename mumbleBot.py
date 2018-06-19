@@ -184,7 +184,7 @@ class MumbleBot:
                     self.volume = float(float(parameter) / 100)
                     self.send_msg_channel(var.config.get('strings', 'change_volume') % (
                         int(self.volume * 100), self.mumble.users[text.actor]['name']))
-                    var.config.set('bot', 'volume', self.volume)
+                    var.config.set('bot', 'volume', str(self.volume))
                 else:
                     self.send_msg_channel(var.config.get('strings', 'current_volume') % int(self.volume * 100))
 
