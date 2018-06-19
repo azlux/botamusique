@@ -85,11 +85,11 @@ class MumbleBot:
             password = var.config.get("server", "password")
 
         if args.user:
-            user = args.user
+            username = args.user
         else:
-            user = var.config.get("bot", "user")
+            username = var.config.get("bot", "username")
 
-        self.mumble = pymumble.Mumble(host, user=user, port=port, password=password,
+        self.mumble = pymumble.Mumble(host, user=username, port=port, password=password,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'))
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
