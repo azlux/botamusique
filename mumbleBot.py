@@ -330,8 +330,8 @@ class MumbleBot:
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }]
+                'preferredquality': '192'},
+                {'key': 'FFmpegMetadata'}]
         }
         video_title = ""
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
