@@ -20,6 +20,7 @@ import util
 import base64
 from PIL import Image
 from io import BytesIO
+from mutagen.easyid3 import EasyID3
 
 
 class MumbleBot:
@@ -322,30 +323,35 @@ class MumbleBot:
 
     def download_music(self, url):
         url_hash = hashlib.md5(url.encode()).hexdigest()
-        path = var.config.get('bot', 'tmp_folder') + url_hash + ".mp3"
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': path,
-            'noplaylist': True,
-            'writethumbnail': True,
-            'updatetime': False,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }]
-        }
-        video_title = ""
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            for i in range(2):
-                try:
-                    info_dict = ydl.extract_info(url)
-                    video_title = info_dict['title']
-                except youtube_dl.utils.DownloadError:
-                    pass
-                else:
-                    break
-        return path, video_title
+        path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
+        mp3 = path.replace(".%(ext)s", ".mp3")
+        if os.path.isfile(mp3):
+            audio = EasyID3(mp3)
+            video_title = audio["title"][0]
+        else:
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': path,
+                'noplaylist': True,
+                'writethumbnail': True,
+                'updatetime': False,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192'},
+                    {'key': 'FFmpegMetadata'}]
+            }
+            video_title = ""
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                for i in range(2):
+                    try:
+                        info_dict = ydl.extract_info(url)
+                        video_title = info_dict['title']
+                    except youtube_dl.utils.DownloadError:
+                        pass
+                    else:
+                        break
+        return mp3, video_title
 
     def loop(self):
         raw_music = ""
