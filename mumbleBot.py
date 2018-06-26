@@ -129,7 +129,13 @@ class MumbleBot:
 
             logging.info(command + ' - ' + parameter + ' by ' + user)
 
-            if command == var.config.get('command', 'play_file') and parameter:
+            if command == var.config.get('command', 'joinme'):
+                self.mumble.users.myself.move_in(self.mumble.users[text.actor]['channel_id'])
+
+            elif not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
+                self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_in_my_channel'))
+
+            elif command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
                 # sanitize "../" and so on
                 path = os.path.abspath(os.path.join(music_folder, parameter))
@@ -166,7 +172,7 @@ class MumbleBot:
                 self.stop()
 
             elif command == var.config.get('command', 'kill'):
-                if self.is_admin(text.actor):
+                if self.is_admin(user):
                     self.stop()
                     self.exit = True
                 else:
@@ -176,9 +182,6 @@ class MumbleBot:
                 self.stop()
                 if self.channel:
                     self.mumble.channels.find_by_name(self.channel).move_in()
-
-            elif command == var.config.get('command', 'joinme'):
-                self.mumble.users.myself.move_in(self.mumble.users[text.actor]['channel_id'])
 
             elif command == var.config.get('command', 'volume'):
                 if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
@@ -246,8 +249,8 @@ class MumbleBot:
                     msg = var.config.get('strings', 'queue_empty')
                 else:
                     msg = var.config.get('strings', 'queue_contents') + '<br />'
-                    for (type, path) in var.playlist:
-                        msg += '({}) {}<br />'.format(type, path)
+                    for (music_type, path) in var.playlist:
+                        msg += '({}) {}<br />'.format(music_type, path)
 
                 self.send_msg_channel(msg)
 
@@ -268,9 +271,9 @@ class MumbleBot:
         self.playing = True
 
     def is_admin(self, user):
-        username = self.mumble.users[user]['name']
         list_admin = var.config.get('bot', 'admin').split(';')
-        if username in list_admin:
+        print(list_admin)
+        if user in list_admin:
             return True
         else:
             return False
