@@ -131,11 +131,17 @@ class MumbleBot:
 
             if command == var.config.get('command', 'joinme'):
                 self.mumble.users.myself.move_in(self.mumble.users[text.actor]['channel_id'])
+                return
 
-            elif not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
+            if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_in_my_channel'))
+                return
 
-            elif command == var.config.get('command', 'play_file') and parameter:
+            if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
+                self.mumble.users[text.actor].send_message(var.config.get('strings', 'pm_not_allowed'))
+                return
+
+            if command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
                 # sanitize "../" and so on
                 path = os.path.abspath(os.path.join(music_folder, parameter))
@@ -272,7 +278,6 @@ class MumbleBot:
 
     def is_admin(self, user):
         list_admin = var.config.get('bot', 'admin').split(';')
-        print(list_admin)
         if user in list_admin:
             return True
         else:
