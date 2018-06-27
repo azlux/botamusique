@@ -26,7 +26,6 @@ from mutagen.easyid3 import EasyID3
 class MumbleBot:
     def __init__(self, args):
         signal.signal(signal.SIGINT, self.ctrl_caught)
-
         self.volume = var.config.getfloat('bot', 'volume')
         self.channel = args.channel
         var.current_music = {}
@@ -181,6 +180,23 @@ class MumbleBot:
                 if self.is_admin(user):
                     self.stop()
                     self.exit = True
+                else:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+
+            elif command == var.config.get('command', 'update'):
+                if not self.is_admin(user):
+                    self.mumble.users[text.actor].send_message("Starting the update")
+                    tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install','--upgrade','youtube-dl']).decode()
+                    msg=""
+                    if "Requirement already up-to-date" in tp:
+                        msg += "Youtube-dl is up-to-date"
+                    else :
+                        msg += "Update done : " + tp.split('Successfully installed')[1]
+                    if 'Your branch is up-to-date' in sp.check_output(['/usr/bin/env','git','status']).decode():
+                        msg += "<br /> Botamusique is up-to-date"
+                    else :
+                        msg += "<br /> Botamusique have available update"
+                    self.mumble.users[text.actor].send_message(msg)
                 else:
                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
 
