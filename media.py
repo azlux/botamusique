@@ -108,7 +108,7 @@ def clear_tmp_folder(path, size):
                 size_tp += os.path.getsize(file)
                 if int(size_tp/(1024*1024)) > size:
                     logging.info("Cleaning tmp folder")
-                    to_remove = all_files[idx:]
+                    to_remove = all_files[:idx]
                     print(to_remove)
                     for f in to_remove:
                         logging.debug("Removing " + f)

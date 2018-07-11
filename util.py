@@ -66,9 +66,9 @@ def zipdir(zippath, zipname_prefix=None):
     return zipname
 
 
-def write_config():
-    with open(var.configfile, 'w') as f:
-        var.config.write(f)
+def write_db():
+    with open(var.dbfile, 'w') as f:
+        var.db.write(f)
 
 
 class Dir(object):

@@ -15,6 +15,7 @@ Bot the can play :
 
 You need to create a folder for all your music. Organize your music by subfolder.
 The main folder needs to be declared in the config (with a '/' at the end)
+You can enable the web interface into the configuration.ini file.
 
 ### Installation
 1. You need python 3 with opuslib and protobuf (look at the requirement of pymumble)
