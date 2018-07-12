@@ -125,6 +125,7 @@ class MumbleBot:
                 parameter = ''
                 if len(message) > 1:
                     parameter = message[1]
+
             else:
                 return
 
@@ -171,8 +172,10 @@ class MumbleBot:
 
             elif command == var.config.get('command', 'play_playlist') and parameter:
                 offset = 1
-                if len(message) > 2:
-                    offset = int(message[2])
+                try:
+                    offset = int(parameter.split(" ")[-1])
+                except ValueError:
+                    pass
                 var.playlist.append(["playlist", parameter, user, var.config.getint('bot', 'max_track_playlist'), offset])
                 self.async_download_next()
 
@@ -364,23 +367,30 @@ class MumbleBot:
                 path, title = self.download_music(url)
             var.current_music["path"] = path
 
-            audio = EasyID3(path)
-            if audio["title"]:
-                title = audio["title"][0]
+            if os.path.isfile(path):
+                audio = EasyID3(path)
+                if audio["title"]:
+                    title = audio["title"][0]
 
-            path_thumbnail = var.config.get('bot', 'tmp_folder') + hashlib.md5(path.encode()).hexdigest() + '.jpg'
-            thumbnail_html = ""
-            if os.path.isfile(path_thumbnail):
-                im = Image.open(path_thumbnail)
-                im.thumbnail((100, 100), Image.ANTIALIAS)
-                buffer = BytesIO()
-                im.save(buffer, format="JPEG")
-                thumbnail_base64 = base64.b64encode(buffer.getvalue())
-                thumbnail_html = '<img - src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
+                path_thumbnail = var.config.get('bot', 'tmp_folder') + hashlib.md5(path.encode()).hexdigest() + '.jpg'
+                thumbnail_html = ""
+                if os.path.isfile(path_thumbnail):
+                    im = Image.open(path_thumbnail)
+                    im.thumbnail((100, 100), Image.ANTIALIAS)
+                    buffer = BytesIO()
+                    im.save(buffer, format="JPEG")
+                    thumbnail_base64 = base64.b64encode(buffer.getvalue())
+                    thumbnail_html = '<img - src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
 
-            logging.debug(thumbnail_html)
-            if var.config.getboolean('bot', 'announce_current_music'):
-                self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
+                logging.debug(thumbnail_html)
+                if var.config.getboolean('bot', 'announce_current_music'):
+                    self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
+            else:
+                if var.current_music["type"] == "playlist":
+                    var.current_music['current_index'] = var.current_music['number_track_to_play']
+                if self.get_next():
+                    self.launch_next()
+                    self.async_download_next()
 
         elif var.current_music["type"] == "file":
             path = var.config.get('bot', 'music_folder') + var.current_music["path"]
