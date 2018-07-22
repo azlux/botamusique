@@ -32,7 +32,10 @@ def get_radio_server_description(url):
             request = urllib.request.Request(url_icecast)
             response = urllib.request.urlopen(request)
             data = json.loads(response.read().decode('utf-8', errors='ignore'), strict=False)
-            title_server = data['icestats']['source'][0]['server_name'] + ' - ' + data['icestats']['source'][0]['server_description']
+            source = data['icestats']['source']
+            if type(source) is list:
+                source = source[0]
+            title_server = source['server_name'] + ' - ' + source['server_description']
             logging.info("TITLE FOUND ICECAST: " + title_server)
             if not title_server:
                 title_server = url
