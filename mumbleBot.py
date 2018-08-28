@@ -289,7 +289,7 @@ class MumbleBot:
                     msg = var.config.get('strings', 'queue_empty')
                 else:
                     msg = var.config.get('strings', 'queue_contents') + '<br />'
-                    for (music_type, path) in var.playlist:
+                    for (music_type, path, user) in var.playlist:
                         msg += '({}) {}<br />'.format(music_type, path)
 
                 self.send_msg_channel(msg)
