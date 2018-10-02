@@ -397,7 +397,7 @@ class MumbleBot:
             title = var.current_music["path"]
 
         elif var.current_music["type"] == "radio":
-            url = media.get_url(var.current_music["path"])
+            url = media.get_url(var.current_music["url"])
             if not url:
                 return
             var.current_music["path"] = url
