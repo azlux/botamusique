@@ -207,7 +207,7 @@ class MumbleBot:
                         msg += "Youtube-dl is up-to-date"
                     else:
                         msg += "Update done : " + tp.split('Successfully installed')[1]
-                    if 'Unpacking' not in sp.check_output(['/usr/bin/env', 'git', 'fetch']).decode():
+                    if 'up-to-date' not in sp.check_output(['/usr/bin/env', 'git', 'pull']).decode():
                         msg += "<br /> Botamusique is up-to-date"
                     else:
                         msg += "<br /> Botamusique have available update"
