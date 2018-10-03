@@ -199,7 +199,7 @@ class MumbleBot:
                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
 
             elif command == var.config.get('command', 'update'):
-                if not self.is_admin(user):
+                if self.is_admin(user):
                     self.mumble.users[text.actor].send_message("Starting the update")
                     tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
                     msg = ""
