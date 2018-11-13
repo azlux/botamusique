@@ -1,0 +1,37 @@
+type : url
+    url
+    title
+    path
+    duration
+    thundnail
+    user
+    ready (validation, no, downloading, yes)
+
+type : playlist
+    url
+    path
+    playlist_title
+    nb_track_allowed
+    nb_track_playlist
+    max_track_allowed
+    start_index
+    current_index
+    current url
+    current_title
+    current_duration
+    current_thundnail
+    user
+    ready (validation, No, in progress, Yes)
+
+type : radio
+    url
+    name
+    current_title
+    user
+
+type : file
+    path
+    title
+    duration
+    user
+
