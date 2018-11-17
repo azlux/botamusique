@@ -14,13 +14,18 @@ import interface
 import variables as var
 import hashlib
 import youtube_dl
-import media
 import logging
 import util
 import base64
 from PIL import Image
 from io import BytesIO
 from mutagen.easyid3 import EasyID3
+import re
+import media.url
+import media.file
+import media.playlist
+import media.radio
+import media.system
 
 
 class MumbleBot:
@@ -28,32 +33,12 @@ class MumbleBot:
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.volume = var.config.getfloat('bot', 'volume')
         self.channel = args.channel
-        var.current_music = {}
 
         FORMAT = '%(asctime)s: %(message)s'
         if args.quiet:
             logging.basicConfig(format=FORMAT, level=logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
         else:
             logging.basicConfig(format=FORMAT, level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
-
-        ######
-        ## Format of the Playlist :
-        ## [("<type>","<path/url>")]
-        ## types : file, radio, url, is_playlist, number_music_to_play
-        ######
-
-        ######
-        ## Format of the current_music variable
-        # var.current_music = { "type" : str,
-        #                       "path" : str,                 # path of the file to play
-        #                       "url" : str                   # url to download
-        #                       "title" : str,
-        #                       "user" : str, 
-        #                       "is_playlist": boolean,
-        #                       "number_track_to_play": int,  # FOR PLAYLIST ONLY
-        #                       "start_index" : int,          # FOR PLAYLIST ONLY
-        #                       "current_index" : int}        # FOR PLAYLIST ONLY
-        # len(var.current_music) = 6
 
         var.playlist = []
 
@@ -63,7 +48,7 @@ class MumbleBot:
         self.exit = False
         self.nb_exit = 0
         self.thread = None
-        self.playing = False
+        self.is_playing = False
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -107,7 +92,7 @@ class MumbleBot:
         self.loop()
 
     def ctrl_caught(self, signal, frame):
-        logging.info("\nSIGINT caught, quitting")
+        logging.info("\nSIGINT caught, quitting, {} more to kill".format(2 - self.nb_exit))
         self.exit = True
         self.stop()
         if self.nb_exit > 1:
@@ -150,25 +135,46 @@ class MumbleBot:
                 if path.startswith(music_folder):
                     if os.path.isfile(path):
                         filename = path.replace(music_folder, '')
-                        var.playlist.append(["file", filename, user])
+                        music = {'type': 'file',
+                                 'path': filename,
+                                 'user': user}
+                        var.playlist.append(music)
                     else:
                         # try to do a partial match
                         matches = [file for file in util.get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
                         if len(matches) == 0:
-                            self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_file'))
+                            self.send_msg(var.config.get('strings', 'no_file'), text)
                         elif len(matches) == 1:
-                            var.playlist.append(["file", matches[0], user])
+                            music = {'type': 'file',
+                                     'path': matches[0],
+                                     'user': user}
+                            var.playlist.append(music)
                         else:
                             msg = var.config.get('strings', 'multiple_matches') + '<br />'
                             msg += '<br />'.join(matches)
-                            self.mumble.users[text.actor].send_message(msg)
+                            self.send_msg(msg, text)
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_file'))
+                    self.send_msg(var.config.get('strings', 'bad_file'), text)
                 self.async_download_next()
 
             elif command == var.config.get('command', 'play_url') and parameter:
-                var.playlist.append(["url", parameter, user])
-                self.async_download_next()
+
+                music = {'type': 'url',
+                         'url': self.get_url_from_input(parameter),
+                         'user': user,
+                         'ready': 'validation'}
+                var.playlist.append(music)
+
+                if media.url.get_url_info():
+                    if var.playlist[-1]['duration'] > var.config.getint('bot', 'max_track_duration'):
+                        var.playlist.pop()
+                        self.send_msg(var.config.get('strings', 'too_long'), text)
+                    else:
+                        var.playlist[-1]['ready'] = "no"
+                        self.async_download_next()
+                else:
+                    var.playlist.pop()
+                    self.send_msg(var.config.get('strings', 'unable_download'), text)
 
             elif command == var.config.get('command', 'play_playlist') and parameter:
                 offset = 1
@@ -176,17 +182,26 @@ class MumbleBot:
                     offset = int(parameter.split(" ")[-1])
                 except ValueError:
                     pass
-                var.playlist.append(["playlist", parameter, user, var.config.getint('bot', 'max_track_playlist'), offset])
+                music = {'type': 'playlist',
+                         'url': self.get_url_from_input(parameter),
+                         'user': user,
+                         'max_track_allowed': var.config.getint('bot', 'max_track_playlist'),
+                         'current_index': 1,
+                         'start_index': offset}
+                var.playlist.append(music)
                 self.async_download_next()
 
             elif command == var.config.get('command', 'play_radio') and parameter:
                 if var.config.has_option('radio', parameter):
                     parameter = var.config.get('radio', parameter)
-                var.playlist.append(["radio", parameter, user])
+                music = {'type': 'radio',
+                         'url': self.get_url_from_input(parameter),
+                         'user': user}
+                var.playlist.append(music)
                 self.async_download_next()
 
             elif command == var.config.get('command', 'help'):
-                self.send_msg_channel(var.config.get('strings', 'help'))
+                self.send_msg(var.config.get('strings', 'help'), text)
 
             elif command == var.config.get('command', 'stop'):
                 self.stop()
@@ -208,9 +223,9 @@ class MumbleBot:
                     else:
                         msg += "Update done : " + tp.split('Successfully installed')[1]
                     if 'up-to-date' not in sp.check_output(['/usr/bin/env', 'git', 'pull']).decode():
-                        msg += "<br /> Botamusique is up-to-date"
+                        msg += "<br /> I'm up-to-date"
                     else:
-                        msg += "<br /> Botamusique have available update"
+                        msg += "<br /> I have available updates, need to do it manually"
                     self.mumble.users[text.actor].send_message(msg)
                 else:
                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
@@ -223,56 +238,62 @@ class MumbleBot:
             elif command == var.config.get('command', 'volume'):
                 if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
                     self.volume = float(float(parameter) / 100)
-                    self.send_msg_channel(var.config.get('strings', 'change_volume') % (
-                        int(self.volume * 100), self.mumble.users[text.actor]['name']))
+                    self.send_msg(var.config.get('strings', 'change_volume') % (
+                        int(self.volume * 100), self.mumble.users[text.actor]['name']), text)
                     var.db.set('bot', 'volume', str(self.volume))
                 else:
-                    self.send_msg_channel(var.config.get('strings', 'current_volume') % int(self.volume * 100))
+                    self.send_msg(var.config.get('strings', 'current_volume') % int(self.volume * 100), text)
 
             elif command == var.config.get('command', 'current_music'):
-                if var.current_music:
-                    source = var.current_music["type"]
+                if len(var.playlist) > 0:
+                    source = var.playlist[0]["type"]
                     if source == "radio":
                         reply = "[radio] {title} on {url} by {user}".format(
-                            title=media.get_radio_title(var.current_music["path"]),
-                            url=var.current_music["title"],
-                            user=var.current_music["user"]
+                            title=media.radio.get_radio_title(var.playlist[0]["url"]),
+                            url=var.playlist[0]["title"],
+                            user=var.playlist[0]["user"]
                         )
                     elif source == "url":
                         reply = "[url] {title} (<a href=\"{url}\">{url}</a>) by {user}".format(
-                            title=var.current_music["title"],
-                            url=var.current_music["path"],
-                            user=var.current_music["user"]
+                            title=var.playlist[0]["title"],
+                            url=var.playlist[0]["url"],
+                            user=var.playlist[0]["user"]
                         )
                     elif source == "file":
                         reply = "[file] {title} by {user}".format(
-                            title=var.current_music["title"],
-                            user=var.current_music["user"])
+                            title=var.playlist[0]["title"],
+                            user=var.playlist[0]["user"])
                     elif source == "playlist":
                         reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user}".format(
-                            title=var.current_music["title"],
-                            url=var.current_music["path"],
-                            playlist=var.current_music["playlist_title"],
-                            user=var.current_music["user"]
+                            title=var.playlist[0]["title"],
+                            url=var.playlist[0]["url"],
+                            playlist=var.playlist[0]["playlist_title"],
+                            user=var.playlist[0]["user"]
                         )
                     else:
                         reply = "(?)[{}] {} {} by {}".format(
-                            var.current_music["type"],
-                            var.current_music["path"],
-                            var.current_music["title"],
-                            var.current_music["user"]
+                            var.playlist[0]["type"],
+                            var.playlist[0]["url"] if 'url' in var.playlist[0] else var.playlist[0]["path"],
+                            var.playlist[0]["title"],
+                            var.playlist[0]["user"]
                         )
                 else:
                     reply = var.config.get('strings', 'not_playing')
 
-                self.mumble.users[text.actor].send_message(reply)
+                self.send_msg(reply, text)
 
-            elif command == var.config.get('command', 'next'):
-                if self.get_next():
-                    self.launch_next()
+            elif command == var.config.get('command', 'skip'):
+                if parameter is not None and parameter.isdigit() and int(parameter) > 0:
+                    if int(parameter) < len(var.playlist):
+                        removed = var.playlist.pop(int(parameter))
+                        self.send_msg(var.config.get('strings', 'removing_item') % (removed['title'] if 'title' in removed else removed['url']), text)
+                    else:
+                        self.send_msg(var.config.get('strings', 'no_possible'), text)
+                elif self.next():
+                    self.launch_music()
                     self.async_download_next()
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'queue_empty'))
+                    self.send_msg(var.config.get('strings', 'queue_empty'), text)
                     self.stop()
 
             elif command == var.config.get('command', 'list'):
@@ -280,35 +301,27 @@ class MumbleBot:
 
                 files = util.get_recursive_filelist_sorted(folder_path)
                 if files:
-                    self.mumble.users[text.actor].send_message('<br>'.join(files))
+                    self.send_msg('<br>'.join(files), text)
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_file'))
+                    self.send_msg(var.config.get('strings', 'no_file'), text)
 
             elif command == var.config.get('command', 'queue'):
-                if len(var.playlist) == 0:
+                if len(var.playlist) <= 1:
                     msg = var.config.get('strings', 'queue_empty')
                 else:
                     msg = var.config.get('strings', 'queue_contents') + '<br />'
-                    for (music_type, path, user) in var.playlist:
-                        msg += '({}) {}<br />'.format(music_type, path)
+                    i = 1
+                    for value in var.playlist[1:]:
+                        msg += '[{}] ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['url'])
+                        i += 1
 
-                self.send_msg_channel(msg)
+                self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'repeat'):
-                var.playlist.append([var.current_music["type"], var.current_music["path"], var.current_music["user"]])
+                var.playlist.append([var.playlist[0]["type"], var.playlist[0]["path"], var.playlist[0]["user"]])
 
             else:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command'))
-
-    def launch_play_file(self, path):
-        self.stop()
-        if var.config.getboolean('debug', 'ffmpeg'):
-            ffmpeg_debug = "debug"
-        else:
-            ffmpeg_debug = "warning"
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
-        self.playing = True
 
     @staticmethod
     def is_admin(user):
@@ -319,60 +332,38 @@ class MumbleBot:
             return False
 
     @staticmethod
-    def get_next():
+    def next():
         # Return True is next is possible
-        if var.current_music and var.current_music['type'] == "playlist":
-            var.current_music['current_index'] += 1
-            if var.current_music['current_index'] <= (var.current_music['start_index'] + var.current_music['number_track_to_play']):
+        if len(var.playlist) > 0 and var.playlist[0]['type'] == "playlist":
+            var.playlist[0]['current_index'] = var.playlist[0]['current_index'] + 1
+            if var.playlist[0]['current_index'] <= (var.playlist[0]['start_index'] + var.playlist[0]['max_track_allowed']):
                 return True
 
-        if not var.playlist:
+        if len(var.playlist) > 1:
+            var.playlist.pop(0)
+            return True
+        elif len(var.playlist) == 1:
+            var.playlist.pop(0)
+            return False
+        else:
             return False
 
-        if var.playlist[0][0] == "playlist":
-            var.current_music = {'type': var.playlist[0][0],
-                                 'url': var.playlist[0][1],
-                                 'title': None,
-                                 'user': var.playlist[0][2],
-                                 'is_playlist': True,
-                                 'number_track_to_play': var.playlist[0][3],
-                                 'start_index': var.playlist[0][4],
-                                 'current_index': var.playlist[0][4]
-                                 }
-        else:
-            var.current_music = {'type': var.playlist[0][0],
-                                 'url': var.playlist[0][1],
-                                 'title': None,
-                                 'user': var.playlist[0][2]}
-        var.playlist.pop(0)
-        return True
-
-    def launch_next(self):
-        path = ""
-        title = ""
+    def launch_music(self):
+        uri = ""
         var.next_downloaded = False
-        logging.debug(var.current_music)
-        if var.current_music["type"] == "url" or var.current_music["type"] == "playlist":
-            url = media.get_url(var.current_music["url"])
+        logging.debug(var.playlist)
+        if var.playlist[0]["type"] == "url" or var.playlist[0]["type"] == "playlist":
+            media.system.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
-            if not url:
-                return
-
-            media.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
-
-            if var.current_music["type"] == "playlist":
-                path, title = self.download_music(url, var.current_music["current_index"])
-                var.current_music["playlist_title"] = title
-            else:
-                path, title = self.download_music(url)
-            var.current_music["path"] = path
-
-            if os.path.isfile(path):
-                audio = EasyID3(path)
+            self.download_music(index=0)
+            uri = var.playlist[0]['path']
+            if os.path.isfile(uri):
+                audio = EasyID3(uri)
+                title = ""
                 if audio["title"]:
                     title = audio["title"][0]
 
-                path_thumbnail = var.config.get('bot', 'tmp_folder') + hashlib.md5(path.encode()).hexdigest() + '.jpg'
+                path_thumbnail = var.config.get('bot', 'tmp_folder') + hashlib.md5(uri.encode()).hexdigest() + '.jpg'
                 thumbnail_html = ""
                 if os.path.isfile(path_thumbnail):
                     im = Image.open(path_thumbnail)
@@ -384,54 +375,58 @@ class MumbleBot:
 
                 logging.debug(thumbnail_html)
                 if var.config.getboolean('bot', 'announce_current_music'):
-                    self.send_msg_channel(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
+                    self.send_msg(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
             else:
-                if var.current_music["type"] == "playlist":
-                    var.current_music['current_index'] = var.current_music['number_track_to_play']
-                if self.get_next():
-                    self.launch_next()
-                    self.async_download_next()
+                pass
 
-        elif var.current_music["type"] == "file":
-            path = var.config.get('bot', 'music_folder') + var.current_music["path"]
-            title = var.current_music["path"]
+        elif var.playlist[0]["type"] == "file":
+            uri = var.config.get('bot', 'music_folder') + var.playlist[0]["path"]
 
-        elif var.current_music["type"] == "radio":
-            url = media.get_url(var.current_music["url"])
-            if not url:
-                return
-            var.current_music["path"] = url
-            path = url
-            title = media.get_radio_server_description(url)
-
-        var.current_music["title"] = title
+        elif var.playlist[0]["type"] == "radio":
+            uri = var.playlist[0]["url"]
+            title = media.radio.get_radio_server_description(uri)
+            var.playlist[0]["title"] = title
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
         else:
             ffmpeg_debug = "warning"
 
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', path, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        print(var.playlist)
+        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
 
-    @staticmethod
-    def download_music(url, index=None):
+        if var.playlist[0]["type"] == "readio":
+            command = ["ffmpeg", '-v', ffmpeg_debug,'-reconnect', '1', '-reconnect_at_eof', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '4294', '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        self.is_playing = True
+
+    def download_music(self, index, next_with_playlist=False):
+        url = var.playlist[index]['url']
         url_hash = hashlib.md5(url.encode()).hexdigest()
-        if index:
-            url_hash = url_hash + "-" + str(index)
+
+        if var.playlist[index]['type'] == 'playlist':
+            url_hash = url_hash + "-" + str(var.playlist[index]['current_index'])
+
         path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
         mp3 = path.replace(".%(ext)s", ".mp3")
-        if os.path.isfile(mp3):
-            audio = EasyID3(mp3)
-            video_title = audio["title"][0]
-        else:
-            if index:
+        var.playlist[index]['path'] = mp3
+        # if os.path.isfile(mp3):
+        #    audio = EasyID3(mp3)
+        #    var.playlist[index]['title'] = audio["title"][0]
+        if var.playlist[index]['ready'] == "no":
+            var.playlist[index]['ready'] = "downloading"
+            self.send_msg(var.config.get('strings', "download_in_progress") % var.playlist[index]['title'])
+            if var.playlist[index]['type'] == 'playlist':
+                item = str(var.playlist[index]['current_index'])
+                if next_with_playlist:
+                    item = str(var.playlist[index]['current_index'] + 1)
+
                 ydl_opts = {
                     'format': 'bestaudio/best',
                     'outtmpl': path,
                     'writethumbnail': True,
                     'updatetime': False,
-                    'playlist_items': str(index),
+                    'playlist_items': item,
                     'postprocessors': [{
                         'key': 'FFmpegExtractAudio',
                         'preferredcodec': 'mp3',
@@ -451,42 +446,42 @@ class MumbleBot:
                         'preferredquality': '192'},
                         {'key': 'FFmpegMetadata'}]
                 }
-            video_title = ""
+            print(ydl_opts)
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 for i in range(2):
                     try:
-                        info_dict = ydl.extract_info(url)
-                        video_title = info_dict['title']
+                        ydl.extract_info(url)
+                        var.playlist[index]['ready'] = "yes"
                     except youtube_dl.utils.DownloadError:
                         pass
                     else:
                         break
-        return mp3, video_title
+        return True
 
     def async_download_next(self):
         if not var.next_downloaded:
+            if len(var.playlist) > 0 and var.playlist[0]['type'] == 'playlist':
+                th = threading.Thread(target=self.download_music, kwargs={'index': 0, 'next_with_playlist': True})
+            elif len(var.playlist) > 1 and var.playlist[1]['type'] == 'url':
+                th = threading.Thread(target=self.download_music, kwargs={'index': 1})
+            else:
+                return
+
             var.next_downloaded = True
             logging.info("Start download in thread")
-            th = threading.Thread(target=self.download_next, args=())
             th.daemon = True
             th.start()
 
-    def download_next(self):
-        if not var.current_music:
-            return
+    @staticmethod
+    def get_url_from_input(string):
+        if string.startswith('http'):
+            return string
+        p = re.compile('href="(.+)"', re.IGNORECASE)
+        res = re.search(p, string)
+        if res:
+            return res.group(1)
         else:
-            if var.current_music["type"] == "playlist":
-                if var.current_music['current_index'] + 1 <= (var.current_music['start_index'] + var.current_music['number_track_to_play']):
-                    self.download_music(media.get_url(var.current_music['url']), var.current_music["current_index"] + 1)
-
-            if var.playlist:
-                url = media.get_url(var.playlist[0][1])
-                if not url:
-                    return
-                if var.playlist[0][0] == "playlist":
-                    self.download_music(url, var.current_music["current_index"])
-                elif var.playlist[0][0] == "playlist":
-                    self.download_music(url)
+            return False
 
     def loop(self):
         raw_music = ""
@@ -504,11 +499,12 @@ class MumbleBot:
                 time.sleep(0.1)
 
             if self.thread is None or not raw_music:
-                if self.get_next():
-                    self.launch_next()
+                if self.is_playing:
+                    self.is_playing = False
+                    self.next()
+                if len(var.playlist) > 0 and ('ready' not in var.playlist[0] or var.playlist[0]['ready'] != 'validation'):
+                    self.launch_music()
                     self.async_download_next()
-                else:
-                    var.current_music = None
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             time.sleep(0.01)
@@ -519,18 +515,20 @@ class MumbleBot:
 
     def stop(self):
         if self.thread:
-            var.current_music = None
             self.thread.kill()
             self.thread = None
             var.playlist = []
+        self.is_playing = False
 
     def set_comment(self):
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
 
-    def send_msg_channel(self, msg, channel=None):
-        if not channel:
-            channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
-        channel.send_text_message(msg)
+    def send_msg(self, msg, text=None):
+        if not text or not text.session:
+            own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
+            own_channel.send_text_message(msg)
+        else:
+            self.mumble.users[text.actor].send_message(msg)
 
 
 def start_web_interface(addr, port):

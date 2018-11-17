@@ -69,7 +69,9 @@ def index():
     if request.method == 'POST':
         print(request.form)
         if 'add_file' in request.form and ".." not in request.form['add_file']:
-            item = ('file', request.form['add_file'], 'Web')
+            item = {'type': 'file',
+                    'path' : request.form['add_file'],
+                    'user' : 'Web'}
             var.playlist.append(item)
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
@@ -86,67 +88,40 @@ def index():
                 files = music_library.get_files_recursively(folder)
             else:
                 files = music_library.get_files(folder)
-            files = list(map(lambda file: ('file', os.path.join(folder, file), 'Web'), files))
+            files = list(map(lambda file: {'type':'file','path': os.path.join(folder, file), 'user':'Web'}, files))
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
 
         elif 'add_url' in request.form:
-            var.playlist.append(['url', request.form['add_url'], "Web"])
+            var.playlist.append({'type':'url',
+                                'url': request.form['add_url'],
+                                'user': 'Web',
+                                'ready': 'validation'})
+            media.url.get_url_info()
+            var.playlist[-1]['ready'] = "no"
 
         elif 'add_radio' in request.form:
-            var.playlist.append(['radio', request.form['add_radio'], "Web"])
+            var.playlist.append({'type': 'radio',
+                                'path': request.form['add_radio'],
+                                'user': "Web"})
 
         elif 'delete_music' in request.form:
-            for item in var.playlist:
-                if str(item[2]) == request.form['delete_music']:
-                    var.playlist.remove(item)
-                    break
+            if len(var.playlist) >= request.form['delete_music']:
+                var.playlist.pop(request.form['delete_music'])
+        
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
                 random.shuffle(var.playlist)
 
-    if var.current_music:
-        source = var.current_music['type']
-        # format for current_music below:
-        # (sourcetype, title, url or None)
-        if source == "radio":
-            current_music = (
-                "[radio]",
-                media.get_radio_title(var.current_music['path']),
-                var.current_music['title']
-            )
-        elif source == "url":
-            current_music = (
-                "[url]",
-                var.current_music['title'],
-                var.current_music['path']
-            )
-        elif source == "file":
-            current_music = (
-                "[file]",
-                var.current_music['title'],
-                None
-            )
-        else:
-            current_music = (
-                "(??)[" + var.current_music['type'] + "]",
-                var.current_music['path'],
-                var.current_music['title'],
-            )
-    else:
-        current_music = None
-
     return render_template('index.html',
                            all_files=files,
-                           current_music=current_music,
                            music_library=music_library,
                            os=os,
                            playlist=var.playlist,
                            user=var.user)
 
 
-@web.route('/upload', methods=["POST"])
 def upload():
     file = request.files['file']
     if not file:
