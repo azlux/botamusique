@@ -83,10 +83,10 @@
 
 <div id="playlist">
     Currently Playing :
-    {% if current_music %}
-    {{ current_music[0] }} {{ current_music[1] }}
-    {% if current_music[2] %}
-        (<a href="{{ current_music[2] }}">{{ current_music[2] }}</a>)
+    {% if playlist|length > 0 %}
+    {{ playlist[0]['title'] }} {{ playlist[0]['user'] }}
+    {% if 'url' in playlist[0]  %}
+        (<a href="{{ playlist[0]['url'] }}">{{ playlist[0]['url'] }}</a>)
     {% endif %}
     {% else %}
     No music
@@ -96,9 +96,9 @@
     <form method="post"><input type="text" value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
 
     <ul>
-        {% for m in playlist %}
-        <li>{{ m[1] }}
-            <form method="post"><input type="text" value="{{ m[2] }}" name="delete_music" hidden><input type="submit" value="X"></form>
+        {% for m in playlist[1:] %}
+        <li>[{{ m['type'] }}]] {{ m['title'] }} -  {{ m['url'] }}
+            <form method="post"><input type="text" value="{{ loop.index }}" name="delete_music" hidden><input type="submit" value="X"></form>
         </li>
         {% endfor %}
     </ul>

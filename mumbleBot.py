@@ -393,12 +393,11 @@ class MumbleBot:
             ffmpeg_debug = "warning"
 
         print(var.playlist)
-		command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
-		
-		if var.playlist[0]["type"] == "readio":
-			command = ["ffmpeg", '-v', ffmpeg_debug,'-reconnect', '1', '-reconnect_at_eof', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '4294', '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
-        
-		self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+
+        if var.playlist[0]["type"] == "readio":
+            command = ["ffmpeg", '-v', ffmpeg_debug,'-reconnect', '1', '-reconnect_at_eof', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '4294', '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
 
     def download_music(self, index, next_with_playlist=False):
@@ -525,7 +524,7 @@ class MumbleBot:
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
 
     def send_msg(self, msg, text=None):
-        if not text.session:
+        if not text or not text.session:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
             own_channel.send_text_message(msg)
         else:
