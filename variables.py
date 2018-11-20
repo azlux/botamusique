@@ -6,4 +6,3 @@ is_proxified = False
 dbfile = None
 db = None
 config = None
-next_downloaded = False

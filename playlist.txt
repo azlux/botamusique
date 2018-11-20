@@ -9,7 +9,7 @@ type : url
 
 type : playlist
     url
-    path
+    ready
     playlist_title
     nb_track_allowed
     nb_track_playlist
@@ -20,8 +20,10 @@ type : playlist
     current_title
     current_duration
     current_thundnail
+    current_ready (validation,no, downloading, yes)
+    next_ready (validation,no, downloading, yes)
     user
-    ready (validation, No, in progress, Yes)
+
 
 type : radio
     url

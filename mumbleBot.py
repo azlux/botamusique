@@ -187,9 +187,16 @@ class MumbleBot:
                          'user': user,
                          'max_track_allowed': var.config.getint('bot', 'max_track_playlist'),
                          'current_index': 1,
-                         'start_index': offset}
+                         'start_index': offset,
+                         'ready': 'validation',
+                         'current_ready': 'validation',
+                         'next_ready': 'validation'}
                 var.playlist.append(music)
-                self.async_download_next()
+                if media.playlist.get_playlist_info():
+                    var.playlist[-1]['ready'] = 'yes'
+                    self.async_download_next()
+                else:
+                    var.playlist.pop()
 
             elif command == var.config.get('command', 'play_radio') and parameter:
                 if var.config.has_option('radio', parameter):
@@ -265,7 +272,7 @@ class MumbleBot:
                             user=var.playlist[0]["user"])
                     elif source == "playlist":
                         reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user}".format(
-                            title=var.playlist[0]["title"],
+                            title=var.playlist[0]["current_title"],
                             url=var.playlist[0]["url"],
                             playlist=var.playlist[0]["playlist_title"],
                             user=var.playlist[0]["user"]
@@ -337,6 +344,8 @@ class MumbleBot:
         if len(var.playlist) > 0 and var.playlist[0]['type'] == "playlist":
             var.playlist[0]['current_index'] = var.playlist[0]['current_index'] + 1
             if var.playlist[0]['current_index'] <= (var.playlist[0]['start_index'] + var.playlist[0]['max_track_allowed']):
+                var.playlist[0]['current_ready'] = var.playlist[0]['next_ready']
+                var.playlist[0]['next_ready'] = "validation"
                 return True
 
         if len(var.playlist) > 1:
@@ -350,12 +359,27 @@ class MumbleBot:
 
     def launch_music(self):
         uri = ""
-        var.next_downloaded = False
         logging.debug(var.playlist)
         if var.playlist[0]["type"] == "url" or var.playlist[0]["type"] == "playlist":
             media.system.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
-            self.download_music(index=0)
+            if var.playlist[0]["type"] == "url":
+                self.download_music(index=0)
+
+            elif var.playlist[0]["type"] == "playlist" and var.playlist[0]['current_ready'] == "validation":
+                if media.playlist.get_music_info(var.playlist[0]['current_index']):
+                    if var.playlist[0]['current_duration'] > var.config.getint('bot', 'max_track_duration'):
+                        self.send_msg(var.config.get('strings', 'too_long'))
+                        if self.next():
+                            self.launch_music()
+                    else:
+                        var.playlist[0]['current_ready'] = 'no'
+                        self.download_music(index=0, playlist_index=int(var.playlist[0]['current_index']))
+                else:
+                    self.send_msg(var.config.get('strings', 'unable_download'))
+                    if self.next():
+                        self.launch_music()
+
             uri = var.playlist[0]['path']
             if os.path.isfile(uri):
                 audio = EasyID3(uri)
@@ -392,15 +416,12 @@ class MumbleBot:
         else:
             ffmpeg_debug = "warning"
 
-        print(var.playlist)
         command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
-
-        if var.playlist[0]["type"] == "readio":
-            command = ["ffmpeg", '-v', ffmpeg_debug,'-reconnect', '1', '-reconnect_at_eof', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '4294', '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        logging.info("FFmpeg command : " + " ".join(command))
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
 
-    def download_music(self, index, next_with_playlist=False):
+    def download_music(self, index, playlist_index=0):
         url = var.playlist[index]['url']
         url_hash = hashlib.md5(url.encode()).hexdigest()
 
@@ -408,75 +429,83 @@ class MumbleBot:
             url_hash = url_hash + "-" + str(var.playlist[index]['current_index'])
 
         path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
+        var.playlist[index]['path'] = path
         mp3 = path.replace(".%(ext)s", ".mp3")
         var.playlist[index]['path'] = mp3
         # if os.path.isfile(mp3):
         #    audio = EasyID3(mp3)
         #    var.playlist[index]['title'] = audio["title"][0]
-        if var.playlist[index]['ready'] == "no":
+        ydl_opts = ""
+        if var.playlist[index]['type'] == 'url' and var.playlist[index]['ready'] == "no":
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': path,
+                'noplaylist': True,
+                'writethumbnail': True,
+                'updatetime': False,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192'},
+                    {'key': 'FFmpegMetadata'}]
+            }
             var.playlist[index]['ready'] = "downloading"
             self.send_msg(var.config.get('strings', "download_in_progress") % var.playlist[index]['title'])
-            if var.playlist[index]['type'] == 'playlist':
-                item = str(var.playlist[index]['current_index'])
-                if next_with_playlist:
-                    item = str(var.playlist[index]['current_index'] + 1)
 
-                ydl_opts = {
-                    'format': 'bestaudio/best',
-                    'outtmpl': path,
-                    'writethumbnail': True,
-                    'updatetime': False,
-                    'playlist_items': item,
-                    'postprocessors': [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192'},
-                        {'key': 'FFmpegMetadata'}]
-                }
-            else:
-                ydl_opts = {
-                    'format': 'bestaudio/best',
-                    'outtmpl': path,
-                    'noplaylist': True,
-                    'writethumbnail': True,
-                    'updatetime': False,
-                    'postprocessors': [{
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192'},
-                        {'key': 'FFmpegMetadata'}]
-                }
-            print(ydl_opts)
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                for i in range(2):
-                    try:
-                        ydl.extract_info(url)
-                        var.playlist[index]['ready'] = "yes"
-                    except youtube_dl.utils.DownloadError:
-                        pass
-                    else:
-                        break
-        return True
-
-    def async_download_next(self):
-        if not var.next_downloaded:
-            if len(var.playlist) > 0 and var.playlist[0]['type'] == 'playlist':
-                th = threading.Thread(target=self.download_music, kwargs={'index': 0, 'next_with_playlist': True})
-            elif len(var.playlist) > 1 and var.playlist[1]['type'] == 'url':
-                th = threading.Thread(target=self.download_music, kwargs={'index': 1})
+        if var.playlist[index]['type'] == 'playlist':
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': path,
+                'writethumbnail': True,
+                'updatetime': False,
+                'playlist_items': str(playlist_index),
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192'},
+                    {'key': 'FFmpegMetadata'}]
+            }
+            if var.playlist[index]['current_index'] == playlist_index and var.playlist[index]['current_ready'] == "no":
+                var.playlist[index]['current_ready'] = "downloading"
+            elif var.playlist[index]['current_index'] == playlist_index + 1 and var.playlist[index]['next_ready'] == "no":
+                var.playlist[index]['next_ready'] = "downloading"
             else:
                 return
+        logging.info("download :" + str(var.playlist[index]))
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            for i in range(2):
+                try:
+                    ydl.extract_info(url)
+                    if 'ready' in var.playlist[index] and var.playlist[index]['ready'] == "downloading":
+                        var.playlist[index]['ready'] = "yes"
+                    if var.playlist[index]['type'] == 'playlist':
+                        if var.playlist[index]['current_index'] == playlist_index and var.playlist[index]['current_ready'] == "downloading":
+                            var.playlist[index]['current_ready'] = "yes"
+                        elif var.playlist[index]['current_index'] == playlist_index + 1 and var.playlist[index]['next_ready'] == 'downloading':
+                            var.playlist[index]['next_ready'] = "yes"
+                except youtube_dl.utils.DownloadError:
+                    pass
+                else:
+                    break
+        return
 
-            var.next_downloaded = True
-            logging.info("Start download in thread")
-            th.daemon = True
-            th.start()
+    def async_download_next(self):
+        if len(var.playlist) > 0 and var.playlist[0]['type'] == 'playlist' and var.playlist[0]['next_ready'] == 'no':
+            th = threading.Thread(target=self.download_music, kwargs={'index': 0, 'playlist_index': var.playlist[0]["current_index"] + 1})
+        elif len(var.playlist) > 1 and var.playlist[1]['type'] == 'url' and var.playlist[1]['ready'] == 'no':
+            th = threading.Thread(target=self.download_music, kwargs={'index': 1})
+        else:
+            return
+
+        logging.info("Start download in thread")
+        th.daemon = True
+        th.start()
 
     @staticmethod
     def get_url_from_input(string):
         if string.startswith('http'):
             return string
-        p = re.compile('href="(.+)"', re.IGNORECASE)
+        p = re.compile('href="(.+?)"', re.IGNORECASE)
         res = re.search(p, string)
         if res:
             return res.group(1)
@@ -502,9 +531,12 @@ class MumbleBot:
                 if self.is_playing:
                     self.is_playing = False
                     self.next()
-                if len(var.playlist) > 0 and ('ready' not in var.playlist[0] or var.playlist[0]['ready'] != 'validation'):
-                    self.launch_music()
-                    self.async_download_next()
+                if len(var.playlist) > 0:
+                    if var.playlist[0]['type'] in ['radio', 'file'] \
+                            or (var.playlist[0]['type'] == 'url' and var.playlist[0]['ready'] != 'validation') \
+                            or (var.playlist[0]['type'] == 'playlist' and var.playlist[0]['ready'] == 'yes'):
+                        self.launch_music()
+                        self.async_download_next()
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             time.sleep(0.01)
@@ -517,7 +549,7 @@ class MumbleBot:
         if self.thread:
             self.thread.kill()
             self.thread = None
-            var.playlist = []
+        var.playlist = []
         self.is_playing = False
 
     def set_comment(self):

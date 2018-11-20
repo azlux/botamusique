@@ -26,7 +26,6 @@ def clear_tmp_folder(path, size):
                 all_files = [os.path.join(path, file) for file in files]
                 all_files.sort(key=lambda x: os.path.getmtime(x))
             size_tp = 0
-            print(all_files)
             for idx, file in enumerate(all_files):
                 size_tp += os.path.getsize(file)
                 if int(size_tp / (1024 * 1024)) > size:
