@@ -490,7 +490,7 @@ class MumbleBot:
         return
 
     def async_download_next(self):
-        if len(var.playlist) > 0 and var.playlist[0]['type'] == 'playlist' and var.playlist[0]['next_ready'] == 'no':
+        if len(var.playlist) > 0 and var.playlist[0]['type'] == 'playlist' and var.playlist[0]['next_ready'] == 'validate':
             th = threading.Thread(target=self.download_music, kwargs={'index': 0, 'playlist_index': var.playlist[0]["current_index"] + 1})
         elif len(var.playlist) > 1 and var.playlist[1]['type'] == 'url' and var.playlist[1]['ready'] == 'no':
             th = threading.Thread(target=self.download_music, kwargs={'index': 1})
