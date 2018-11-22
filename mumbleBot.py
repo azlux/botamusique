@@ -342,12 +342,15 @@ class MumbleBot:
     def next():
         # Return True is next is possible
         if len(var.playlist) > 0 and var.playlist[0]['type'] == "playlist":
+            logging.debug("Next into playlist")
             var.playlist[0]['current_index'] = var.playlist[0]['current_index'] + 1
             if var.playlist[0]['current_index'] <= (var.playlist[0]['start_index'] + var.playlist[0]['max_track_allowed']):
                 var.playlist[0]['current_ready'] = var.playlist[0]['next_ready']
                 var.playlist[0]['next_ready'] = "validation"
+                var.playlist[0]['next_title'] = ""
+                var.playlist[0]['next_duration'] = 0
                 return True
-
+        logging.debug("Next into the queue")
         if len(var.playlist) > 1:
             var.playlist.pop(0)
             return True
@@ -364,21 +367,11 @@ class MumbleBot:
             media.system.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
             if var.playlist[0]["type"] == "url":
+                logging.info("Download current single music")
                 self.download_music(index=0)
-
-            elif var.playlist[0]["type"] == "playlist" and var.playlist[0]['current_ready'] == "validation":
-                if media.playlist.get_music_info(var.playlist[0]['current_index']):
-                    if var.playlist[0]['current_duration'] > var.config.getint('bot', 'max_track_duration'):
-                        self.send_msg(var.config.get('strings', 'too_long'))
-                        if self.next():
-                            self.launch_music()
-                    else:
-                        var.playlist[0]['current_ready'] = 'no'
-                        self.download_music(index=0, playlist_index=int(var.playlist[0]['current_index']))
-                else:
-                    self.send_msg(var.config.get('strings', 'unable_download'))
-                    if self.next():
-                        self.launch_music()
+            else:
+                logging.info("Download current music into playlist")
+                self.download_music(index=0, playlist_index=int(var.playlist[0]['current_index']))
 
             uri = var.playlist[0]['path']
             if os.path.isfile(uri):
@@ -422,16 +415,21 @@ class MumbleBot:
         self.is_playing = True
 
     def download_music(self, index, playlist_index=0):
+        logging.debug("Download index:" + str(index) + ", playlist index:" + str(playlist_index))
+        logging.debug(var.playlist[index])
+
         url = var.playlist[index]['url']
         url_hash = hashlib.md5(url.encode()).hexdigest()
 
         if var.playlist[index]['type'] == 'playlist':
-            url_hash = url_hash + "-" + str(var.playlist[index]['current_index'])
+            url_hash = url_hash + "-" + str(playlist_index)
 
         path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
-        var.playlist[index]['path'] = path
         mp3 = path.replace(".%(ext)s", ".mp3")
-        var.playlist[index]['path'] = mp3
+
+        if playlist_index == var.playlist[0]['current_index']:
+            var.playlist[index]['path'] = mp3
+
         # if os.path.isfile(mp3):
         #    audio = EasyID3(mp3)
         #    var.playlist[index]['title'] = audio["title"][0]
@@ -453,6 +451,39 @@ class MumbleBot:
             self.send_msg(var.config.get('strings', "download_in_progress") % var.playlist[index]['title'])
 
         if var.playlist[index]['type'] == 'playlist':
+            if var.playlist[index]['current_index'] == playlist_index and var.playlist[index]['current_ready'] == 'validation':
+                var.playlist[index]['current_ready'] = 'validating'
+                if media.playlist.get_music_info(playlist_index):
+                    if var.playlist[0]['current_duration'] > var.config.getint('bot', 'max_track_duration'):
+                        self.send_msg(var.config.get('strings', 'too_long'))
+                        if self.next():
+                            self.async_download_next()
+                            return
+                    else:
+                        var.playlist[0]['current_ready'] = 'no'
+                        pass  # Music is good
+                else:
+                    self.send_msg(var.config.get('strings', 'unable_download'))
+                    if self.next():
+                        self.async_download_next()
+                        return
+            elif var.playlist[index]['current_index'] == playlist_index - 1 and var.playlist[index]['next_ready'] == 'validation':
+                var.playlist[index]['next_ready'] = 'validating'
+                if media.playlist.get_music_info(playlist_index):
+                    if var.playlist[0]['next_duration'] > var.config.getint('bot', 'max_track_duration'):
+                        self.send_msg(var.config.get('strings', 'too_long'))
+                        if self.next():
+                            self.async_download_next()
+                            return
+                    else:
+                        var.playlist[0]['next_ready'] = 'no'
+                        pass  # Next Music is good
+                else:
+                    self.send_msg(var.config.get('strings', 'unable_download'))
+                    if self.next():
+                        self.async_download_next()
+                        return
+
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'outtmpl': path,
@@ -467,11 +498,11 @@ class MumbleBot:
             }
             if var.playlist[index]['current_index'] == playlist_index and var.playlist[index]['current_ready'] == "no":
                 var.playlist[index]['current_ready'] = "downloading"
-            elif var.playlist[index]['current_index'] == playlist_index + 1 and var.playlist[index]['next_ready'] == "no":
+            elif var.playlist[index]['current_index'] == playlist_index - 1 and var.playlist[index]['next_ready'] == "no":
                 var.playlist[index]['next_ready'] = "downloading"
             else:
                 return
-        logging.info("download :" + str(var.playlist[index]))
+        logging.info("Information before start downloading :" + str(var.playlist[index]))
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             for i in range(2):
                 try:
@@ -481,7 +512,7 @@ class MumbleBot:
                     if var.playlist[index]['type'] == 'playlist':
                         if var.playlist[index]['current_index'] == playlist_index and var.playlist[index]['current_ready'] == "downloading":
                             var.playlist[index]['current_ready'] = "yes"
-                        elif var.playlist[index]['current_index'] == playlist_index + 1 and var.playlist[index]['next_ready'] == 'downloading':
+                        elif var.playlist[index]['current_index'] == playlist_index - 1 and var.playlist[index]['next_ready'] == 'downloading':
                             var.playlist[index]['next_ready'] = "yes"
                 except youtube_dl.utils.DownloadError:
                     pass
@@ -490,7 +521,8 @@ class MumbleBot:
         return
 
     def async_download_next(self):
-        if len(var.playlist) > 0 and var.playlist[0]['type'] == 'playlist' and var.playlist[0]['next_ready'] == 'validate':
+        logging.info("Async download next asked")
+        if len(var.playlist) > 0 and var.playlist[0]['type'] == 'playlist' and var.playlist[0]['next_ready'] == 'validation':
             th = threading.Thread(target=self.download_music, kwargs={'index': 0, 'playlist_index': var.playlist[0]["current_index"] + 1})
         elif len(var.playlist) > 1 and var.playlist[1]['type'] == 'url' and var.playlist[1]['ready'] == 'no':
             th = threading.Thread(target=self.download_music, kwargs={'index': 1})

@@ -3,7 +3,11 @@ import variables as var
 
 
 def get_url_info():
-    with youtube_dl.YoutubeDL() as ydl:
+    ydl_opts = {
+        'noplaylist': True
+    }
+
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         for i in range(2):
             try:
                 print(var.playlist)

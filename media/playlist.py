@@ -26,8 +26,12 @@ def get_music_info(index=0):
         for i in range(2):
             try:
                 info = ydl.extract_info(var.playlist[0]['url'], download=False)
-                var.playlist[0]['current_duration'] = info['entries'][0]['duration'] / 60
-                var.playlist[0]['current_title'] = info['entries'][0]['title']
+                if var.playlist[0]['current_index'] == index:
+                    var.playlist[0]['current_duration'] = info['entries'][0]['duration'] / 60
+                    var.playlist[0]['current_title'] = info['entries'][0]['title']
+                elif var.playlist[0]['current_index'] == index - 1:
+                    var.playlist[0]['next_duration'] = info['entries'][0]['duration'] / 60
+                    var.playlist[0]['next_title'] = info['entries'][0]['title']
             except youtube_dl.utils.DownloadError:
                 pass
             else:
