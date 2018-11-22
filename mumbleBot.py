@@ -366,13 +366,6 @@ class MumbleBot:
         if var.playlist[0]["type"] == "url" or var.playlist[0]["type"] == "playlist":
             media.system.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
-            if var.playlist[0]["type"] == "url":
-                logging.info("Download current single music")
-                self.download_music(index=0)
-            else:
-                logging.info("Download current music into playlist")
-                self.download_music(index=0, playlist_index=int(var.playlist[0]['current_index']))
-
             uri = var.playlist[0]['path']
             if os.path.isfile(uri):
                 audio = EasyID3(uri)
@@ -394,7 +387,12 @@ class MumbleBot:
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
             else:
-                pass
+                if var.playlist[0]["type"] == "url":
+                    logging.info("Download current single music")
+                    self.download_music(index=0)
+                else:
+                    logging.info("Download current music into playlist")
+                    self.download_music(index=0, playlist_index=int(var.playlist[0]['current_index']))
 
         elif var.playlist[0]["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + var.playlist[0]["path"]
@@ -427,7 +425,7 @@ class MumbleBot:
         path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
         mp3 = path.replace(".%(ext)s", ".mp3")
 
-        if playlist_index == var.playlist[0]['current_index']:
+        if (var.playlist[index]['type'] == 'playlist' and playlist_index == var.playlist[0]['current_index']) or var.playlist[index]['type'] == 'url':
             var.playlist[index]['path'] = mp3
 
         # if os.path.isfile(mp3):
