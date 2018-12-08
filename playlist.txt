@@ -6,24 +6,9 @@ type : url
     thundnail
     user
     ready (validation, no, downloading, yes)
-
-type : playlist
-    url
-    ready
+    from_playlist (yes,no)
     playlist_title
-    nb_track_allowed
-    nb_track_playlist
-    max_track_allowed
-    start_index
-    current_index
-    current url
-    current_title
-    current_duration
-    current_thundnail
-    current_ready (validation,no, downloading, yes)
-    next_ready (validation,no, downloading, yes)
-    user
-
+    playlist_url
 
 type : radio
     url

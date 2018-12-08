@@ -2,15 +2,25 @@ import youtube_dl
 import variables as var
 
 
-def get_playlist_info():
+def get_playlist_info(url, start_index=1, user=""):
     ydl_opts = {
-        'playlist_items': str(0)
+        'extract_flat': 'in_playlist'
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         for i in range(2):
             try:
-                info = ydl.extract_info(var.playlist[-1]['url'], download=False)
-                var.playlist[-1]['playlist_title'] = info['title']
+                info = ydl.extract_info(url, download=False)
+                playlist_title = info['title']
+                for j in range(start_index, start_index + var.config.getint('bot', 'max_track_playlist')):
+                    music = {'type': 'url',
+                             'title': info['entries'][j]['title'],
+                             'url': "https://www.youtube.com/watch?v=" + info['entries'][j]['url'],
+                             'user': user,
+                             'from_playlist': True,
+                             'playlist_title': playlist_title,
+                             'playlist_url': url,
+                             'ready': 'validation'}
+                    var.playlist.append(music)
             except youtube_dl.utils.DownloadError:
                 pass
             else:
