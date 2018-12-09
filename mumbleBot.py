@@ -35,10 +35,15 @@ class MumbleBot:
         self.channel = args.channel
 
         FORMAT = '%(asctime)s: %(message)s'
-        if args.quiet:
-            logging.basicConfig(format=FORMAT, level=logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
-        else:
+        if args.verbose:
             logging.basicConfig(format=FORMAT, level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+            logging.debug("Starting in DEBUG loglevel")
+        elif args.quiet:
+            logging.basicConfig(format=FORMAT, level=logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
+            logging.error("Starting in ERROR loglevel")
+        else:
+            logging.basicConfig(format=FORMAT, level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
+            logging.info("Starting in INFO loglevel")
 
         var.playlist = []
 
@@ -335,6 +340,7 @@ class MumbleBot:
 
     def launch_music(self):
         uri = ""
+        logging.debug("launch_music asked" + str(var.playlist[0]))
         if var.playlist[0]["type"] == "url":
             media.system.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
@@ -345,14 +351,13 @@ class MumbleBot:
                 self.download_music(index=0)
 
             uri = var.playlist[0]['path']
-
             if os.path.isfile(uri):
                 audio = EasyID3(uri)
                 title = ""
                 if audio["title"]:
                     title = audio["title"][0]
 
-                path_thumbnail = var.config.get('bot', 'tmp_folder') + hashlib.md5(uri.encode()).hexdigest() + '.jpg'
+                path_thumbnail = var.playlist[0]['path'][:-4] + '.jpg'  # Remove .mp3 and add .jpg
                 thumbnail_html = ""
                 if os.path.isfile(path_thumbnail):
                     im = Image.open(path_thumbnail)
@@ -362,10 +367,11 @@ class MumbleBot:
                     thumbnail_base64 = base64.b64encode(buffer.getvalue())
                     thumbnail_html = '<img - src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
 
-                logging.debug(thumbnail_html)
+                logging.debug("Thunbail data " + thumbnail_html)
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
             else:
+                logging.error("Error with the path during launch_music")
                 pass
 
         elif var.playlist[0]["type"] == "file":
@@ -391,12 +397,15 @@ class MumbleBot:
             if media.url.get_url_info(index=index):
                 if var.playlist[index]['duration'] > var.config.getint('bot', 'max_track_duration'):
                     var.playlist.pop()
+                    logging.info("the music " + var.playlist[index]["url"] + " has a duration of " + var.playlist[index]['duration'] + "s -- too long")
                     self.send_msg(var.config.get('strings', 'too_long'))
+                    return
                 else:
                     var.playlist[index]['ready'] = "no"
-        else:
-            var.playlist.pop(index)
-            self.send_msg(var.config.get('strings', 'unable_download'))
+            else:
+                var.playlist.pop(index)
+                logging.error("Error while fetching info from the URL")
+                self.send_msg(var.config.get('strings', 'unable_download'))
 
         if var.playlist[index]['type'] == 'url' and var.playlist[index]['ready'] == "no":
             var.playlist[index]['ready'] = "downloading"
@@ -515,7 +524,7 @@ class MumbleBot:
 
 
 def start_web_interface(addr, port):
-    print('Starting web interface on {}:{}'.format(addr, port))
+    logging.info('Starting web interface on {}:{}'.format(addr, port))
     interface.web.run(port=port, host=addr)
 
 
@@ -527,6 +536,7 @@ if __name__ == '__main__':
     parser.add_argument("--db", dest='db', type=str, default='db.ini', help='database file. Default db.ini')
 
     parser.add_argument("-q", "--quiet", dest="quiet", action="store_true", help="Only Error logs")
+    parser.add_argument("-v", "--verbose", dest="verbose", action="store_true", help="Show debug log")
 
     # Mumble arguments
     parser.add_argument("-s", "--server", dest="host", type=str, help="Hostname of the Mumble server")
@@ -544,7 +554,7 @@ if __name__ == '__main__':
     db.read([var.dbfile], encoding='latin-1')
 
     if len(parsed_configs) == 0:
-        print('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)
+        logging.error('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)
         sys.exit()
 
     var.config = config
