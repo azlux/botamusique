@@ -82,7 +82,7 @@ class MumbleBot:
             username = var.config.get("bot", "username")
 
         self.mumble = pymumble.Mumble(host, user=username, port=port, password=password,
-                                      debug=var.config.getboolean('debug', 'mumbleConnection'))
+                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=args.certificate)
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
         self.mumble.set_codec_profile("audio")
@@ -544,6 +544,7 @@ if __name__ == '__main__':
     parser.add_argument("-P", "--password", dest="password", type=str, help="Server password, if required")
     parser.add_argument("-p", "--port", dest="port", type=int, help="Port for the Mumble server")
     parser.add_argument("-c", "--channel", dest="channel", type=str, help="Default channel for the bot")
+    parser.add_argument("-C", "--cert", dest="certificate", type=str, default=None, help="Certificate file")
 
     args = parser.parse_args()
     var.dbfile = args.db
