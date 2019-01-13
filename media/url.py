@@ -16,6 +16,8 @@ def get_url_info(index=-1):
                 var.playlist[index]['title'] = info['title']
             except youtube_dl.utils.DownloadError:
                 pass
+            except KeyError:
+                return True
             else:
                 return True
     return False

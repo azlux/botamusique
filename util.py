@@ -71,6 +71,48 @@ def write_db():
         var.db.write(f)
 
 
+def get_user_ban():
+    res = "List of ban hash"
+    for i in var.db.items("user_ban"):
+        res += "<br/>" + i[0]
+    return res
+
+
+def user_ban(user):
+    var.db.set("user_ban", user, None)
+    res = "User " + user + " banned"
+    write_db()
+    return res
+
+
+def user_unban(user):
+    var.db.remove_option("user_ban", user)
+    res = "Done"
+    write_db()
+    return res
+
+
+def get_url_ban():
+    res = "List of ban hash"
+    for i in var.db.items("url_ban"):
+        res += "<br/>" + i[0]
+    return res
+
+
+def url_ban(url):
+    var.db.set("url_ban", url, None)
+    res = "url " + url + " banned"
+    write_db()
+    return res
+
+
+def url_unban(url):
+    var.db.remove_option("url_ban", url)
+    res = "Done"
+    write_db()
+    return res
+
+
 class Dir(object):
     def __init__(self, path):
         self.name = os.path.basename(path.strip('/'))

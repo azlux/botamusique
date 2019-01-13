@@ -32,6 +32,9 @@ class MumbleBot:
     def __init__(self, args):
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.volume = var.config.getfloat('bot', 'volume')
+        if db.has_option('bot', 'volume'):
+            self.volume = var.db.getfloat('bot', 'volume')
+
         self.channel = args.channel
 
         FORMAT = '%(asctime)s: %(message)s'
@@ -77,11 +80,11 @@ class MumbleBot:
             password = var.config.get("server", "password")
 
         if args.user:
-            username = args.user
+            self.username = args.user
         else:
-            username = var.config.get("bot", "username")
+            self.username = var.config.get("bot", "username")
 
-        self.mumble = pymumble.Mumble(host, user=username, port=port, password=password,
+        self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=args.certificate)
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
@@ -108,7 +111,9 @@ class MumbleBot:
     def message_received(self, text):
         message = text.message.strip()
         user = self.mumble.users[text.actor]['name']
-        if message[0] == '!':
+        if var.config.getboolean('command', 'split_username_at_space'):
+            user = user.split()[0]
+        if message[0] == var.config.get('command', 'command_symbol'):
             message = message[1:].split(' ', 1)
             if len(message) > 0:
                 command = message[0]
@@ -132,6 +137,53 @@ class MumbleBot:
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'pm_not_allowed'))
                 return
+
+            for i in var.db.items("user_ban"):
+                if user.lower() == i[0]:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'user_ban'))
+                    return
+
+            if command == var.config.get('command', 'user_ban'):
+                if self.is_admin(user):
+                    if parameter:
+                        self.mumble.users[text.actor].send_message(util.user_ban(parameter))
+                    else:
+                        self.mumble.users[text.actor].send_message(util.get_user_ban())
+                else:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                return
+
+            elif command == var.config.get('command', 'user_unban'):
+                if self.is_admin(user):
+                    if parameter:
+                        self.mumble.users[text.actor].send_message(util.user_unban(parameter))
+                else:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                return
+
+            elif command == var.config.get('command', 'url_ban'):
+                if self.is_admin(user):
+                    if parameter:
+                        self.mumble.users[text.actor].send_message(util.url_ban(self.get_url_from_input(parameter)))
+                    else:
+                        self.mumble.users[text.actor].send_message(util.get_url_ban())
+                else:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                return
+
+            elif command == var.config.get('command', 'url_unban'):
+                if self.is_admin(user):
+                    if parameter:
+                        self.mumble.users[text.actor].send_message(util.url_unban(self.get_url_from_input(parameter)))
+                else:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                return
+
+            if parameter:
+                for i in var.db.items("url_ban"):
+                    if self.get_url_from_input(parameter.lower()) == i[0]:
+                        self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
+                        return
 
             if command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
@@ -163,7 +215,6 @@ class MumbleBot:
                 self.async_download_next()
 
             elif command == var.config.get('command', 'play_url') and parameter:
-
                 music = {'type': 'url',
                          'url': self.get_url_from_input(parameter),
                          'user': user,
@@ -175,6 +226,12 @@ class MumbleBot:
                         var.playlist.pop()
                         self.send_msg(var.config.get('strings', 'too_long'), text)
                     else:
+                        for i in var.db.options("url_ban"):
+                            print(i, ' -> ', {var.playlist[-1]["url"]})
+                            if var.playlist[-1]['url'] == i:
+                                self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
+                                var.playlist.pop()
+                                return
                         var.playlist[-1]['ready'] = "no"
                         self.async_download_next()
                 else:
@@ -313,7 +370,7 @@ class MumbleBot:
                 self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'repeat'):
-                var.playlist.append([var.playlist[0]["type"], var.playlist[0]["path"], var.playlist[0]["user"]])
+                var.playlist.append(var.playlist[0])
 
             else:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command'))
@@ -549,10 +606,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     var.dbfile = args.db
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
-    parsed_configs = config.read(['configuration.default.ini', args.config, var.dbfile], encoding='latin-1')
+    parsed_configs = config.read(['configuration.default.ini', args.config], encoding='latin-1')
 
-    db = configparser.ConfigParser(interpolation=None, allow_no_value=True)
-    db.read([var.dbfile], encoding='latin-1')
+    db = configparser.ConfigParser(interpolation=None, allow_no_value=True, delimiters='²')
+    db.read(var.dbfile, encoding='latin-1')
 
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)
