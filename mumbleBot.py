@@ -77,15 +77,15 @@ class MumbleBot:
             password = var.config.get("server", "password")
         if args.tokens:
             tokens = args.tokens
-            print(tokens)
         else:
             tokens = var.config.get("server", "tokens")
             access_tokens = []
-            tokenslist = tokens.split(",")
-            for i in tokenslist:
-                access_tokens.append(str(i))
-            logging.info(access_tokens)            
-            print(access_tokens)
+            if "," in tokens:
+                tokenslist = tokens.split(",")
+                for i in tokenslist:
+                    access_tokens.append(str(i))
+            else:
+                access_tokens.append(tokens)
         if args.user:
             username = args.user
         else:
