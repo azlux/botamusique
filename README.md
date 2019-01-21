@@ -31,9 +31,10 @@ $ python3 -m venv venv
 $ venv/bin/pip install wheel
 $ venv/bin/pip install -r requirements.txt
 ```
-
+### (Optionnal) Generate a certificate
+`$ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
 ### Starting the bot
-`$ venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL`
+`$ venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C -C /path/to/botamusique.pem`
 
 The bot listen to the 8181 port so you should redirect to this one in you NAT configuration to let others peoples access the web interface. (DISABLED)
 
