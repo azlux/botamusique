@@ -70,14 +70,21 @@ class MumbleBot:
             host = args.host
         else:
             host = var.config.get("server", "host")
+
         if args.port:
             port = args.port
         else:
             port = var.config.getint("server", "port")
+
         if args.password:
             password = args.password
         else:
             password = var.config.get("server", "password")
+
+        if args.certificate:
+            certificate = args.certificate
+        else:
+            certificate = var.config.get("server", "certificate")
 
         if args.user:
             self.username = args.user
@@ -85,7 +92,7 @@ class MumbleBot:
             self.username = var.config.get("bot", "username")
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password,
-                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=args.certificate)
+                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=certificate)
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
         self.mumble.set_codec_profile("audio")
