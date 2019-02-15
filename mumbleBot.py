@@ -90,22 +90,15 @@ class MumbleBot:
             tokens = args.tokens
         else:
             tokens = var.config.get("server", "tokens")
-            access_tokens = []
-            if "," in tokens:
-                tokenslist = tokens.split(",")
-                for i in tokenslist:
-                    access_tokens.append(str(i))
-            else:
-                access_tokens.append(tokens)
+            tokens = tokens.split(',')
+
         if args.user:
             self.username = args.user
         else:
             self.username = var.config.get("bot", "username")
 
-        self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=access_tokens,
+        self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=args.certificate)
-        self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password,
-                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=certificate)
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
         self.mumble.set_codec_profile("audio")
