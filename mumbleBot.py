@@ -86,11 +86,24 @@ class MumbleBot:
         else:
             certificate = var.config.get("server", "certificate")
 
+        if args.tokens:
+            tokens = args.tokens
+        else:
+            tokens = var.config.get("server", "tokens")
+            access_tokens = []
+            if "," in tokens:
+                tokenslist = tokens.split(",")
+                for i in tokenslist:
+                    access_tokens.append(str(i))
+            else:
+                access_tokens.append(tokens)
         if args.user:
             self.username = args.user
         else:
             self.username = var.config.get("bot", "username")
 
+        self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=access_tokens,
+                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=args.certificate)
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=certificate)
         self.mumble.callbacks.set_callback("text_received", self.message_received)
@@ -606,6 +619,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--server", dest="host", type=str, help="Hostname of the Mumble server")
     parser.add_argument("-u", "--user", dest="user", type=str, help="Username for the bot")
     parser.add_argument("-P", "--password", dest="password", type=str, help="Server password, if required")
+    parser.add_argument("-T", "--tokens", dest="tokens", type=str, help="Server tokens, if required")
     parser.add_argument("-p", "--port", dest="port", type=int, help="Port for the Mumble server")
     parser.add_argument("-c", "--channel", dest="channel", type=str, help="Default channel for the bot")
     parser.add_argument("-C", "--cert", dest="certificate", type=str, default=None, help="Certificate file")
