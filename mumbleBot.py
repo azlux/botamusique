@@ -140,7 +140,7 @@ class MumbleBot:
             logging.info(command + ' - ' + parameter + ' by ' + user)
 
             if command == var.config.get('command', 'joinme'):
-                self.mumble.users.myself.move_in(self.mumble.users[text.actor]['channel_id'])
+                self.mumble.users.myself.move_in(self.mumble.users[text.actor]['channel_id'], token=parameter)
                 return
 
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
