@@ -17,6 +17,7 @@ import youtube_dl
 import logging
 import util
 import base64
+import pafy
 from PIL import Image
 from io import BytesIO
 from mutagen.easyid3 import EasyID3
@@ -247,22 +248,7 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'bad_file'), text)
 
             elif command == var.config.get('command', 'play_url') and parameter:
-                self.send_msg(var.config.get('strings', 'download_in_progress') % parameter)
-                entries = media.url.get_url_info(self.get_url_from_input(parameter), user)
-                if entries:
-                    for music in entries:
-                        if music['duration'] > var.config.getint('bot', 'max_track_duration'):
-                            self.send_msg(var.config.get('strings', 'too_long'), text)
-                        else:
-                            for i in var.db.options("url_ban"):
-                                if music['url'] == i:
-                                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
-                                    return
-                            pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
-                            if pos > 1:
-                                self.send_msg(var.config.get('strings', 'file_queued') % (music['title'], pos))
-                else:
-                    self.send_msg(var.config.get('strings', 'unable_download') % parameter, text)
+                self.play_url(parameter, text, user)
 
             elif command == var.config.get('command', 'play_playlist') and parameter:
                 offset = 1
@@ -399,9 +385,43 @@ class MumbleBot:
             elif command == var.config.get('command', 'repeat'):
                 self.queue_work(lambda: var.playlist.append(var.playlist[0]) if len(var.playlist) > 0 else None)
 
+            elif command == var.config.get('command', 'search'):
+                if str(parameter) == '':
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_error') % parameter)
+                    return
+                self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_for') % parameter)
+                try:
+                    result = pafy.call_gdata('search', {'q':parameter,'maxResults':1,'part':'id','type':'video','safeSearch':'none'})
+                except Exception as e:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_error') % parameter)
+                    return
+                if len(result['items']) == 0:
+                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_search_results') % parameter)
+                    return
+                url = 'https://www.youtube.com/watch?v=' + result['items'][0]['id']['videoId']
+                self.play_url(url, text, user)
+
             else:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command') % command)
 
+
+    def play_url(self, url, text, user):
+        self.send_msg(var.config.get('strings', 'download_in_progress') % url)
+        entries = media.url.get_url_info(self.get_url_from_input(url), user)
+        if entries:
+            for music in entries:
+                if music['duration'] > var.config.getint('bot', 'max_track_duration'):
+                    self.send_msg(var.config.get('strings', 'too_long'), text)
+                else:
+                    for i in var.db.options("url_ban"):
+                        if music['url'] == i:
+                            self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
+                            return
+                    pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
+                    if pos > 1:
+                        self.send_msg(var.config.get('strings', 'file_queued') % (music['title'], pos))
+        else:
+            self.send_msg(var.config.get('strings', 'unable_download') % url, text)
 
     def get_current_music(self):
         if len(var.playlist) > 0:

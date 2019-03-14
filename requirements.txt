@@ -5,3 +5,4 @@ youtube-dl
 python-magic
 Pillow
 mutagen
+pafy
