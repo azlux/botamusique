@@ -49,14 +49,21 @@ class MumbleBot:
             self.volume = var.db.getfloat('bot', 'volume')
 
         FORMAT = '%(asctime)s: %(message)s'
+        loglevel = logging.INFO
         if args.verbose:
-            logging.basicConfig(format=FORMAT, level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+            loglevel = logging.DEBUG
+        elif args.quiet:
+            loglevel = logging.ERROR
+        logfile = var.config.get('bot', 'logfile')
+        if logfile:
+            logging.basicConfig(filename=logfile, format=FORMAT, level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+        else:
+            logging.basicConfig(format=FORMAT, level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
+        if args.verbose:
             logging.debug("Starting in DEBUG loglevel")
         elif args.quiet:
-            logging.basicConfig(format=FORMAT, level=logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
             logging.error("Starting in ERROR loglevel")
         else:
-            logging.basicConfig(format=FORMAT, level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
             logging.info("Starting in INFO loglevel")
 
         var.playlist = []
