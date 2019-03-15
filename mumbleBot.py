@@ -411,8 +411,8 @@ class MumbleBot:
                 url = 'https://www.youtube.com/watch?v=' + result['items'][0]['id']['videoId']
                 self.play_url(url, text, user)
 
-            else:
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command') % command)
+            #else:
+                #self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command') % command)
 
 
     def play_url(self, url, text, user):
