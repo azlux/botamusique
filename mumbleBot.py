@@ -416,7 +416,7 @@ class MumbleBot:
 
 
     def play_url(self, url, text, user):
-        self.send_msg(var.config.get('strings', 'download_in_progress') % url)
+        #self.send_msg(var.config.get('strings', 'download_in_progress') % url)
         entries = media.url.get_url_info(self.get_url_from_input(url), user)
         if entries:
             for music in entries:
@@ -493,7 +493,7 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
             elif 'thumbnail' in music:
                 if var.config.getboolean('bot', 'announce_current_music'):
-                    title = music['title']
+                    title = '<a href="%s">%s</a>' % (music['url'], music['title'])
                     #thumbnail_html = '<img src="%s" width="100"/>' % music['thumbnail']
                     thumbnail_html = ""
                     self.send_msg(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
