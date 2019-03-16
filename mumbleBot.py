@@ -244,18 +244,19 @@ class MumbleBot:
                         # try to do a partial match
                         matches = [file for file in util.get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
                         if len(matches) == 0:
-                            self.send_msg(var.config.get('strings', 'no_file'), text)
+                            self.send_msg(var.config.get('strings', 'no_file'))
                         elif len(matches) == 1:
                             music = {'type': 'file',
                                      'path': matches[0],
                                      'user': user}
-                            self.queue_work(lambda: var.playlist.append(music))
+                            pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
+                            self.mumble.users[text.actor].send_message(var.config.get('strings', 'file_queued') % (matches[0], pos))
                         else:
                             msg = var.config.get('strings', 'multiple_matches') + '<br />'
                             msg += '<br />'.join(matches)
-                            self.send_msg(msg, text)
+                            self.send_msg(msg)
                 else:
-                    self.send_msg(var.config.get('strings', 'bad_file'), text)
+                    self.send_msg(var.config.get('strings', 'bad_file'))
 
             elif command == var.config.get('command', 'play_url') and parameter:
                 self.play_url(parameter, text, user)
@@ -276,10 +277,11 @@ class MumbleBot:
                 music = {'type': 'radio',
                          'url': self.get_url_from_input(parameter),
                          'user': user}
-                self.queue_work(lambda: var.playlist.append(music))
+                pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
+                self.mumble.users[text.actor].send_message(var.config.get('strings', 'file_queued') % (music['url'], pos))
 
             elif command == var.config.get('command', 'help'):
-                self.send_msg(var.config.get('strings', 'help'), text)
+                self.send_msg(var.config.get('strings', 'help'))
 
             elif command == var.config.get('command', 'stop'):
                 self.queue_work(self.stop_all)
@@ -318,10 +320,10 @@ class MumbleBot:
                     self.queue_work(lambda: self.set_volume(volume))
 
                     self.send_msg(var.config.get('strings', 'change_volume') % (
-                        int(volume * 100), self.mumble.users[text.actor]['name']), text)
+                        int(volume * 100), self.mumble.users[text.actor]['name']))
                 else:
                     volume = self.queue_work(lambda: self.volume).wait()
-                    self.send_msg(var.config.get('strings', 'current_volume') % int(volume * 100), text)
+                    self.send_msg(var.config.get('strings', 'current_volume') % int(volume * 100))
 
             elif command == var.config.get('command', 'current_music'):
                 current = self.queue_work(self.get_current_music).wait()
@@ -356,7 +358,7 @@ class MumbleBot:
                 else:
                     reply = var.config.get('strings', 'not_playing')
 
-                self.send_msg(reply, text)
+                self.send_msg(reply)
 
             elif command == var.config.get('command', 'skip'):
                 count = 1
@@ -367,7 +369,7 @@ class MumbleBot:
                         count -= 1
                     else:
                         self.queue_work(self.stop_all).wait()
-                        self.send_msg(var.config.get('strings', 'queue_empty'), text)
+                        self.send_msg(var.config.get('strings', 'queue_empty'))
                         return
 
             elif command == var.config.get('command', 'list'):
@@ -375,9 +377,9 @@ class MumbleBot:
 
                 files = util.get_recursive_filelist_sorted(folder_path)
                 if files:
-                    self.send_msg('<br>'.join(files), text)
+                    self.send_msg('<br>'.join(files))
                 else:
-                    self.send_msg(var.config.get('strings', 'no_file'), text)
+                    self.send_msg(var.config.get('strings', 'no_file'))
 
             elif command == var.config.get('command', 'queue'):
                 playlist = self.queue_work(lambda: [m.copy() for m in var.playlist]).wait()
@@ -390,23 +392,23 @@ class MumbleBot:
                         msg += '[{}] ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['url'])
                         i += 1
 
-                self.send_msg(msg, text)
+                self.send_msg(msg)
 
             elif command == var.config.get('command', 'repeat'):
                 self.queue_work(lambda: var.playlist.append(var.playlist[0]) if len(var.playlist) > 0 else None)
 
             elif command == var.config.get('command', 'search'):
                 if str(parameter) == '':
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_error') % parameter)
+                    self.send_msg(var.config.get('strings', 'search_error') % parameter)
                     return
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_for') % parameter)
                 try:
                     result = pafy.call_gdata('search', {'q':parameter,'maxResults':1,'part':'id','type':'video','safeSearch':'none'})
                 except Exception as e:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_error') % parameter)
+                    self.send_msg(var.config.get('strings', 'search_error') % parameter)
                     return
                 if len(result['items']) == 0:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'no_search_results') % parameter)
+                    self.send_msg(var.config.get('strings', 'no_search_results') % parameter)
                     return
                 url = 'https://www.youtube.com/watch?v=' + result['items'][0]['id']['videoId']
                 self.play_url(url, text, user)
@@ -416,22 +418,22 @@ class MumbleBot:
 
 
     def play_url(self, url, text, user):
-        #self.send_msg(var.config.get('strings', 'download_in_progress') % url)
+        self.mumble.users[text.actor].send_message(var.config.get('strings', 'download_in_progress') % url)
         entries = media.url.get_url_info(self.get_url_from_input(url), user)
         if entries:
             for music in entries:
                 if music['duration'] > var.config.getint('bot', 'max_track_duration'):
-                    self.send_msg(var.config.get('strings', 'too_long'), text)
+                    self.send_msg(var.config.get('strings', 'too_long'))
                 else:
                     for i in var.db.options("url_ban"):
                         if music['url'] == i:
-                            self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
+                            self.send_msg(var.config.get('strings', 'url_ban'))
                             return
                     pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
                     if pos > 1:
-                        self.send_msg(var.config.get('strings', 'file_queued') % (music['title'], pos))
+                        self.mumble.users[text.actor].send_message(var.config.get('strings', 'file_queued') % (music['title'], pos))
         else:
-            self.send_msg(var.config.get('strings', 'unable_download') % url, text)
+            self.send_msg(var.config.get('strings', 'unable_download') % url)
 
     def get_current_music(self):
         if len(var.playlist) > 0:
@@ -488,7 +490,7 @@ class MumbleBot:
                     thumbnail_base64 = base64.b64encode(buffer.getvalue())
                     thumbnail_html = '<img src="data:image/PNG;base64,' + thumbnail_base64.decode() + '"/>'
 
-                logging.debug("Thunbail data " + thumbnail_html)
+                logging.debug("Thumbnail data " + thumbnail_html)
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get('strings', 'now_playing') % (title, thumbnail_html))
             elif 'thumbnail' in music:
@@ -500,11 +502,13 @@ class MumbleBot:
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + music["path"]
+            self.send_msg(var.config.get('strings', 'now_playing') % (uri, ""))
 
         elif music["type"] == "radio":
             uri = music["url"]
             title = media.radio.get_radio_server_description(uri)
             music["title"] = title
+            self.send_msg(var.config.get('strings', 'now_playing') % (title or uri, ""))
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
