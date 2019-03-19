@@ -468,7 +468,6 @@ class MumbleBot:
         uri = ""
         logging.debug("launch_music asked" + str(music))
         if music["type"] == "url":
-            media.system.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
             if 'path' not in music:
                 return False
@@ -517,7 +516,7 @@ class MumbleBot:
 
         command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         logging.info("FFmpeg command : " + " ".join(command))
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=1024*1024)
         self.is_playing = True
         return True
 
