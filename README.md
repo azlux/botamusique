@@ -9,9 +9,17 @@ Bot the can play :
 - Local folder (disabled, I need to work on the web interface)
 
 -----
+## Menu
+1. [Web Interface](#web-interface)
+2. [Installation](#installation)
+3. [Generate a certificate](#optional-generate-a-certificate)
+4. [Starting the bot](#starting-the-bot)
+5. [Custom commands](#custom-commands)
+6. [Contributors](#contributors)
+
 
 ### Web interface
-* Disabled I need to work on it. Since I use this bot for radio, youtube/soundcloud and folder music, the web interace isn't ready.
+* Disabled by default. It's working but ugly (I'm not a web developer).
 
 You need to create a folder for all your music. Organize your music by subfolder.
 The main folder needs to be declared in the config (with a '/' at the end)
@@ -23,16 +31,17 @@ You can enable the web interface into the configuration.ini file.
 
 Example installation commands for Debian and Ubuntu:
 ```
-# apt install python3-venv
-# apt install ffmpeg
-$ git clone --recurse-submodules https://github.com/azlux/botamusique.git
-$ cd botamusique
-$ python3 -m venv venv
-$ venv/bin/pip install wheel
-$ venv/bin/pip install -r requirements.txt
+apt install python3-venv
+apt install ffmpeg
+git clone --recurse-submodules https://github.com/azlux/botamusique.git
+cd botamusique python3 -m venv venv
+venv/bin/pip install wheel
+venv/bin/pip install -r requirements.txt
 ```
+
 ### (Optional) Generate a certificate
 `$ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
+
 ### Starting the bot
 `$ venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C /path/to/botamusique.pem`
 
@@ -52,7 +61,11 @@ you have the section :
 - strings : you can customize all string the bot can say.
 - debug : option to active ffmpeg or pymumble debug. (Can be very verbose)
 
+### Contributors
+If you want to participate, You're welcome to fork and pull requests Fix et new features.
 
-### TODOLIST
+The following people joined the collaborators for a faster development, big thanks:
+- @slipenbois
+- @mertkutay
 
-Check the issue #3
+Feel free to ask me if you want to help activelly without using pull requests. 

@@ -6,7 +6,7 @@ def get_url_info(index=-1):
     ydl_opts = {
         'noplaylist': True
     }
-
+    var.playlist[index]['duration'] = 0
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         for i in range(2):
             try:
