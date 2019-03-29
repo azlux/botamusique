@@ -11,7 +11,7 @@ def get_playlist_info(url, start_index=1, user=""):
             try:
                 info = ydl.extract_info(url, download=False)
                 playlist_title = info['title']
-                for j in range(start_index, start_index + var.config.getint('bot', 'max_track_playlist')):
+                for j in range(start_index, min( len(info['entries']), start_index + var.config.getint('bot', 'max_track_playlist') ) ):
                     music = {'type': 'url',
                              'title': info['entries'][j]['title'],
                              'url': "https://www.youtube.com/watch?v=" + info['entries'][j]['url'],
