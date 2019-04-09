@@ -34,7 +34,8 @@ Example installation commands for Debian and Ubuntu:
 apt install python3-venv
 apt install ffmpeg
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
-cd botamusique python3 -m venv venv
+cd botamusique
+python3 -m venv venv
 venv/bin/pip install wheel
 venv/bin/pip install -r requirements.txt
 ```
