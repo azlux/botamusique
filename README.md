@@ -31,7 +31,7 @@ You can enable the web interface into the configuration.ini file.
 
 Example installation commands for Debian and Ubuntu:
 ```
-apt install python3-venv ffmpeg libjpeg-dev
+apt install python3-venv ffmpeg libjpeg-dev zlibc zlib1g zlib1g-dev
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
 cd botamusique
 python3 -m venv venv

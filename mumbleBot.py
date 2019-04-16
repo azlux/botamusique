@@ -28,6 +28,33 @@ import media.playlist
 import media.radio
 import media.system
 
+"""
+FORMAT OF A MUSIC INTO THE PLAYLIST
+type : url
+    url
+    title
+    path
+    duration
+    thundnail
+    user
+    ready (validation, no, downloading, yes)
+    from_playlist (yes,no)
+    playlist_title
+    playlist_url
+
+type : radio
+    url
+    name
+    current_title
+    user
+
+type : file
+    path
+    title
+    duration
+    user
+"""
+
 
 class MumbleBot:
     def __init__(self, args):
@@ -38,6 +65,7 @@ class MumbleBot:
 
         self.channel = args.channel
 
+        # Set specific format for the log
         FORMAT = '%(asctime)s: %(message)s'
         if args.verbose:
             logging.basicConfig(format=FORMAT, level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
@@ -49,6 +77,7 @@ class MumbleBot:
             logging.basicConfig(format=FORMAT, level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
             logging.info("Starting in INFO loglevel")
 
+        # the playlist is... a list (Surprise !!)
         var.playlist = []
 
         var.user = args.user
@@ -99,7 +128,7 @@ class MumbleBot:
             self.username = var.config.get("bot", "username")
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
-                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=args.certificate)
+                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=certificate)
         self.mumble.callbacks.set_callback("text_received", self.message_received)
 
         self.mumble.set_codec_profile("audio")
@@ -113,6 +142,7 @@ class MumbleBot:
 
         self.loop()
 
+    # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
         logging.info("\nSIGINT caught, quitting, {} more to kill".format(2 - self.nb_exit))
         self.exit = True
@@ -122,13 +152,21 @@ class MumbleBot:
             sys.exit(0)
         self.nb_exit += 1
 
+    # All text send to the chat is analysed by this function
     def message_received(self, text):
+
         message = text.message.strip()
         user = self.mumble.users[text.actor]['name']
+
         if var.config.getboolean('command', 'split_username_at_space'):
+            # in can you use https://github.com/Natenom/mumblemoderator-module-collection/tree/master/os-suffixes , you want to split the username
             user = user.split()[0]
+
         if message[0] == var.config.get('command', 'command_symbol'):
+            # remove the symbol from the message
             message = message[1:].split(' ', 1)
+
+            # use the first word as a command, the others one as  parameters
             if len(message) > 0:
                 command = message[0]
                 parameter = ''
@@ -144,6 +182,7 @@ class MumbleBot:
                 self.mumble.users.myself.move_in(self.mumble.users[text.actor]['channel_id'], token=parameter)
                 return
 
+            # Anti stupid guy function
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_in_my_channel'))
                 return
@@ -152,6 +191,9 @@ class MumbleBot:
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'pm_not_allowed'))
                 return
 
+            ###
+            # Admin command
+            ###
             for i in var.db.items("user_ban"):
                 if user.lower() == i[0]:
                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'user_ban'))
@@ -199,6 +241,9 @@ class MumbleBot:
                         self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
                         return
 
+            ###
+            # everyday commands
+            ###
             if command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
                 # sanitize "../" and so on
@@ -230,7 +275,7 @@ class MumbleBot:
 
             elif command == var.config.get('command', 'play_url') and parameter:
                 music = {'type': 'url',
-                         'url': self.get_url_from_input(parameter),
+                         'url': self.get_url_from_input(parameter),  # grab the real URL
                          'user': user,
                          'ready': 'validation'}
                 var.playlist.append(music)
@@ -241,7 +286,6 @@ class MumbleBot:
                         self.send_msg(var.config.get('strings', 'too_long'), text)
                     else:
                         for i in var.db.options("url_ban"):
-                            print(i, ' -> ', {var.playlist[-1]["url"]})
                             if var.playlist[-1]['url'] == i:
                                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
                                 var.playlist.pop()
@@ -253,7 +297,7 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'unable_download'), text)
 
             elif command == var.config.get('command', 'play_playlist') and parameter:
-                offset = 1
+                offset = 1  # if you want to start the playlist at a specific index
                 try:
                     offset = int(parameter.split(" ")[-1])
                 except ValueError:
@@ -286,6 +330,7 @@ class MumbleBot:
             elif command == var.config.get('command', 'update'):
                 if self.is_admin(user):
                     self.mumble.users[text.actor].send_message("Starting the update")
+                    # Need to be improved
                     tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
                     msg = ""
                     if "Requirement already up-to-date" in tp:
@@ -293,6 +338,7 @@ class MumbleBot:
                     else:
                         msg += "Update done : " + tp.split('Successfully installed')[1]
                     if 'up-to-date' not in sp.check_output(['/usr/bin/env', 'git', 'pull']).decode():
+                        # Need to change it with release tag
                         msg += "<br /> I'm up-to-date"
                     else:
                         msg += "<br /> I have available updates, need to do it manually"
@@ -306,6 +352,7 @@ class MumbleBot:
                     self.mumble.channels.find_by_name(self.channel).move_in()
 
             elif command == var.config.get('command', 'volume'):
+                # The volume is a percentage
                 if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
                     self.volume = float(float(parameter) / 100)
                     self.send_msg(var.config.get('strings', 'change_volume') % (
@@ -349,13 +396,15 @@ class MumbleBot:
                 self.send_msg(reply, text)
 
             elif command == var.config.get('command', 'skip'):
-                if parameter is not None and parameter.isdigit() and int(parameter) > 0:
+                if parameter is not None and parameter.isdigit() and int(parameter) > 0:  # Allow to remove specific music into the queue with a number
                     if int(parameter) < len(var.playlist):
                         removed = var.playlist.pop(int(parameter))
+
+                        # the Title isn't here if the music wasn't downloaded
                         self.send_msg(var.config.get('strings', 'removing_item') % (removed['title'] if 'title' in removed else removed['url']), text)
                     else:
                         self.send_msg(var.config.get('strings', 'no_possible'), text)
-                elif self.next():
+                elif self.next():  # Is no number send, just skip the current music
                     self.launch_music()
                     self.async_download_next()
                 else:
@@ -413,24 +462,28 @@ class MumbleBot:
         uri = ""
         logging.debug("launch_music asked" + str(var.playlist[0]))
         if var.playlist[0]["type"] == "url":
+            # Delete older music is the tmp folder is too big
             media.system.clear_tmp_folder(var.config.get('bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
+            # Check if the music is ready to be played
             if var.playlist[0]["ready"] == "downloading":
                 return
             elif var.playlist[0]["ready"] != "yes":
                 logging.info("Current music wasn't ready, Downloading...")
                 self.download_music(index=0)
 
+            # get the Path
             uri = var.playlist[0]['path']
             if os.path.isfile(uri):
                 audio = EasyID3(uri)
                 title = ""
                 if audio["title"]:
-                    title = audio["title"][0]
+                    title = audio["title"][0]  # take the title from the file tag
 
                 path_thumbnail = var.playlist[0]['path'][:-4] + '.jpg'  # Remove .mp3 and add .jpg
                 thumbnail_html = ""
                 if os.path.isfile(path_thumbnail):
+                    # Create the image message
                     im = Image.open(path_thumbnail)
                     im.thumbnail((100, 100), Image.ANTIALIAS)
                     buffer = BytesIO()
@@ -460,13 +513,14 @@ class MumbleBot:
 
         command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         logging.info("FFmpeg command : " + " ".join(command))
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)  # The ffmpeg process is a thread
         self.is_playing = True
 
     def download_music(self, index):
         if var.playlist[index]['type'] == 'url' and var.playlist[index]['ready'] == "validation":
             if media.url.get_url_info(index=index):
                 if var.playlist[index]['duration'] > var.config.getint('bot', 'max_track_duration'):
+                    # Check the length, useful in case of playlist, it wasn't checked before)
                     var.playlist.pop()
                     logging.info("the music " + var.playlist[index]["url"] + " has a duration of " + var.playlist[index]['duration'] + "s -- too long")
                     self.send_msg(var.config.get('strings', 'too_long'))
@@ -479,6 +533,7 @@ class MumbleBot:
                 self.send_msg(var.config.get('strings', 'unable_download'))
 
         if var.playlist[index]['type'] == 'url' and var.playlist[index]['ready'] == "no":
+            # download the music
             var.playlist[index]['ready'] = "downloading"
 
             logging.debug("Download index:" + str(index))
@@ -512,7 +567,7 @@ class MumbleBot:
 
             logging.info("Information before start downloading :" + str(var.playlist[index]))
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                for i in range(2):
+                for i in range(2):  # Always try 2 times
                     try:
                         ydl.extract_info(url)
                         if 'ready' in var.playlist[index] and var.playlist[index]['ready'] == "downloading":
@@ -524,6 +579,8 @@ class MumbleBot:
             return
 
     def async_download_next(self):
+        # Function start if the next music isn't ready
+        # Do nothing in case the next music is already downloaded
         logging.info("Async download next asked")
         if len(var.playlist) > 1 and var.playlist[1]['type'] == 'url' and var.playlist[1]['ready'] in ["no", "validation"]:
             th = threading.Thread(target=self.download_music, kwargs={'index': 1})
@@ -534,6 +591,7 @@ class MumbleBot:
         th.start()
 
     @staticmethod
+    # Parse the html from the message to get the URL
     def get_url_from_input(string):
         if string.startswith('http'):
             return string
@@ -544,15 +602,19 @@ class MumbleBot:
         else:
             return False
 
+    # Main loop of the Bot
     def loop(self):
         raw_music = ""
         while not self.exit and self.mumble.isAlive():
 
             while self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
+                # If the buffer isn't empty, I cannot send new music part, so I wait
                 time.sleep(0.01)
             if self.thread:
+                # I get raw from ffmpeg thread
                 raw_music = self.thread.stdout.read(480)
                 if raw_music:
+                    # Adjust the volume and send it to mumble
                     self.mumble.sound_output.add_sound(audioop.mul(raw_music, 2, self.volume))
                 else:
                     time.sleep(0.1)
@@ -560,23 +622,29 @@ class MumbleBot:
                 time.sleep(0.1)
 
             if self.thread is None or not raw_music:
+                # Not music into the buffet
                 if self.is_playing:
+                    # get next music
                     self.is_playing = False
                     self.next()
                 if len(var.playlist) > 0:
                     if var.playlist[0]['type'] in ['radio', 'file'] \
                             or (var.playlist[0]['type'] == 'url' and var.playlist[0]['ready'] not in ['validation', 'downloading']):
+                        # Check if the music can be start before launch the music
                         self.launch_music()
                         self.async_download_next()
 
         while self.mumble.sound_output.get_buffer_size() > 0:
+            # Empty the buffer before exit
             time.sleep(0.01)
         time.sleep(0.5)
 
         if self.exit:
+            # The db is not fixed config like url/user ban and volume
             util.write_db()
 
     def stop(self):
+        # Kill the ffmpeg thread and empty the playlist
         if self.thread:
             self.thread.kill()
             self.thread = None
@@ -587,6 +655,7 @@ class MumbleBot:
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
 
     def send_msg(self, msg, text=None):
+        # text if the object message, contain information if direct message or channel message
         if not text or not text.session:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
             own_channel.send_text_message(msg)
