@@ -511,7 +511,7 @@ class MumbleBot:
         else:
             ffmpeg_debug = "warning"
 
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
         logging.info("FFmpeg command : " + " ".join(command))
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)  # The ffmpeg process is a thread
         self.is_playing = True
