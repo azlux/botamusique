@@ -2,7 +2,7 @@ import youtube_dl
 import variables as var
 
 
-def get_playlist_info(url, start_index=1, user=""):
+def get_playlist_info(url, start_index=0, user=""):
     ydl_opts = {
         'extract_flat': 'in_playlist'
     }
