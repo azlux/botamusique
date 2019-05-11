@@ -184,11 +184,11 @@ class MumbleBot:
 
             # Anti stupid guy function
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_in_my_channel'))
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_in_my_channel'))
                 return
 
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'pm_not_allowed'))
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'pm_not_allowed'))
                 return
 
             ###
@@ -196,49 +196,49 @@ class MumbleBot:
             ###
             for i in var.db.items("user_ban"):
                 if user.lower() == i[0]:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'user_ban'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'user_ban'))
                     return
 
             if command == var.config.get('command', 'user_ban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.user_ban(parameter))
+                        self.mumble.users[text.actor].send_text_message(util.user_ban(parameter))
                     else:
-                        self.mumble.users[text.actor].send_message(util.get_user_ban())
+                        self.mumble.users[text.actor].send_text_message(util.get_user_ban())
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             elif command == var.config.get('command', 'user_unban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.user_unban(parameter))
+                        self.mumble.users[text.actor].send_text_message(util.user_unban(parameter))
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             elif command == var.config.get('command', 'url_ban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.url_ban(self.get_url_from_input(parameter)))
+                        self.mumble.users[text.actor].send_text_message(util.url_ban(self.get_url_from_input(parameter)))
                     else:
-                        self.mumble.users[text.actor].send_message(util.get_url_ban())
+                        self.mumble.users[text.actor].send_text_message(util.get_url_ban())
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             elif command == var.config.get('command', 'url_unban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.url_unban(self.get_url_from_input(parameter)))
+                        self.mumble.users[text.actor].send_text_message(util.url_unban(self.get_url_from_input(parameter)))
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             if parameter:
                 for i in var.db.items("url_ban"):
                     if self.get_url_from_input(parameter.lower()) == i[0]:
-                        self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
+                        self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'url_ban'))
                         return
 
             ###
@@ -287,7 +287,7 @@ class MumbleBot:
                     else:
                         for i in var.db.options("url_ban"):
                             if var.playlist[-1]['url'] == i:
-                                self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
+                                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'url_ban'))
                                 var.playlist.pop()
                                 return
                         var.playlist[-1]['ready'] = "no"
@@ -325,11 +325,11 @@ class MumbleBot:
                     self.stop()
                     self.exit = True
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
 
             elif command == var.config.get('command', 'update'):
                 if self.is_admin(user):
-                    self.mumble.users[text.actor].send_message("Starting the update")
+                    self.mumble.users[text.actor].send_text_message("Starting the update")
                     # Need to be improved
                     tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
                     msg = ""
@@ -342,9 +342,9 @@ class MumbleBot:
                         msg += "<br /> I'm up-to-date"
                     else:
                         msg += "<br /> I have available updates, need to do it manually"
-                    self.mumble.users[text.actor].send_message(msg)
+                    self.mumble.users[text.actor].send_text_message(msg)
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
 
             elif command == var.config.get('command', 'stop_and_getout'):
                 self.stop()
@@ -436,7 +436,7 @@ class MumbleBot:
                 var.playlist.append(var.playlist[0])
 
             else:
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command'))
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'bad_command'))
 
     @staticmethod
     def is_admin(user):
@@ -505,6 +505,8 @@ class MumbleBot:
             uri = var.playlist[0]["url"]
             title = media.radio.get_radio_server_description(uri)
             var.playlist[0]["title"] = title
+            if var.config.getboolean('bot', 'announce_current_music'):
+                self.send_msg(var.config.get('strings', 'now_playing') % (title, "URL : " + uri))
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
@@ -660,7 +662,7 @@ class MumbleBot:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
             own_channel.send_text_message(msg)
         else:
-            self.mumble.users[text.actor].send_message(msg)
+            self.mumble.users[text.actor].send_text_message(msg)
 
 
 def start_web_interface(addr, port):
