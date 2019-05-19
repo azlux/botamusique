@@ -405,6 +405,7 @@ class MumbleBot:
                 try:
                     result = pafy.call_gdata('search', {'q':parameter,'maxResults':1,'part':'id','type':'video','safeSearch':'none'})
                 except Exception as e:
+                    logging.debug(e)
                     self.send_msg(var.config.get('strings', 'search_error') % parameter)
                     return
                 if len(result['items']) == 0:
@@ -514,9 +515,11 @@ class MumbleBot:
         else:
             ffmpeg_debug = "warning"
 
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin',
+                '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20',
+                '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         logging.info("FFmpeg command : " + " ".join(command))
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=1024*1024)
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
         return True
 
@@ -532,7 +535,7 @@ class MumbleBot:
             return False
 
     def loop(self):
-        raw_music = 0
+        raw_music = None
         while not self.exit and self.mumble.isAlive():
             with self.work_queue_lock:
                 queue = self.work_queue
