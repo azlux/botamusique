@@ -1,11 +1,13 @@
 import youtube_dl
+import urllib
+import re
 
-
-def build_dict(info, user=""):
+def build_dict(info, user="", start=0):
     music = {
         'type': 'url',
         'url': info['webpage_url'],
         'user': user,
+        'start': start,
         'duration': info['duration'] / 60,
         'title': info['title'],
         'thumbnail': info['thumbnail']
@@ -16,6 +18,15 @@ def build_dict(info, user=""):
             break
     return music
 
+def get_start_time(qs):
+     d = urllib.parse.parse_qs(qs)
+     if 't' in d and len(d['t']) > 0:
+         mins = re.match(r'(\d+)m', d['t'][0])
+         mins = int(mins[1]) if mins else 0
+         secs = re.match(r'(\d+)s', d['t'][0])
+         secs = int(secs[1]) if secs else 0
+         return mins * 60 + secs
+     return 0
 
 def get_url_info(url, user=""):
     ydl_opts = {
@@ -37,7 +48,10 @@ def get_url_info(url, user=""):
                             'playlist_url': url})
                     return entries
 
-                return [build_dict(info, user)]
+                components = urllib.parse.urlparse(url)
+                start = get_start_time(components.query) or get_start_time(components.fragment)
+
+                return [build_dict(info, user, start)]
             except youtube_dl.utils.DownloadError as e:
                 print(e)
             except KeyError as e:

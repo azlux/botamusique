@@ -516,8 +516,10 @@ class MumbleBot:
             ffmpeg_debug = "warning"
 
         command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin',
-                '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20',
-                '-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+                '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20']
+        if music['start'] > 0:
+            command += ['-ss', str(music['start'])]
+        command += ['-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         logging.info("FFmpeg command : " + " ".join(command))
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
