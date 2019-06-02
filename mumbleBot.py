@@ -519,6 +519,8 @@ class MumbleBot:
                 '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20']
         if music['start'] > 0:
             command += ['-ss', str(music['start'])]
+        if music['end'] > 0:
+            command += ['-to', str(music['end'])]
         command += ['-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
         logging.info("FFmpeg command : " + " ".join(command))
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)

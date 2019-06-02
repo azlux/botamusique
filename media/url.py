@@ -2,12 +2,13 @@ import youtube_dl
 import urllib
 import re
 
-def build_dict(info, user="", start=0):
+def build_dict(info, user="", start=0, end=-1):
     music = {
         'type': 'url',
         'url': info['webpage_url'],
         'user': user,
         'start': start,
+        'end': end,
         'duration': info['duration'] / 60,
         'title': info['title'],
         'thumbnail': info['thumbnail']
@@ -18,15 +19,18 @@ def build_dict(info, user="", start=0):
             break
     return music
 
-def get_start_time(qs):
+def get_time(qs, key):
      d = urllib.parse.parse_qs(qs)
-     if 't' in d and len(d['t']) > 0:
-         mins = re.match(r'(\d+)m', d['t'][0])
-         mins = int(mins[1]) if mins else 0
-         secs = re.match(r'(\d+)s', d['t'][0])
-         secs = int(secs[1]) if secs else 0
+     if key in d and len(d[key]) > 0:
+         mins = re.match(r'([\d\.]+)m', d[key][0])
+         mins = float(mins[1]) if mins else 0
+         secs = re.match(r'([\d\.]+)s', d[key][0])
+         secs = float(secs[1]) if secs else 0
          return mins * 60 + secs
-     return 0
+     return None
+
+def get_component_time(components, key):
+    return get_time(components.query, key) or get_time(components.fragment, key)
 
 def get_url_info(url, user=""):
     ydl_opts = {
@@ -49,9 +53,11 @@ def get_url_info(url, user=""):
                     return entries
 
                 components = urllib.parse.urlparse(url)
-                start = get_start_time(components.query) or get_start_time(components.fragment)
+                start = get_component_time(components, 't') or get_component_time(components, 'start') or 0
+                length = get_component_time(components, 'l') or get_component_time(components, 'length')
+                end = start + length if length is not None else (get_component_time(components, 'end') or -1)
 
-                return [build_dict(info, user, start)]
+                return [build_dict(info, user, start, end)]
             except youtube_dl.utils.DownloadError as e:
                 print(e)
             except KeyError as e:
