@@ -55,6 +55,8 @@ type : file
     user
 """
 
+version = 2
+
 
 class MumbleBot:
     def __init__(self, args):
@@ -331,17 +333,7 @@ class MumbleBot:
                 if self.is_admin(user):
                     self.mumble.users[text.actor].send_text_message("Starting the update")
                     # Need to be improved
-                    tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
-                    msg = ""
-                    if "Requirement already up-to-date" in tp:
-                        msg += "Youtube-dl is up-to-date"
-                    else:
-                        msg += "Update done : " + tp.split('Successfully installed')[1]
-                    if 'up-to-date' not in sp.check_output(['/usr/bin/env', 'git', 'pull']).decode():
-                        # Need to change it with release tag
-                        msg += "<br /> I'm up-to-date"
-                    else:
-                        msg += "<br /> I have available updates, need to do it manually"
+                    msg = util.update(version)
                     self.mumble.users[text.actor].send_text_message(msg)
                 else:
                     self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
@@ -696,6 +688,13 @@ if __name__ == '__main__':
 
     db = configparser.ConfigParser(interpolation=None, allow_no_value=True, delimiters='²')
     db.read(var.dbfile, encoding='latin-1')
+
+    if 'url_ban' not in db.sections():
+        db.add_section('url_ban')
+    if 'bot' not in db.sections():
+        db.add_section('bot')
+    if 'user_ban' not in db.sections():
+        db.add_section('user_ban')
 
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(args.config), file=sys.stderr)

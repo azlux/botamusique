@@ -5,6 +5,9 @@ import magic
 import os
 import variables as var
 import zipfile
+import urllib.request
+import subprocess as sp
+import logging
 
 
 def get_recursive_filelist_sorted(path):
@@ -76,6 +79,24 @@ def get_user_ban():
     for i in var.db.items("user_ban"):
         res += "<br/>" + i[0]
     return res
+
+
+def update(version):
+    v = int(urllib.request.urlopen(urllib.request.Request("https://azlux.fr/botamusique/version")).read())
+    if v > version:
+        logging.info('New version, starting update')
+        tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh']).decode()
+        logging.debug(tp)
+        msg = "New version installed"
+    else:
+        logging.info('Starting update youtube-dl via pip3')
+        tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
+        msg = ""
+        if "Requirement already up-to-date" in tp:
+            msg += "Youtube-dl is up-to-date"
+        else:
+            msg += "Update done : " + tp.split('Successfully installed')[1]
+    return msg
 
 
 def user_ban(user):

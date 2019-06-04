@@ -12,10 +12,11 @@ Bot the can play :
 ## Menu
 1. [Web Interface](#web-interface)
 2. [Installation](#installation)
-3. [Generate a certificate](#optional-generate-a-certificate)
-4. [Starting the bot](#starting-the-bot)
-5. [Custom commands](#custom-commands)
-6. [Contributors](#contributors)
+3. [Update](#udpate)
+4. [Generate a certificate](#optional-generate-a-certificate)
+5. [Starting the bot](#starting-the-bot)
+6. [Custom commands](#custom-commands)
+7. [Contributors](#contributors)
 
 
 ### Web interface
@@ -29,7 +30,17 @@ You can enable the web interface into the configuration.ini file.
 1. You need python 3 with opuslib and protobuf (look at the requirement of pymumble)
 2. The Bot uses ffmpeg, so you know what you have to do if ffmpeg isn't in your package manager. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
-Example installation commands for Debian and Ubuntu:
+To Install botamusique (stable and build-in auto-update):
+```
+curl -Lo botamusique.tar.gz https://azlux.fr/botamusique/sources.tar.gz
+tar -xzf botamusique.tar.gz
+cd botamusique
+python3 -m venv venv
+venv/bin/pip install wheel
+venv/bin/pip install -r requirements.txt
+```
+
+For the master version, you can use Git installation commands (no build-in auto-update allowed):
 ```
 apt install python3-venv ffmpeg libjpeg-dev zlibc zlib1g zlib1g-dev
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
@@ -38,6 +49,17 @@ python3 -m venv venv
 venv/bin/pip install wheel
 venv/bin/pip install -r requirements.txt
 ```
+
+### Update
+If using the recommanded install, you can send to the bot `!update`(command by default)
+
+If using git, you need to make the update manually:
+```
+git pull --all
+git submodule update
+venv/bin/pip install --upgrade -r requirements.txt
+```
+
 
 ### (Optional) Generate a certificate
 `$ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`

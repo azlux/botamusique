@@ -5,7 +5,6 @@ import json
 import http.client
 import struct
 
-
 def get_radio_server_description(url):
     p = re.compile('(https?\:\/\/[^\/]*)', re.IGNORECASE)
     res = re.search(p, url)
