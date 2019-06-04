@@ -87,7 +87,10 @@ def update(version):
         logging.info('New version, starting update')
         tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh']).decode()
         logging.debug(tp)
+        logging.info('Update pip librairies dependancies')
+        tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirement.txt']).decode()
         msg = "New version installed"
+        
     else:
         logging.info('Starting update youtube-dl via pip3')
         tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
