@@ -307,14 +307,25 @@ class MumbleBot:
                 if media.playlist.get_playlist_info(url=self.get_url_from_input(parameter), start_index=offset, user=user):
                     self.async_download_next()
 
-            elif command == var.config.get('command', 'play_radio') and parameter:
-                if var.config.has_option('radio', parameter):
-                    parameter = var.config.get('radio', parameter)
-                music = {'type': 'radio',
-                         'url': self.get_url_from_input(parameter),
-                         'user': user}
-                var.playlist.append(music)
-                self.async_download_next()
+            elif command == var.config.get('command', 'play_radio'):
+                if not parameter:
+                    all_radio = var.config.items('radio')
+                    msg = var.config.get('strings', 'preconfigurated_radio') + " :<br />"
+                    for i in all_radio:
+                        comment = ""
+                        if len(i[1].split(maxsplit=1)) == 2:
+                            comment = " - " + i[1].split(maxsplit=1)[1]
+                        msg += "<br />" + i[0] + comment
+                    self.send_msg(msg)
+                else:
+                    if var.config.has_option('radio', parameter):
+                        parameter = var.config.get('radio', parameter)
+                        parameter = parameter.split()[0]
+                    music = {'type': 'radio',
+                             'url': self.get_url_from_input(parameter),
+                             'user': user}
+                    var.playlist.append(music)
+                    self.async_download_next()
 
             elif command == var.config.get('command', 'help'):
                 self.send_msg(var.config.get('strings', 'help'), text)
