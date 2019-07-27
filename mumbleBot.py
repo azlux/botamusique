@@ -27,7 +27,7 @@ import media.file
 import media.playlist
 import media.radio
 import media.system
-from lib.radiobrowser import getstations_byname, geturl_byid
+from lib import radiobrowser
 
 """
 FORMAT OF A MUSIC INTO THE PLAYLIST
@@ -371,7 +371,7 @@ class MumbleBot:
                 else:
                     logging.info('Found query parameter: ' + parameter)
                     self.send_msg('Searching for stations - this may take some seconds...', text)
-                    rb_stations = getstations_byname(parameter)
+                    rb_stations = radiobrowser.getstations_byname(parameter)
                     msg = var.config.get('strings', 'rbqueryresult') + " :"
                     msg += '\n<table><tr><th>ID</th><th>Station Name</th></tr>'
                     for s in rb_stations:
@@ -387,7 +387,7 @@ class MumbleBot:
                     self.send_msg(msg, text)
                 else:
                     logging.info('Retreiving url for station ID ' + parameter)
-                    url = geturl_byid(parameter)
+                    url = radiobrowser.geturl_byid(parameter)
                     if url != "-1":
                         logging.info('Found url: ' + url)
                         music = {'type': 'radio',
