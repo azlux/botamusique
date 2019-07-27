@@ -365,11 +365,11 @@ class MumbleBot:
             elif command == var.config.get('command', 'rb_query'):
                 logging.info('Querying radio stations')
                 if not parameter:
-                    logging.info('rbquery without parameter')
+                    logging.debug('rbquery without parameter')
                     msg += 'You have to add a query text to search for a specific radio station.'
                     self.send_msg(msg, text)
                 else:
-                    logging.info('Found query parameter: ' + parameter)
+                    logging.debug('Found query parameter: ' + parameter)
                     self.send_msg('Searching for stations - this may take some seconds...', text)
                     rb_stations = radiobrowser.getstations_byname(parameter)
                     msg = var.config.get('strings', 'rbqueryresult') + " :"
@@ -380,13 +380,13 @@ class MumbleBot:
                     self.send_msg(msg, text)
             # Play a secific station (by id) from http://www.radio-browser.info API
             elif command == var.config.get('command', 'rb_play'):
-                logging.info('Play a station by ID')
+                logging.debug('Play a station by ID')
                 if not parameter:
-                    logging.info('rbplay without parameter')
+                    logging.debug('rbplay without parameter')
                     msg += 'Please enter a station ID from rbquery. Example: !rbplay 96748'
                     self.send_msg(msg, text)
                 else:
-                    logging.info('Retreiving url for station ID ' + parameter)
+                    logging.debug('Retreiving url for station ID ' + parameter)
                     url = radiobrowser.geturl_byid(parameter)
                     if url != "-1":
                         logging.info('Found url: ' + url)
