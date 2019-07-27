@@ -391,6 +391,9 @@ class MumbleBot:
                     self.send_msg(msg, text)
                 else:
                     logging.debug('Retreiving url for station ID ' + parameter)
+                    msg = 'Start playing radio station: ' + radiobrowser.getstationname_byid(parameter)
+                    logging.info(' Play radio station ' + msg)
+                    self.send_msg(msg, text)
                     url = radiobrowser.geturl_byid(parameter)
                     if url != "-1":
                         logging.info('Found url: ' + url)
@@ -399,7 +402,6 @@ class MumbleBot:
 			                     'user': user}
                         var.playlist.append(music)
                         self.async_download_next()
-                        self.send_msg('Now playing radio station: ' + radiobrowser.getstationname_byid(parameter), text)
                     else:
                         logging.info('No playable url found.')
                         msg += "No playable url found for this station, please try another station."
