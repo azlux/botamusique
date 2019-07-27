@@ -330,6 +330,8 @@ class MumbleBot:
                         self.async_download_next()
                     else:
                         self.send_msg(var.config.get('strings', 'bad_url'))
+            elif command == var.config.get('command', 'rb_query'):
+                logging.info('Querying radio stations')
 
             elif command == var.config.get('command', 'help'):
                 self.send_msg(var.config.get('strings', 'help'), text)
