@@ -8,7 +8,7 @@ def getstations_byname(query):
     for st in results:
         try:
             # url = rb.playable_station(st['id'])['url']
-            station = {'stationname': st['name'], 'url': url, 'id':st['id']}
+            station = {'stationname': st['name'], 'id':st['id']}
             stations.append(station)
         except:
             pass
