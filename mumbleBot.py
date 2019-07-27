@@ -399,7 +399,9 @@ class MumbleBot:
                     genre = rstation[0]['tags']
                     imageurl = rstation[0]['favicon']
                     homepage = rstation[0]['homepage']
-                    msg = f'Start playing radio station: {stationname} ({codec}/{bitrate} kbit, country: {country}, genre: {genre})'
+                    logging.info(f'hp: {homepage}')
+                    logging.info(f'img: {imageurl}')
+                    msg = f'Start playing radio station: {stationname} ({codec}/{bitrate} kbit, Country: {country}, Genre: {genre})'
                     if homepage and imageurl:
                         msg += f'<a href="{homepage}"><img src="{imageurl}"></a>'
                     logging.debug(f'Play radio station {stationname}')
