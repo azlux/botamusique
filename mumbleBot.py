@@ -27,7 +27,7 @@ import media.file
 import media.playlist
 import media.radio
 import media.system
-from radiobrowser import getstations_byname, geturl_byid
+from lib.radiobrowser import getstations_byname, geturl_byid
 
 """
 FORMAT OF A MUSIC INTO THE PLAYLIST
