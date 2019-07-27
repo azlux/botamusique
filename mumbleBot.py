@@ -27,7 +27,7 @@ import media.file
 import media.playlist
 import media.radio
 import media.system
-from radiobrowser import getstations_byname
+from radiobrowser import getstations_byname, geturl_byid
 
 """
 FORMAT OF A MUSIC INTO THE PLAYLIST
@@ -361,20 +361,43 @@ class MumbleBot:
                         self.async_download_next()
                     else:
                         self.send_msg(var.config.get('strings', 'bad_url'))
+            # query http://www.radio-browser.info API for a radio station
             elif command == var.config.get('command', 'rb_query'):
                 logging.info('Querying radio stations')
                 msg = var.config.get(
                         'strings', 'rbqueryresult') + " :"
                 if not parameter:
                     logging.info('rbquery without parameter')
+                    msg += 'You have to add a query text to search for a specific radio station.'
+                    self.send_msg(msg, text)
                 else:
                     logging.info('Found query parameter: ' + parameter)
-                    stations = getstations_byname(parameter)
+                    rb_stations = getstations_byname(parameter)
                     msg += '\n<table><tr><th>ID</th><th>Station Name</th></tr>'
-                    for s in stations:
+                    for s in rb_stations:
                         msg += '<tr><td>' + s['id'] + '</td><td>' + s['stationname'] + '</td></tr>'
                     msg += '</table>'
                     self.send_msg(msg, text)
+            # Play a secific station (by id) from http://www.radio-browser.info API
+            elif command == var.config.get('command', 'rb_play'):
+                logging.info('Play a station by ID')
+                if not parameter:
+                    logging.info('rbplay withou parameter')
+                    msg += 'Please enter a station ID from rbquery. Example: !rbplay 96748'
+                    self.send_msg(msg, text)
+                else:
+                    logging.info('Retreiving url for station ID ' + parameter)
+                    url = geturl_byid(parameter)
+                    if url != "-1":
+                        logging.info('Found url: ' + url)
+                        music = {'type': 'radio',
+			                     'url': url,
+			                     'user': user}
+                        var.playlist.append(music)
+                        self.async_download_next()
+                    else:
+                        logging.info('No playable url found.')
+                pass
 
             elif command == var.config.get('command', 'help'):
                 self.send_msg(var.config.get('strings', 'help'), text)

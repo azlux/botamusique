@@ -14,6 +14,13 @@ def getstations_byname(query):
             pass
     return stations
 
+def geturl_byid(id):
+    url = rb.playable_station(id)['url']
+    if url != None:
+        return url
+    else:
+        return "-1"
+
 
 if __name__ == "__main__":
     r = getstations_byname('r.sh')
