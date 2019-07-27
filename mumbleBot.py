@@ -335,8 +335,6 @@ class MumbleBot:
                 if not parameter:
                     logging.debug('rbquery without parameter')
                 else:
-                    parameter = var.config.get('rbquery', parameter)
-                    parameter = parameter.split()[0]
                     logging.debug('Found query parameter: ' + parameter)
 
             elif command == var.config.get('command', 'help'):
