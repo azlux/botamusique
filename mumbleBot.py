@@ -398,6 +398,7 @@ class MumbleBot:
 			                     'url': url,
 			                     'user': user}
                         var.playlist.append(music)
+                        self.send_msg('Now playing ' + radiobrowser.getstationname_byid(parameter), text)
                         self.async_download_next()
                     else:
                         logging.info('No playable url found.')

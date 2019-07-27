@@ -21,7 +21,9 @@ def geturl_byid(id):
     else:
         return "-1"
 
-
+def getstationname_byid(id):
+    return rb.stations_byid(id)
+    
 if __name__ == "__main__":
     r = getstations_byname('r.sh')
     pass
