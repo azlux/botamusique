@@ -27,7 +27,7 @@ import media.file
 import media.playlist
 import media.radio
 import media.system
-from lib import radiobrowser
+from librb import radiobrowser
 
 """
 FORMAT OF A MUSIC INTO THE PLAYLIST
