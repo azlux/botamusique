@@ -80,6 +80,8 @@ you have the section :
 - webinterface : basic configuration about the interface (disabled by default)
 - command : you can customize the command you want for each action (if you put `help = helpme` , the bot will response to `!helpme` )
 - radio : here you can have a list of default radio ( I can play a jazz radio with the command `!radio jazz`)
+- rbquery : search http://www.radio-browser.info API for listed radio stations - eg: `!rbquery nora`
+- rbplay : Play a specific radio station by ID (from rbquery) - eg: `!rbplay 96748`
 - strings : you can customize all string the bot can say.
 - debug : option to active ffmpeg or pymumble debug. (Can be very verbose)
 
