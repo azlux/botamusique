@@ -375,6 +375,7 @@ class MumbleBot:
                     msg = var.config.get('strings', 'rbqueryresult') + " :"
                     msg += '\n<table><tr><th>ID</th><th>Station Name</th></tr>'
                     if not rb_stations:
+                        logging.debug('No matches found for rbquery ' + parameter)
                         self.send_msg('Radio-Browser found no matches for ' + parameter, text)
                     else:
                         for s in rb_stations:
