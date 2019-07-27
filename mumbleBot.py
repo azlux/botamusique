@@ -363,6 +363,8 @@ class MumbleBot:
                         self.send_msg(var.config.get('strings', 'bad_url'))
             elif command == var.config.get('command', 'rb_query'):
                 logging.info('Querying radio stations')
+                msg = var.config.get(
+                        'strings', 'rbqueryresult') + " :"
                 if not parameter:
                     logging.info('rbquery without parameter')
                 else:
