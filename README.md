@@ -4,7 +4,8 @@ Botamusique is a mumble bot which goal is to allow users to listen music togethe
 Predicted functionalities will be ones you could expect from any classic music player.
 
 Bot the can play :
-- Radio url
+- Radio station from url
+- Radio station from http://www.radio-browser.info API (query from > 24.000 stations)
 - Youtube/Soundcloud URL (everything supported by youtube-dl)
 - Local folder (disabled, I need to work on the web interface)
 
