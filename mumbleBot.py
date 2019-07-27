@@ -391,7 +391,12 @@ class MumbleBot:
                     self.send_msg(msg, text)
                 else:
                     logging.debug('Retreiving url for station ID ' + parameter)
-                    msg = 'Start playing radio station: ' + radiobrowser.getstationname_byid(parameter)
+                    rstation = radiobrowser.getstationname_byid(parameter)
+                    stationname = rstation['name']
+                    country = rstation['country']
+                    codec = rstation['codec']
+                    bitrate = rstation['bitrate'] 
+                    msg = f'Start playing radio station: {stationname} from {country} ({codec}/{bitrate} kbit)'
                     logging.info(' Play radio station ' + msg)
                     self.send_msg(msg, text)
                     url = radiobrowser.geturl_byid(parameter)
