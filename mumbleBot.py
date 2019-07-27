@@ -395,9 +395,14 @@ class MumbleBot:
                     stationname = rstation[0]['name']
                     country = rstation[0]['country']
                     codec = rstation[0]['codec']
-                    bitrate = rstation[0]['bitrate'] 
-                    msg = f'Start playing radio station: {stationname} from {country} ({codec}/{bitrate} kbit)'
-                    logging.info(' Play radio station ' + msg)
+                    bitrate = rstation[0]['bitrate']
+                    genre = rstation[0]['tags']
+                    imageurl = rstation[0]['favicon']
+                    homepage = rstation[0]['homepage']
+                    msg = f'Start playing radio station: {stationname} ({codec}/{bitrate} kbit, country: {country}, genre: {genre})'
+                    if homepage and imageurl:
+                        msg += f'<a href="{homepage}"><img src="{imageurl}"></a>'
+                    logging.debug(f'Play radio station {stationname}')
                     self.send_msg(msg, text)
                     url = radiobrowser.geturl_byid(parameter)
                     if url != "-1":
