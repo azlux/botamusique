@@ -382,7 +382,7 @@ class MumbleBot:
             elif command == var.config.get('command', 'rb_play'):
                 logging.info('Play a station by ID')
                 if not parameter:
-                    logging.info('rbplay withou parameter')
+                    logging.info('rbplay without parameter')
                     msg += 'Please enter a station ID from rbquery. Example: !rbplay 96748'
                     self.send_msg(msg, text)
                 else:
@@ -397,7 +397,8 @@ class MumbleBot:
                         self.async_download_next()
                     else:
                         logging.info('No playable url found.')
-                pass
+                        msg += "No playable url found for this station, please try another station."
+                        self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'help'):
                 self.send_msg(var.config.get('strings', 'help'), text)
