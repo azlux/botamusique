@@ -26,5 +26,5 @@ def getstationname_byid(id):
     
 if __name__ == "__main__":
     r = getstations_byname('r.sh')
-    name = getstationname_byid(96748)
+    stationinfo = getstationname_byid(96748)
     pass
