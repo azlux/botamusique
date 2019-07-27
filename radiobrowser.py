@@ -1,4 +1,4 @@
-from radios import RadioBrowser
+from rbRadios import RadioBrowser
 
 rb = RadioBrowser()
 
