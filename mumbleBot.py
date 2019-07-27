@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import ptvsd
+
 import threading
 import time
 import sys
@@ -54,7 +54,7 @@ type : file
     duration
     user
 """
-ptvsd.enable_attach()
+
 version = 2
 
 
