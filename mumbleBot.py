@@ -371,7 +371,7 @@ class MumbleBot:
                     logging.info('Found query parameter: ' + parameter)
                     stations = getstations_byname(parameter)
                     for s in stations:
-                        msg += "<br />" + s['id'] + s['stationname'] + ': '
+                        msg += "<br />" + s['id'] + '\t\t' + s['stationname'] + ': '
                     self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'help'):
