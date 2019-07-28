@@ -388,7 +388,10 @@ class MumbleBot:
                             homepage = s['homepage']
                             msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}/</td></tr>'
                         msg += '</table>'
-                        self.send_msg(msg, text)
+                        if len(msg) < 5000:
+                            self.send_msg(msg, text)
+                        else:
+                            self.send_msg('Query result too long to post (> 5000 characters), please try another query.', text)
             # Play a secific station (by id) from http://www.radio-browser.info API
             elif command == var.config.get('command', 'rb_play'):
                 logging.debug('Play a station by ID')
