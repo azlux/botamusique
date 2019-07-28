@@ -386,7 +386,7 @@ class MumbleBot:
                             bitrate = s['bitrate']
                             genre = s['genre']
                             homepage = s['homepage']
-                            msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}/</td></tr></table>'
+                            msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}/</td></tr>'
                         msg += '</table>'
                         self.send_msg(msg, text)
             # Play a secific station (by id) from http://www.radio-browser.info API
