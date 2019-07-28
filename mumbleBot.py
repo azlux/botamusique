@@ -389,9 +389,9 @@ class MumbleBot:
                         msg += '</table>'
                         # Shorten table if message too long
                         if len(msg) < 5000:
+                            logging.info('Result too long stage I')
                             msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L1)'
                             msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th></tr>'
-                        else:
                             for s in rb_stations:
                                 stationid = s['id']
                                 stationname = s['stationname']
@@ -399,6 +399,7 @@ class MumbleBot:
                                 if len(msg) < 5000:
                                     self.send_msg(msg, text)
                                 else:
+                                    logging.info('Result too long stage II')
                                     msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L2)'
                                     msg += '!rbplay ID - Station Name'
                                     for s in rb_stations:
