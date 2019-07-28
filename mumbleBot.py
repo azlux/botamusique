@@ -404,7 +404,7 @@ class MumbleBot:
                                     msg += '!rbplay ID - Station Name'
                                     for s in rb_stations:
                                         stationid = s['id']
-                                        stationname = s['stationname']
+                                        stationname = s['stationname'][:12]
                                         msg += f'{stationid} - {stationname}'
                                         if len(msg) < 5000:
                                             self.send_msg(msg, text)
