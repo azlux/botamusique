@@ -373,13 +373,13 @@ class MumbleBot:
                     self.send_msg('Searching for stations - this may take some seconds...', text)
                     rb_stations = radiobrowser.getstations_byname(parameter)
                     msg = var.config.get('strings', 'rbqueryresult') + " :"
-                    msg += '\n<table><tr><th>ID</th><th>Station Name</th></tr>'
+                    msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>'
                     if not rb_stations:
                         logging.debug('No matches found for rbquery ' + parameter)
                         self.send_msg('Radio-Browser found no matches for ' + parameter, text)
                     else:
                         for s in rb_stations:
-                            msg += '<tr><td>' + s['id'] + '</td><td>' + s['stationname'] + '</td></tr>'
+                            msg += f'<tr><td>{s['id']}</td><td>{s['stationname']}</td><td>{s['genre']}</td><td>{s['codec']}/{s['bitrate']}</td><td>{s['country']}</td><td>{s['homepage']}/</td></tr></table>'
                         msg += '</table>'
                         self.send_msg(msg, text)
             # Play a secific station (by id) from http://www.radio-browser.info API

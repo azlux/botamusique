@@ -1,6 +1,6 @@
-from librb.rbRadios import RadioBrowser
+from rbRadios import RadioBrowser
 
-rb = RadioBrowser()
+rb = librb.RadioBrowser()
 
 def getstations_byname(query):
     results = rb.stations_byname(query)
@@ -8,7 +8,7 @@ def getstations_byname(query):
     for st in results:
         try:
             # url = rb.playable_station(st['id'])['url']
-            station = {'stationname': st['name'], 'id':st['id']}
+            station = {'stationname': st['name'], 'id':st['id'], 'codec':st['codec'], 'bitrate':st['bitrate'], 'country':st['country'], 'homepage':st['homepage'], 'genre':st['tags']}
             stations.append(station)
         except:
             pass
