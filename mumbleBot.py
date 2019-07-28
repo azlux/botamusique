@@ -387,8 +387,8 @@ class MumbleBot:
                             genre = s['genre']
                             # msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td></tr>'
                             msg += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td></tr>' % (stationid, stationname, genre, codec, bitrate, country)
-                            msg += '</table>'
-                            # Full message as html table
+                        msg += '</table>'
+                        # Full message as html table
                         if len(msg) <= 5000:
                             self.send_msg(msg, text)
                         # Shorten message if message too long (stage I)
@@ -401,6 +401,7 @@ class MumbleBot:
                                 stationname = s['stationname']
                                 # msg += f'<tr><td>{stationid}</td><td>{stationname}</td>'
                                 msg += '<tr><td>%s</td><td>%s</td>' % (stationid, stationname)
+                            msg += '</table>'
                             if len(msg) <= 5000:
                                 self.send_msg(msg, text)
                             # Shorten message if message too long (stage II)
