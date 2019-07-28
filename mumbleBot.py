@@ -384,7 +384,7 @@ class MumbleBot:
                             country = s['country']
                             codec = s['codec']
                             bitrate = s['bitrate']
-                            genre = s['tags']
+                            genre = s['genre']
                             homepage = s['homepage']
                             msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}/</td></tr></table>'
                         msg += '</table>'
