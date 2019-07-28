@@ -373,7 +373,7 @@ class MumbleBot:
                     self.send_msg('Searching for stations - this may take some seconds...', text)
                     rb_stations = radiobrowser.getstations_byname(parameter)
                     msg = var.config.get('strings', 'rbqueryresult') + " :"
-                    msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>'
+                    msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th></tr>'
                     if not rb_stations:
                         logging.debug('No matches found for rbquery ' + parameter)
                         self.send_msg('Radio-Browser found no matches for ' + parameter, text)
@@ -385,8 +385,7 @@ class MumbleBot:
                             codec = s['codec']
                             bitrate = s['bitrate']
                             genre = s['genre']
-                            homepage = s['homepage']
-                            msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}/</td></tr>'
+                            msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td></tr>'
                         msg += '</table>'
                         if len(msg) < 5000:
                             self.send_msg(msg, text)
