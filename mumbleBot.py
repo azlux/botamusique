@@ -366,11 +366,11 @@ class MumbleBot:
                 logging.info('Querying radio stations')
                 if not parameter:
                     logging.debug('rbquery without parameter')
-                    msg += 'You have to add a query text to search for a specific radio station.'
+                    msg += 'You have to add a query text to search for a matching radio stations.'
                     self.send_msg(msg, text)
                 else:
                     logging.debug('Found query parameter: ' + parameter)
-                    self.send_msg('Searching for stations - this may take some seconds...', text)
+                    # self.send_msg('Searching for stations - this may take some seconds...', text)
                     rb_stations = radiobrowser.getstations_byname(parameter)
                     msg = var.config.get('strings', 'rbqueryresult') + " :"
                     msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th></tr>'
