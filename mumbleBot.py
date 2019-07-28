@@ -379,7 +379,14 @@ class MumbleBot:
                         self.send_msg('Radio-Browser found no matches for ' + parameter, text)
                     else:
                         for s in rb_stations:
-                            msg += f'<tr><td>{s['id']}</td><td>{s['stationname']}</td><td>{s['genre']}</td><td>{s['codec']}/{s['bitrate']}</td><td>{s['country']}</td><td>{s['homepage']}/</td></tr></table>'
+                            stationid = s['id']
+                            stationname = s['name']
+                            country = s['country']
+                            codec = s['codec']
+                            bitrate = s['bitrate']
+                            genre = s['tags']
+                            homepage = s['homepage']
+                            msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}/</td></tr></table>'
                         msg += '</table>'
                         self.send_msg(msg, text)
             # Play a secific station (by id) from http://www.radio-browser.info API
