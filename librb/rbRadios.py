@@ -11,9 +11,9 @@ def request(endpoint, **kwargs):
     fmt = kwargs.get("format", "json")
 
     if fmt == "xml":
-        content_type = f"application/{fmt}"
+        content_type = "application/%s" % fmt
     else:
-        content_type = f"application/{fmt}"
+        content_type = "application/%s" % fmt
 
     headers = {"content-type": content_type, "User-Agent": "pyradios/dev"}
 
