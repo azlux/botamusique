@@ -380,7 +380,7 @@ class MumbleBot:
                     else:
                         for s in rb_stations:
                             stationid = s['id']
-                            stationname = s['name']
+                            stationname = s['stationname']
                             country = s['country']
                             codec = s['codec']
                             bitrate = s['bitrate']
