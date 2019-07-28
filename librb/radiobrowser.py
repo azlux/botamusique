@@ -1,4 +1,4 @@
-from rbRadios import RadioBrowser
+from librb.rbRadios import RadioBrowser
 
 rb = librb.RadioBrowser()
 
