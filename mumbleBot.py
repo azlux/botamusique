@@ -389,7 +389,7 @@ class MumbleBot:
                             msg += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td></tr>' % (stationid, stationname, genre, codec, bitrate, country)
                         msg += '</table>'
                         # Shorten table if message too long
-                        if len(msg) < 5000:
+                        if len(msg) <= 5000:
                             logging.debug('Result too long stage I')
                             msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L1)'
                             msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th></tr>'
@@ -398,21 +398,20 @@ class MumbleBot:
                                 stationname = s['stationname']
                                 # msg += f'<tr><td>{stationid}</td><td>{stationname}</td>'
                                 msg += '<tr><td>%s</td><td>%s</td>' % (stationid, stationname)
-                                if len(msg) < 5000:
+                                self.send_msg(msg, text)
+                        else:
+                            logging.debug('Result too long stage II')
+                            msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L2)'
+                            msg += '!rbplay ID - Station Name'
+                            for s in rb_stations:
+                                stationid = s['id']
+                                stationname = s['stationname'][:12]
+                                # msg += f'{stationid} - {stationname}'
+                                msg += '%s - %s' % (stationid, stationname)
+                                if len(msg) <= 5000:
                                     self.send_msg(msg, text)
                                 else:
-                                    logging.debug('Result too long stage II')
-                                    msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L2)'
-                                    msg += '!rbplay ID - Station Name'
-                                    for s in rb_stations:
-                                        stationid = s['id']
-                                        stationname = s['stationname'][:12]
-                                        # msg += f'{stationid} - {stationname}'
-                                        msg += '%s - %s' % (stationid, stationname)
-                                        if len(msg) < 5000:
-                                            self.send_msg(msg, text)
-                                        else:
-                                            self.send_msg('Query result too long to post (> 5000 characters), please try another query.', text)
+                                    self.send_msg('Query result too long to post (> 5000 characters), please try another query.', text)
             # Play a secific station (by id) from http://www.radio-browser.info API
             elif command == var.config.get('command', 'rb_play'):
                 logging.debug('Play a station by ID')
