@@ -5,7 +5,7 @@ Predicted functionalities will be ones you could expect from any classic music p
 
 Bot the can play :
 - Radio station from url
-- Radio station from http://www.radio-browser.info API (query from > 24.000 stations)
+- Radio station from http://www.radio-browser.info API (query from > 24k stations)
 - Youtube/Soundcloud URL (everything supported by youtube-dl)
 - Local folder (disabled, I need to work on the web interface)
 
@@ -84,10 +84,10 @@ you have the section :
 - rbquery : search http://www.radio-browser.info API for listed radio stations - eg: `!rbquery nora`
 - rbplay : Play a specific radio station by ID (from rbquery) - eg: `!rbplay 96748`
 - strings : you can customize all string the bot can say.
-- debug : option to active ffmpeg or pymumble debug. (Can be very verbose)
+- debug : option to activate ffmpeg or pymumble debug. (Can be very verbose)
 
 ### Contributors
-If you want to participate, You're welcome to fork and pull requests Fix et new features.
+If you want to participate, You're welcome to fork and pull requests (fixes and new features).
 
 The following people joined the collaborators for a faster development, big thanks:
 - @slipenbois
