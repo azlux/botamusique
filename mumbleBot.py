@@ -435,13 +435,13 @@ class MumbleBot:
                     bitrate = rstation[0]['bitrate']
                     genre = rstation[0]['tags']
                     homepage = rstation[0]['homepage']
-                    msg = 'Start playing radio station:'
+                    msg = 'Radio station added to playlist:'
                     # msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
                     #       f'<tr><td>{parameter}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}</td></tr></table>'
                     msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
                           '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td><td>%s</td></tr></table>' \
                            % (parameter, stationname, genre, codec, bitrate, country, homepage)
-                    logging.debug('Play radio station %s' % stationname)
+                    logging.debug('Added station to playlist %s' % stationname)
                     self.send_msg(msg, text)
                     url = radiobrowser.geturl_byid(parameter)
                     if url != "-1":
