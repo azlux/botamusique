@@ -1,13 +1,12 @@
 from librb.rbRadios import RadioBrowser
 
-rb = librb.RadioBrowser()
+rb = RadioBrowser()
 
 def getstations_byname(query):
     results = rb.stations_byname(query)
     stations = []
     for st in results:
         try:
-            # url = rb.playable_station(st['id'])['url']
             station = {'stationname': st['name'], 'id':st['id'], 'codec':st['codec'], 'bitrate':st['bitrate'], 'country':st['country'], 'homepage':st['homepage'], 'genre':st['tags']}
             stations.append(station)
         except:
