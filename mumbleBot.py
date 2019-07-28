@@ -385,7 +385,8 @@ class MumbleBot:
                             codec = s['codec']
                             bitrate = s['bitrate']
                             genre = s['genre']
-                            msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td></tr>'
+                            # msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td></tr>'
+                            msg += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td></tr>' % (stationid, stationname, genre, codec, bitrate, country)
                         msg += '</table>'
                         # Shorten table if message too long
                         if len(msg) < 5000:
@@ -395,7 +396,8 @@ class MumbleBot:
                             for s in rb_stations:
                                 stationid = s['id']
                                 stationname = s['stationname']
-                                msg += f'<tr><td>{stationid}</td><td>{stationname}</td>'
+                                # msg += f'<tr><td>{stationid}</td><td>{stationname}</td>'
+                                msg += '<tr><td>%s</td><td>%s</td>' % (stationid, stationname)
                                 if len(msg) < 5000:
                                     self.send_msg(msg, text)
                                 else:
@@ -405,7 +407,8 @@ class MumbleBot:
                                     for s in rb_stations:
                                         stationid = s['id']
                                         stationname = s['stationname'][:12]
-                                        msg += f'{stationid} - {stationname}'
+                                        # msg += f'{stationid} - {stationname}'
+                                        msg += '%s - %s' % (stationid, stationname)
                                         if len(msg) < 5000:
                                             self.send_msg(msg, text)
                                         else:
@@ -426,10 +429,13 @@ class MumbleBot:
                     bitrate = rstation[0]['bitrate']
                     genre = rstation[0]['tags']
                     homepage = rstation[0]['homepage']
-                    msg = f'Start playing radio station:'
+                    msg = 'Start playing radio station:'
+                    # msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
+                    #       f'<tr><td>{parameter}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}</td></tr></table>'
                     msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
-                          f'<tr><td>{parameter}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}</td></tr></table>'
-                    logging.debug(f'Play radio station {stationname}')
+                          '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td><td>%s</td></tr></table>' \
+                           % (parameter, stationname, genre, codec, bitrate, country, homepage)
+                    logging.debug('Play radio station %s' % stationname)
                     self.send_msg(msg, text)
                     url = radiobrowser.geturl_byid(parameter)
                     if url != "-1":
