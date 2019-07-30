@@ -1,9 +1,11 @@
 import re
-import urllib
+import urllib.request
+import urllib.error
 import logging
 import json
 import http.client
 import struct
+
 
 def get_radio_server_description(url):
     p = re.compile('(https?\:\/\/[^\/]*)', re.IGNORECASE)
@@ -29,18 +31,20 @@ def get_radio_server_description(url):
         try:
             request = urllib.request.Request(url_icecast)
             response = urllib.request.urlopen(request)
-            data = json.loads(response.read().decode('utf-8', errors='ignore'), strict=False)
-            source = data['icestats']['source']
-            if type(source) is list:
-                source = source[0]
-            title_server = source['server_name'] + ' - ' + source['server_description']
-            logging.info("TITLE FOUND ICECAST: " + title_server)
-            if not title_server:
-                title_server = url
+            response_data = response.read().decode('utf-8', errors='ignore')
+            if response_data:
+                data = json.loads(response_data, strict=False)
+                source = data['icestats']['source']
+                if type(source) is list:
+                    source = source[0]
+                title_server = source['server_name']
+                if 'server_description' in source:
+                    title_server += ' - ' + source['server_description']
+                logging.info("TITLE FOUND ICECAST: " + title_server)
+                if not title_server:
+                    title_server = url
         except urllib.error.URLError:
             title_server = url
-        except urllib.error.HTTPError:
-            return False
         except http.client.BadStatusLine:
             pass
     return title_server
@@ -67,4 +71,3 @@ def get_radio_title(url):
     except (urllib.error.URLError, urllib.error.HTTPError):
         pass
     return 'Unable to get the music title'
-

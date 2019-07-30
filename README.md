@@ -17,7 +17,8 @@ Bot the can play :
 4. [Generate a certificate](#optional-generate-a-certificate)
 5. [Starting the bot](#starting-the-bot)
 6. [Custom commands](#custom-commands)
-7. [Contributors](#contributors)
+7. [Known issues](#known-issues)
+8. [Contributors](#contributors)
 
 
 ### Web interface
@@ -85,6 +86,14 @@ you have the section :
 - rbplay : Play a specific radio station by ID (from rbquery) - eg: `!rbplay 96748`
 - strings : you can customize all string the bot can say.
 - debug : option to activate ffmpeg or pymumble debug. (Can be very verbose)
+
+### Known Issues
+
+During installation, you can have the error:
+```
+ImportError: libtiff.so.5: cannot open shared object file: No such file or directory
+```
+You need to install a missing system librairie: `apt install libtiff5`
 
 ### Contributors
 If you want to participate, You're welcome to fork and pull requests (fixes and new features).
