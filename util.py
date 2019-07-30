@@ -88,7 +88,7 @@ def update(version):
         tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh']).decode()
         logging.debug(tp)
         logging.info('Update pip librairies dependancies')
-        tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirement.txt']).decode()
+        tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
         msg = "New version installed"
         
     else:
