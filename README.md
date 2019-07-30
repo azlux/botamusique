@@ -4,7 +4,8 @@ Botamusique is a mumble bot which goal is to allow users to listen music togethe
 Predicted functionalities will be ones you could expect from any classic music player.
 
 Bot the can play :
-- Radio url
+- Radio station from url
+- Radio station from http://www.radio-browser.info API (query from > 24k stations)
 - Youtube/Soundcloud URL (everything supported by youtube-dl)
 - Local folder (disabled, I need to work on the web interface)
 
@@ -80,11 +81,13 @@ you have the section :
 - webinterface : basic configuration about the interface (disabled by default)
 - command : you can customize the command you want for each action (if you put `help = helpme` , the bot will response to `!helpme` )
 - radio : here you can have a list of default radio ( I can play a jazz radio with the command `!radio jazz`)
+- rbquery : search http://www.radio-browser.info API for listed radio stations - eg: `!rbquery nora`
+- rbplay : Play a specific radio station by ID (from rbquery) - eg: `!rbplay 96748`
 - strings : you can customize all string the bot can say.
-- debug : option to active ffmpeg or pymumble debug. (Can be very verbose)
+- debug : option to activate ffmpeg or pymumble debug. (Can be very verbose)
 
 ### Contributors
-If you want to participate, You're welcome to fork and pull requests Fix et new features.
+If you want to participate, You're welcome to fork and pull requests (fixes and new features).
 
 The following people joined the collaborators for a faster development, big thanks:
 - @slipenbois
