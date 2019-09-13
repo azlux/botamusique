@@ -95,6 +95,14 @@ ImportError: libtiff.so.5: cannot open shared object file: No such file or direc
 ```
 You need to install a missing system librairie: `apt install libtiff5`
 
+---
+
+At start, you can have this following error even if you have install all requirements:
+```
+Exception: Could not find opus library. Make sure it is installed.
+```
+You need to install the opus codec (not embeded in all system) : `apt install libopus0`
+
 ### Contributors
 If you want to participate, You're welcome to fork and pull requests (fixes and new features).
 
