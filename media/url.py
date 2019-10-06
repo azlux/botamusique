@@ -25,10 +25,13 @@ def build_dict(info, user="", start=0, end=-1):
 def get_time(qs, key):
      d = urllib.parse.parse_qs(qs)
      if key in d and len(d[key]) > 0:
-         mins = re.match(r'([\d\.]+)m', d[key][0])
+         mins = re.search(r'([\d\.]+)m', d[key][0])
          mins = float(mins[1]) if mins else 0
-         secs = re.match(r'([\d\.]+)s', d[key][0])
+         secs = re.search(r'([\d\.]+)s', d[key][0])
          secs = float(secs[1]) if secs else 0
+         if mins == 0 and secs == 0:
+             secs = re.match(r'[\d\.]+', d[key][0])
+             secs = float(secs[0]) if secs else 0
          return mins * 60 + secs
      return None
 

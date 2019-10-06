@@ -320,15 +320,18 @@ class MumbleBot:
                     self.mumble.channels.find_by_name(self.channel).move_in()
 
             elif command == var.config.get('command', 'volume'):
-                if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
+                try:
                     volume = float(float(parameter) / 100)
-                    self.queue_work(lambda: self.set_volume(volume))
+                except ValueError:
+                    volume = None
 
-                    self.send_msg(var.config.get('strings', 'change_volume') % (
-                        int(volume * 100), self.mumble.users[text.actor]['name']))
-                else:
+                if volume is None:
                     volume = self.queue_work(lambda: self.volume).wait()
-                    self.send_msg(var.config.get('strings', 'current_volume') % int(volume * 100))
+                    self.send_msg(var.config.get('strings', 'current_volume') % float(volume * 100))
+                else:
+                    self.queue_work(lambda: self.set_volume(volume))
+                    self.send_msg(var.config.get('strings', 'change_volume') % (
+                        float(volume * 100), self.mumble.users[text.actor]['name']))
 
             elif command == var.config.get('command', 'current_music'):
                 current = self.queue_work(self.get_current_music).wait()
