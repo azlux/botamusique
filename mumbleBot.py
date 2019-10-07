@@ -174,58 +174,58 @@ class MumbleBot:
                 return
 
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_in_my_channel'))
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_in_my_channel'))
                 return
 
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'pm_not_allowed'))
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'pm_not_allowed'))
                 return
 
             for i in var.db.items("user_ban"):
                 if user.lower() == i[0]:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'user_ban'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'user_ban'))
                     return
 
             if command == var.config.get('command', 'user_ban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.user_ban(parameter))
+                        self.mumble.users[text.actor].send_text_message(util.user_ban(parameter))
                     else:
-                        self.mumble.users[text.actor].send_message(util.get_user_ban())
+                        self.mumble.users[text.actor].send_text_message(util.get_user_ban())
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             elif command == var.config.get('command', 'user_unban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.user_unban(parameter))
+                        self.mumble.users[text.actor].send_text_message(util.user_unban(parameter))
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             elif command == var.config.get('command', 'url_ban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.url_ban(self.get_url_from_input(parameter)))
+                        self.mumble.users[text.actor].send_text_message(util.url_ban(self.get_url_from_input(parameter)))
                     else:
-                        self.mumble.users[text.actor].send_message(util.get_url_ban())
+                        self.mumble.users[text.actor].send_text_message(util.get_url_ban())
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             elif command == var.config.get('command', 'url_unban'):
                 if self.is_admin(user):
                     if parameter:
-                        self.mumble.users[text.actor].send_message(util.url_unban(self.get_url_from_input(parameter)))
+                        self.mumble.users[text.actor].send_text_message(util.url_unban(self.get_url_from_input(parameter)))
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
                 return
 
             if parameter:
                 for i in var.db.items("url_ban"):
                     if self.get_url_from_input(parameter.lower()) == i[0]:
-                        self.mumble.users[text.actor].send_message(var.config.get('strings', 'url_ban'))
+                        self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'url_ban'))
                         return
 
             if command == var.config.get('command', 'play_file') and parameter:
@@ -249,7 +249,7 @@ class MumbleBot:
                                      'path': matches[0],
                                      'user': user}
                             pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
-                            self.mumble.users[text.actor].send_message(var.config.get('strings', 'file_queued') % (matches[0], pos))
+                            self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'file_queued') % (matches[0], pos))
                         else:
                             msg = var.config.get('strings', 'multiple_matches') + '<br />'
                             msg += '<br />'.join(matches)
@@ -258,7 +258,7 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'bad_file'))
 
             elif command == var.config.get('command', 'play_url') and parameter:
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'download_in_progress') % parameter)
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'download_in_progress') % parameter)
                 entries = media.url.get_url_info(self.get_url_from_input(parameter), user)
                 self.play_urls(entries, text, user)
 
@@ -279,7 +279,7 @@ class MumbleBot:
                          'url': self.get_url_from_input(parameter),
                          'user': user}
                 pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'file_queued') % (music['url'], pos))
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'file_queued') % (music['url'], pos))
 
             elif command == var.config.get('command', 'help'):
                 self.send_msg(var.config.get('strings', 'help'))
@@ -291,11 +291,11 @@ class MumbleBot:
                 if self.is_admin(user):
                     self.queue_work(self.quit())
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
 
             elif command == var.config.get('command', 'update'):
                 if self.is_admin(user):
-                    self.mumble.users[text.actor].send_message("Starting the update")
+                    self.mumble.users[text.actor].send_text_message("Starting the update")
                     tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
                     msg = ""
                     if "Requirement already up-to-date" in tp:
@@ -308,11 +308,11 @@ class MumbleBot:
                     else:
                         msg += "<br /> I have available updates"
                         needs_restart = True
-                    self.mumble.users[text.actor].send_message(msg)
+                    self.mumble.users[text.actor].send_text_message(msg)
                     if needs_restart:
                         os.execv(sys.executable, [sys.executable] + sys.argv)
                 else:
-                    self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'not_admin'))
 
             elif command == var.config.get('command', 'stop_and_getout'):
                 self.queue_work(self.stop_all).wait()
@@ -406,7 +406,7 @@ class MumbleBot:
                 if str(parameter) == '':
                     self.send_msg(var.config.get('strings', 'search_error') % parameter)
                     return
-                self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_for') % parameter)
+                self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'search_for') % parameter)
                 try:
                     entries = media.url.search(parameter, user)
                 except Exception as e:
@@ -419,7 +419,7 @@ class MumbleBot:
                 self.play_urls(entries, text, user)
 
             #else:
-                #self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command') % command)
+                #self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'bad_command') % command)
 
 
     def play_urls(self, entries, text, user):
@@ -434,7 +434,7 @@ class MumbleBot:
                             return
                     pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
                     if pos > 1:
-                        self.mumble.users[text.actor].send_message(var.config.get('strings', 'file_queued') % (music['title'], pos))
+                        self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'file_queued') % (music['title'], pos))
         else:
             self.send_msg(var.config.get('strings', 'unable_download') % url)
 
@@ -599,7 +599,7 @@ class MumbleBot:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
             own_channel.send_text_message(msg)
         else:
-            self.mumble.users[text.actor].send_message(msg)
+            self.mumble.users[text.actor].send_text_message(msg)
 
 
 def start_web_interface(addr, port):
