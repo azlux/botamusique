@@ -8,12 +8,12 @@ import configparser
 import audioop
 import subprocess as sp
 import argparse
+import os
 import os.path
 import pymumble.pymumble_py3 as pymumble
 import interface
 import variables as var
 import hashlib
-import youtube_dl
 import logging
 import util
 import base64
@@ -269,7 +269,7 @@ class MumbleBot:
                     pass
                 musics = media.playlist.get_playlist_info(url=self.get_url_from_input(parameter), start_index=offset, user=user)
                 if musics:
-                    self.queue_work(lambda: var.playlist.extend(musics))
+                    self.play_urls(musics, text, user)
 
             elif command == var.config.get('command', 'play_radio') and parameter:
                 if var.config.has_option('radio', parameter):
@@ -301,11 +301,15 @@ class MumbleBot:
                         msg += "Youtube-dl is up-to-date"
                     else:
                         msg += "Update done : " + tp.split('Successfully installed')[1]
+                    needs_restart = False
                     if 'up-to-date' not in sp.check_output(['/usr/bin/env', 'git', 'pull']).decode():
                         msg += "<br /> I'm up-to-date"
                     else:
-                        msg += "<br /> I have available updates, need to do it manually"
+                        msg += "<br /> I have available updates"
+                        needs_restart = True
                     self.mumble.users[text.actor].send_message(msg)
+                    if needs_restart:
+                        os.execv(sys.executable, [sys.executable] + sys.argv)
                 else:
                     self.mumble.users[text.actor].send_message(var.config.get('strings', 'not_admin'))
 
@@ -565,7 +569,8 @@ class MumbleBot:
                 if len(var.playlist) > 0:
                     music = var.playlist[0]
                     if music['type'] in ['radio', 'file', 'url']:
-                        self.launch_music(music)
+                        if not self.launch_music(music):
+                            self.next()
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             time.sleep(0.01)

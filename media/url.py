@@ -1,6 +1,9 @@
-import youtube_dl
-import urllib
+import json
+import logging
 import re
+import subprocess
+import variables as var
+import urllib
 
 def build_dict(info, user="", start=0, end=-1):
     music = {
@@ -32,36 +35,37 @@ def get_time(qs, key):
 def get_component_time(components, key):
     return get_time(components.query, key) or get_time(components.fragment, key)
 
+ytdl_opts = ['-J', '-x', '-f', 'bestaudio/best']
+
 def get_url_info(url, user=""):
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'noplaylist': True
-    }
 
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        for i in range(2):
-            try:
-                info = ydl.extract_info(url, download=False)
+    for i in range(2):
+        try:
+            args =  [var.config.get('bot', 'ytdl_path'), '--no-playlist'] + ytdl_opts + [url]
+            logging.debug('youtube-dl command: ' + str(args))
+            info = json.loads(subprocess.check_output(args))
 
-                if info.get('_type') == 'playlist':
-                    entries = [build_dict(t, user) for t in info['entries']]
-                    for entry in entries:
-                        entry.update({
-                            'from_playlist': True,
-                            'playlist_title': info['title'],
-                            'playlist_url': url})
+            if info.get('_type') == 'playlist':
+                entries = [build_dict(t, user) for t in info['entries']]
+                for entry in entries:
+                    entry.update({
+                        'from_playlist': True,
+                        'playlist_title': info['title'],
+                        'playlist_url': url})
                     return entries
 
-                components = urllib.parse.urlparse(url)
-                start = get_component_time(components, 't') or get_component_time(components, 'start') or 0
-                length = get_component_time(components, 'l') or get_component_time(components, 'length')
-                end = start + length if length is not None else (get_component_time(components, 'end') or -1)
+            components = urllib.parse.urlparse(url)
+            start = get_component_time(components, 't') or get_component_time(components, 'start') or 0
+            length = get_component_time(components, 'l') or get_component_time(components, 'length')
+            end = start + length if length is not None else (get_component_time(components, 'end') or -1)
 
-                return [build_dict(info, user, start, end)]
-            except youtube_dl.utils.DownloadError as e:
-                print(e)
-            except KeyError as e:
-                print(e)
-            except TypeError as e:
-                print(e)
+            return [build_dict(info, user, start, end)]
+        except subprocess.CalledProcessError as e:
+            print(e)
+        except json.JSONDecodeError as e:
+            print(e)
+        except KeyError as e:
+            print(e)
+        except TypeError as e:
+            print(e)
     return None
