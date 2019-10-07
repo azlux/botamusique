@@ -37,6 +37,27 @@ def get_component_time(components, key):
 
 ytdl_opts = ['-J', '-x', '-f', 'bestaudio/best']
 
+def search(keyword, user=""):
+    for i in range(2):
+        try:
+            args = [var.config.get('bot', 'ytdl_path')] + ytdl_opts + ['ytsearch:' + keyword]
+            logging.debug('youtube-dl command: ' + str(args))
+            info = json.loads(subprocess.check_output(args))
+
+            if 'entries' in info:
+                return [build_dict(info['entries'][0], user)]
+
+            return []
+        except subprocess.CalledProcessError as e:
+            print(e)
+        except json.JSONDecodeError as e:
+            print(e)
+        except KeyError as e:
+            print(e)
+        except TypeError as e:
+            print(e)
+    return None
+
 def get_url_info(url, user=""):
 
     for i in range(2):

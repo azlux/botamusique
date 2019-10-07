@@ -17,7 +17,6 @@ import hashlib
 import logging
 import util
 import base64
-import pafy
 from PIL import Image
 from io import BytesIO
 from mutagen.easyid3 import EasyID3
@@ -259,7 +258,9 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'bad_file'))
 
             elif command == var.config.get('command', 'play_url') and parameter:
-                self.play_url(parameter, text, user)
+                self.mumble.users[text.actor].send_message(var.config.get('strings', 'download_in_progress') % parameter)
+                entries = media.url.get_url_info(self.get_url_from_input(parameter), user)
+                self.play_urls(entries, text, user)
 
             elif command == var.config.get('command', 'play_playlist') and parameter:
                 offset = 1
@@ -407,24 +408,21 @@ class MumbleBot:
                     return
                 self.mumble.users[text.actor].send_message(var.config.get('strings', 'search_for') % parameter)
                 try:
-                    result = pafy.call_gdata('search', {'q':parameter,'maxResults':1,'part':'id','type':'video','safeSearch':'none'})
+                    entries = media.url.search(parameter, user)
                 except Exception as e:
                     logging.debug(e)
                     self.send_msg(var.config.get('strings', 'search_error') % parameter)
                     return
-                if len(result['items']) == 0:
+                if len(entries) == 0:
                     self.send_msg(var.config.get('strings', 'no_search_results') % parameter)
                     return
-                url = 'https://www.youtube.com/watch?v=' + result['items'][0]['id']['videoId']
-                self.play_url(url, text, user)
+                self.play_urls(entries, text, user)
 
             #else:
                 #self.mumble.users[text.actor].send_message(var.config.get('strings', 'bad_command') % command)
 
 
-    def play_url(self, url, text, user):
-        self.mumble.users[text.actor].send_message(var.config.get('strings', 'download_in_progress') % url)
-        entries = media.url.get_url_info(self.get_url_from_input(url), user)
+    def play_urls(self, entries, text, user):
         if entries:
             for music in entries:
                 if music['duration'] > var.config.getint('bot', 'max_track_duration'):
