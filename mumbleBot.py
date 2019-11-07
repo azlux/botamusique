@@ -237,7 +237,9 @@ class MumbleBot:
                         filename = path.replace(music_folder, '')
                         music = {'type': 'file',
                                  'path': filename,
-                                 'user': user}
+                                 'user': user,
+                                 'start': 0,
+                                 'end': 0}
                         self.queue_work(lambda: var.playlist.append(music))
                     else:
                         # try to do a partial match
@@ -247,7 +249,9 @@ class MumbleBot:
                         elif len(matches) == 1:
                             music = {'type': 'file',
                                      'path': matches[0],
-                                     'user': user}
+                                     'user': user,
+                                     'start': 0,
+                                     'end': 0}
                             pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
                             self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'file_queued') % (matches[0], pos))
                         else:
@@ -520,8 +524,9 @@ class MumbleBot:
         else:
             ffmpeg_debug = "warning"
 
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin',
-                '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20']
+        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin']
+        if music["type"] != "file":
+                command += ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20']
         if music['start'] > 0:
             command += ['-ss', str(music['start'])]
         if music['end'] > 0:
