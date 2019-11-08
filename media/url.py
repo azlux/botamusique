@@ -8,13 +8,14 @@ import urllib
 def build_dict(info, user="", start=0, end=-1):
     music = {
         'type': 'url',
+        'format_id': info.get('format_id'),
         'url': info['webpage_url'],
         'user': user,
         'start': start,
         'end': end,
-        'duration': info['duration'] / 60,
+        'duration': info.get('duration', 0) / 60,
         'title': info['title'],
-        'thumbnail': info['thumbnail']
+        'thumbnail': info.get('thumbnail')
     }
     for f in info['formats']:
         if f['format_id'] == info['format_id']:

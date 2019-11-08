@@ -1,3 +1,6 @@
 [submodule "pymumble"]
 	path = pymumble
 	url = https://github.com/azlux/pymumble.git
+[submodule "pyfluidsynth"]
+	path = pyfluidsynth
+	url = https://github.com/cyclopsian/pyfluidsynth.git

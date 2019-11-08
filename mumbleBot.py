@@ -17,6 +17,8 @@ import hashlib
 import logging
 import util
 import base64
+import requests
+import pyfluidsynth.fluidsynth as fluidsynth
 from PIL import Image
 from io import BytesIO
 from mutagen.easyid3 import EasyID3
@@ -39,13 +41,65 @@ class Future(threading.Event):
         super().wait(timeout)
         return self.retval
 
+class MusicSourceSubprocess:
+    def __init__(self, process):
+        self.process = process
+    def active(self):
+        return self.process is not None
+    def next(self):
+        return self.process.stdout.read(480)
+    def stop(self):
+        self.process.kill()
+        self.process = None
+
+class MusicSourceFluidSynth:
+    def __init__(self, soundfont, uri):
+        content = None
+        if uri.lower().startswith('https://') or uri.lower().startswith('http://'):
+            r = requests.get(uri, timeout=10)
+            if r.status_code == requests.codes.ok:
+                content = r.content
+        else:
+            with open(uri, 'rb') as f:
+                content = f.read()
+
+        if content:
+            args = {
+                    'player.timing-source': 'sample',
+                    'synth.lock-memory': 0,
+                    'synth.chorus.level': 0.0,
+                    'synth.reverb.level': 0.0,
+                    }
+            self.synth = fluidsynth.Synth(gain=0.25, samplerate=48000, **args)
+            self.synth.start()
+            self.synth.sfload(soundfont)
+            self.player = fluidsynth.Player(self.synth)
+            self.player.add(content)
+            self.player.play()
+        else:
+            self.synth = None
+    def active(self):
+        return self.synth is not None and self.player.status() == fluidsynth.Player.PLAYING
+    def next(self):
+        active = self.active()
+        a = self.synth.get_samples(240)
+        if active and a.size > 0:
+            return (a[::2] + a[1::2]).tobytes()
+        return None
+    def stop(self):
+        if self.synth:
+            self.player.stop()
+            self.player.delete()
+            self.player = None
+            self.synth.delete()
+            self.synth = None
+
 
 class MumbleBot:
     def __init__(self, args):
         signal.signal(signal.SIGINT, self.ctrl_caught)
-        self.volume = var.config.getfloat('bot', 'volume')
-        if db.has_option('bot', 'volume'):
-            self.volume = var.db.getfloat('bot', 'volume')
+        self.volume = var.db.getfloat('bot', 'volume', fallback=0.5)
+        self.soundfont = var.db.get('bot', 'soundfont', fallback=None)
 
         FORMAT = '%(asctime)s: %(message)s'
         loglevel = logging.INFO
@@ -72,7 +126,7 @@ class MumbleBot:
         var.is_proxified = var.config.getboolean("webinterface", "is_web_proxified")
         self.exit = False
         self.nb_exit = 0
-        self.thread = None
+        self.music_source = None
         self.is_playing = False
         self.work_queue_lock = threading.Lock()
         self.work_queue = []
@@ -230,36 +284,15 @@ class MumbleBot:
 
             if command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
-                # sanitize "../" and so on
-                path = os.path.abspath(os.path.join(music_folder, parameter))
-                if path.startswith(music_folder):
-                    if os.path.isfile(path):
-                        filename = path.replace(music_folder, '')
-                        music = {'type': 'file',
-                                 'path': filename,
-                                 'user': user,
-                                 'start': 0,
-                                 'end': 0}
-                        self.queue_work(lambda: var.playlist.append(music))
-                    else:
-                        # try to do a partial match
-                        matches = [file for file in util.get_recursive_filelist_sorted(music_folder) if parameter.lower() in file.lower()]
-                        if len(matches) == 0:
-                            self.send_msg(var.config.get('strings', 'no_file'))
-                        elif len(matches) == 1:
-                            music = {'type': 'file',
-                                     'path': matches[0],
-                                     'user': user,
-                                     'start': 0,
-                                     'end': 0}
-                            pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
-                            self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'file_queued') % (matches[0], pos))
-                        else:
-                            msg = var.config.get('strings', 'multiple_matches') + '<br />'
-                            msg += '<br />'.join(matches)
-                            self.send_msg(msg)
-                else:
-                    self.send_msg(var.config.get('strings', 'bad_file'))
+                filename = self.find_file(music_folder, parameter)
+                if filename:
+                    music = {'type': 'file',
+                             'path': filename,
+                             'user': user,
+                             'start': 0,
+                             'end': 0}
+                    pos = self.queue_work(lambda: (var.playlist.append(music) or len(var.playlist))).wait()
+                    self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'file_queued') % (filename, pos))
 
             elif command == var.config.get('command', 'play_url') and parameter:
                 self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'download_in_progress') % parameter)
@@ -337,6 +370,18 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'change_volume') % (
                         float(volume * 100), self.mumble.users[text.actor]['name']))
 
+            elif command == var.config.get('command', 'soundfont'):
+                if parameter:
+                    sf_folder = var.config.get('bot', 'soundfont_folder')
+                    filename = self.find_file(sf_folder, parameter)
+                    if filename:
+                        self.queue_work(lambda: self.set_soundfont(filename))
+                        self.send_msg(var.config.get('strings', 'change_soundfont') % (
+                            filename, self.mumble.users[text.actor]['name']))
+                else:
+                    soundfont = self.queue_work(lambda: self.soundfont).wait()
+                    self.send_msg(var.config.get('strings', 'current_soundfont') % soundfont)
+
             elif command == var.config.get('command', 'current_music'):
                 current = self.queue_work(self.get_current_music).wait()
                 if current:
@@ -362,7 +407,7 @@ class MumbleBot:
                         )
                     elif source == "file":
                         reply = "[file] {title} by {user}".format(
-                            title=current["title"],
+                            title=current["path"],
                             user=current["user"])
                     else:
                         reply = "ERROR"
@@ -391,7 +436,16 @@ class MumbleBot:
                 if files:
                     self.send_msg('<br>'.join(files))
                 else:
-                    self.send_msg(var.config.get('strings', 'no_file'))
+                    self.send_msg(var.config.get('strings', 'folder_empty'))
+
+            elif command == var.config.get('command', 'list_soundfonts'):
+                folder_path = var.config.get('bot', 'soundfont_folder')
+
+                files = util.get_recursive_filelist_sorted(folder_path, False)
+                if files:
+                    self.send_msg('<br>'.join(files))
+                else:
+                    self.send_msg(var.config.get('strings', 'folder_empty'))
 
             elif command == var.config.get('command', 'queue'):
                 playlist = self.queue_work(lambda: [m.copy() for m in var.playlist]).wait()
@@ -426,8 +480,11 @@ class MumbleBot:
                 self.play_urls(entries, text, user)
 
             #else:
-                #self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'bad_command') % command)
+                #help_cmd = self.print_cmd('help')
+                #self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'bad_command') % (command, help_cmd))
 
+    def print_cmd(self, cmd):
+        return var.config.get('command', 'command_symbol') + var.config.get('command', cmd)
 
     def play_urls(self, entries, text, user):
         if entries:
@@ -443,7 +500,30 @@ class MumbleBot:
                     if pos > 1:
                         self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'file_queued') % (music['title'], pos))
         else:
-            self.send_msg(var.config.get('strings', 'unable_download') % url)
+            self.send_msg(var.config.get('strings', 'bad_url'))
+
+    def find_file(self, folder, parameter):
+        # sanitize "../" and so on
+        path = os.path.abspath(os.path.join(folder, parameter or ''))
+        if path.startswith(folder):
+            if os.path.isfile(path):
+                return path.replace(folder, '')
+            else:
+                # try to do a partial match
+                matches = [file for file in util.get_recursive_filelist_sorted(folder) if parameter.lower() in file.lower()]
+                if len(matches) == 0:
+                    self.send_msg(var.config.get('strings', 'no_file'))
+                    return None
+                elif len(matches) == 1:
+                    return matches[0]
+                else:
+                    msg = var.config.get('strings', 'multiple_matches') + '<br />'
+                    msg += '<br />'.join(matches)
+                    self.send_msg(msg)
+                    return None
+        else:
+            self.send_msg(var.config.get('strings', 'bad_file'))
+            return None
 
     def get_current_music(self):
         if len(var.playlist) > 0:
@@ -453,6 +533,10 @@ class MumbleBot:
     def set_volume(self, volume):
         self.volume = volume
         var.db.set('bot', 'volume', str(volume))
+
+    def set_soundfont(self, sf):
+        self.soundfont = sf
+        var.db.set('bot', 'soundfont', str(sf))
 
     @staticmethod
     def is_admin(user):
@@ -511,7 +595,7 @@ class MumbleBot:
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + music["path"]
-            self.send_msg(var.config.get('strings', 'now_playing') % (uri, ""))
+            self.send_msg(var.config.get('strings', 'now_playing') % (music['path'], ""))
 
         elif music["type"] == "radio":
             uri = music["url"]
@@ -519,23 +603,34 @@ class MumbleBot:
             music["title"] = title
             self.send_msg(var.config.get('strings', 'now_playing') % (title or uri, ""))
 
-        if var.config.getboolean('debug', 'ffmpeg'):
-            ffmpeg_debug = "debug"
+        if (music['type'] == 'file' and uri.lower().endswith('.mid')) or music.get('format_id') == 'midi':
+            sf_folder = var.config.get('bot', 'soundfont_folder')
+            if not self.soundfont:
+                self.send_msg(var.config.get('strings', 'no_soundfont') % (self.print_cmd('list_soundfonts'), self.print_cmd('soundfont')))
+                return False
+            soundfont = os.path.join(sf_folder, self.soundfont)
+            self.music_source = MusicSourceFluidSynth(soundfont, uri)
+            #command = ['fluidsynth', '-a', 'file', '-O', 's16', '-T', 'raw', '-iln', '-R', 'no', '-C', 'no', '-F', '-',
+                #soundfont, uri]
+            #logging.info("Fluidsynth command : " + " ".join(command))
         else:
-            ffmpeg_debug = "warning"
+            if var.config.getboolean('debug', 'ffmpeg'):
+                ffmpeg_debug = "debug"
+            else:
+                ffmpeg_debug = "warning"
 
-        command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin']
-        if music["type"] != "file":
-                command += ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20']
-        if music['start'] > 0:
-            command += ['-ss', str(music['start'])]
-        if music['end'] > 0:
-            command += ['-to', str(music['end'])]
-        command += ['-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
-        logging.info("FFmpeg command : " + " ".join(command))
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
-        self.is_playing = True
-        return True
+            command = ["ffmpeg", '-v', ffmpeg_debug, '-nostdin']
+            if music["type"] != "file":
+                    command += ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '20']
+            if music['start'] > 0:
+                command += ['-ss', str(music['start'])]
+            if music['end'] > 0:
+                command += ['-to', str(music['end'])]
+            command += ['-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+            logging.info("FFmpeg command : " + " ".join(command))
+            self.music_source = MusicSourceSubprocess(sp.Popen(command, stdout=sp.PIPE, bufsize=480))
+        self.is_playing = self.music_source.active()
+        return self.is_playing
 
     @staticmethod
     def get_url_from_input(string):
@@ -559,8 +654,8 @@ class MumbleBot:
 
             while self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 time.sleep(0.01)
-            if self.thread:
-                raw_music = self.thread.stdout.read(480)
+            if self.music_source:
+                raw_music = self.music_source.next()
                 if raw_music:
                     self.mumble.sound_output.add_sound(audioop.mul(raw_music, 2, self.volume))
                 else:
@@ -568,7 +663,7 @@ class MumbleBot:
             else:
                 time.sleep(0.1)
 
-            if self.thread is None or not raw_music:
+            if self.music_source is None or not raw_music:
                 if self.is_playing:
                     self.is_playing = False
                     self.next()
@@ -586,9 +681,9 @@ class MumbleBot:
             util.write_db()
 
     def stop_current(self):
-        if self.thread:
-            self.thread.kill()
-            self.thread = None
+        if self.music_source:
+            self.music_source.stop()
+            self.music_source = None
         self.is_playing = False
 
     def stop_all(self):

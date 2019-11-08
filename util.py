@@ -7,7 +7,7 @@ import variables as var
 import zipfile
 
 
-def get_recursive_filelist_sorted(path):
+def get_recursive_filelist_sorted(path, only_audio=True):
     filelist = []
     for root, dirs, files in os.walk(path):
         relroot = root.replace(path, '', 1)
@@ -24,7 +24,7 @@ def get_recursive_filelist_sorted(path):
                 continue
 
             mime = magic.from_file(fullpath, mime=True)
-            if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
+            if not only_audio or ('audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime):
                 filelist.append(relroot + file)
 
     filelist.sort()
