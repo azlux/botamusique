@@ -54,6 +54,8 @@ class MusicSourceSubprocess:
             a = numpy.frombuffer(a, dtype=numpy.int16)
             return (a[::2] // 2 + a[1::2] // 2).tobytes()
         return None
+    def set_soundfont(self):
+        pass
     def stop(self):
         self.process.kill()
         self.process = None
@@ -78,7 +80,7 @@ class MusicSourceFluidSynth:
                     }
             self.synth = fluidsynth.Synth(gain=0.25, samplerate=48000, **args)
             self.synth.start()
-            self.synth.sfload(soundfont)
+            self.sfid = self.synth.sfload(soundfont)
             self.player = fluidsynth.Player(self.synth)
             self.player.add(content)
             self.player.play()
@@ -92,6 +94,11 @@ class MusicSourceFluidSynth:
         if active and a.size > 0:
             return (a[::2] + a[1::2]).tobytes()
         return None
+    def set_soundfont(self, sf):
+        if self.synth:
+            oldid = self.sfid
+            self.synth.sfunload(oldid, True)
+            self.sfid = self.synth.sfload(sf, True)
     def stop(self):
         if self.synth:
             self.player.stop()
@@ -562,6 +569,9 @@ class MumbleBot:
     def set_soundfont(self, sf):
         self.soundfont = sf
         var.db.set('bot', 'soundfont', str(sf))
+        sf_folder = var.config.get('bot', 'soundfont_folder')
+        sf = os.path.join(sf_folder, sf)
+        self.queue_work(lambda: self.music_source.set_soundfont(sf) if self.music_source else None)
 
     @staticmethod
     def is_admin(user):
@@ -675,7 +685,10 @@ class MumbleBot:
                 queue = self.work_queue
                 self.work_queue = []
             for f in queue:
-                f()
+                try:
+                    f()
+                except Exception as e:
+                    print(e)
 
             while self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 time.sleep(0.01)
