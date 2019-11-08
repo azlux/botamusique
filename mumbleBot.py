@@ -18,6 +18,7 @@ import logging
 import util
 import base64
 import requests
+import numpy
 import pyfluidsynth.fluidsynth as fluidsynth
 from PIL import Image
 from io import BytesIO
@@ -47,7 +48,11 @@ class MusicSourceSubprocess:
     def active(self):
         return self.process is not None
     def next(self):
-        return self.process.stdout.read(480)
+        a = self.process.stdout.read(480)
+        if a:
+            a = numpy.frombuffer(a, dtype=numpy.int16)
+            return (a[::2] // 2 + a[1::2] // 2).tobytes()
+        return None
     def stop(self):
         self.process.kill()
         self.process = None
@@ -626,7 +631,7 @@ class MumbleBot:
                 command += ['-ss', str(music['start'])]
             if music['end'] > 0:
                 command += ['-to', str(music['end'])]
-            command += ['-i', uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-']
+            command += ['-i', uri, '-ac', '2', '-f', 's16le', '-ar', '48000', '-']
             logging.info("FFmpeg command : " + " ".join(command))
             self.music_source = MusicSourceSubprocess(sp.Popen(command, stdout=sp.PIPE, bufsize=480))
         self.is_playing = self.music_source.active()
