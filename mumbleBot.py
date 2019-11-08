@@ -19,6 +19,7 @@ import util
 import base64
 import requests
 import numpy
+import glob
 import pyfluidsynth.fluidsynth as fluidsynth
 from PIL import Image
 from io import BytesIO
@@ -289,8 +290,8 @@ class MumbleBot:
 
             if command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
-                filename = self.find_file(music_folder, parameter)
-                if filename:
+                filenames = self.find_file(music_folder, parameter, multiple='*' in parameter)
+                for filename in filenames:
                     music = {'type': 'file',
                              'path': filename,
                              'user': user,
@@ -378,11 +379,11 @@ class MumbleBot:
             elif command == var.config.get('command', 'soundfont'):
                 if parameter:
                     sf_folder = var.config.get('bot', 'soundfont_folder')
-                    filename = self.find_file(sf_folder, parameter)
-                    if filename:
-                        self.queue_work(lambda: self.set_soundfont(filename))
+                    filenames = self.find_file(sf_folder, parameter)
+                    if len(filenames) > 0:
+                        self.queue_work(lambda: self.set_soundfont(filenames[0]))
                         self.send_msg(var.config.get('strings', 'change_soundfont') % (
-                            filename, self.mumble.users[text.actor]['name']))
+                            filenames[0], self.mumble.users[text.actor]['name']))
                 else:
                     soundfont = self.queue_work(lambda: self.soundfont).wait()
                     self.send_msg(var.config.get('strings', 'current_soundfont') % soundfont)
@@ -437,11 +438,26 @@ class MumbleBot:
             elif command == var.config.get('command', 'list'):
                 folder_path = var.config.get('bot', 'music_folder')
 
-                files = util.get_recursive_filelist_sorted(folder_path)
-                if files:
-                    self.send_msg('<br>'.join(files))
-                else:
-                    self.send_msg(var.config.get('strings', 'folder_empty'))
+                maxlen = self.mumble.get_max_message_length()
+                files = self.find_file(folder_path, parameter or '*', multiple=True)
+
+                if len(files):
+                    sent = 0
+                    while sent < len(files):
+                        msg = files[sent]
+                        if len(msg) > maxlen:
+                            msg = msg[0:maxlen-3]+'...'
+                            sent += 1
+                        else:
+                            while True:
+                                sent += 1
+                                if sent >= len(files):
+                                    break
+                                nextstr = '<br>' + files[sent]
+                                if len(nextstr) + len(msg) > maxlen:
+                                    break
+                                msg += nextstr
+                        self.send_msg(msg)
 
             elif command == var.config.get('command', 'list_soundfonts'):
                 folder_path = var.config.get('bot', 'soundfont_folder')
@@ -460,7 +476,7 @@ class MumbleBot:
                     msg = var.config.get('strings', 'queue_contents') + '<br />'
                     i = 1
                     for value in playlist[1:]:
-                        msg += '[{}] ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['url'])
+                        msg += '[{}] ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['path'])
                         i += 1
 
                 self.send_msg(msg)
@@ -507,28 +523,32 @@ class MumbleBot:
         else:
             self.send_msg(var.config.get('strings', 'bad_url'))
 
-    def find_file(self, folder, parameter):
+    def find_file(self, folder, parameter, multiple=False):
         # sanitize "../" and so on
         path = os.path.abspath(os.path.join(folder, parameter or ''))
         if path.startswith(folder):
             if os.path.isfile(path):
-                return path.replace(folder, '')
+                return [path.replace(folder, '')]
             else:
                 # try to do a partial match
-                matches = [file for file in util.get_recursive_filelist_sorted(folder) if parameter.lower() in file.lower()]
+                if '*' in parameter:
+                    matches = [file.replace(folder, '') for file in glob.glob(os.path.join(folder, '**', parameter), recursive=True)]
+                    matches.sort()
+                else:
+                    matches = [file for file in util.get_recursive_filelist_sorted(folder, False) if parameter.lower() in file.lower()]
                 if len(matches) == 0:
                     self.send_msg(var.config.get('strings', 'no_file'))
-                    return None
-                elif len(matches) == 1:
-                    return matches[0]
+                    return []
+                elif len(matches) == 1 or multiple:
+                    return matches
                 else:
                     msg = var.config.get('strings', 'multiple_matches') + '<br />'
                     msg += '<br />'.join(matches)
                     self.send_msg(msg)
-                    return None
+                    return []
         else:
             self.send_msg(var.config.get('strings', 'bad_file'))
-            return None
+            return []
 
     def get_current_music(self):
         if len(var.playlist) > 0:
