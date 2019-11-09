@@ -445,26 +445,8 @@ class MumbleBot:
             elif command == var.config.get('command', 'list'):
                 folder_path = var.config.get('bot', 'music_folder')
 
-                maxlen = self.mumble.get_max_message_length()
                 files = self.find_file(folder_path, parameter or '*', multiple=True)
-
-                if len(files):
-                    sent = 0
-                    while sent < len(files):
-                        msg = files[sent]
-                        if len(msg) > maxlen:
-                            msg = msg[0:maxlen-3]+'...'
-                            sent += 1
-                        else:
-                            while True:
-                                sent += 1
-                                if sent >= len(files):
-                                    break
-                                nextstr = '<br>' + files[sent]
-                                if len(nextstr) + len(msg) > maxlen:
-                                    break
-                                msg += nextstr
-                        self.send_msg(msg)
+                self.print_items(files);
 
             elif command == var.config.get('command', 'list_soundfonts'):
                 folder_path = var.config.get('bot', 'soundfont_folder')
@@ -510,6 +492,27 @@ class MumbleBot:
             #else:
                 #help_cmd = self.print_cmd('help')
                 #self.mumble.users[text.actor].send_text_message(var.config.get('strings', 'bad_command') % (command, help_cmd))
+
+    def print_items(self, items):
+        maxlen = self.mumble.get_max_message_length() - 1
+
+        if len(items):
+            sent = 0
+            while sent < len(items):
+                msg = items[sent]
+                if len(msg) > maxlen:
+                    msg = msg[0:maxlen-3]+'...'
+                    sent += 1
+                else:
+                    while True:
+                        sent += 1
+                        if sent >= len(items):
+                            break
+                        nextstr = '<br>' + items[sent]
+                        if len(nextstr) + len(msg) > maxlen:
+                            break
+                        msg += nextstr
+                self.send_msg(msg)
 
     def print_cmd(self, cmd):
         return var.config.get('command', 'command_symbol') + var.config.get('command', cmd)
@@ -736,6 +739,7 @@ class MumbleBot:
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
 
     def send_msg(self, msg, text=None):
+        msg = msg.encode('utf-8', 'ignore').decode('utf-8')
         if not text or not text.session:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
             own_channel.send_text_message(msg)
