@@ -5,10 +5,25 @@ import subprocess
 import variables as var
 import urllib
 
+def find_best_audio(info):
+    fid = info.get('format_id')
+    if not fid:
+        return None
+    for f in info['formats']:
+        if f['format_id'] == fid and (fid == 'midi' or ('abr' in f and 'DASH' not in f.get('format_note', ''))):
+            return f
+    preferred = None
+    for f in info['formats']:
+        if 'DASH' not in f.get('format_note', '') and 'abr' in f and (not preferred or f['abr'] > preferred['abr']):
+            preferred = f
+    return preferred
+
 def build_dict(info, user="", start=0, end=-1):
+    f = find_best_audio(info)
     music = {
         'type': 'url',
-        'format_id': info.get('format_id'),
+        'format_id': f.get('format_id') if f else None,
+        'path': f.get('url') if f else None,
         'url': info['webpage_url'],
         'user': user,
         'start': start,
@@ -17,10 +32,8 @@ def build_dict(info, user="", start=0, end=-1):
         'title': info['title'],
         'thumbnail': info.get('thumbnail')
     }
-    for f in info['formats']:
-        if f['format_id'] == info['format_id']:
-            music['path'] = f['url']
-            break
+    #print(json.dumps(info, indent=4))
+    #print(json.dumps(music, indent=4))
     return music
 
 def get_time(qs, key):

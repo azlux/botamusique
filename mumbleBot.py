@@ -664,7 +664,7 @@ class MumbleBot:
                 command += ['-ss', str(music['start'])]
             if music['end'] > 0:
                 command += ['-to', str(music['end'])]
-            command += ['-i', uri, '-ac', '2', '-f', 's16le', '-ar', '48000', '-']
+            command += ['-i', uri, '-ac', '2', '-vn', '-f', 's16le', '-ar', '48000', '-']
             logging.info("FFmpeg command : " + " ".join(command))
             self.music_source = MusicSourceSubprocess(sp.Popen(command, stdout=sp.PIPE, bufsize=480))
         self.is_playing = self.music_source.active()
