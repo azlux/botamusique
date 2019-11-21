@@ -1,126 +1,215 @@
 {% macro dirlisting(dir, path='') -%}
-    <ul>
+<ul class="list-group">
     {% for subdirname, subdirobj in dir.get_subdirs().items() %}
-        {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
-        <li class="directory">
-            <span>{{ subdirname }}/&nbsp;</span>
-            <form method="post" class="directory form1">
+    {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
+    <li class="directory list-group-item list-group-item-primary">
+        <span>{{ subdirpath }}/&nbsp;</span>
+        <div class="btn-group" role="group">
+            <form method="post" class="directory">
                 <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
-                <input type="submit" value="Add all tracks from this folder">
+                <button type="submit" class="btn btn-secondary">Add all tracks from this folder</button>
             </form>
-            <form method="post" class="directory form2">
+            <form method="post" class="directory">
                 <input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden>
-                <input type="submit" value="Add all tracks from this folder (recursively)">
+                <button type="submit" class="btn btn-secondary">Add all tracks from this folder (recursively)</button>
             </form>
-            <form action="./download" method="get" class="directory form3">
+            <form action="./download" method="get" class="directory">
                 <input type="text" value="{{ subdirpath }}" name="directory" hidden>
-                <input type="submit" value="Download entire directory">
+                <button type="submit" class="btn btn-secondary">Download entire directory</button>
             </form>
-        </li>
-        {{- dirlisting(subdirobj, subdirpath) -}}
+        </div>
+    </li>
+    {{- dirlisting(subdirobj, subdirpath) -}}
     {% endfor %}
     {%- set files = dir.get_files() %}
     {%- if files %}
-        {% for file in files %}
-        {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
-        <li class="file">
+    {% for file in files %}
+    {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
+    <li class="file list-group-item">
+        <div class="btn-group" role="group">
             <form method="post" class="file file_add">
                 <input type="text" value="{{ filepath }}" name="add_file" hidden>
-                <input type="submit" value="Add">
+                <button type="submit" class="btn btn-primary">Add</button>
             </form>
-            <form action="./download" method="get"  class="file file_download">
+            <form action="./download" method="get" class="file file_download">
                 <input type="text" value="{{ filepath }}" name="file" hidden>
-                <input type="submit" value="Download">
-                &nbsp;{{ file }}
+                <button type="submit" class="btn btn-primary">Download</button>
             </form>
-        </li>
-        {% endfor %}
+        </div>&nbsp;{{ filepath }}
+    </li>
+    {% endfor %}
     {%- endif %}
-    </ul>
+</ul>
 {%- endmacro %}
 
 <!DOCTYPE html>
+
 <head>
     <meta charset="UTF-8">
-    <title></title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <title>botamusique web interface</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
 </head>
+
 <body>
-<a href="."><h5>Refresh</h5></a>
-<br>
+    <div class="container">
+        <div class="row">
+            <div id="playlist" class="card">
+                <div class="card-head">
+                    <h2 class="card-title">Play List</h2>
+                </div>
 
-<div id="upload">
-    <form action="./upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file" value="Browse Music file"/>
-        Upload into
-        <input list="targetdirs" id="targetdir" name="targetdir" placeholder="uploads" />
-        <datalist id="targetdirs">
-            <option value="uploads">
-            {% for dir in music_library.get_subdirs_recursively() %}
-            <option value="{{ dir }}">
-            {% endfor %}
-        </datalist>
-        <input type="submit" value="Upload"/>
-    </form>
-</div>
+                <div class="card-body">
+                    <div>
+                        Currently Playing :
+                        {% if playlist|length > 0 %}
+                        {% if 'url' in playlist[0] %}
+                        (<a href="{{ playlist[0]['url'] }}">{{ playlist[0]['url'] }}</a>)
+                        {% elif 'path' in playlist[0] %}
+                        ({{ playlist[0]['path'] }})
+                        {% endif %}
+                        {% else %}
+                        No music
+                        {% endif %}
+                    </div>
+                    Playlist :
+                    <form method="post">
+                        <input type="text" value="randomize" name="action" hidden>
+                        <button type="submit" class="btn btn-primary">Randomize playlist</button>
+                    </form>
 
-<div id="url">
-    Add Youtube/Soundcloud URL :
-    <form method="post">
-        <input type=text name="add_url">
-        <input type="submit" value="Add URL">
-    </form>
-</div>
-<div id="radio">
-    Add Radio URL :
-    <form method="post">
-        <input type=text name="add_radio">
-        <input type="submit" value="Add Radio">
-    </form>
-</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Type</th>
+                                <th scope="col">Title</th>
+                                <th scope="col">Url/Path</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in playlist[1:] %}
+                            <tr>
+                                <th>{{ m['type'] }}</th>
+                                <th>
+                                    {% if 'title' in m %}
+                                    ({{ m['title'] }})
+                                    {% else %}
+                                    No title
+                                    {% endif %}
+                                </th>
+                                <th>
+                                    {% if 'url' in m %}
+                                    (<a href="{{ m['url'] }}">{{ m['url'] }}</a>)
+                                    {% elif 'path' in m %}
+                                    ({{ m['path'] }})
+                                    {% endif %}
+                                </th>
+                                <th>
+                                    <form method="post">
+                                        <input type="text" value="{{ loop.index }}" name="delete_music" hidden>
+                                        <button type="submit" class="btn btn-primary">Remove</button>
+                                    </form>
+                                </th>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-<div id="playlist">
-    Currently Playing :
-    {% if playlist|length > 0 %}
-    {{ playlist[0]['title'] }} {{ playlist[0]['user'] }}
-    {% if 'url' in playlist[0]  %}
-        (<a href="{{ playlist[0]['url'] }}">{{ playlist[0]['url'] }}</a>)
-    {% endif %}
-    {% else %}
-    No music
-    {% endif %}
-    <br />
-    Playlist :
-    <form method="post"><input type="text" value="randomize" name="action" hidden><input type="submit" value="Randomize playlist"></form>
+        <div class="row">
+            <div id="browser" class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Music library</h2>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <form action="./download" method="get" class="directory form1">
+                            <input type="text" value="./" name="directory" hidden>
+                            <button type="submit" class="btn btn-primary">Download entire music library</button>
+                        </form>
+                        <form method="post" class="directory form3">
+                            <input type="text" value="./" name="add_folder_recursively" hidden>
+                            <button type="submit" class="btn btn-primary">Add all tracks from music library
+                                (recursively)</button>
+                        </form>
+                    </div>
+                    <br />
+                    {{ dirlisting(music_library) }}
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <ul>
-        {% for m in playlist[1:] %}
-        <li>[{{ m['type'] }}]] {{ m['title'] }} -  {{ m['url'] }}
-            <form method="post"><input type="text" value="{{ loop.index }}" name="delete_music" hidden><input type="submit" value="X"></form>
-        </li>
-        {% endfor %}
-    </ul>
-    <h2>Music library:</h2>
-    <form action="./download" method="get" class="directory form1">
-        <input type="text" value="./" name="directory" hidden>
-        <input type="submit" value="Download entire music library">
-    </form>
-    <form method="post" class="directory form3">
-        <input type="text" value="./" name="add_folder_recursively" hidden>
-        <input type="submit" value="Add all tracks from music library (recursively)">
-    </form>
-    <br />
-    {{ dirlisting(music_library) }}
+    <div id="upload" class="container">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Upload File</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="./upload" method="post" enctype="multipart/form-data">
+                            <div class="input-group">
+                                <div class="custom-file">
+                                    <input type="file" name="file" class="custom-file-input" id="uploadSelectFile"
+                                        aria-describedby="uploadSubmit" value="Browse Music file" />
+                                    <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
+                                </div>
+                                <div class="input-group-append">
+                                    <input class="form-control" list="targetdirs" id="targetdir" name="targetdir"
+                                        placeholder="uploads" />
+                                    <datalist id="targetdirs">
+                                        <option value="uploads">
+                                            {% for dir in music_library.get_subdirs_recursively() %}
+                                        <option value="{{ dir }}">
+                                            {% endfor %}
+                                    </datalist>
+                                    <button class="btn btn-outline-secondary" type="submit"
+                                        id="uploadSubmit">Button</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Add URL</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <label>Add Youtube/Soundcloud URL :</label>
+                            <input class="form-control" type="text" name="add_url">
+                            <button type="submit" class="btn btn-primary">Add URL</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Add Radio</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            <label>Add Radio URL :</label>
+                            <input class="form-control" type="text" name="add_radio">
+                            <button type="submit" class="btn btn-primary">Add Radio</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-
-</div>
-<div id="browser">
-
-</div>
-<div id="upload">
-
-</div>
+    <script src="/static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
+
 </html>
