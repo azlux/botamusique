@@ -224,6 +224,14 @@
 
     <script src="/static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
     <script src="/static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script>
+        $('#uploadSelectFile').on('change', function () {
+            //get the file name
+            var fileName = $(this).val().replace('C:\\fakepath\\', " ");
+            //replace the "Choose a file" label
+            $(this).next('.custom-file-label').html(fileName);
+        })
+    </script>
 </body>
 
 </html>
