@@ -122,6 +122,7 @@ def index():
                            user=var.user)
 
 
+@web.route('/upload', methods=["POST"])
 def upload():
     file = request.files['file']
     if not file:
@@ -137,14 +138,15 @@ def upload():
     elif '../' in targetdir:
         return redirect("./", code=406)
 
-    # print('Uploading file:')
-    # print('filename:', filename)
-    # print('targetdir:', targetdir)
-    # print('mimetype:', file.mimetype)
+    print('Uploading file:')
+    print('filename:', filename)
+    print('targetdir:', targetdir)
+    print('mimetype:', file.mimetype)
 
     if "audio" in file.mimetype:
         storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
-        if not storagepath.startswith(var.music_folder):
+        print('storagepath:',storagepath)
+        if not storagepath.startswith(os.path.abspath(var.music_folder)):
             return redirect("./", code=406)
 
         try:
@@ -154,6 +156,7 @@ def upload():
                 return redirect("./", code=500)
 
         filepath = os.path.join(storagepath, filename)
+        print('filepath:',filepath)
         if os.path.exists(filepath):
             return redirect("./", code=406)
 
