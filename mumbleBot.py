@@ -16,6 +16,7 @@ import variables as var
 import hashlib
 import logging
 import util
+import html
 import base64
 import requests
 import numpy
@@ -677,7 +678,7 @@ class MumbleBot:
         p = re.compile('href="(.+?)"', re.IGNORECASE)
         res = re.search(p, string)
         if res:
-            return res.group(1)
+            return html.unescape(res.group(1))
         else:
             return False
 
