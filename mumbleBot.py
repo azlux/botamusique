@@ -56,7 +56,7 @@ type : file
     user
 """
 
-version = 3
+version = 4
 
 
 class MumbleBot:
@@ -70,18 +70,18 @@ class MumbleBot:
 
         # Set specific format for the log
         FORMAT = '%(asctime)s: %(message)s'
+        loglevel = logging.INFO
         if args.verbose:
-            logging.basicConfig(
-                format=FORMAT, level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+            loglevel = logging.DEBUG
             logging.debug("Starting in DEBUG loglevel")
         elif args.quiet:
-            logging.basicConfig(
-                format=FORMAT, level=logging.ERROR, datefmt='%Y-%m-%d %H:%M:%S')
+            loglevel = logging.ERROR
             logging.error("Starting in ERROR loglevel")
+        logfile = var.config.get('bot', 'logfile')
+        if logfile:
+            logging.basicConfig(filename=logfile,format=FORMAT, level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
         else:
-            logging.basicConfig(
-                format=FORMAT, level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-            logging.info("Starting in INFO loglevel")
+            logging.basicConfig(format=FORMAT, level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
 
         # the playlist is... a list (Surprise !!)
         var.playlist = []
@@ -137,8 +137,7 @@ class MumbleBot:
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=certificate)
-        self.mumble.callbacks.set_callback(
-            "text_received", self.message_received)
+        self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_TEXTMESSAGERECEIVED, self.message_received)
 
         self.mumble.set_codec_profile("audio")
         self.mumble.start()  # start the mumble thread
@@ -447,8 +446,8 @@ class MumbleBot:
                     if url != "-1":
                         logging.info('Found url: ' + url)
                         music = {'type': 'radio',
-			                     'url': url,
-			                     'user': user}
+                                 'url': url,
+                                 'user': user}
                         var.playlist.append(music)
                         self.async_download_next()
                     else:
@@ -572,8 +571,7 @@ class MumbleBot:
                         'strings', 'queue_contents') + '<br />'
                     i = 1
                     for value in var.playlist[1:]:
-                        msg += '[{}] ({}) {}<br />'.format(i, value['type'],
-                                                           value['title'] if 'title' in value else value['url'])
+                        msg += '[{}] ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['url'])
                         i += 1
 
                 self.send_msg(msg, text)
@@ -639,10 +637,10 @@ class MumbleBot:
                     buffer = BytesIO()
                     im.save(buffer, format="JPEG")
                     thumbnail_base64 = base64.b64encode(buffer.getvalue())
-                    thumbnail_html = '<img - src="data:image/PNG;base64,' + \
+                    thumbnail_html = '<img src="data:image/PNG;base64,' + \
                         thumbnail_base64.decode() + '"/>'
 
-                logging.debug("Thunbail data " + thumbnail_html)
+                logging.debug("Thumbail data " + thumbnail_html)
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
                         'strings', 'now_playing') % (title, thumbnail_html))
@@ -818,6 +816,7 @@ class MumbleBot:
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
 
     def send_msg(self, msg, text=None):
+        msg = msg.encode('utf-8', 'ignore').decode('utf-8')
         # text if the object message, contain information if direct message or channel message
         if not text or not text.session:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
@@ -866,11 +865,11 @@ if __name__ == '__main__':
     var.dbfile = args.db
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
     parsed_configs = config.read(
-        ['configuration.default.ini', args.config], encoding='latin-1')
+        ['configuration.default.ini', args.config], encoding='utf-8')
 
     db = configparser.ConfigParser(
         interpolation=None, allow_no_value=True, delimiters='²')
-    db.read(var.dbfile, encoding='latin-1')
+    db.read(var.dbfile, encoding='utf-8')
 
     if 'url_ban' not in db.sections():
         db.add_section('url_ban')

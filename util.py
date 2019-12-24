@@ -8,7 +8,8 @@ import zipfile
 import urllib.request
 import subprocess as sp
 import logging
-
+import youtube_dl
+from importlib import reload
 
 def get_recursive_filelist_sorted(path):
     filelist = []
@@ -99,6 +100,8 @@ def update(version):
             msg += "Youtube-dl is up-to-date"
         else:
             msg += "Update done : " + tp.split('Successfully installed')[1]
+    reload(youtube_dl)
+    msg += "<br/> Youtube-dl reloaded"
     return msg
 
 
@@ -213,7 +216,7 @@ class Dir(object):
 
             for key, val in self.subdirs.items():
                 files.extend(map(lambda file: key + '/' + file, val.get_files_recursively()))
-
+        
         return files
 
     def render_text(self, ident=0):
