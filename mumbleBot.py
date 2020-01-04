@@ -56,7 +56,7 @@ type : file
     user
 """
 
-version = 4
+version = 5
 
 
 class MumbleBot:
@@ -365,13 +365,13 @@ class MumbleBot:
                 logging.info('Querying radio stations')
                 if not parameter:
                     logging.debug('rbquery without parameter')
-                    msg += 'You have to add a query text to search for a matching radio stations.'
+                    msg = var.config.get('strings', 'rb_query_empty')
                     self.send_msg(msg, text)
                 else:
                     logging.debug('Found query parameter: ' + parameter)
                     # self.send_msg('Searching for stations - this may take some seconds...', text)
                     rb_stations = radiobrowser.getstations_byname(parameter)
-                    msg = var.config.get('strings', 'rbqueryresult') + " :"
+                    msg = var.config.get('strings', 'rb_query_result') + " :"
                     msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th></tr>'
                     if not rb_stations:
                         logging.debug('No matches found for rbquery ' + parameter)
@@ -393,7 +393,7 @@ class MumbleBot:
                         # Shorten message if message too long (stage I)
                         else:
                             logging.debug('Result too long stage I')
-                            msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L1)'
+                            msg = var.config.get('strings', 'rb_query_result') + " :" + ' (shortened L1)'
                             msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th></tr>'
                             for s in rb_stations:
                                 stationid = s['id']
@@ -406,7 +406,7 @@ class MumbleBot:
                             # Shorten message if message too long (stage II)
                             else:
                                 logging.debug('Result too long stage II')
-                                msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L2)'
+                                msg = var.config.get('strings', 'rb_query_result') + " :" + ' (shortened L2)'
                                 msg += '!rbplay ID - Station Name'
                                 for s in rb_stations:
                                     stationid = s['id']
@@ -423,7 +423,7 @@ class MumbleBot:
                 logging.debug('Play a station by ID')
                 if not parameter:
                     logging.debug('rbplay without parameter')
-                    msg += 'Please enter a station ID from rbquery. Example: !rbplay 96748'
+                    msg = var.config.get('strings', 'rb_play_empty')
                     self.send_msg(msg, text)
                 else:
                     logging.debug('Retreiving url for station ID ' + parameter)

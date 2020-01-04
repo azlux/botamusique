@@ -76,7 +76,7 @@ If you want information about autoStart and auto-Restart the bot, [you can have 
 ### Custom commands
 You can copy the file `configuration.default.ini` to `configuration.ini` and customize all variable. Everything can be change but don't remove the default file.
 
-you have the section :
+you have the sections :
 - server : configuration about the server and bot name. This is overrided by the `./mumbleBot.py` parameters.
 - bot : basic configuration of the bot : comment, folder, volume at start ....
 - webinterface : basic configuration about the interface (disabled by default)
@@ -110,4 +110,4 @@ The following people joined the collaborators for a faster development, big than
 - @slipenbois
 - @mertkutay
 
-Feel free to ask me if you want to help activelly without using pull requests. 
+Feel free to ask me if you want to help activelly without using pull requests.
