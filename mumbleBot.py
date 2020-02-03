@@ -765,7 +765,7 @@ class MumbleBot:
     # Main loop of the Bot
     def loop(self):
         raw_music = ""
-        while not self.exit and self.mumble.isAlive():
+        while not self.exit and self.mumble.is_alive():
 
             while self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 # If the buffer isn't empty, I cannot send new music part, so I wait
