@@ -54,13 +54,20 @@
     <meta charset="UTF-8">
     <title>botamusique web interface</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
 </head>
 
 <body>
     <div class="container">
-        <div class="row">
+        <div class="bs-docs-section">
+            <div class="page-header" id="banner">
+                <h1>botamusique Web Interface</h1>
+            </div>
+        </div>
+        <div class="bs-docs-section">
+            <div class="row">
             <div class="col">
                 <div id="playlist" class="card">
                     <div class="card-header">
@@ -69,21 +76,28 @@
 
                     <div class="card-body">
                         <div>
-                            Currently Playing :
-                            {% if playlist|length > 0 %}
-                            {% if 'url' in playlist[0] %}
-                            <a href="{{ playlist[0]['url'] }}">{{ playlist[0]['url'] }}</a>
-                            {% elif 'path' in playlist[0] %}
-                            {{ playlist[0]['path'] }}
+                            <p> <b>Currently Playing: </b>
+                            {% if playlist.length() > 0 %}
+                            {% if 'url' in playlist.current_item() %}
+                            <a href="{{ playlist.current_item()['url'] }}">{{ playlist.current_item()['url'] }}</a>
+                            {% elif 'path' in playlist.current_item() %}
+                            {{ playlist.current_item()['path'] }}
                             {% endif %}
                             {% else %}
                             No music
                             {% endif %}
+                            </p>
                         </div>
-                        <form method="post">
-                            <input type="text" value="randomize" name="action" hidden>
-                            <button type="submit" class="btn btn-primary">Randomize playlist</button>
-                        </form>
+                        <div class="line">
+                            <form method="post">
+                                <input type="text" value="randomize" name="action" hidden>
+                                <button type="submit" class="btn btn-primary btn-space">Randomize playlist</button>
+                            </form>
+                           <form method="post">
+                                <input type="text" value="stop" name="action" hidden>
+                                <button type="submit" class="btn btn-danger btn-space">Stop</button>
+                            </form>
+                        </div>
 
                         <table class="table">
                             <thead>
@@ -96,16 +110,35 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for m in playlist[1:] %}
+                                {% for m in playlist.playlist %}
+                                {% if loop.index0 == playlist.current_index %}
+                                <tr class="table-active">
+                                {% else %}
                                 <tr>
+                                {% endif %}
                                     <th scope="row">{{ loop.index }}</th>
-                                    <td>{{ m['type'] }}</td>
+                                    <td>{{ m['type'].capitalize() }}</td>
                                     <td>
-                                        {% if 'title' in m %}
-                                        ({{ m['title'] }})
-                                        {% else %}
-                                        No title
-                                        {% endif %}
+                                        <div class="playlist-title"">
+                                            {% if 'thumbnail' in m %}
+                                                <img width="80" src="data:image/PNG;base64,{{ m['thumbnail'] }}"/>
+                                                {% else %}
+                                                <img width="80" src="/static/image/unknown-album.png"/>
+                                            {% endif %}
+                                        </div>
+                                        <div class="playlist-artwork">
+                                            {% if 'title' in m and m['title'].strip() %}
+                                                <b>{{ m['title'] }}</b>
+                                            {% else %}
+                                                <b>{{ m['url'] }}</b>
+                                            {% endif %}
+                                            <br>
+                                            {% if 'artist' in m %}
+                                                {{ m['artist'] }}
+                                            {% else %}
+                                                Unknown Artist
+                                            {% endif %}
+                                        </div>
                                     </td>
                                     <td>
                                         {% if 'url' in m %}
@@ -115,10 +148,16 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <form method="post">
-                                            <input type="text" value="{{ loop.index }}" name="delete_music" hidden>
-                                            <button type="submit" class="btn btn-primary">Remove</button>
-                                        </form>
+                                        <div class="line">
+                                            <form method="post">
+                                                <input type="text" value="{{ loop.index0 }}" name="play_music" hidden>
+                                                <button type="submit" class="btn btn-success btn-sm btn-space">Play</button>
+                                            </form>
+                                            <form method="post">
+                                                <input type="text" value="{{ loop.index0 }}" name="delete_music" hidden>
+                                                <button type="submit" class="btn btn-danger btn-sm btn-space">Remove</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -128,8 +167,10 @@
                 </div>
             </div>
         </div>
+        </div>
 
-        <div class="row">
+        <div class="bs-docs-section">
+            <div class="row">
             <div class="col">
                 <div id="browser" class="card">
                     <div class="card-header">
@@ -154,10 +195,12 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 
     <div id="upload" class="container">
-        <div class="row">
+        <div class="bs-docs-section">
+            <div class="row">
             <div class="col">
                 <div class="card">
                     <div class="card-header">
@@ -190,7 +233,10 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        </div>
+
+        <div class="bs-docs-section">
+            <div class="row">
             <div class="col">
                 <div class="card">
                     <div class="card-header">
@@ -219,6 +265,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 
