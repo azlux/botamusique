@@ -71,8 +71,9 @@ def index():
         if 'add_file' in request.form and ".." not in request.form['add_file']:
             item = {'type': 'file',
                     'path' : request.form['add_file'],
+                    'title' : 'Unknown',
                     'user' : 'Web'}
-            var.playlist.append(item)
+            var.playlist.append(var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path']))
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -106,13 +107,21 @@ def index():
                                 'user': "Web"})
 
         elif 'delete_music' in request.form:
-            if len(var.playlist) >= request.form['delete_music']:
-                var.playlist.pop(request.form['delete_music'])
-        
+            if len(var.playlist.playlist) >= int(request.form['delete_music']):
+                var.playlist.remove(int(request.form['delete_music']))
+
+        elif 'play_music' in request.form:
+            if len(var.playlist.playlist) >= int(request.form['play_music']):
+                var.botamusique.pause()
+                var.botamusique.launch_music(int(request.form['play_music']))
+
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
-                random.shuffle(var.playlist)
+                random.shuffle(var.playlist.playlist)
+            elif action == "stop":
+                var.botamusique.pause()
+
 
     return render_template('index.html',
                            all_files=files,
