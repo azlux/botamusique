@@ -56,6 +56,10 @@ class PlayList:
 
         return self.playlist[self.next_index()]
 
+    def jump(self, index):
+        self.current_index = index
+        return self.playlist[index]
+
     def clear(self):
         self.playlist = []
         self.current_index = 0

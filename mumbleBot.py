@@ -20,6 +20,7 @@ import util
 import base64
 from PIL import Image
 from io import BytesIO
+import mutagen
 from mutagen.easyid3 import EasyID3
 import re
 import media.url
@@ -37,7 +38,8 @@ type : url
     title
     path
     duration
-    thundnail
+    artist
+    thumbnail
     user
     ready (validation, no, downloading, yes)
     from_playlist (yes,no)
@@ -53,7 +55,9 @@ type : radio
 type : file
     path
     title
+    artist
     duration
+    thumbnail
     user
 """
 
@@ -101,6 +105,7 @@ class MumbleBot:
         self.nb_exit = 0
         self.thread = None
         self.is_playing = False
+        self.is_pause = False
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -154,8 +159,6 @@ class MumbleBot:
         if self.channel:
             self.mumble.channels.find_by_name(self.channel).move_in()
         self.mumble.set_bandwidth(200000)
-
-        self.loop()
 
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
@@ -602,10 +605,15 @@ class MumbleBot:
         logging.debug("Next into the queue")
         return var.playlist.next()
 
-    def launch_music(self):
+    def launch_music(self, index=-1):
         uri = ""
-        music = var.playlist.next()
-        logging.debug("launch_music asked" + str(music))
+        music = None
+        if index == -1:
+            music = var.playlist.next()
+        else:
+            music = var.playlist.jump(index)
+
+        logging.debug("launch_music asked" + str(music['path']))
         if music["type"] == "url":
             # Delete older music is the tmp folder is too big
             media.system.clear_tmp_folder(var.config.get(
@@ -619,41 +627,30 @@ class MumbleBot:
                 self.download_music(music)
                 if music == False:
                     var.playlist.remove()
+                    return
 
-            # get the Path
-            uri = music['path']
-            if os.path.isfile(uri):
-                audio = EasyID3(uri)
-                print(audio["title"])
-                title = ""
-                if audio["title"]:
-                    # take the title from the file tag
-                    title = audio["title"][0]
+            if self.update_music_tag_info():
+                music = var.playlist.current_item()
 
-                # Remove .mp3 and add .jpg
-                path_thumbnail = music['path'][:-4] + '.jpg'
-                thumbnail_html = ""
-                if os.path.isfile(path_thumbnail):
-                    # Create the image message
-                    im = Image.open(path_thumbnail)
-                    im.thumbnail((100, 100), Image.ANTIALIAS)
-                    buffer = BytesIO()
-                    im.save(buffer, format="JPEG")
-                    thumbnail_base64 = base64.b64encode(buffer.getvalue())
-                    thumbnail_html = '<img src="data:image/PNG;base64,' + \
-                        thumbnail_base64.decode() + '"/>'
-
-                logging.debug("Thumbail data " + thumbnail_html)
+                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 music['thumbnail'] + '"/>'
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
-                        'strings', 'now_playing') % (title, thumbnail_html))
-            else:
-                logging.error("Error with the path during launch_music")
-                pass
+                        'strings', 'now_playing') % (music['title'], thumbnail_html))
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + \
                 var.playlist.current_item()["path"]
+
+            if self.update_music_tag_info(uri):
+                music = var.playlist.current_item()
+
+                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 music['thumbnail'] + '"/>'
+                #logging.debug("Thumbnail data " + thumbnail_html)
+                if var.config.getboolean('bot', 'announce_current_music'):
+                    self.send_msg(var.config.get(
+                        'strings', 'now_playing') % (music['title'], thumbnail_html))
 
         elif music["type"] == "radio":
             uri = music["url"]
@@ -744,6 +741,51 @@ class MumbleBot:
                         break
             var.playlist.playlist[index] = music
 
+    def update_music_tag_info(self, uri=""):
+        music = var.playlist.current_item()
+        if not music['type'] == 'file' and not music['type'] == 'url':
+            return False
+
+        # get the Path
+        if uri == "":
+            uri = music['path']
+
+        if os.path.isfile(uri):
+            music = self.get_music_tag_info(music, uri)
+            var.playlist.update(music)
+            return True
+        else:
+            logging.error("Error with the path during launch_music")
+            return False
+
+    def get_music_tag_info(self, music, uri=""):
+        if not uri:
+            uri = music['path']
+
+        if os.path.isfile(uri):
+            audio = EasyID3(uri)
+            if audio["title"]:
+                # take the title from the file tag
+                music['title'] = audio["title"][0]
+                music['artist'] = ', '.join(audio["artist"])
+
+                path_thumbnail = uri[:-3] + "jpg"
+                if os.path.isfile(path_thumbnail):
+                    im = Image.open(path_thumbnail)
+                    im.thumbnail((100, 100), Image.ANTIALIAS)
+                    buffer = BytesIO()
+                    im.save(buffer, format="JPEG")
+                    music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+                    # try to extract artwork from mp3 ID3 tag
+                elif uri[-3:] == "mp3":
+                    tags = mutagen.File(uri)
+                    if "APIC:" in tags:
+                        music['thumbnail'] = base64.b64encode(tags["APIC:"].data).decode('utf-8')
+
+        return music
+
+
     def async_download_next(self):
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
@@ -795,7 +837,7 @@ class MumbleBot:
                     # get next music
                     self.is_playing = False
                     self.next()
-                if len(var.playlist.playlist) > 0:
+                if not self.is_pause and len(var.playlist.playlist) > 0:
                     if var.playlist.current_item()['type'] in ['radio', 'file'] \
                             or (var.playlist.current_item()['type'] == 'url' and var.playlist.current_item()['ready'] not in ['validation', 'downloading']):
                         # Check if the music can be start before launch the music
@@ -818,6 +860,14 @@ class MumbleBot:
             self.thread = None
         var.playlist.clear()
         self.is_playing = False
+
+    def pause(self):
+        # Kill the ffmpeg thread
+        if self.thread:
+            self.thread.kill()
+            self.thread = None
+        self.is_playing = False
+        self.is_pause = True
 
     def set_comment(self):
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
@@ -892,4 +942,5 @@ if __name__ == '__main__':
 
     var.config = config
     var.db = db
-    botamusique = MumbleBot(args)
+    var.botamusique = MumbleBot(args)
+    var.botamusique.loop()
