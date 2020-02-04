@@ -28,6 +28,7 @@ import media.playlist
 import media.radio
 import media.system
 from librb import radiobrowser
+from media.playlist import PlayList
 
 """
 FORMAT OF A MUSIC INTO THE PLAYLIST
@@ -68,23 +69,29 @@ class MumbleBot:
 
         self.channel = args.channel
 
-        # Set specific format for the log
-        FORMAT = '%(asctime)s: %(message)s'
-        loglevel = logging.INFO
+        root = logging.getLogger()
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        root.setLevel(logging.INFO)
+
+        logfile = var.config.get('bot', 'logfile')
+
+        handler = None
+        if logfile:
+            handler = logging.FileHandler(logfile)
+        else:
+            handler = logging.StreamHandler(sys.stdout)
+
+        handler.setFormatter(formatter)
+        root.addHandler(handler)
+
         if args.verbose:
-            loglevel = logging.DEBUG
+            root.setLevel(logging.DEBUG)
             logging.debug("Starting in DEBUG loglevel")
         elif args.quiet:
-            loglevel = logging.ERROR
+            root.setLevel(logging.ERROR)
             logging.error("Starting in ERROR loglevel")
-        logfile = var.config.get('bot', 'logfile')
-        if logfile:
-            logging.basicConfig(filename=logfile,format=FORMAT, level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S')
-        else:
-            logging.basicConfig(format=FORMAT, level=loglevel, datefmt='%Y-%m-%d %H:%M:%S')
 
-        # the playlist is... a list (Surprise !!)
-        var.playlist = []
+        var.playlist = PlayList()
 
         var.user = args.user
         var.music_folder = var.config.get('bot', 'music_folder')
@@ -306,26 +313,24 @@ class MumbleBot:
                          'url': self.get_url_from_input(parameter),
                          'user': user,
                          'ready': 'validation'}
-                var.playlist.append(music)
 
                 if media.url.get_url_info():
-                    if var.playlist[-1]['duration'] > var.config.getint('bot', 'max_track_duration'):
-                        var.playlist.pop()
+                    if music['duration'] > var.config.getint('bot', 'max_track_duration'):
                         self.send_msg(var.config.get(
                             'strings', 'too_long'), text)
                     else:
                         for i in var.db.options("url_ban"):
-                            if var.playlist[-1]['url'] == i:
+                            if music['url'] == i:
                                 self.mumble.users[text.actor].send_text_message(
                                     var.config.get('strings', 'url_ban'))
-                                var.playlist.pop()
                                 return
-                        var.playlist[-1]['ready'] = "no"
+                        music['ready'] = "no"
+                        var.playlist.append(music)
                         self.async_download_next()
                 else:
-                    var.playlist.pop()
                     self.send_msg(var.config.get(
                         'strings', 'unable_download'), text)
+
 
             elif command == var.config.get('command', 'play_playlist') and parameter:
                 offset = 1  # if you want to start the playlist at a specific index
@@ -500,32 +505,33 @@ class MumbleBot:
                         'strings', 'current_volume') % int(self.volume * 100), text)
 
             elif command == var.config.get('command', 'current_music'):
-                if len(var.playlist) > 0:
-                    source = var.playlist[0]["type"]
+                if len(var.playlist.playlist) > 0:
+                    current_music = var.playlist.current_item()
+                    source = current_music["type"]
                     if source == "radio":
                         reply = "[radio] {title} on {url} by {user}".format(
                             title=media.radio.get_radio_title(
-                                var.playlist[0]["url"]),
-                            url=var.playlist[0]["title"],
-                            user=var.playlist[0]["user"]
+                                current_music["url"]),
+                            url=current_music["title"],
+                            user=current_music["user"]
                         )
-                    elif source == "url" and 'from_playlist' in var.playlist[0]:
+                    elif source == "url" and 'from_playlist' in current_music:
                         reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user}".format(
-                            title=var.playlist[0]["title"],
-                            url=var.playlist[0]["playlist_url"],
-                            playlist=var.playlist[0]["playlist_title"],
-                            user=var.playlist[0]["user"]
+                            title=current_music["title"],
+                            url=current_music["playlist_url"],
+                            playlist=current_music["playlist_title"],
+                            user=current_music["user"]
                         )
                     elif source == "url":
                         reply = "[url] {title} (<a href=\"{url}\">{url}</a>) by {user}".format(
-                            title=var.playlist[0]["title"],
-                            url=var.playlist[0]["url"],
-                            user=var.playlist[0]["user"]
+                            title=current_music["title"],
+                            url=current_music["url"],
+                            user=current_music["user"]
                         )
                     elif source == "file":
                         reply = "[file] {title} by {user}".format(
-                            title=var.playlist[0]["title"],
-                            user=var.playlist[0]["user"])
+                            title=current_music["title"],
+                            user=current_music["user"])
                     else:
                         reply = "ERROR"
                         logging.error(var.playlist)
@@ -537,7 +543,7 @@ class MumbleBot:
             elif command == var.config.get('command', 'skip'):
                 # Allow to remove specific music into the queue with a number
                 if parameter is not None and parameter.isdigit() and int(parameter) > 0:
-                    if int(parameter) < len(var.playlist):
+                    if int(parameter) < len(var.playlist.playlist):
                         removed = var.playlist.pop(int(parameter))
 
                         # the Title isn't here if the music wasn't downloaded
@@ -564,20 +570,20 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'no_file'), text)
 
             elif command == var.config.get('command', 'queue'):
-                if len(var.playlist) <= 1:
+                if len(var.playlist.playlist) <= 1:
                     msg = var.config.get('strings', 'queue_empty')
                 else:
                     msg = var.config.get(
                         'strings', 'queue_contents') + '<br />'
                     i = 1
-                    for value in var.playlist[1:]:
+                    for value in var.playlist.playlist:
                         msg += '[{}] ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['url'])
                         i += 1
 
                 self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'repeat'):
-                var.playlist.append(var.playlist[0])
+                var.playlist.append(var.playlist.current_item())
 
             else:
                 self.mumble.users[text.actor].send_text_message(
@@ -594,41 +600,38 @@ class MumbleBot:
     @staticmethod
     def next():
         logging.debug("Next into the queue")
-        if len(var.playlist) > 1:
-            var.playlist.pop(0)
-            return True
-        elif len(var.playlist) == 1:
-            var.playlist.pop(0)
-            return False
-        else:
-            return False
+        return var.playlist.next()
 
     def launch_music(self):
         uri = ""
-        logging.debug("launch_music asked" + str(var.playlist[0]))
-        if var.playlist[0]["type"] == "url":
+        music = var.playlist.next()
+        logging.debug("launch_music asked" + str(music))
+        if music["type"] == "url":
             # Delete older music is the tmp folder is too big
             media.system.clear_tmp_folder(var.config.get(
                 'bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
 
             # Check if the music is ready to be played
-            if var.playlist[0]["ready"] == "downloading":
+            if music["ready"] == "downloading":
                 return
-            elif var.playlist[0]["ready"] != "yes":
+            elif music["ready"] != "yes":
                 logging.info("Current music wasn't ready, Downloading...")
-                self.download_music(index=0)
+                self.download_music(music)
+                if music == False:
+                    var.playlist.remove()
 
             # get the Path
-            uri = var.playlist[0]['path']
+            uri = music['path']
             if os.path.isfile(uri):
                 audio = EasyID3(uri)
+                print(audio["title"])
                 title = ""
                 if audio["title"]:
                     # take the title from the file tag
                     title = audio["title"][0]
 
                 # Remove .mp3 and add .jpg
-                path_thumbnail = var.playlist[0]['path'][:-4] + '.jpg'
+                path_thumbnail = music['path'][:-4] + '.jpg'
                 thumbnail_html = ""
                 if os.path.isfile(path_thumbnail):
                     # Create the image message
@@ -648,14 +651,14 @@ class MumbleBot:
                 logging.error("Error with the path during launch_music")
                 pass
 
-        elif var.playlist[0]["type"] == "file":
+        elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + \
-                var.playlist[0]["path"]
+                var.playlist.current_item()["path"]
 
-        elif var.playlist[0]["type"] == "radio":
-            uri = var.playlist[0]["url"]
+        elif music["type"] == "radio":
+            uri = music["url"]
             title = media.radio.get_radio_server_description(uri)
-            var.playlist[0]["title"] = title
+            music["title"] = title
             if var.config.getboolean('bot', 'announce_current_music'):
                 self.send_msg(var.config.get('strings', 'now_playing') %
                               (title, "URL : " + uri))
@@ -672,36 +675,40 @@ class MumbleBot:
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
 
-    def download_music(self, index):
-        if var.playlist[index]['type'] == 'url' and var.playlist[index]['ready'] == "validation":
-            if media.url.get_url_info(index=index):
-                if var.playlist[index]['duration'] > var.config.getint('bot', 'max_track_duration'):
+    def download_music(self, index=-1):
+        if index == -1:
+            index = var.playlist.current_index
+
+        music = var.playlist.playlist[index]
+        if music['type'] == 'url' and music['ready'] == "validation":
+            music = media.url.get_url_info(music)
+            if music:
+                if music['duration'] > var.config.getint('bot', 'max_track_duration'):
                     # Check the length, useful in case of playlist, it wasn't checked before)
-                    var.playlist.pop()
                     logging.info(
-                        "the music " + var.playlist[index]["url"] + " has a duration of " + var.playlist[index]['duration'] + "s -- too long")
+                        "the music " + music["url"] + " has a duration of " + music['duration'] + "s -- too long")
                     self.send_msg(var.config.get('strings', 'too_long'))
-                    return
+                    return False
                 else:
-                    var.playlist[index]['ready'] = "no"
+                    music['ready'] = "no"
             else:
-                var.playlist.pop(index)
                 logging.error("Error while fetching info from the URL")
                 self.send_msg(var.config.get('strings', 'unable_download'))
+                return False
 
-        if var.playlist[index]['type'] == 'url' and var.playlist[index]['ready'] == "no":
+        if music['type'] == 'url' and music['ready'] == "no":
             # download the music
-            var.playlist[index]['ready'] = "downloading"
+            music['ready'] = "downloading"
 
-            logging.debug("Download index:" + str(index))
-            logging.debug(var.playlist[index])
-
-            url = var.playlist[index]['url']
+            url = music['url']
             url_hash = hashlib.md5(url.encode()).hexdigest()
+
+            logging.debug("Download url:" + url)
+            logging.debug(music)
 
             path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
             mp3 = path.replace(".%(ext)s", ".mp3")
-            var.playlist[index]['path'] = mp3
+            music['path'] = mp3
 
             # if os.path.isfile(mp3):
             #    audio = EasyID3(mp3)
@@ -721,29 +728,29 @@ class MumbleBot:
                     {'key': 'FFmpegMetadata'}]
             }
             self.send_msg(var.config.get(
-                'strings', "download_in_progress") % var.playlist[index]['title'])
+                'strings', "download_in_progress") % music['title'])
 
             logging.info("Information before start downloading :" +
-                         str(var.playlist[index]))
+                         str(music))
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 for i in range(2):  # Always try 2 times
                     try:
                         ydl.extract_info(url)
-                        if 'ready' in var.playlist[index] and var.playlist[index]['ready'] == "downloading":
-                            var.playlist[index]['ready'] = "yes"
+                        if 'ready' in music and music['ready'] == "downloading":
+                            music['ready'] = "yes"
                     except youtube_dl.utils.DownloadError:
                         pass
                     else:
                         break
-            return
+            var.playlist.playlist[index] = music
 
     def async_download_next(self):
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         logging.info("Async download next asked")
-        if len(var.playlist) > 1 and var.playlist[1]['type'] == 'url' and var.playlist[1]['ready'] in ["no", "validation"]:
+        if len(var.playlist.playlist) > 1 and var.playlist.next_item()['type'] == 'url' and var.playlist.next_item()['ready'] in ["no", "validation"]:
             th = threading.Thread(
-                target=self.download_music, kwargs={'index': 1})
+                target=self.download_music, kwargs={'index': var.playlist.next_index()})
         else:
             return
         logging.info("Start downloading next in thread")
@@ -788,9 +795,9 @@ class MumbleBot:
                     # get next music
                     self.is_playing = False
                     self.next()
-                if len(var.playlist) > 0:
-                    if var.playlist[0]['type'] in ['radio', 'file'] \
-                            or (var.playlist[0]['type'] == 'url' and var.playlist[0]['ready'] not in ['validation', 'downloading']):
+                if len(var.playlist.playlist) > 0:
+                    if var.playlist.current_item()['type'] in ['radio', 'file'] \
+                            or (var.playlist.current_item()['type'] == 'url' and var.playlist.current_item()['ready'] not in ['validation', 'downloading']):
                         # Check if the music can be start before launch the music
                         self.launch_music()
                         self.async_download_next()
@@ -809,7 +816,7 @@ class MumbleBot:
         if self.thread:
             self.thread.kill()
             self.thread = None
-        var.playlist = []
+        var.playlist.clear()
         self.is_playing = False
 
     def set_comment(self):
