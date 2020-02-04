@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-from flask import Flask, render_template, request, redirect, send_file
+from functools import wraps
+from flask import Flask, render_template, request, redirect, send_file, Response
 import variables as var
 import util
 from datetime import datetime
@@ -58,8 +59,35 @@ def init_proxy():
     if var.is_proxified:
         web.wsgi_app = ReverseProxied(web.wsgi_app)
 
+# https://stackoverflow.com/questions/29725217/password-protect-one-webpage-in-flask-app
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == var.config.get("webinterface", "user") and password == var.config.get("webinterface", "password")
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    logging.info("Web Interface login failed.")
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if var.config.getboolean("webinterface", "require_auth") and (not auth or not check_auth(auth.username, auth.password)):
+            if auth:
+                logging.info("Web Interface login attempt, user: %s" % auth.username)
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
 
 @web.route("/", methods=['GET', 'POST'])
+@requires_auth
 def index():
     folder_path = var.music_folder
     files = util.get_recursive_filelist_sorted(var.music_folder)
@@ -140,6 +168,18 @@ def index():
                 var.botamusique.pause()
             elif action == "clear":
                 var.botamusique.stop()
+            elif action == "volume_up":
+                if var.botamusique.volume + 0.03 < 1.0:
+                    var.botamusique.volume = var.botamusique.volume + 0.03
+                else:
+                    var.botamusique.volume = 1.0
+                logging.debug("web interface volume up to %.2f" % var.botamusique.volume)
+            elif action == "volume_down":
+                if var.botamusique.volume - 0.03 > 0:
+                    var.botamusique.volume = var.botamusique.volume - 0.03
+                else:
+                    var.botamusique.volume = 0
+                logging.debug("web interface volume down to %.2f" % var.botamusique.volume)
 
     return render_template('index.html',
                            all_files=files,
