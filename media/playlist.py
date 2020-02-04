@@ -8,6 +8,15 @@ class PlayList:
     def append(self, item):
         self.playlist.append(item)
 
+    def insert(self, index, item):
+        if index == -1:
+            index = self.current_index
+
+        self.playlist.insert(index, item)
+
+        if index <= self.current_index:
+            self.current_index += 1
+
     def length(self):
         return len(self.playlist)
 
