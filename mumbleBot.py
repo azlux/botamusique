@@ -547,7 +547,7 @@ class MumbleBot:
                 # Allow to remove specific music into the queue with a number
                 if parameter is not None and parameter.isdigit() and int(parameter) > 0:
                     if int(parameter) < len(var.playlist.playlist):
-                        removed = var.playlist.pop(int(parameter))
+                        removed = var.playlist.jump(int(parameter))
 
                         # the Title isn't here if the music wasn't downloaded
                         self.send_msg(var.config.get('strings', 'removing_item') % (
@@ -609,7 +609,7 @@ class MumbleBot:
         uri = ""
         music = None
         if index == -1:
-            music = var.playlist.next()
+            music = var.playlist.current_item()
         else:
             music = var.playlist.jump(index)
 
@@ -636,7 +636,7 @@ class MumbleBot:
                                  music['thumbnail'] + '"/>'
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
-                        'strings', 'now_playing') % (music['title'], thumbnail_html))
+                        'strings', 'now_playing') % (music['artist'] + ' - ' + music['title'], thumbnail_html))
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + \
@@ -650,7 +650,7 @@ class MumbleBot:
                 #logging.debug("Thumbnail data " + thumbnail_html)
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
-                        'strings', 'now_playing') % (music['title'], thumbnail_html))
+                        'strings', 'now_playing') % (music['artist'] + ' - ' + music['title'], thumbnail_html))
 
         elif music["type"] == "radio":
             uri = music["url"]
@@ -671,6 +671,7 @@ class MumbleBot:
         # The ffmpeg process is a thread
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
+        self.is_pause = False
 
     def download_music(self, index=-1):
         if index == -1:
@@ -781,7 +782,11 @@ class MumbleBot:
                 elif uri[-3:] == "mp3":
                     tags = mutagen.File(uri)
                     if "APIC:" in tags:
-                        music['thumbnail'] = base64.b64encode(tags["APIC:"].data).decode('utf-8')
+                        im = Image.open(BytesIO(tags["APIC:"].data))
+                        im.thumbnail((100, 100), Image.ANTIALIAS)
+                        buffer = BytesIO()
+                        im.save(buffer, format="JPEG")
+                        music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
         return music
 
@@ -789,7 +794,7 @@ class MumbleBot:
     def async_download_next(self):
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
-        logging.info("Async download next asked")
+        logging.info("Async download next asked ")
         if len(var.playlist.playlist) > 1 and var.playlist.next_item()['type'] == 'url' and var.playlist.next_item()['ready'] in ["no", "validation"]:
             th = threading.Thread(
                 target=self.download_music, kwargs={'index': var.playlist.next_index()})

@@ -9,6 +9,7 @@ import random
 from werkzeug.utils import secure_filename
 import errno
 import media
+import logging
 
 
 class ReverseProxied(object):
@@ -67,13 +68,23 @@ def index():
         music_library.add_file(file)
 
     if request.method == 'POST':
-        print(request.form)
-        if 'add_file' in request.form and ".." not in request.form['add_file']:
+        logging.debug("Post request: "+ str(request.form))
+        if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             item = {'type': 'file',
-                    'path' : request.form['add_file'],
+                    'path' : request.form['add_file_bottom'],
                     'title' : 'Unknown',
                     'user' : 'Web'}
             var.playlist.append(var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path']))
+
+        elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
+            item = {'type': 'file',
+                    'path' : request.form['add_file_next'],
+                    'title' : 'Unknown',
+                    'user' : 'Web'}
+            var.playlist.insert(
+                var.playlist.current_index + 1,
+                var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path'])
+            )
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -108,7 +119,13 @@ def index():
 
         elif 'delete_music' in request.form:
             if len(var.playlist.playlist) >= int(request.form['delete_music']):
-                var.playlist.remove(int(request.form['delete_music']))
+                if var.playlist.current_index == int(request.form['delete_music']):
+                    var.botamusique.pause()
+                    var.playlist.remove(int(request.form['delete_music']))
+                    var.botamusique.launch_music()
+                else:
+                    var.playlist.remove(int(request.form['delete_music']))
+
 
         elif 'play_music' in request.form:
             if len(var.playlist.playlist) >= int(request.form['play_music']):
@@ -121,7 +138,8 @@ def index():
                 random.shuffle(var.playlist.playlist)
             elif action == "stop":
                 var.botamusique.pause()
-
+            elif action == "clear":
+                var.botamusique.stop()
 
     return render_template('index.html',
                            all_files=files,
@@ -137,7 +155,8 @@ def upload():
     if not file:
         return redirect("./", code=406)
 
-    filename = secure_filename(file.filename).strip()
+    #filename = secure_filename(file.filename).strip()
+    filename = file.filename
     if filename == '':
         return redirect("./", code=406)
 

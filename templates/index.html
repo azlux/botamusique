@@ -4,24 +4,33 @@
     {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
     {%- set subdirid = subdirpath.replace("/","-") %}
     <li class="directory list-group-item list-group-item-primary">
-        <span>{{ subdirpath }}/&nbsp;</span>
         <div class="btn-group" role="group">
-            <form method="post" class="directory">
-                <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
-                <button type="submit" class="btn btn-secondary">Add all tracks from this folder</button>
-            </form>
-            <form method="post" class="directory">
-                <input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden>
-                <button type="submit" class="btn btn-secondary">Add all tracks from this folder (recursively)</button>
-            </form>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success btn-sm" onclick="$('#add_folder_{{ subdirpath }}').submit();"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
+                        <form method="post" id="add_folder_{{ subdirpath }}" class="directory">
+                            <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
+                            <a onclick="$('#add_folder_{{ subdirpath }}').submit();" href="#" class="dropdown-item"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder</a>
+                        </form>
+                        <form method="post" id="add_folder_recursively_{{ subdirpath }}" class="directory">
+                            <input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden>
+                            <a onclick="$('#add_folder_recursively_{{ subdirpath }}').submit();return false;" href="#" class="dropdown-item"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder and sub-folders</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <form action="./download" method="get" class="directory">
                 <input type="text" value="{{ subdirpath }}" name="directory" hidden>
-                <button type="submit" class="btn btn-secondary">Download entire directory</button>
+                <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
-            <button class="btn btn-primary" type="button" data-toggle="collapse"
-                data-target="#multiCollapse-{{ subdirid }}" aria-expanded="true"
-                aria-controls="multiCollapse-{{ subdirid }}">Toggle Collapse</button>
         </div>
+
+        <a data-toggle="collapse"
+                    data-target="#multiCollapse-{{ subdirid }}" aria-expanded="true"
+                    aria-controls="multiCollapse-{{ subdirid }}" href="#"><i class="fa fa-folder" aria-hidden="true"></i> <small>{{ subdirpath }}/</small></a>
     </li>
     <div class="collapse multi-collapse" id="multiCollapse-{{ subdirid }}">
         {{- dirlisting(subdirobj, subdirpath) -}}
@@ -33,15 +42,29 @@
     {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
     <li class="file list-group-item">
         <div class="btn-group" role="group">
-            <form method="post" class="file file_add">
-                <input type="text" value="{{ filepath }}" name="add_file" hidden>
-                <button type="submit" class="btn btn-primary">Add</button>
-            </form>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success btn-sm" onclick="$('#file_add_bottom_{{  subdirname }}_{{ loop.index0 }}').submit();"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
+                        <form method="post" id="file_add_bottom_{{ path }}_{{ loop.index0 }}" class="file file_add">
+                            <input type="text" value="{{ filepath }}" name="add_file_bottom" hidden>
+                            <a onclick="$('#file_add_bottom_{{ path }}_{{ loop.index0 }}').submit();" href="#" class="dropdown-item"><i class="fa fa-angle-down" aria-hidden="true"></i> To bottom of play list</a>
+                        </form>
+                        <form method="post" id="file_add_next_{{ path }}_{{ loop.index0 }}" class="file file_add">
+                            <input type="text" value="{{ filepath }}" name="add_file_next" hidden>
+                            <a onclick="$('#file_add_next_{{ path }}_{{ loop.index0 }}').submit();return false;" href="#" class="dropdown-item"><i class="fa fa-angle-right" aria-hidden="true"></i> After current song</a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <form action="./download" method="get" class="file file_download">
                 <input type="text" value="{{ filepath }}" name="file" hidden>
-                <button type="submit" class="btn btn-primary">Download</button>
+                <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
-        </div>&nbsp;{{ filepath }}
+        </div>&nbsp;
+        <small><i class="fa fa-music" aria-hidden="true"></i> {{ filepath }}</small>
     </li>
     {% endfor %}
     {%- endif %}
@@ -71,31 +94,18 @@
             <div class="col">
                 <div id="playlist" class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Play List</h2>
+                        <h2 class="card-title"><i class="fa fa-list" aria-hidden="true"></i> Play List</h2>
                     </div>
 
                     <div class="card-body">
-                        <div>
-                            <p> <b>Currently Playing: </b>
-                            {% if playlist.length() > 0 %}
-                            {% if 'url' in playlist.current_item() %}
-                            <a href="{{ playlist.current_item()['url'] }}">{{ playlist.current_item()['url'] }}</a>
-                            {% elif 'path' in playlist.current_item() %}
-                            {{ playlist.current_item()['path'] }}
-                            {% endif %}
-                            {% else %}
-                            No music
-                            {% endif %}
-                            </p>
-                        </div>
-                        <div class="line">
+                        <div class="btn-group" style="margin-bottom: 5px;">
                             <form method="post">
                                 <input type="text" value="randomize" name="action" hidden>
-                                <button type="submit" class="btn btn-primary btn-space">Randomize playlist</button>
+                                <button type="submit" class="btn btn-primary btn-space"><i class="fas fa-random"></i></button>
                             </form>
                            <form method="post">
                                 <input type="text" value="stop" name="action" hidden>
-                                <button type="submit" class="btn btn-danger btn-space">Stop</button>
+                                <button type="submit" class="btn btn-danger btn-space"><i class="fas fa-stop"></i></button>
                             </form>
                         </div>
 
@@ -103,13 +113,17 @@
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
-                                    <th scope="col">Type</th>
                                     <th scope="col">Title</th>
                                     <th scope="col">Url/Path</th>
                                     <th scope="col">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {% if playlist.length() == 0 %}
+                                    <tr class="table-dark">
+                                    <td colspan="4" class="text-muted" style="text-align:center;"> Play list is empty. </td>
+                                    </tr>
+                                {% else %}
                                 {% for m in playlist.playlist %}
                                 {% if loop.index0 == playlist.current_index %}
                                 <tr class="table-active">
@@ -117,9 +131,8 @@
                                 <tr>
                                 {% endif %}
                                     <th scope="row">{{ loop.index }}</th>
-                                    <td>{{ m['type'].capitalize() }}</td>
                                     <td>
-                                        <div class="playlist-title"">
+                                        <div class="playlist-title">
                                             {% if 'thumbnail' in m %}
                                                 <img width="80" src="data:image/PNG;base64,{{ m['thumbnail'] }}"/>
                                                 {% else %}
@@ -132,6 +145,7 @@
                                             {% else %}
                                                 <b>{{ m['url'] }}</b>
                                             {% endif %}
+                                            <span class="badge badge-secondary">{{ m['type'].capitalize() }}</span>
                                             <br>
                                             {% if 'artist' in m %}
                                                 {{ m['artist'] }}
@@ -142,27 +156,35 @@
                                     </td>
                                     <td>
                                         {% if 'url' in m %}
-                                        <a href="{{ m['url'] }}">{{ m['url'] }}</a>
+                                            <small><a href="{{ m['url'] }}"><i>{{ m['url']|truncate(50) }}</i></a></small>
                                         {% elif 'path' in m %}
-                                        {{ m['path'] }}
+                                        <small>{{ m['path']|truncate(50) }}</small>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <div class="line">
+                                        <div class="btn-group">
                                             <form method="post">
                                                 <input type="text" value="{{ loop.index0 }}" name="play_music" hidden>
-                                                <button type="submit" class="btn btn-success btn-sm btn-space">Play</button>
+                                                <button type="submit" class="btn btn-success btn-sm btn-space"><i class="fas fa-play"></i></button>
                                             </form>
                                             <form method="post">
                                                 <input type="text" value="{{ loop.index0 }}" name="delete_music" hidden>
-                                                <button type="submit" class="btn btn-danger btn-sm btn-space">Remove</button>
+                                                <button type="submit" class="btn btn-danger btn-sm btn-space"><i class="fas fa-trash-alt"></i></button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
+                                {% endif %}
                             </tbody>
                         </table>
+
+                        <div class="btn-group">
+                            <form method="post">
+                                <input type="text" value="clear" name="action" hidden>
+                                <button type="submit" class="btn btn-danger btn-space"><i class="fas fa-trash-alt"></i> Clear Playlist</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -174,19 +196,18 @@
             <div class="col">
                 <div id="browser" class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Music library</h2>
+                        <h2 class="card-title"><i class="fa fa-list" aria-hidden="true"></i> Music Library</h2>
                     </div>
 
                     <div class="card-body">
-                        <div class="btn-group" role="group">
+                        <div class="btn-group line" role="group">
                             <form action="./download" method="get" class="directory form1">
                                 <input type="text" value="./" name="directory" hidden>
-                                <button type="submit" class="btn btn-primary">Download entire music library</button>
+                                <button type="submit" class="btn btn-secondary btn-space"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>
                             </form>
                             <form method="post" class="directory form3">
                                 <input type="text" value="./" name="add_folder_recursively" hidden>
-                                <button type="submit" class="btn btn-primary">Add all tracks from music library
-                                    (recursively)</button>
+                                <button type="submit" class="btn btn-secondary btn-space"><i class="fa fa-plus" aria-hidden="true"></i> Add All</button>
                             </form>
                         </div>
                         <br />
@@ -209,14 +230,14 @@
                     <div class="card-body">
                         <form action="./upload" method="post" enctype="multipart/form-data">
                             <div class="input-group">
-                                <div class="custom-file">
+                                <div class="custom-file btn-space">
                                     <input type="file" name="file" class="custom-file-input" id="uploadSelectFile"
                                         aria-describedby="uploadSubmit" value="Browse Music file" />
                                     <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
                                 </div>
                                 <div class="input-group-append">
                                     <span class="input-group-text">Upload To</span>
-                                    <input class="form-control" list="targetdirs" id="targetdir" name="targetdir"
+                                    <input class="form-control btn-space" list="targetdirs" id="targetdir" name="targetdir"
                                         placeholder="uploads" />
                                     <datalist id="targetdirs">
                                         <option value="uploads">
@@ -224,6 +245,7 @@
                                         <option value="{{ dir }}">
                                             {% endfor %}
                                     </datalist>
+
                                     <button class="btn btn-outline-secondary" type="submit"
                                         id="uploadSubmit">Upload</button>
                                 </div>
@@ -244,9 +266,11 @@
                     </div>
                     <div class="card-body">
                         <form method="post">
-                            <label>Add Youtube/Soundcloud URL :</label>
-                            <input class="form-control" type="text" name="add_url">
-                            <button type="submit" class="btn btn-primary">Add URL</button>
+                            <label>Add Youtube/Soundcloud URL</label>
+                            <div class="input-group">
+                                <input class="form-control btn-space" type="text" name="add_url">
+                                <button type="submit" class="btn btn-primary">Add URL</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -258,9 +282,11 @@
                     </div>
                     <div class="card-body">
                         <form method="post">
-                            <label>Add Radio URL :</label>
-                            <input class="form-control" type="text" name="add_radio">
-                            <button type="submit" class="btn btn-primary">Add Radio</button>
+                            <label>Add Radio URL</label>
+                            <div class="input-group">
+                                <input class="form-control btn-space" type="text" name="add_radio">
+                                <button type="submit" class="btn btn-primary">Add Radio</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -271,6 +297,8 @@
 
     <script src="/static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
     <script src="/static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="/static/js/fontawesome.all.js" crossorigin="anonymous"></script>
+
     <script>
         $('#uploadSelectFile').on('change', function () {
             //get the file name

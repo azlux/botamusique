@@ -6,3 +6,4 @@ is_proxified = False
 dbfile = None
 db = None
 config = None
+botamusique = None
