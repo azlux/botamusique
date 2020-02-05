@@ -654,10 +654,15 @@ class MumbleBot:
                 if 'thumbnail' in music:
                     thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                                      music['thumbnail'] + '"/>'
+                display = ''
+                if 'artist' in music:
+                    display = music['artist'] + ' - '
+                if 'title' in music:
+                    display += music['title']
 
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
-                        'strings', 'now_playing') % (music['artist'] + ' - ' + music['title'], thumbnail_html))
+                        'strings', 'now_playing') % (display, thumbnail_html))
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + \
@@ -670,10 +675,15 @@ class MumbleBot:
                 if 'thumbnail' in music:
                     thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                                      music['thumbnail'] + '"/>'
-                #logging.debug("Thumbnail data " + thumbnail_html)
+                display = ''
+                if 'artist' in music:
+                    display = music['artist'] + ' - '
+                if 'title' in music:
+                    display += music['title']
+
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
-                        'strings', 'now_playing') % (music['artist'] + ' - ' + music['title'], thumbnail_html))
+                        'strings', 'now_playing') % (display, thumbnail_html))
 
         elif music["type"] == "radio":
             uri = music["url"]
