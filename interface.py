@@ -102,21 +102,25 @@ def index():
     if request.method == 'POST':
         logging.debug("Post request: "+ str(request.form))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
-            item = {'type': 'file',
-                    'path' : request.form['add_file_bottom'],
-                    'title' : 'Unknown',
-                    'user' : 'Web'}
-            var.playlist.append(var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path']))
+            path = var.config.get('bot', 'music_folder') + request.form['add_file_bottom']
+            if os.path.isfile(path):
+                item = {'type': 'file',
+                        'path' : request.form['add_file_bottom'],
+                        'title' : 'Unknown',
+                        'user' : 'Web'}
+                var.playlist.append(var.botamusique.get_music_tag_info(item, path))
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
-            item = {'type': 'file',
-                    'path' : request.form['add_file_next'],
-                    'title' : 'Unknown',
-                    'user' : 'Web'}
-            var.playlist.insert(
-                var.playlist.current_index + 1,
-                var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path'])
-            )
+            path = var.config.get('bot', 'music_folder') + request.form['add_file_next']
+            if os.path.isfile(path):
+                item = {'type': 'file',
+                        'path' : request.form['add_file_next'],
+                        'title' : 'Unknown',
+                        'user' : 'Web'}
+                var.playlist.insert(
+                    var.playlist.current_index + 1,
+                    var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path'])
+                )
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -128,15 +132,17 @@ def index():
                 folder += '/'
 
             print('folder:', folder)
-            if 'add_folder_recursively' in request.form:
-                files = music_library.get_files_recursively(folder)
-            else:
-                files = music_library.get_files(folder)
 
-            files = list(map(lambda file: var.botamusique.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}, \
-                                                                             var.config.get('bot', 'music_folder') + os.path.join(folder, file)), files))
-            print('Adding to playlist: ', files)
-            var.playlist.extend(files)
+            if os.path.isdir(var.config.get('bot', 'music_folder') + folder):
+                if 'add_folder_recursively' in request.form:
+                    files = music_library.get_files_recursively(folder)
+                else:
+                    files = music_library.get_files(folder)
+
+                files = list(map(lambda file: var.botamusique.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}, \
+                                                                                 var.config.get('bot', 'music_folder') + os.path.join(folder, file)), files))
+                print('Adding to playlist: ', files)
+                var.playlist.extend(files)
 
         elif 'add_url' in request.form:
             var.playlist.append({'type':'url',
@@ -168,14 +174,16 @@ def index():
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
             path = var.config.get('bot', 'music_folder') + request.form['delete_music_file']
-            logging.info("web interface delete file " + path)
-            os.remove(path)
+            if os.path.isfile(path):
+                logging.info("web interface delete file " + path)
+                os.remove(path)
 
         elif 'delete_folder' in request.form and ".." not in request.form['delete_folder']:
             path = var.config.get('bot', 'music_folder') + request.form['delete_folder']
-            logging.info("web interface delete folder " + path)
-            shutil.rmtree(path)
-            time.sleep(0.1)
+            if os.path.isdir(path):
+                logging.info("web interface delete folder " + path)
+                shutil.rmtree(path)
+                time.sleep(0.1)
 
         elif 'action' in request.form:
             action = request.form['action']
