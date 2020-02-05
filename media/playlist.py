@@ -1,5 +1,6 @@
 import youtube_dl
 import variables as var
+import random
 
 class PlayList:
     playlist = []
@@ -79,7 +80,14 @@ class PlayList:
         return self.playlist[index]
 
     def randomize(self):
+        # current_index will lose track after shuffling, thus we take current music out before shuffling
+        current = self.current_item()
+        del self.playlist[self.current_index]
+
         random.shuffle(self.playlist)
+
+        self.playlist.insert(0, current)
+        self.current_index = 0
         self.version += 1
 
     def clear(self):
