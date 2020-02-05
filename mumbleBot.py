@@ -195,7 +195,7 @@ class MumbleBot:
             else:
                 return
 
-            logging.info(command + ' - ' + parameter + ' by ' + user)
+            logging.info('bot: received command ' + command + ' - ' + parameter + ' by ' + user)
 
             if command == var.config.get('command', 'joinme'):
                 self.mumble.users.myself.move_in(
@@ -288,6 +288,7 @@ class MumbleBot:
                         music = {'type': 'file',
                                  'path': filename,
                                  'user': user}
+                        logging.info("bot: add to playlist: " + filename)
                         var.playlist.append(music)
                     else:
                         # try to do a partial match
@@ -300,6 +301,7 @@ class MumbleBot:
                             music = {'type': 'file',
                                      'path': matches[0],
                                      'user': user}
+                            logging.info("bot: add to playlist: " + matches[0])
                             var.playlist.append(music)
                         else:
                             msg = var.config.get(
@@ -329,6 +331,7 @@ class MumbleBot:
                                 return
                         music['ready'] = "no"
                         var.playlist.append(music)
+                        logging.info("bot: add to playlist: " + music['url'])
                         self.async_download_next()
                 else:
                     self.send_msg(var.config.get(
@@ -365,24 +368,25 @@ class MumbleBot:
                                  'url': url,
                                  'user': user}
                         var.playlist.append(music)
+                        logging.info("bot: add to playlist: " + music['url'])
                         self.async_download_next()
                     else:
                         self.send_msg(var.config.get('strings', 'bad_url'))
             # query http://www.radio-browser.info API for a radio station
             elif command == var.config.get('command', 'rb_query'):
-                logging.info('Querying radio stations')
+                logging.info('bot: Querying radio stations')
                 if not parameter:
                     logging.debug('rbquery without parameter')
                     msg += 'You have to add a query text to search for a matching radio stations.'
                     self.send_msg(msg, text)
                 else:
-                    logging.debug('Found query parameter: ' + parameter)
+                    logging.debug('bot: Found query parameter: ' + parameter)
                     # self.send_msg('Searching for stations - this may take some seconds...', text)
                     rb_stations = radiobrowser.getstations_byname(parameter)
                     msg = var.config.get('strings', 'rbqueryresult') + " :"
                     msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th></tr>'
                     if not rb_stations:
-                        logging.debug('No matches found for rbquery ' + parameter)
+                        logging.debug('bot: No matches found for rbquery ' + parameter)
                         self.send_msg('Radio-Browser found no matches for ' + parameter, text)
                     else:
                         for s in rb_stations:
@@ -400,7 +404,7 @@ class MumbleBot:
                             self.send_msg(msg, text)
                         # Shorten message if message too long (stage I)
                         else:
-                            logging.debug('Result too long stage I')
+                            logging.debug('bot: Result too long stage I')
                             msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L1)'
                             msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th></tr>'
                             for s in rb_stations:
@@ -413,7 +417,7 @@ class MumbleBot:
                                 self.send_msg(msg, text)
                             # Shorten message if message too long (stage II)
                             else:
-                                logging.debug('Result too long stage II')
+                                logging.debug('bot: Result too long stage II')
                                 msg = var.config.get('strings', 'rbqueryresult') + " :" + ' (shortened L2)'
                                 msg += '!rbplay ID - Station Name'
                                 for s in rb_stations:
@@ -428,13 +432,13 @@ class MumbleBot:
                                     self.send_msg('Query result too long to post (> 5000 characters), please try another query.', text)
             # Play a secific station (by id) from http://www.radio-browser.info API
             elif command == var.config.get('command', 'rb_play'):
-                logging.debug('Play a station by ID')
+                logging.debug('bot: Play a station by ID')
                 if not parameter:
-                    logging.debug('rbplay without parameter')
+                    logging.debug('bot: rbplay without parameter')
                     msg += 'Please enter a station ID from rbquery. Example: !rbplay 96748'
                     self.send_msg(msg, text)
                 else:
-                    logging.debug('Retreiving url for station ID ' + parameter)
+                    logging.debug('bot: Retreiving url for station ID ' + parameter)
                     rstation = radiobrowser.getstationname_byid(parameter)
                     stationname = rstation[0]['name']
                     country = rstation[0]['country']
@@ -448,18 +452,19 @@ class MumbleBot:
                     msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
                           '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td><td>%s</td></tr></table>' \
                            % (parameter, stationname, genre, codec, bitrate, country, homepage)
-                    logging.debug('Added station to playlist %s' % stationname)
+                    logging.debug('bot: Added station to playlist %s' % stationname)
                     self.send_msg(msg, text)
                     url = radiobrowser.geturl_byid(parameter)
                     if url != "-1":
-                        logging.info('Found url: ' + url)
+                        logging.info('bot: Found url: ' + url)
                         music = {'type': 'radio',
                                  'url': url,
                                  'user': user}
                         var.playlist.append(music)
+                        logging.info("bot: add to playlist: " + music['url'])
                         self.async_download_next()
                     else:
-                        logging.info('No playable url found.')
+                        logging.info('bot: No playable url found.')
                         msg += "No playable url found for this station, please try another station."
                         self.send_msg(msg, text)
 
@@ -587,6 +592,10 @@ class MumbleBot:
 
             elif command == var.config.get('command', 'repeat'):
                 var.playlist.append(var.playlist.current_item())
+                if var.playlist.current_item()['type'] == 'file':
+                    logging.info("bot: add to playlist: " + music['path'])
+                else:
+                    logging.info("bot: add to playlist: " + music['url'])
 
             else:
                 self.mumble.users[text.actor].send_text_message(
@@ -602,7 +611,7 @@ class MumbleBot:
 
     @staticmethod
     def next():
-        logging.debug("Next into the queue")
+        logging.debug("bot: Next into the queue")
         return var.playlist.next()
 
     def launch_music(self, index=-1):
@@ -616,7 +625,7 @@ class MumbleBot:
         else:
             music = var.playlist.jump(index)
 
-        logging.debug("launch_music asked" + str(music['path']))
+        logging.info("bot: play music " + str(music['path']))
         if music["type"] == "url":
             # Delete older music is the tmp folder is too big
             media.system.clear_tmp_folder(var.config.get(
@@ -704,7 +713,7 @@ class MumbleBot:
             url = music['url']
             url_hash = hashlib.md5(url.encode()).hexdigest()
 
-            logging.debug("Download url:" + url)
+            logging.info("bot: Download url:" + url)
             logging.debug(music)
 
             path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
@@ -731,8 +740,8 @@ class MumbleBot:
             self.send_msg(var.config.get(
                 'strings', "download_in_progress") % music['title'])
 
-            logging.info("Information before start downloading :" +
-                         str(music))
+            logging.info("Information before start downloading: " +
+                         str(music['title']))
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 for i in range(2):  # Always try 2 times
                     try:
@@ -799,13 +808,13 @@ class MumbleBot:
     def async_download_next(self):
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
-        logging.info("Async download next asked ")
+        logging.info("bot: Async download next asked ")
         if len(var.playlist.playlist) > 1 and var.playlist.next_item()['type'] == 'url' and var.playlist.next_item()['ready'] in ["no", "validation"]:
             th = threading.Thread(
                 target=self.download_music, kwargs={'index': var.playlist.next_index()})
         else:
             return
-        logging.info("Start downloading next in thread")
+        logging.info("bot: Start downloading next in thread")
         th.daemon = True
         th.start()
 
@@ -870,6 +879,7 @@ class MumbleBot:
             self.thread = None
         var.playlist.clear()
         self.is_playing = False
+        logging.info("bot: music stopped. playlist trashed.")
 
     def pause(self):
         # Kill the ffmpeg thread
@@ -878,6 +888,7 @@ class MumbleBot:
             self.thread = None
         self.is_playing = False
         self.is_pause = True
+        logging.info("bot: music paused.")
 
     def set_comment(self):
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))

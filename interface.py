@@ -141,7 +141,8 @@ def index():
 
                 files = list(map(lambda file: var.botamusique.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}, \
                                                                                  var.config.get('bot', 'music_folder') + os.path.join(folder, file)), files))
-                print('Adding to playlist: ', files)
+
+                logging.info("adding to play list: " + " ,".join([file['path'] for file in files]))
                 var.playlist.extend(files)
 
         elif 'add_url' in request.form:
@@ -198,13 +199,13 @@ def index():
                     var.botamusique.volume = var.botamusique.volume + 0.03
                 else:
                     var.botamusique.volume = 1.0
-                logging.debug("web interface volume up to %.2f" % var.botamusique.volume)
+                logging.info("web interface volume up to %.2f" % var.botamusique.volume)
             elif action == "volume_down":
                 if var.botamusique.volume - 0.03 > 0:
                     var.botamusique.volume = var.botamusique.volume - 0.03
                 else:
                     var.botamusique.volume = 0
-                logging.debug("web interface volume down to %.2f" % var.botamusique.volume)
+                logging.info("web interface volume down to %.2f" % var.botamusique.volume)
 
     return render_template('index.html',
                            all_files=files,
@@ -232,10 +233,10 @@ def upload():
     elif '../' in targetdir:
         return redirect("./", code=406)
 
-    print('Uploading file:')
-    print('filename:', filename)
-    print('targetdir:', targetdir)
-    print('mimetype:', file.mimetype)
+    logging.info('Uploading file:')
+    logging.info(' - filename:', filename)
+    logging.info(' - targetdir:', targetdir)
+    logging.info(' - mimetype:', file.mimetype)
 
     if "audio" in file.mimetype:
         storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
@@ -250,7 +251,7 @@ def upload():
                 return redirect("./", code=500)
 
         filepath = os.path.join(storagepath, filename)
-        print('filepath:',filepath)
+        logging.info(' - filepath: ', filepath)
         if os.path.exists(filepath):
             return redirect("./", code=406)
 
