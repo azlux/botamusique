@@ -133,7 +133,11 @@ def playlist():
 @web.route("/post", methods=['POST'])
 @requires_auth
 def post():
+    folder_path = var.music_folder
+    files = util.get_recursive_filelist_sorted(var.music_folder)
     music_library = util.Dir(folder_path)
+    for file in files:
+        music_library.add_file(file)
     if request.method == 'POST':
         logging.debug("Post request: "+ str(request.form))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
