@@ -775,6 +775,7 @@ class MumbleBot:
                     im = Image.open(path_thumbnail)
                     im.thumbnail((100, 100), Image.ANTIALIAS)
                     buffer = BytesIO()
+                    im = im.convert('RGB')
                     im.save(buffer, format="JPEG")
                     music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
@@ -785,6 +786,7 @@ class MumbleBot:
                         im = Image.open(BytesIO(tags["APIC:"].data))
                         im.thumbnail((100, 100), Image.ANTIALIAS)
                         buffer = BytesIO()
+                        im = im.convert('RGB')
                         im.save(buffer, format="JPEG")
                         music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
 

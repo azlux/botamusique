@@ -6,17 +6,20 @@
     <li class="directory list-group-item list-group-item-primary">
         <div class="btn-group" role="group">
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-success btn-sm" onclick="$('#add_folder_{{ subdirpath }}').submit();"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                <form method="post" class="directory">
+                    <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
+                    <button type="button" class="btn btn-success btn-sm btn-submit"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                </form>
                 <div class="btn-group" role="group">
                     <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
-                        <form method="post" id="add_folder_{{ subdirpath }}" class="directory">
+                        <form method="post" class="directory">
                             <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
-                            <a onclick="$('#add_folder_{{ subdirpath }}').submit();" href="#" class="dropdown-item"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder</a>
+                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder</a>
                         </form>
-                        <form method="post" id="add_folder_recursively_{{ subdirpath }}" class="directory">
+                        <form method="post" class="directory">
                             <input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden>
-                            <a onclick="$('#add_folder_recursively_{{ subdirpath }}').submit();return false;" href="#" class="dropdown-item"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder and sub-folders</a>
+                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder and sub-folders</a>
                         </form>
                     </div>
                 </div>
@@ -43,17 +46,20 @@
     <li class="file list-group-item">
         <div class="btn-group" role="group">
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-success btn-sm" onclick="$('#file_add_bottom_{{  subdirname }}_{{ loop.index0 }}').submit();"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                <form method="post" class="file file_add">
+                    <input type="text" value="{{ filepath }}" name="add_file_bottom" hidden>
+                    <button type="button" class="btn btn-success btn-sm btn-submit"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                </form>
                 <div class="btn-group" role="group">
                     <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
-                        <form method="post" id="file_add_bottom_{{ path }}_{{ loop.index0 }}" class="file file_add">
+                        <form method="post" class="file file_add">
                             <input type="text" value="{{ filepath }}" name="add_file_bottom" hidden>
-                            <a onclick="$('#file_add_bottom_{{ path }}_{{ loop.index0 }}').submit();" href="#" class="dropdown-item"><i class="fa fa-angle-down" aria-hidden="true"></i> To bottom of play list</a>
+                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-angle-down" aria-hidden="true"></i> To bottom of play list</a>
                         </form>
-                        <form method="post" id="file_add_next_{{ path }}_{{ loop.index0 }}" class="file file_add">
+                        <form method="post" class="file file_add">
                             <input type="text" value="{{ filepath }}" name="add_file_next" hidden>
-                            <a onclick="$('#file_add_next_{{ path }}_{{ loop.index0 }}').submit();return false;" href="#" class="dropdown-item"><i class="fa fa-angle-right" aria-hidden="true"></i> After current song</a>
+                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-angle-right" aria-hidden="true"></i> After current song</a>
                         </form>
                     </div>
                 </div>
@@ -316,7 +322,10 @@
             var fileName = $(this).val().replace('C:\\fakepath\\', " ");
             //replace the "Choose a file" label
             $(this).next('.custom-file-label').html(fileName);
-        })
+        });
+        $('a.a-submit, button.btn-submit').on('click', function (event) {
+            $(event.target).closest('form').submit();
+        });
     </script>
 </body>
 

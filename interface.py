@@ -86,6 +86,7 @@ def requires_auth(f):
         return f(*args, **kwargs)
     return decorated
 
+
 @web.route("/", methods=['GET', 'POST'])
 @requires_auth
 def index():
@@ -128,7 +129,9 @@ def index():
                 files = music_library.get_files_recursively(folder)
             else:
                 files = music_library.get_files(folder)
-            files = list(map(lambda file: {'type':'file','path': os.path.join(folder, file), 'user':'Web'}, files))
+
+            files = list(map(lambda file: var.botamusique.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}, \
+                                                                             var.config.get('bot', 'music_folder') + os.path.join(folder, file)), files))
             print('Adding to playlist: ', files)
             var.playlist.extend(files)
 
@@ -186,7 +189,8 @@ def index():
                            music_library=music_library,
                            os=os,
                            playlist=var.playlist,
-                           user=var.user)
+                           user=var.user
+                           )
 
 
 @web.route('/upload', methods=["POST"])
