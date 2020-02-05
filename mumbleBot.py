@@ -650,8 +650,11 @@ class MumbleBot:
             if self.update_music_tag_info():
                 music = var.playlist.current_item()
 
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 music['thumbnail'] + '"/>'
+                thumbnail_html = ''
+                if 'thumbnail' in music:
+                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                     music['thumbnail'] + '"/>'
+
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
                         'strings', 'now_playing') % (music['artist'] + ' - ' + music['title'], thumbnail_html))
@@ -663,8 +666,10 @@ class MumbleBot:
             if self.update_music_tag_info(uri):
                 music = var.playlist.current_item()
 
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 music['thumbnail'] + '"/>'
+                thumbnail_html = ''
+                if 'thumbnail' in music:
+                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                     music['thumbnail'] + '"/>'
                 #logging.debug("Thumbnail data " + thumbnail_html)
                 if var.config.getboolean('bot', 'announce_current_music'):
                     self.send_msg(var.config.get(
