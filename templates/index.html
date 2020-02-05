@@ -6,21 +6,21 @@
     <li class="directory list-group-item list-group-item-primary">
         <div class="btn-group" role="group">
             <div class="btn-group" role="group">
-                <form method="post" class="directory">
-                    <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
-                    <button type="button" class="btn btn-success btn-sm btn-submit"><i class="fa fa-plus" aria-hidden="true"></i></button>
-                </form>
+                <button type="button" class="btn btn-success btn-sm"
+                        onclick="request('/post', {add_folder : '{{ subdirpath }}'})">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                </button>
                 <div class="btn-group" role="group">
                     <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
-                        <form method="post" class="directory">
-                            <input type="text" value="{{ subdirpath }}" name="add_folder" hidden>
-                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder</a>
-                        </form>
-                        <form method="post" class="directory">
-                            <input type="text" value="{{ subdirpath }}" name="add_folder_recursively" hidden>
-                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-folder" aria-hidden="true"></i> Entire folder and sub-folders</a>
-                        </form>
+                        <a class="dropdown-item"
+                           onclick="request('/post', {add_folder : '{{ subdirpath }}'})">
+                            <i class="fa fa-folder" aria-hidden="true"></i> Entire folder
+                        </a>
+                        <a class="dropdown-item"
+                           onclick="request('/post', {add_folder_recursively : '{{ subdirpath }}'})">
+                            <i class="fa fa-folder" aria-hidden="true"></i> Entire folder and sub-folders
+                        </a>
                     </div>
                 </div>
             </div>
@@ -54,21 +54,21 @@
     <li class="file list-group-item">
         <div class="btn-group" role="group">
             <div class="btn-group" role="group">
-                <form method="post" class="file file_add">
-                    <input type="text" value="{{ filepath }}" name="add_file_bottom" hidden>
-                    <button type="button" class="btn btn-success btn-sm btn-submit"><i class="fa fa-plus" aria-hidden="true"></i></button>
-                </form>
+                <button type="button" class="btn btn-success btn-sm"
+                        onclick="request('/post', {add_file_bottom : '{{ filepath }}'})">
+                    <i class="fa fa-plus" aria-hidden="true"></i>
+                </button>
                 <div class="btn-group" role="group">
                     <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
                     <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
-                        <form method="post" class="file file_add">
-                            <input type="text" value="{{ filepath }}" name="add_file_bottom" hidden>
-                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-angle-down" aria-hidden="true"></i> To bottom of play list</a>
-                        </form>
-                        <form method="post" class="file file_add">
-                            <input type="text" value="{{ filepath }}" name="add_file_next" hidden>
-                            <a href="#" class="dropdown-item a-submit"><i class="fa fa-angle-right" aria-hidden="true"></i> After current song</a>
-                        </form>
+                        <a class="dropdown-item"
+                           onclick="request('/post', {add_file_bottom : '{{ filepath }}'})">
+                            <i class="fa fa-angle-down" aria-hidden="true"></i> To bottom of play list
+                        </a>
+                        <a class="dropdown-item"
+                           onclick="request('/post', {add_file_next : '{{ filepath }}'})">
+                            <i class="fa fa-angle-right" aria-hidden="true"></i> After current song
+                        </a>
                     </div>
                 </div>
             </div>
@@ -120,25 +120,25 @@
 
                     <div class="card-body">
                         <div class="btn-group" style="margin-bottom: 5px;">
-                            <form method="post">
-                                <input type="text" value="randomize" name="action" hidden>
-                                <button type="submit" class="btn btn-primary btn-space"><i class="fas fa-random"></i></button>
-                            </form>
-                           <form method="post">
-                                <input type="text" value="stop" name="action" hidden>
-                                <button type="submit" class="btn btn-danger btn-space"><i class="fas fa-stop"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-primary btn-space"
+                                    onclick="request('/post', {action : 'randomize'})">
+                                <i class="fas fa-random" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-space"
+                                    onclick="request('/post', {action : 'stop'})">
+                                <i class="fas fa-stop" aria-hidden="true"></i>
+                            </button>
                         </div>
 
                         <div class="btn-group" style="float: right;">
-                            <form method="post">
-                                <input type="text" value="volume_down" name="action" hidden>
-                                <button type="submit" class="btn btn-warning btn-space"><i class="fa fa-volume-down" aria-hidden="true"></i></button>
-                            </form>
-                            <form method="post">
-                                <input type="text" value="volume_up" name="action" hidden>
-                                <button type="submit" class="btn btn-warning btn-space"><i class="fa fa-volume-up" aria-hidden="true"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-warning btn-space"
+                                    onclick="request('/post', {action : 'volume_down'})">
+                                <i class="fa fa-volume-down" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="btn btn-warning btn-space"
+                                    onclick="request('/post', {action : 'volume_up'})">
+                                <i class="fa fa-volume-up" aria-hidden="true"></i>
+                            </button>
                         </div>
 
                         <table class="table">
@@ -150,72 +150,18 @@
                                     <th scope="col">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% if playlist.length() == 0 %}
-                                    <tr class="table-dark">
-                                    <td colspan="4" class="text-muted" style="text-align:center;"> Play list is empty. </td>
-                                    </tr>
-                                {% else %}
-                                {% for m in playlist.playlist %}
-                                {% if loop.index0 == playlist.current_index %}
-                                <tr class="table-active">
-                                {% else %}
-                                <tr>
-                                {% endif %}
-                                    <th scope="row">{{ loop.index }}</th>
-                                    <td>
-                                        <div class="playlist-title">
-                                            {% if 'thumbnail' in m %}
-                                                <img width="80" src="data:image/PNG;base64,{{ m['thumbnail'] }}"/>
-                                                {% else %}
-                                                <img width="80" src="/static/image/unknown-album.png"/>
-                                            {% endif %}
-                                        </div>
-                                        <div class="playlist-artwork">
-                                            {% if 'title' in m and m['title'].strip() %}
-                                                <b>{{ m['title'] }}</b>
-                                            {% else %}
-                                                <b>{{ m['url'] }}</b>
-                                            {% endif %}
-                                            <span class="badge badge-secondary">{{ m['type'].capitalize() }}</span>
-                                            <br>
-                                            {% if 'artist' in m %}
-                                                {{ m['artist'] }}
-                                            {% else %}
-                                                Unknown Artist
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {% if 'url' in m %}
-                                            <small><a href="{{ m['url'] }}"><i>{{ m['url']|truncate(50) }}</i></a></small>
-                                        {% elif 'path' in m %}
-                                        <small>{{ m['path']|truncate(50) }}</small>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <form method="post">
-                                                <input type="text" value="{{ loop.index0 }}" name="play_music" hidden>
-                                                <button type="submit" class="btn btn-success btn-sm btn-space"><i class="fas fa-play"></i></button>
-                                            </form>
-                                            <form method="post">
-                                                <input type="text" value="{{ loop.index0 }}" name="delete_music" hidden>
-                                                <button type="submit" class="btn btn-danger btn-sm btn-space"><i class="fas fa-trash-alt"></i></button>
-                                            </form>
-                                        </div>
-                                    </td>
+                            <tbody id="playlist-table">
+                                <tr class="table-dark">
+                                <td colspan="4" class="text-muted" style="text-align:center;"> Play list is empty. </td>
                                 </tr>
-                                {% endfor %}
-                                {% endif %}
                             </tbody>
                         </table>
 
                         <div class="btn-group">
-                            <form method="post">
-                                <input type="text" value="clear" name="action" hidden>
-                                <button type="submit" class="btn btn-danger btn-space"><i class="fas fa-trash-alt"></i> Clear Playlist</button>
-                            </form>
+                            <button type="button" class="btn btn-danger btn-space"
+                                    onclick="request('/post', {action : 'clear'})">
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -341,6 +287,59 @@
         $('a.a-submit, button.btn-submit').on('click', function (event) {
             $(event.target).closest('form').submit();
         });
+
+        var playlist_ver = 0;
+
+        function request(url, _data){
+            $.ajax({
+                type: 'POST',
+                url: '/post',
+                data : _data,
+                statusCode : {
+                    200 : function(data) {
+                        if (data.ver > playlist_ver) {
+                            updatePlaylist();
+                            playlist_ver = data.ver;
+                        }
+                    }
+                }
+            });
+        }
+
+        function displayPlaylist(data){
+            $("#playlist-table tr").remove();
+            $.each(data, function(index, item){
+                $("#playlist-table").append(item);
+            })
+        }
+
+        function updatePlaylist(){
+            $.ajax({
+                type: 'GET',
+                url: '/playlist',
+                statusCode : {
+                    200 : displayPlaylist
+                }
+            });
+        }
+
+
+        // Check the version of playlist to see if update is needed.
+        setInterval(function(){
+            $.ajax({
+                type: 'POST',
+                url : '/post',
+                statusCode : {
+                    200 : function(data){
+                        if(data.ver > playlist_ver){
+                            updatePlaylist();
+                            playlist_ver = data.ver;
+                        }
+                    }
+                }
+            });
+        } , 3000);
+
     </script>
 </body>
 

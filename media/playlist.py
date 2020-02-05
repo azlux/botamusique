@@ -4,11 +4,15 @@ import variables as var
 class PlayList:
     playlist = []
     current_index = 0
+    version = 0 # increase by one after each change
 
     def append(self, item):
+        self.version += 1
         self.playlist.append(item)
 
     def insert(self, index, item):
+        self.version += 1
+
         if index == -1:
             index = self.current_index
 
@@ -21,9 +25,11 @@ class PlayList:
         return len(self.playlist)
 
     def extend(self, items):
+        self.version += 1
         self.playlist.extend(items)
 
     def next(self):
+        self.version += 1
         if len(self.playlist) == 0:
             return False
 
@@ -32,11 +38,13 @@ class PlayList:
         return self.playlist[self.current_index]
 
     def update(self, item, index=-1):
+        self.version += 1
         if index == -1:
             index = self.current_index
         self.playlist[index] = item
 
     def remove(self, index=-1):
+        self.version += 1
         if index > len(self.playlist) - 1:
             return False
 
@@ -66,10 +74,16 @@ class PlayList:
         return self.playlist[self.next_index()]
 
     def jump(self, index):
+        self.version += 1
         self.current_index = index
         return self.playlist[index]
 
+    def randomize(self):
+        random.shuffle(self.playlist)
+        self.version += 1
+
     def clear(self):
+        self.version += 1
         self.playlist = []
         self.current_index = 0
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from functools import wraps
-from flask import Flask, render_template, request, redirect, send_file, Response
+from flask import Flask, render_template, request, redirect, send_file, Response, jsonify
 import variables as var
 import util
 from datetime import datetime
@@ -90,7 +90,7 @@ def requires_auth(f):
     return decorated
 
 
-@web.route("/", methods=['GET', 'POST'])
+@web.route("/", methods=['GET'])
 @requires_auth
 def index():
     folder_path = var.music_folder
@@ -99,6 +99,40 @@ def index():
     for file in files:
         music_library.add_file(file)
 
+
+    return render_template('index.html',
+                           all_files=files,
+                           music_library=music_library,
+                           os=os,
+                           playlist=var.playlist,
+                           user=var.user
+                           )
+
+@web.route("/playlist", methods=['GET'])
+@requires_auth
+def playlist():
+    if var.playlist.length() == 0:
+        return jsonify([render_template('playlist.html',
+                               m=False,
+                               index=-1
+                               )]
+                       )
+
+    data = []
+
+    for index, item in enumerate(var.playlist.playlist):
+         data.append(render_template('playlist.html',
+                                     index=index,
+                                     m=item,
+                                     playlist=var.playlist
+                                     )
+                     )
+
+    return jsonify(data)
+
+@web.route("/post", methods=['POST'])
+@requires_auth
+def post():
     if request.method == 'POST':
         logging.debug("Post request: "+ str(request.form))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
@@ -149,17 +183,17 @@ def index():
 
         elif 'add_url' in request.form:
             var.playlist.append({'type':'url',
-                                'url': request.form['add_url'],
-                                'user': 'Web',
-                                'ready': 'validation'})
+                                 'url': request.form['add_url'],
+                                 'user': 'Web',
+                                 'ready': 'validation'})
             logging.info("web: add to playlist: " + request.form['add_url'])
             media.url.get_url_info()
             var.playlist.playlist[-1]['ready'] = "no"
 
         elif 'add_radio' in request.form:
             var.playlist.append({'type': 'radio',
-                                'path': request.form['add_radio'],
-                                'user': "Web"})
+                                 'path': request.form['add_radio'],
+                                 'user': "Web"})
             logging.info("web: add to playlist: " + request.form['add_radio'])
 
         elif 'delete_music' in request.form:
@@ -194,7 +228,7 @@ def index():
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
-                random.shuffle(var.playlist.playlist)
+                var.playlist.randomize()
             elif action == "stop":
                 var.botamusique.pause()
             elif action == "clear":
@@ -212,14 +246,7 @@ def index():
                     var.botamusique.volume = 0
                 logging.info("web: volume down to %d" % (var.botamusique.volume * 100))
 
-    return render_template('index.html',
-                           all_files=files,
-                           music_library=music_library,
-                           os=os,
-                           playlist=var.playlist,
-                           user=var.user
-                           )
-
+        return jsonify({'ver': var.playlist.version})
 
 @web.route('/upload', methods=["POST"])
 def upload():
@@ -239,9 +266,9 @@ def upload():
         return redirect("./", code=406)
 
     logging.info('Uploading file:')
-    logging.info(' - filename:', filename)
-    logging.info(' - targetdir:', targetdir)
-    logging.info(' - mimetype:', file.mimetype)
+    logging.info(' - filename: ' + filename)
+    logging.info(' - targetdir: ' + targetdir)
+    logging.info(' - mimetype: ' + file.mimetype)
 
     if "audio" in file.mimetype:
         storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
@@ -256,7 +283,7 @@ def upload():
                 return redirect("./", code=500)
 
         filepath = os.path.join(storagepath, filename)
-        logging.info(' - filepath: ', filepath)
+        logging.info(' - filepath: ' + filepath)
         if os.path.exists(filepath):
             return redirect("./", code=406)
 
