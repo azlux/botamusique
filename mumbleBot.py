@@ -508,6 +508,7 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'change_volume') % (
                         int(self.volume * 100), self.mumble.users[text.actor]['name']), text)
                     var.db.set('bot', 'volume', str(self.volume))
+                    logging.info('bot: volume set to %d' % (self.volume * 100))
                 else:
                     self.send_msg(var.config.get(
                         'strings', 'current_volume') % int(self.volume * 100), text)
@@ -537,12 +538,16 @@ class MumbleBot:
                             user=current_music["user"]
                         )
                     elif source == "file":
-                        reply = "[file] {title} by {user}".format(
-                            title=current_music["title"],
-                            user=current_music["user"])
+                        thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 current_music['thumbnail'] + '"/>'
+                        reply = "[file] {title} by {user} <br> {thumb}".format(
+                            title=current_music['artist'] + ' - ' + current_music['title'],
+                            user=current_music["user"],
+                            thumb=thumbnail_html
+                        )
                     else:
                         reply = "ERROR"
-                        logging.error(var.playlist)
+                        logging.error(current_music)
                 else:
                     reply = var.config.get('strings', 'not_playing')
 
@@ -592,7 +597,8 @@ class MumbleBot:
 
             elif command == var.config.get('command', 'repeat'):
                 var.playlist.append(var.playlist.current_item())
-                if var.playlist.current_item()['type'] == 'file':
+                music = var.playlist.current_item()
+                if music['type'] == 'file':
                     logging.info("bot: add to playlist: " + music['path'])
                 else:
                     logging.info("bot: add to playlist: " + music['url'])

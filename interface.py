@@ -109,6 +109,7 @@ def index():
                         'title' : 'Unknown',
                         'user' : 'Web'}
                 var.playlist.append(var.botamusique.get_music_tag_info(item, path))
+                logging.info('web: add to playlist(bottom): ' + item['path'])
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.config.get('bot', 'music_folder') + request.form['add_file_next']
@@ -121,6 +122,7 @@ def index():
                     var.playlist.current_index + 1,
                     var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path'])
                 )
+                logging.info('web: add to playlist(next): ' + item['path'])
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -142,7 +144,7 @@ def index():
                 files = list(map(lambda file: var.botamusique.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}, \
                                                                                  var.config.get('bot', 'music_folder') + os.path.join(folder, file)), files))
 
-                logging.info("adding to play list: " + " ,".join([file['path'] for file in files]))
+                logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
                 var.playlist.extend(files)
 
         elif 'add_url' in request.form:
@@ -150,15 +152,18 @@ def index():
                                 'url': request.form['add_url'],
                                 'user': 'Web',
                                 'ready': 'validation'})
+            logging.info("web: add to playlist: " + request.form['add_url'])
             media.url.get_url_info()
-            var.playlist[-1]['ready'] = "no"
+            var.playlist.playlist[-1]['ready'] = "no"
 
         elif 'add_radio' in request.form:
             var.playlist.append({'type': 'radio',
                                 'path': request.form['add_radio'],
                                 'user': "Web"})
+            logging.info("web: add to playlist: " + request.form['add_radio'])
 
         elif 'delete_music' in request.form:
+            logging.info("web: delete from playlist: " + var.playlist.playlist[int(request.form['delete_music'])])
             if len(var.playlist.playlist) >= int(request.form['delete_music']):
                 if var.playlist.current_index == int(request.form['delete_music']):
                     var.botamusique.pause()
@@ -169,6 +174,7 @@ def index():
 
 
         elif 'play_music' in request.form:
+            logging.info("web: jump to: " + var.playlist.playlist[int(request.form['play_music'])])
             if len(var.playlist.playlist) >= int(request.form['play_music']):
                 var.botamusique.pause()
                 var.botamusique.launch_music(int(request.form['play_music']))
@@ -176,13 +182,13 @@ def index():
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
             path = var.config.get('bot', 'music_folder') + request.form['delete_music_file']
             if os.path.isfile(path):
-                logging.info("web interface delete file " + path)
+                logging.info("web: delete file " + path)
                 os.remove(path)
 
         elif 'delete_folder' in request.form and ".." not in request.form['delete_folder']:
             path = var.config.get('bot', 'music_folder') + request.form['delete_folder']
             if os.path.isdir(path):
-                logging.info("web interface delete folder " + path)
+                logging.info("web: delete folder " + path)
                 shutil.rmtree(path)
                 time.sleep(0.1)
 
@@ -199,13 +205,13 @@ def index():
                     var.botamusique.volume = var.botamusique.volume + 0.03
                 else:
                     var.botamusique.volume = 1.0
-                logging.info("web interface volume up to %.2f" % var.botamusique.volume)
+                logging.info("web: volume up to %d" % (var.botamusique.volume * 100))
             elif action == "volume_down":
                 if var.botamusique.volume - 0.03 > 0:
                     var.botamusique.volume = var.botamusique.volume - 0.03
                 else:
                     var.botamusique.volume = 0
-                logging.info("web interface volume down to %.2f" % var.botamusique.volume)
+                logging.info("web: volume down to %d" % (var.botamusique.volume * 100))
 
     return render_template('index.html',
                            all_files=files,
