@@ -608,6 +608,9 @@ class MumbleBot:
     def launch_music(self, index=-1):
         uri = ""
         music = None
+        if var.playlist.length() == 0:
+            return
+
         if index == -1:
             music = var.playlist.current_item()
         else:

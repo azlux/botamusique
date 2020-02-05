@@ -5,12 +5,15 @@ from flask import Flask, render_template, request, redirect, send_file, Response
 import variables as var
 import util
 from datetime import datetime
+import os
 import os.path
+import shutil
 import random
 from werkzeug.utils import secure_filename
 import errno
 import media
 import logging
+import time
 
 
 class ReverseProxied(object):
@@ -162,6 +165,17 @@ def index():
             if len(var.playlist.playlist) >= int(request.form['play_music']):
                 var.botamusique.pause()
                 var.botamusique.launch_music(int(request.form['play_music']))
+
+        elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
+            path = var.config.get('bot', 'music_folder') + request.form['delete_music_file']
+            logging.info("web interface delete file " + path)
+            os.remove(path)
+
+        elif 'delete_folder' in request.form and ".." not in request.form['delete_folder']:
+            path = var.config.get('bot', 'music_folder') + request.form['delete_folder']
+            logging.info("web interface delete folder " + path)
+            shutil.rmtree(path)
+            time.sleep(0.1)
 
         elif 'action' in request.form:
             action = request.form['action']
