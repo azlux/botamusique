@@ -685,7 +685,7 @@ class MumbleBot:
 
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
                    uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
-        logging.info("FFmpeg command : " + " ".join(command))
+        logging.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
@@ -782,31 +782,34 @@ class MumbleBot:
             uri = music['path']
 
         if os.path.isfile(uri):
-            audio = EasyID3(uri)
-            if audio["title"]:
-                # take the title from the file tag
-                music['title'] = audio["title"][0]
-                music['artist'] = ', '.join(audio["artist"])
+            try:
+                audio = EasyID3(uri)
+                if audio["title"]:
+                    # take the title from the file tag
+                    music['title'] = audio["title"][0]
+                    music['artist'] = ', '.join(audio["artist"])
 
-                path_thumbnail = uri[:-3] + "jpg"
-                if os.path.isfile(path_thumbnail):
-                    im = Image.open(path_thumbnail)
-                    im.thumbnail((100, 100), Image.ANTIALIAS)
-                    buffer = BytesIO()
-                    im = im.convert('RGB')
-                    im.save(buffer, format="JPEG")
-                    music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-                    # try to extract artwork from mp3 ID3 tag
-                elif uri[-3:] == "mp3":
-                    tags = mutagen.File(uri)
-                    if "APIC:" in tags:
-                        im = Image.open(BytesIO(tags["APIC:"].data))
+                    path_thumbnail = uri[:-3] + "jpg"
+                    if os.path.isfile(path_thumbnail):
+                        im = Image.open(path_thumbnail)
                         im.thumbnail((100, 100), Image.ANTIALIAS)
                         buffer = BytesIO()
                         im = im.convert('RGB')
                         im.save(buffer, format="JPEG")
                         music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+                        # try to extract artwork from mp3 ID3 tag
+                    elif uri[-3:] == "mp3":
+                        tags = mutagen.File(uri)
+                        if "APIC:" in tags:
+                            im = Image.open(BytesIO(tags["APIC:"].data))
+                            im.thumbnail((100, 100), Image.ANTIALIAS)
+                            buffer = BytesIO()
+                            im = im.convert('RGB')
+                            im.save(buffer, format="JPEG")
+                            music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            except:
+                pass
 
         return music
 

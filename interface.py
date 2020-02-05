@@ -163,7 +163,7 @@ def index():
             logging.info("web: add to playlist: " + request.form['add_radio'])
 
         elif 'delete_music' in request.form:
-            logging.info("web: delete from playlist: " + var.playlist.playlist[int(request.form['delete_music'])])
+            logging.info("web: delete from playlist: " + var.playlist.playlist[int(request.form['delete_music'])]['path'])
             if len(var.playlist.playlist) >= int(request.form['delete_music']):
                 if var.playlist.current_index == int(request.form['delete_music']):
                     var.botamusique.pause()
@@ -172,9 +172,8 @@ def index():
                 else:
                     var.playlist.remove(int(request.form['delete_music']))
 
-
         elif 'play_music' in request.form:
-            logging.info("web: jump to: " + var.playlist.playlist[int(request.form['play_music'])])
+            logging.info("web: jump to: " + var.playlist.playlist[int(request.form['play_music'])]['path'])
             if len(var.playlist.playlist) >= int(request.form['play_music']):
                 var.botamusique.pause()
                 var.botamusique.launch_music(int(request.form['play_music']))
