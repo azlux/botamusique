@@ -207,25 +207,29 @@
                     </div>
                     <div class="card-body">
                         <form action="./upload" method="post" enctype="multipart/form-data">
-                            <div class="input-group">
-                                <div class="custom-file btn-space">
-                                    <input type="file" name="file" class="custom-file-input" id="uploadSelectFile"
-                                        aria-describedby="uploadSubmit" value="Browse Music file" />
-                                    <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
+                            <div class="row" style="margin-bottom: 5px;">
+                                <div id="uploadBox" class="col-lg-8 input-group">
+                                    <div id="uploadField" style="display: flex; width: 100%">
+                                        <div class="custom-file btn-space">
+                                            <input type="file" name="file[]" class="custom-file-input" id="uploadSelectFile"
+                                                   aria-describedby="uploadSubmit" value="Browse Music file" multiple/>
+                                            <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="input-group-append">
+                                <div class="col-lg-4 input-group-append">
                                     <span class="input-group-text">Upload To</span>
                                     <input class="form-control btn-space" list="targetdirs" id="targetdir" name="targetdir"
-                                        placeholder="uploads" />
+                                           placeholder="uploads" />
                                     <datalist id="targetdirs">
                                         <option value="uploads">
                                             {% for dir in music_library.get_subdirs_recursively() %}
-                                        <option value="{{ dir }}">
+                                                <option value="{{ dir }}">
                                             {% endfor %}
                                     </datalist>
 
                                     <button class="btn btn-outline-secondary" type="submit"
-                                        id="uploadSubmit">Upload</button>
+                                            id="uploadSubmit">Upload</button>
                                 </div>
                             </div>
                         </form>

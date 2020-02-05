@@ -255,47 +255,49 @@ def post():
 
 @web.route('/upload', methods=["POST"])
 def upload():
-    file = request.files['file']
-    if not file:
+    files = request.files.getlist("file[]")
+    if not files:
         return redirect("./", code=406)
 
     #filename = secure_filename(file.filename).strip()
-    filename = file.filename
-    if filename == '':
-        return redirect("./", code=406)
-
-    targetdir = request.form['targetdir'].strip()
-    if targetdir == '':
-        targetdir = 'uploads/'
-    elif '../' in targetdir:
-        return redirect("./", code=406)
-
-    logging.info('Uploading file:')
-    logging.info(' - filename: ' + filename)
-    logging.info(' - targetdir: ' + targetdir)
-    logging.info(' - mimetype: ' + file.mimetype)
-
-    if "audio" in file.mimetype:
-        storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
-        print('storagepath:',storagepath)
-        if not storagepath.startswith(os.path.abspath(var.music_folder)):
+    for file in files:
+        filename = file.filename
+        if filename == '':
             return redirect("./", code=406)
 
-        try:
-            os.makedirs(storagepath)
-        except OSError as ee:
-            if ee.errno != errno.EEXIST:
-                return redirect("./", code=500)
-
-        filepath = os.path.join(storagepath, filename)
-        logging.info(' - filepath: ' + filepath)
-        if os.path.exists(filepath):
+        targetdir = request.form['targetdir'].strip()
+        if targetdir == '':
+            targetdir = 'uploads/'
+        elif '../' in targetdir:
             return redirect("./", code=406)
 
-        file.save(filepath)
-        return redirect("./", code=302)
-    else:
-        return redirect("./", code=409)
+        logging.info('Uploading file:')
+        logging.info(' - filename: ' + filename)
+        logging.info(' - targetdir: ' + targetdir)
+        logging.info(' - mimetype: ' + file.mimetype)
+
+        if "audio" in file.mimetype:
+            storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
+            print('storagepath:',storagepath)
+            if not storagepath.startswith(os.path.abspath(var.music_folder)):
+                return redirect("./", code=406)
+
+            try:
+                os.makedirs(storagepath)
+            except OSError as ee:
+                if ee.errno != errno.EEXIST:
+                    return redirect("./", code=500)
+
+            filepath = os.path.join(storagepath, filename)
+            logging.info(' - filepath: ' + filepath)
+            if os.path.exists(filepath):
+                return redirect("./", code=406)
+
+            file.save(filepath)
+        else:
+            return redirect("./", code=409)
+
+    return redirect("./", code=302)
 
 
 @web.route('/download', methods=["GET"])
