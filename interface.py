@@ -145,7 +145,7 @@ def post():
             if os.path.isfile(path):
                 item = {'type': 'file',
                         'path' : request.form['add_file_bottom'],
-                        'title' : 'Unknown',
+                        'title' : '',
                         'user' : 'Web'}
                 var.playlist.append(var.botamusique.get_music_tag_info(item, path))
                 logging.info('web: add to playlist(bottom): ' + item['path'])
@@ -155,7 +155,7 @@ def post():
             if os.path.isfile(path):
                 item = {'type': 'file',
                         'path' : request.form['add_file_next'],
-                        'title' : 'Unknown',
+                        'title' : '',
                         'user' : 'Web'}
                 var.playlist.insert(
                     var.playlist.current_index + 1,

@@ -631,7 +631,7 @@ class MumbleBot:
         else:
             music = var.playlist.jump(index)
 
-        logging.info("bot: play music " + str(music['path']))
+        logging.info("bot: play music " + str(music['path'] if 'path' in music else music['url']))
         if music["type"] == "url":
             # Delete older music is the tmp folder is too big
             media.system.clear_tmp_folder(var.config.get(
@@ -687,6 +687,7 @@ class MumbleBot:
 
         elif music["type"] == "radio":
             uri = music["url"]
+            logging.info("bot: fetching radio server description")
             title = media.radio.get_radio_server_description(uri)
             music["title"] = title
             if var.config.getboolean('bot', 'announce_current_music'):
@@ -782,14 +783,16 @@ class MumbleBot:
 
         # get the Path
         if uri == "":
-            uri = music['path']
+            if 'path' in music:
+                uri = music['path']
+            else:
+                return False
 
         if os.path.isfile(uri):
             music = self.get_music_tag_info(music, uri)
             var.playlist.update(music)
             return True
         else:
-            logging.error("Error with the path during launch_music")
             return False
 
     def get_music_tag_info(self, music, uri=""):
@@ -799,32 +802,38 @@ class MumbleBot:
         if os.path.isfile(uri):
             try:
                 audio = EasyID3(uri)
-                if audio["title"]:
+                if 'title' in audio:
                     # take the title from the file tag
                     music['title'] = audio["title"][0]
+
+                if 'artist' in audio:
                     music['artist'] = ', '.join(audio["artist"])
 
-                    path_thumbnail = uri[:-3] + "jpg"
-                    if os.path.isfile(path_thumbnail):
-                        im = Image.open(path_thumbnail)
-                        im.thumbnail((100, 100), Image.ANTIALIAS)
-                        buffer = BytesIO()
-                        im = im.convert('RGB')
-                        im.save(buffer, format="JPEG")
-                        music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                path_thumbnail = uri[:-3] + "jpg"
+                im = None
 
-                        # try to extract artwork from mp3 ID3 tag
-                    elif uri[-3:] == "mp3":
-                        tags = mutagen.File(uri)
-                        if "APIC:" in tags:
-                            im = Image.open(BytesIO(tags["APIC:"].data))
-                            im.thumbnail((100, 100), Image.ANTIALIAS)
-                            buffer = BytesIO()
-                            im = im.convert('RGB')
-                            im.save(buffer, format="JPEG")
-                            music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+                if os.path.isfile(path_thumbnail):
+                    im = Image.open(path_thumbnail)
+
+                    # try to extract artwork from mp3 ID3 tag
+                elif uri[-3:] == "mp3":
+                    tags = mutagen.File(uri)
+                    if "APIC:" in tags:
+                        im = Image.open(BytesIO(tags["APIC:"].data))
+
+                if im:
+                    im.thumbnail((100, 100), Image.ANTIALIAS)
+                    buffer = BytesIO()
+                    im = im.convert('RGB')
+                    im.save(buffer, format="JPEG")
+                    music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+                    return music
             except:
                 pass
+
+        # if nothing found
+        music['title'] = os.path.basename(uri)[:-4]
 
         return music
 
@@ -833,7 +842,8 @@ class MumbleBot:
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         logging.info("bot: Async download next asked ")
-        if len(var.playlist.playlist) > 1 and var.playlist.next_item()['type'] == 'url' and var.playlist.next_item()['ready'] in ["no", "validation"]:
+        if len(var.playlist.playlist) > 1 and var.playlist.next_item()['type'] == 'url' \
+                and var.playlist.next_item()['ready'] in ["no", "validation"]:
             th = threading.Thread(
                 target=self.download_music, kwargs={'index': var.playlist.next_index()})
         else:

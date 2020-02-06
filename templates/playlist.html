@@ -20,8 +20,8 @@
         <div class="playlist-artwork">
             {% if 'title' in m and m['title'].strip() %}
                 <b>{{ m['title'] }}</b>
-            {% else %}
-                <b>{{ m['url'] }}</b>
+            {% elif 'url' in m %}
+                <b>{{ m['url']|truncate(30) }}</b>
             {% endif %}
             <span class="badge badge-secondary">{{ m['type'].capitalize() }}</span>
             <br>
