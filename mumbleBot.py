@@ -458,6 +458,8 @@ class MumbleBot:
                     if url != "-1":
                         logging.info('bot: Found url: ' + url)
                         music = {'type': 'radio',
+                                 'title': stationname,
+                                 'artist': homepage,
                                  'url': url,
                                  'user': user}
                         var.playlist.append(music)
@@ -687,12 +689,14 @@ class MumbleBot:
 
         elif music["type"] == "radio":
             uri = music["url"]
-            logging.info("bot: fetching radio server description")
-            title = media.radio.get_radio_server_description(uri)
-            music["title"] = title
+            if 'title' not in music:
+                logging.info("bot: fetching radio server description")
+                title = media.radio.get_radio_server_description(uri)
+                music["title"] = title
+
             if var.config.getboolean('bot', 'announce_current_music'):
                 self.send_msg(var.config.get('strings', 'now_playing') %
-                              (title, "URL : " + uri))
+                              (music["title"], "URL: " + uri))
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"

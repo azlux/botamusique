@@ -152,7 +152,7 @@
                             </thead>
                             <tbody id="playlist-table">
                                 <tr class="table-dark">
-                                <td colspan="4" class="text-muted" style="text-align:center;"> Play list is empty. </td>
+                                <td colspan="4" class="text-muted" style="text-align:center;"> Fetching playlist .... </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -343,6 +343,8 @@
                 }
             });
         } , 3000);
+
+        $(document).ready(updatePlaylist);
 
     </script>
 </body>
