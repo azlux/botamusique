@@ -4,6 +4,7 @@
 import threading
 import time
 import sys
+import math
 import signal
 import configparser
 import audioop
@@ -67,9 +68,11 @@ version = 5
 class MumbleBot:
     def __init__(self, args):
         signal.signal(signal.SIGINT, self.ctrl_caught)
-        self.volume = var.config.getfloat('bot', 'volume')
+        self.volume_set = var.config.getfloat('bot', 'volume')
         if db.has_option('bot', 'volume'):
-            self.volume = var.db.getfloat('bot', 'volume')
+            self.volume_set = var.db.getfloat('bot', 'volume')
+
+        self.volume = self.volume_set
 
         self.channel = args.channel
 
@@ -116,6 +119,7 @@ class MumbleBot:
             tt.daemon = True
             tt.start()
 
+
         if args.host:
             host = args.host
         else:
@@ -160,6 +164,14 @@ class MumbleBot:
             self.mumble.channels.find_by_name(self.channel).move_in()
         self.mumble.set_bandwidth(200000)
 
+        self.is_ducking = False
+        self.on_ducking = False
+        if var.config.getboolean("bot", "ducking"):
+            self.is_ducking = True
+            self.ducking_volume = var.config.getfloat("bot", "ducking_volume")
+            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, self.ducking_sound_received)
+            self.mumble.set_receive_sound(True)
+
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
         logging.info(
@@ -173,7 +185,6 @@ class MumbleBot:
 
     # All text send to the chat is analysed by this function
     def message_received(self, text):
-
         message = text.message.strip()
         user = self.mumble.users[text.actor]['name']
 
@@ -506,14 +517,14 @@ class MumbleBot:
             elif command == var.config.get('command', 'volume'):
                 # The volume is a percentage
                 if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
-                    self.volume = float(float(parameter) / 100)
+                    self.volume_set = float(float(parameter) / 100)
                     self.send_msg(var.config.get('strings', 'change_volume') % (
-                        int(self.volume * 100), self.mumble.users[text.actor]['name']), text)
-                    var.db.set('bot', 'volume', str(self.volume))
-                    logging.info('bot: volume set to %d' % (self.volume * 100))
+                        int(self.volume_set * 100), self.mumble.users[text.actor]['name']), text)
+                    var.db.set('bot', 'volume', str(self.volume_set))
+                    logging.info('bot: volume set to %d' % (self.volume_set * 100))
                 else:
                     self.send_msg(var.config.get(
-                        'strings', 'current_volume') % int(self.volume * 100), text)
+                        'strings', 'current_volume') % int(self.volume_set * 100), text)
 
             elif command == var.config.get('command', 'current_music'):
                 if len(var.playlist.playlist) > 0:
@@ -710,6 +721,7 @@ class MumbleBot:
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
         self.is_pause = False
+        self.last_volume_cycle_time = time.time()
 
     def download_music(self, index=-1):
         if index == -1:
@@ -856,6 +868,23 @@ class MumbleBot:
         th.daemon = True
         th.start()
 
+    def volume_cycle(self):
+        delta = time.time() - self.last_volume_cycle_time
+
+        if delta > 0.001:
+            if self.is_ducking and self.on_ducking:
+                self.volume = (self.volume - self.ducking_volume) * math.exp(- delta / 0.2) + self.ducking_volume
+                if self.ducking_release > time.time():
+                    self.on_ducking = False
+            else:
+                self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.5)
+
+        self.last_volume_cycle_time = time.time()
+
+    def ducking_sound_received(self, user, sound):
+        self.on_ducking = True
+        self.ducking_release = time.time() + 1 # ducking release after 0.5s
+
     @staticmethod
     # Parse the html from the message to get the URL
     def get_url_from_input(string):
@@ -881,6 +910,7 @@ class MumbleBot:
                 raw_music = self.thread.stdout.read(480)
                 if raw_music:
                     # Adjust the volume and send it to mumble
+                    self.volume_cycle()
                     self.mumble.sound_output.add_sound(
                         audioop.mul(raw_music, 2, self.volume))
                 else:

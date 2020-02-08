@@ -243,11 +243,11 @@ def post():
             elif action == "clear":
                 var.botamusique.stop()
             elif action == "volume_up":
-                if var.botamusique.volume + 0.03 < 1.0:
-                    var.botamusique.volume = var.botamusique.volume + 0.03
+                if var.botamusique.volume_set + 0.03 < 1.0:
+                    var.botamusique.volume_set = var.botamusique.volume_set + 0.03
                 else:
-                    var.botamusique.volume = 1.0
-                logging.info("web: volume up to %d" % (var.botamusique.volume * 100))
+                    var.botamusique.volume_set = 1.0
+                logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
             elif action == "volume_down":
                 if var.botamusique.volume - 0.03 > 0:
                     var.botamusique.volume = var.botamusique.volume - 0.03
