@@ -1,0 +1,55 @@
+{% if index == -1 %}
+    <tr class="table-dark">
+    <td colspan="4" class="text-muted" style="text-align:center;"> Play list is empty. </td>
+    </tr>
+{% else %}
+{% if index == playlist.current_index %}
+<tr class="table-active">
+{% else %}
+<tr>
+{% endif %}
+    <th scope="row">{{ index + 1 }}</th>
+    <td>
+        <div class="playlist-title">
+            {% if 'thumbnail' in m %}
+                <img width="80" src="data:image/PNG;base64,{{ m['thumbnail'] }}"/>
+                {% else %}
+                <img width="80" src="/static/image/unknown-album.png"/>
+            {% endif %}
+        </div>
+        <div class="playlist-artwork">
+            {% if 'title' in m and m['title'].strip() %}
+                <b>{{ m['title']|truncate(45) }}</b>
+            {% elif 'url' in m %}
+                <b>{{ m['url']|truncate(45) }}</b>
+            {% endif %}
+            <span class="badge badge-secondary">{{ m['type'].capitalize() }}</span>
+            <br>
+            {% if 'artist' in m %}
+                {{ m['artist'] }}
+            {% else %}
+                Unknown Artist
+            {% endif %}
+        </div>
+    </td>
+    <td>
+        {% if 'url' in m %}
+            <small><a href="{{ m['url'] }}"><i>{{ m['url']|truncate(50) }}</i></a></small>
+        {% elif 'path' in m %}
+        <small>{{ m['path']|truncate(50) }}</small>
+        {% endif %}
+    </td>
+    <td>
+        <div class="btn-group">
+            <button type="button" class="btn btn-success btn-sm btn-space"
+                    onclick="request('/post', {play_music : '{{ index }}'})">
+                <i class="fa fa-play" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn-danger btn-sm btn-space"
+                    onclick="request('/post', {delete_music : '{{ index }}'})">
+                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+            </button>
+        </div>
+    </td>
+</tr>
+{% endif %}

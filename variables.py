@@ -1,8 +1,9 @@
 current_music = None
-playlist = []
+playlist = None
 user = ""
 music_folder = ""
 is_proxified = False
 dbfile = None
 db = None
 config = None
+botamusique = None

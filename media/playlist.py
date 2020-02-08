@@ -1,5 +1,99 @@
 import youtube_dl
 import variables as var
+import random
+
+class PlayList:
+    playlist = []
+    current_index = 0
+    version = 0 # increase by one after each change
+
+    def append(self, item):
+        self.version += 1
+        self.playlist.append(item)
+
+    def insert(self, index, item):
+        self.version += 1
+
+        if index == -1:
+            index = self.current_index
+
+        self.playlist.insert(index, item)
+
+        if index <= self.current_index:
+            self.current_index += 1
+
+    def length(self):
+        return len(self.playlist)
+
+    def extend(self, items):
+        self.version += 1
+        self.playlist.extend(items)
+
+    def next(self):
+        self.version += 1
+        if len(self.playlist) == 0:
+            return False
+
+        self.current_index = self.next_index()
+
+        return self.playlist[self.current_index]
+
+    def update(self, item, index=-1):
+        self.version += 1
+        if index == -1:
+            index = self.current_index
+        self.playlist[index] = item
+
+    def remove(self, index=-1):
+        self.version += 1
+        if index > len(self.playlist) - 1:
+            return False
+
+        if index == -1:
+            index = self.current_index
+        del self.playlist[index]
+
+        if self.current_index <= index:
+            self.next()
+
+    def current_item(self):
+        return self.playlist[self.current_index]
+
+    def next_index(self):
+        if len(self.playlist) == 0:
+            return False
+
+        if self.current_index < len(self.playlist) - 1:
+            return self.current_index + 1
+        else:
+            return 0
+
+    def next_item(self):
+        if len(self.playlist) == 0:
+            return False
+
+        return self.playlist[self.next_index()]
+
+    def jump(self, index):
+        self.version += 1
+        self.current_index = index
+        return self.playlist[index]
+
+    def randomize(self):
+        # current_index will lose track after shuffling, thus we take current music out before shuffling
+        current = self.current_item()
+        del self.playlist[self.current_index]
+
+        random.shuffle(self.playlist)
+
+        self.playlist.insert(0, current)
+        self.current_index = 0
+        self.version += 1
+
+    def clear(self):
+        self.version += 1
+        self.playlist = []
+        self.current_index = 0
 
 
 def get_playlist_info(url, start_index=0, user=""):
@@ -41,15 +135,15 @@ def get_music_info(index=0):
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         for i in range(2):
             try:
-                info = ydl.extract_info(var.playlist[0]['url'], download=False)
+                info = ydl.extract_info(var.playlist.playlist[index]['url'], download=False)
                 # Check if the Duration is longer than the config
-                if var.playlist[0]['current_index'] == index:
-                    var.playlist[0]['current_duration'] = info['entries'][0]['duration'] / 60
-                    var.playlist[0]['current_title'] = info['entries'][0]['title']
+                if var.playlist[index]['current_index'] == index:
+                    var.playlist[index]['current_duration'] = info['entries'][0]['duration'] / 60
+                    var.playlist[index]['current_title'] = info['entries'][0]['title']
                 # Check if the Duration of the next music is longer than the config (async download)
-                elif var.playlist[0]['current_index'] == index - 1:
-                    var.playlist[0]['next_duration'] = info['entries'][0]['duration'] / 60
-                    var.playlist[0]['next_title'] = info['entries'][0]['title']
+                elif var.playlist[index]['current_index'] == index - 1:
+                    var.playlist[index]['next_duration'] = info['entries'][0]['duration'] / 60
+                    var.playlist[index]['next_title'] = info['entries'][0]['title']
             except youtube_dl.utils.DownloadError:
                 pass
             else:
