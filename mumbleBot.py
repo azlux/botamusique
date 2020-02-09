@@ -166,10 +166,11 @@ class MumbleBot:
 
         self.is_ducking = False
         self.on_ducking = False
+        self.ducking_release = time.time()
         if var.config.getboolean("bot", "ducking"):
             self.is_ducking = True
             self.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
-            self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=3000)
+            self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
@@ -531,7 +532,7 @@ class MumbleBot:
                 if parameter == "" or parameter == "on":
                     self.is_ducking = True
                     self.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
-                    self.ducking_threshold = var.config.getint("bot", "ducking_threshold", fallback=3000)
+                    self.ducking_threshold = var.config.getint("bot", "ducking_threshold", fallback=5000)
                     self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
                                                        self.ducking_sound_received)
                     self.mumble.set_receive_sound(True)
@@ -896,11 +897,12 @@ class MumbleBot:
     def volume_cycle(self):
         delta = time.time() - self.last_volume_cycle_time
 
+        if self.ducking_release < time.time():
+            self.on_ducking = False
+
         if delta > 0.001:
             if self.is_ducking and self.on_ducking:
                 self.volume = (self.volume - self.ducking_volume) * math.exp(- delta / 0.2) + self.ducking_volume
-                if self.ducking_release > time.time():
-                    self.on_ducking = False
             else:
                 self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.5)
 
