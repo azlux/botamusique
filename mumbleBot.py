@@ -909,7 +909,7 @@ class MumbleBot:
     def ducking_sound_received(self, user, sound):
         if audioop.rms(sound.pcm, 2) > self.ducking_threshold:
             if self.on_ducking is False:
-                logging.dubug("bot: ducking triggered")
+                logging.debug("bot: ducking triggered")
                 self.on_ducking = True
             self.ducking_release = time.time() + 1 # ducking release after 1s
 
