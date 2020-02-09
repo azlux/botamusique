@@ -168,7 +168,8 @@ class MumbleBot:
         self.on_ducking = False
         if var.config.getboolean("bot", "ducking"):
             self.is_ducking = True
-            self.ducking_volume = var.config.getfloat("bot", "ducking_volume")
+            self.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
+            self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=3000)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
@@ -526,6 +527,30 @@ class MumbleBot:
                     self.send_msg(var.config.get(
                         'strings', 'current_volume') % int(self.volume_set * 100), text)
 
+            elif command == var.config.get('command', 'ducking'):
+                if parameter == "" or parameter == "on":
+                    self.is_ducking = True
+                    self.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
+                    self.ducking_threshold = var.config.getint("bot", "ducking_threshold", fallback=3000)
+                    self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
+                                                       self.ducking_sound_received)
+                    self.mumble.set_receive_sound(True)
+                    logging.info('bot: ducking is on')
+                    msg = "Ducking on."
+                    self.send_msg(msg, text)
+                elif parameter == "off":
+                    self.is_ducking = False
+                    self.mumble.set_receive_sound(False)
+                    msg = "Ducking off."
+                    logging.info('bot: ducking is off')
+                    self.send_msg(msg, text)
+
+            elif command == var.config.get('command', 'ducking_threshold'):
+                if parameter is not None and parameter.isdigit():
+                    self.ducking_threshold = int(parameter)
+                    msg = "Ducking threshold set to %d." % self.ducking_threshold
+                    self.send_msg(msg, text)
+
             elif command == var.config.get('command', 'current_music'):
                 if len(var.playlist.playlist) > 0:
                     current_music = var.playlist.current_item()
@@ -882,8 +907,11 @@ class MumbleBot:
         self.last_volume_cycle_time = time.time()
 
     def ducking_sound_received(self, user, sound):
-        self.on_ducking = True
-        self.ducking_release = time.time() + 1 # ducking release after 0.5s
+        if audioop.rms(sound.pcm, 2) > self.ducking_threshold:
+            print("ducking trigger")
+            self.on_ducking = True
+            self.ducking_release = time.time() + 1 # ducking release after 1s
+
 
     @staticmethod
     # Parse the html from the message to get the URL
