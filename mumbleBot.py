@@ -332,7 +332,7 @@ class MumbleBot:
                          'user': user,
                          'ready': 'validation'}
 
-                if media.url.get_url_info():
+                if media.url.get_url_info(music):
                     if music['duration'] > var.config.getint('bot', 'max_track_duration'):
                         self.send_msg(var.config.get(
                             'strings', 'too_long'), text)
@@ -681,11 +681,11 @@ class MumbleBot:
                 return
             elif music["ready"] != "yes":
                 logging.info("Current music wasn't ready, Downloading...")
-                self.download_music(music)
+                self.download_music()
                 if music == False:
                     var.playlist.remove()
                     return
-
+            uri = music['path']
             if self.update_music_tag_info():
                 music = var.playlist.current_item()
 
