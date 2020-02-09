@@ -74,7 +74,6 @@ class MumbleBot:
 
         self.volume = self.volume_set
 
-        self.channel = args.channel
 
         root = logging.getLogger()
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -134,6 +133,11 @@ class MumbleBot:
             password = args.password
         else:
             password = var.config.get("server", "password")
+
+        if args.channel:
+            self.channel = args.channel
+        else:
+            self.channel = var.config.get("server", "channel")
 
         if args.certificate:
             certificate = args.certificate
