@@ -22,7 +22,6 @@ import base64
 from PIL import Image
 from io import BytesIO
 import mutagen
-from mutagen.easyid3 import EasyID3
 import re
 import media.url
 import media.file
@@ -843,25 +842,42 @@ class MumbleBot:
 
         if os.path.isfile(uri):
             try:
-                audio = EasyID3(uri)
-                if 'title' in audio:
-                    # take the title from the file tag
-                    music['title'] = audio["title"][0]
-
-                if 'artist' in audio:
-                    music['artist'] = ', '.join(audio["artist"])
-
-                path_thumbnail = uri[:-3] + "jpg"
                 im = None
-
+                path_thumbnail = uri[:-3] + "jpg"
                 if os.path.isfile(path_thumbnail):
                     im = Image.open(path_thumbnail)
 
-                    # try to extract artwork from mp3 ID3 tag
-                elif uri[-3:] == "mp3":
+                if uri[-3:] == "mp3":
+                    # title: TIT2
+                    # artist: TPE1, TPE2
+                    # album: TALB
+                    # cover artwork: APIC:
                     tags = mutagen.File(uri)
-                    if "APIC:" in tags:
-                        im = Image.open(BytesIO(tags["APIC:"].data))
+                    if 'TIT2' in tags:
+                        music['title'] = tags['TIT2'].text[0]
+                    if 'TPE1' in tags: # artist
+                        music['artist'] = tags['TPE1'].text[0]
+
+                    print(music)
+
+                    if im is None:
+                        if "APIC:" in tags:
+                            im = Image.open(BytesIO(tags["APIC:"].data))
+
+                elif uri[-3:] == "m4a" or uri[-3:] == "m4b" or uri[-3:] == "mp4" or uri[-3:] == "m4p":
+                    # title: ©nam (\xa9nam)
+                    # artist: ©ART
+                    # album: ©alb
+                    # cover artwork: covr
+                    tags = mutagen.File(uri)
+                    if '©nam' in tags:
+                        music['title'] = tags['©nam'][0]
+                    if '©ART' in tags: # artist
+                        music['artist'] = tags['©ART'][0]
+
+                        if im is None:
+                            if "covr" in tags:
+                                im = Image.open(BytesIO(tags["covr"][0]))
 
                 if im:
                     im.thumbnail((100, 100), Image.ANTIALIAS)
