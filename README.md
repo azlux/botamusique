@@ -1,13 +1,13 @@
 # botamusique
 
-Botamusique is a mumble bot which goal is to allow users to listen music together with its audio output.
-Predicted functionalities will be ones you could expect from any classic music player.
+Botamusique is a mumble bot who plays music on a mumble channel.
+Predicted functionalities will be those people would expect from any classic music player.
 
-Bot the can play :
-- Radio station from url
-- Radio station from http://www.radio-browser.info API (query from > 24k stations)
+botamusique can play:
+- Radio stations from url
+- Radio stations from http://www.radio-browser.info API (query from > 24k stations)
 - Youtube/Soundcloud URL (everything supported by youtube-dl)
-- Local folder (disabled, I need to work on the web interface)
+- Music in local folders (which can be uploaded through a web interface)
 
 -----
 ## Menu
@@ -22,17 +22,17 @@ Bot the can play :
 
 
 ### Web interface
-* Disabled by default. It's working but ugly (I'm not a web developer).
+**Disabled by default.** You need to enable it in `configuration.ini`.
+It works, and we are still making it better.
 
-You need to create a folder for all your music. Organize your music by subfolder.
-The main folder needs to be declared in the config (with a '/' at the end)
-You can enable the web interface into the configuration.ini file.
+You need to create a folder for all your songs. Organize your songs by subfolder.
+The main folder needs to be set in `configuration.ini` (with a '/' at the end).
 
 ### Installation
-1. You need python 3 with opuslib and protobuf (look at the requirement of pymumble)
+1. You need python3 with opuslib and protobuf (look at the requirement of pymumble).
 2. The Bot uses ffmpeg, so you know what you have to do if ffmpeg isn't in your package manager. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
-To Install botamusique (stable and build-in auto-update):
+To install botamusique (**recommended**, stable and with build-in auto-update support):
 ```
 curl -Lo botamusique.tar.gz https://azlux.fr/botamusique/sources.tar.gz
 tar -xzf botamusique.tar.gz
@@ -42,7 +42,7 @@ venv/bin/pip install wheel
 venv/bin/pip install -r requirements.txt
 ```
 
-For the master version, you can use Git installation commands (no build-in auto-update allowed):
+For the version of the master branch, you can use Git installation commands (no build-in auto-update support):
 ```
 apt install python3-venv ffmpeg libjpeg-dev zlibc zlib1g zlib1g-dev
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
@@ -53,9 +53,9 @@ venv/bin/pip install -r requirements.txt
 ```
 
 ### Update
-If using the recommanded install, you can send to the bot `!update`(command by default)
+If using the recommended install, you can send `!update` to the bot (command by default).
 
-If using git, you need to make the update manually:
+If using git, you need to update manually:
 ```
 git pull --all
 git submodule update
@@ -69,45 +69,43 @@ venv/bin/pip install --upgrade -r requirements.txt
 ### Starting the bot
 `$ venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C /path/to/botamusique.pem`
 
-The bot listen to the 8181 port so you should redirect to this one in you NAT configuration to let others peoples access the web interface. (DISABLED)
+The bot listens the 8181 port so you should properly set the forwarding rules in you NAT configuration to let other peoples access the web interface. (DISABLED)
 
 If you want information about autoStart and auto-Restart the bot, [you can have help on the wiki.](https://github.com/azlux/botamusique/wiki/AutoStart---AutoRestart)
 
-### Custom commands
-You can copy the file `configuration.default.ini` to `configuration.ini` and customize all variable. Everything can be change but don't remove the default file.
+### Configuration
+You can copy the file `configuration.default.ini` into `configuration.ini` and customize all variable. Everything can be changed but don't remove the default file.
 
-you have the sections :
-- server : configuration about the server and bot name. This is overrided by the `./mumbleBot.py` parameters.
-- bot : basic configuration of the bot : comment, folder, volume at start ....
-- webinterface : basic configuration about the interface (disabled by default)
-- command : you can customize the command you want for each action (if you put `help = helpme` , the bot will response to `!helpme` )
-- radio : here you can have a list of default radio ( I can play a jazz radio with the command `!radio jazz`)
-- rbquery : search http://www.radio-browser.info API for listed radio stations - eg: `!rbquery nora`
-- rbplay : Play a specific radio station by ID (from rbquery) - eg: `!rbplay 96748`
-- strings : you can customize all string the bot can say.
-- debug : option to activate ffmpeg or pymumble debug. (Can be very verbose)
+Sections explained:
+- `server`: configuration about the server and bot name. This is overridden by the `./mumbleBot.py` parameters.
+- `bot`: basic configuration of the bot, eg. comment, folder, default volume, etc.
+- `webinterface`: basic configuration about the interface (disabled by default)
+- `command`: you can customize the command you want for each action (if you put `help = helpme` , the bot will respond to `!helpme` )
+- `radio`: here you can provide a list of default radio ( I can play a jazz radio with the command `!radio jazz`)
+- `strings`: you can customize all string the bot can say.
+- `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
 
 ### Known Issues
 
-During installation, you can have the error:
+During installation, you may encounter the following error:
 ```
 ImportError: libtiff.so.5: cannot open shared object file: No such file or directory
 ```
-You need to install a missing system librairie: `apt install libtiff5`
+You need to install a missing library: `apt install libtiff5`
 
 ---
 
-At start, you can have this following error even if you have install all requirements:
+In the beginning, you may encounter the following error even if you have installed all requirements:
 ```
 Exception: Could not find opus library. Make sure it is installed.
 ```
-You need to install the opus codec (not embeded in all system) : `apt install libopus0`
+You need to install the opus codec (not embedded in all system): `apt install libopus0`
 
 ### Contributors
-If you want to participate, You're welcome to fork and pull requests (fixes and new features).
+If you want to participate, You're welcome to fork and submit pull requests (fixes and new features).
 
 The following people joined the collaborators for a faster development, big thanks:
 - @slipenbois
 - @mertkutay
 
-Feel free to ask me if you want to help activelly without using pull requests.
+Feel free to ask me if you want to help actively without using pull requests.
