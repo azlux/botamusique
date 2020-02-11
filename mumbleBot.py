@@ -561,21 +561,33 @@ class MumbleBot:
                             user=current_music["user"]
                         )
                     elif source == "url" and 'from_playlist' in current_music:
-                        reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user}".format(
+                        thumbnail_html = ''
+                        if 'thumbnail' in current_music:
+                            thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                             current_music['thumbnail'] + '"/>'
+                        reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
                             title=current_music["title"],
                             url=current_music["playlist_url"],
                             playlist=current_music["playlist_title"],
-                            user=current_music["user"]
+                            user=current_music["user"],
+                            thumb=thumbnail_html
                         )
                     elif source == "url":
-                        reply = "[url] {title} (<a href=\"{url}\">{url}</a>) by {user}".format(
+                        thumbnail_html = ''
+                        if 'thumbnail' in current_music:
+                            thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                             current_music['thumbnail'] + '"/>'
+                        reply = "[url] <a href=\"{url}\">{title}</a> by {user} <br> {thumb}".format(
                             title=current_music["title"],
                             url=current_music["url"],
-                            user=current_music["user"]
+                            user=current_music["user"],
+                            thumb = thumbnail_html
                         )
                     elif source == "file":
-                        thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 current_music['thumbnail'] + '"/>'
+                        thumbnail_html = ''
+                        if 'thumbnail' in current_music:
+                            thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                     current_music['thumbnail'] + '"/>'
                         reply = "[file] {title} by {user} <br> {thumb}".format(
                             title=current_music['artist'] + ' - ' + current_music['title'],
                             user=current_music["user"],
