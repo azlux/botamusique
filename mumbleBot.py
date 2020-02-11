@@ -5,6 +5,7 @@ import threading
 import time
 import sys
 import math
+import re
 import signal
 import configparser
 import audioop
@@ -841,13 +842,20 @@ class MumbleBot:
             uri = music['path']
 
         if os.path.isfile(uri):
+            match = re.search("(.+)\.(.+)", uri)
+            if match is None:
+                return music
+
+            file_no_ext = match[1]
+            ext = match[2]
+
             try:
                 im = None
-                path_thumbnail = uri[:-3] + "jpg"
+                path_thumbnail = file_no_ext + "jpg"
                 if os.path.isfile(path_thumbnail):
                     im = Image.open(path_thumbnail)
 
-                if uri[-3:] == "mp3":
+                if ext == "mp3":
                     # title: TIT2
                     # artist: TPE1, TPE2
                     # album: TALB
@@ -864,7 +872,7 @@ class MumbleBot:
                         if "APIC:" in tags:
                             im = Image.open(BytesIO(tags["APIC:"].data))
 
-                elif uri[-3:] == "m4a" or uri[-3:] == "m4b" or uri[-3:] == "mp4" or uri[-3:] == "m4p":
+                elif ext == "m4a" or ext == "m4b" or ext == "mp4" or ext == "m4p":
                     # title: ©nam (\xa9nam)
                     # artist: ©ART
                     # album: ©alb
@@ -891,7 +899,8 @@ class MumbleBot:
                 pass
 
         # if nothing found
-        music['title'] = os.path.basename(uri)[:-4]
+        match = re.search("([^\.]+)\.?.*", os.path.basename(uri))
+        music['title'] = match[1]
 
         return music
 
