@@ -76,21 +76,6 @@ class MumbleBot:
 
         self.channel = args.channel
 
-        root = logging.getLogger()
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        root.setLevel(logging.INFO)
-
-        logfile = var.config.get('bot', 'logfile')
-
-        handler = None
-        if logfile:
-            handler = logging.FileHandler(logfile)
-        else:
-            handler = logging.StreamHandler(sys.stdout)
-
-        handler.setFormatter(formatter)
-        root.addHandler(handler)
-
         if args.verbose:
             root.setLevel(logging.DEBUG)
             logging.debug("Starting in DEBUG loglevel")
@@ -552,6 +537,18 @@ class MumbleBot:
                     msg = "Ducking threshold set to %d." % self.ducking_threshold
                     self.send_msg(msg, text)
 
+            elif command == var.config.get('command', 'ducking_volume'):
+                # The volume is a percentage
+                if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
+                    self.ducking_volume = float(float(parameter) / 100)
+                    self.send_msg(var.config.get('strings', 'change_ducking_volume') % (
+                        int(self.ducking_volume * 100), self.mumble.users[text.actor]['name']), text)
+                    #var.db.set('bot', 'volume', str(self.volume_set))
+                    logging.info('bot: volume on ducking set to %d' % (self.ducking_volume * 100))
+                else:
+                    self.send_msg(var.config.get(
+                        'strings', 'current_ducking_volume') % int(self.ducking_volume * 100), text)
+
             elif command == var.config.get('command', 'current_music'):
                 if len(var.playlist.playlist) > 0:
                     current_music = var.playlist.current_item()
@@ -866,8 +863,6 @@ class MumbleBot:
                     if 'TPE1' in tags: # artist
                         music['artist'] = tags['TPE1'].text[0]
 
-                    print(music)
-
                     if im is None:
                         if "APIC:" in tags:
                             im = Image.open(BytesIO(tags["APIC:"].data))
@@ -1064,10 +1059,13 @@ if __name__ == '__main__':
                         type=str, default=None, help="Certificate file")
 
     args = parser.parse_args()
+
     var.dbfile = args.db
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
     parsed_configs = config.read(
         ['configuration.default.ini', args.config], encoding='utf-8')
+
+
 
     db = configparser.ConfigParser(
         interpolation=None, allow_no_value=True, delimiters='²')
@@ -1087,5 +1085,23 @@ if __name__ == '__main__':
 
     var.config = config
     var.db = db
+
+    # Setup logger
+    root = logging.getLogger()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    root.setLevel(logging.INFO)
+
+    logfile = var.config.get('bot', 'logfile')
+
+    handler = None
+    if logfile:
+        handler = logging.FileHandler(logfile)
+    else:
+        handler = logging.StreamHandler(sys.stdout)
+
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
+
+    # Start the bot, loop.
     var.botamusique = MumbleBot(args)
     var.botamusique.loop()
