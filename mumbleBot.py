@@ -94,6 +94,8 @@ class MumbleBot:
         self.thread = None
         self.is_playing = False
         self.is_pause = False
+        self.playhead = -1
+        self.song_start_at = -1
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -164,7 +166,7 @@ class MumbleBot:
         logging.info(
             "\nSIGINT caught, quitting, {} more to kill".format(2 - self.nb_exit))
         self.exit = True
-        self.stop()
+        self.clear()
         if self.nb_exit > 1:
             logging.info("Forced Quit")
             sys.exit(0)
@@ -276,7 +278,25 @@ class MumbleBot:
             ###
             # everyday commands
             ###
-            if command == var.config.get('command', 'play_file') and parameter:
+            if command == var.config.get('command', 'play'):
+                if var.playlist.length() > 0:
+                    if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
+                            and int(parameter) < len(var.playlist.playlist):
+                        self.stop()
+                        self.launch_music(int(parameter))
+                    elif self.is_pause:
+                        self.resume()
+                        self.send_msg(self.formatted_current_playing())
+                    else:
+                        self.send_msg(var.config.get('strings', 'not_playing'), text)
+                else:
+                    self.send_msg(var.config.get('strings', 'queue_empty'), text)
+
+            elif command == var.config.get('command', 'pause'):
+                self.pause()
+                self.send_msg(var.config.get('strings', 'paused'))
+
+            elif command == var.config.get('command', 'play_file') and parameter:
                 music_folder = var.config.get('bot', 'music_folder')
                 # sanitize "../" and so on
                 path = os.path.abspath(os.path.join(music_folder, parameter))
@@ -476,10 +496,17 @@ class MumbleBot:
 
             elif command == var.config.get('command', 'stop'):
                 self.stop()
+                self.send_msg(var.config.get(
+                    'strings', 'stopped'), text)
+
+            elif command == var.config.get('command', 'clear'):
+                self.clear()
+                self.send_msg(var.config.get(
+                    'strings', 'cleared'), text)
 
             elif command == var.config.get('command', 'kill'):
                 if self.is_admin(user):
-                    self.stop()
+                    self.clear()
                     self.exit = True
                 else:
                     self.mumble.users[text.actor].send_text_message(
@@ -536,6 +563,9 @@ class MumbleBot:
                     self.ducking_threshold = int(parameter)
                     msg = "Ducking threshold set to %d." % self.ducking_threshold
                     self.send_msg(msg, text)
+                else:
+                    msg = "Current ducking threshold is %d." % self.ducking_threshold
+                    self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'ducking_volume'):
                 # The volume is a percentage
@@ -550,78 +580,36 @@ class MumbleBot:
                         'strings', 'current_ducking_volume') % int(self.ducking_volume * 100), text)
 
             elif command == var.config.get('command', 'current_music'):
+                reply = ""
                 if len(var.playlist.playlist) > 0:
-                    current_music = var.playlist.current_item()
-                    source = current_music["type"]
-                    if source == "radio":
-                        reply = "[radio] {title} on {url} by {user}".format(
-                            title=media.radio.get_radio_title(
-                                current_music["url"]),
-                            url=current_music["title"],
-                            user=current_music["user"]
-                        )
-                    elif source == "url" and 'from_playlist' in current_music:
-                        thumbnail_html = ''
-                        if 'thumbnail' in current_music:
-                            thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                             current_music['thumbnail'] + '"/>'
-                        reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
-                            title=current_music["title"],
-                            url=current_music["playlist_url"],
-                            playlist=current_music["playlist_title"],
-                            user=current_music["user"],
-                            thumb=thumbnail_html
-                        )
-                    elif source == "url":
-                        thumbnail_html = ''
-                        if 'thumbnail' in current_music:
-                            thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                             current_music['thumbnail'] + '"/>'
-                        reply = "[url] <a href=\"{url}\">{title}</a> by {user} <br> {thumb}".format(
-                            title=current_music["title"],
-                            url=current_music["url"],
-                            user=current_music["user"],
-                            thumb = thumbnail_html
-                        )
-                    elif source == "file":
-                        thumbnail_html = ''
-                        if 'thumbnail' in current_music:
-                            thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                     current_music['thumbnail'] + '"/>'
-                        reply = "[file] {title} by {user} <br> {thumb}".format(
-                            title=current_music['artist'] + ' - ' + current_music['title'],
-                            user=current_music["user"],
-                            thumb=thumbnail_html
-                        )
-                    else:
-                        reply = "ERROR"
-                        logging.error(current_music)
+                    reply = self.formatted_current_playing()
                 else:
                     reply = var.config.get('strings', 'not_playing')
 
                 self.send_msg(reply, text)
 
             elif command == var.config.get('command', 'skip'):
-                # Allow to remove specific music into the queue with a number
-                if parameter is not None and parameter.isdigit() and int(parameter) > 0:
-                    if int(parameter) < len(var.playlist.playlist):
-                        removed = var.playlist.jump(int(parameter))
-
-                        # the Title isn't here if the music wasn't downloaded
-                        self.send_msg(var.config.get('strings', 'removing_item') % (
-                            removed['title'] if 'title' in removed else removed['url']), text)
-                    else:
-                        self.send_msg(var.config.get(
-                            'strings', 'no_possible'), text)
-                elif self.next():  # Is no number send, just skip the current music
+                if self.next():  # Is no number send, just skip the current music
                     self.launch_music()
                     self.async_download_next()
                 else:
                     self.send_msg(var.config.get(
                         'strings', 'queue_empty'), text)
-                    self.stop()
 
-            elif command == var.config.get('command', 'list'):
+            elif command == var.config.get('command', 'remove'):
+                # Allow to remove specific music into the queue with a number
+                if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
+                    and int(parameter) < len(var.playlist.playlist):
+
+                    removed = var.playlist.delete(int(parameter))
+
+                    # the Title isn't here if the music wasn't downloaded
+                    self.send_msg(var.config.get('strings', 'removing_item') % (
+                        removed['title'] if 'title' in removed else removed['url']), text)
+                else:
+                    self.send_msg(var.config.get('strings', 'no_possible'), text)
+
+            elif command == var.config.get('command', 'list_file'):
                 folder_path = var.config.get('bot', 'music_folder')
 
                 files = util.get_recursive_filelist_sorted(folder_path)
@@ -652,8 +640,59 @@ class MumbleBot:
                     logging.info("bot: add to playlist: " + music['url'])
 
             else:
-                self.mumble.users[text.actor].send_text_message(
+                self.mumble.users[text.actor].send_text_message( command + ": " +  \
                     var.config.get('strings', 'bad_command'))
+
+    def formatted_current_playing(self):
+        if var.playlist.length() > 0:
+            reply = ""
+            current_music = var.playlist.current_item()
+            source = current_music["type"]
+            if source == "radio":
+                reply = "[radio] {title} on {url} by {user}".format(
+                    title=media.radio.get_radio_title(
+                        current_music["url"]),
+                    url=current_music["title"],
+                    user=current_music["user"]
+                )
+            elif source == "url" and 'from_playlist' in current_music:
+                thumbnail_html = ''
+                if 'thumbnail' in current_music:
+                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                     current_music['thumbnail'] + '"/>'
+                reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
+                    title=current_music["title"],
+                    url=current_music["playlist_url"],
+                    playlist=current_music["playlist_title"],
+                    user=current_music["user"],
+                    thumb=thumbnail_html
+                )
+            elif source == "url":
+                thumbnail_html = ''
+                if 'thumbnail' in current_music:
+                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                     current_music['thumbnail'] + '"/>'
+                reply = "[url] <a href=\"{url}\">{title}</a> by {user} <br> {thumb}".format(
+                    title=current_music["title"],
+                    url=current_music["url"],
+                    user=current_music["user"],
+                    thumb=thumbnail_html
+                )
+            elif source == "file":
+                thumbnail_html = ''
+                if 'thumbnail' in current_music:
+                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                     current_music['thumbnail'] + '"/>'
+                reply = "[file] {title} by {user} <br> {thumb}".format(
+                    title=current_music['artist'] + ' - ' + current_music['title'],
+                    user=current_music["user"],
+                    thumb=thumbnail_html
+                )
+            else:
+                logging.error(current_music)
+            return reply
+        else:
+            return None
 
     @staticmethod
     def is_admin(user):
@@ -827,6 +866,43 @@ class MumbleBot:
                         break
             var.playlist.playlist[index] = music
 
+    def resume(self):
+        music = var.playlist.current_item()
+
+        if var.config.getboolean('debug', 'ffmpeg'):
+            ffmpeg_debug = "debug"
+        else:
+            ffmpeg_debug = "warning"
+
+        if music["type"] != "radio":
+            logging.info("bot: resume music at %.2f seconds" % self.playhead)
+
+            uri = ""
+            if music["type"] == "url":
+                uri = music['path']
+
+            elif music["type"] == "file":
+                uri = var.config.get('bot', 'music_folder') + \
+                      var.playlist.current_item()["path"]
+
+            command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-ss', "%f" % self.playhead, '-i',
+                       uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
+
+        else:
+            logging.info("bot: resume radio")
+            uri = music["url"]
+            command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
+                       uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
+
+
+        logging.info("bot: execute ffmpeg command: " + " ".join(command))
+        # The ffmpeg process is a thread
+        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        self.is_playing = True
+        self.is_pause = False
+        self.last_volume_cycle_time = time.time()
+
+
     def update_music_tag_info(self, uri=""):
         music = var.playlist.current_item()
         if not music['type'] == 'file' and not music['type'] == 'url':
@@ -970,6 +1046,11 @@ class MumbleBot:
                 time.sleep(0.01)
             if self.thread:
                 # I get raw from ffmpeg thread
+                # move playhead forward
+                if self.song_start_at == -1:
+                    self.song_start_at = time.time() - self.playhead
+                self.playhead = time.time() - self.song_start_at
+
                 raw_music = self.thread.stdout.read(480)
                 if raw_music:
                     # Adjust the volume and send it to mumble
@@ -1003,7 +1084,7 @@ class MumbleBot:
             # The db is not fixed config like url/user ban and volume
             util.write_db()
 
-    def stop(self):
+    def clear(self):
         # Kill the ffmpeg thread and empty the playlist
         if self.thread:
             self.thread.kill()
@@ -1012,6 +1093,18 @@ class MumbleBot:
         self.is_playing = False
         logging.info("bot: music stopped. playlist trashed.")
 
+    def stop(self):
+        # Kill the ffmpeg thread
+        if self.thread:
+            self.thread.kill()
+            self.thread = None
+        self.is_playing = False
+        self.is_pause = True
+        self.song_start_at = -1
+        self.playhead = 0
+        self.next()
+        logging.info("bot: music stopped.")
+
     def pause(self):
         # Kill the ffmpeg thread
         if self.thread:
@@ -1019,7 +1112,8 @@ class MumbleBot:
             self.thread = None
         self.is_playing = False
         self.is_pause = True
-        logging.info("bot: music paused.")
+        self.song_start_at = -1
+        logging.info("bot: music paused at %.2f seconds." % self.playhead)
 
     def set_comment(self):
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
