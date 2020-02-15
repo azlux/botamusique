@@ -38,7 +38,7 @@
                 <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
             <button type="submit" class="btn btn-danger btn-sm btn-space"
-                    onclick="request('/post', {delete_folder : '{{ subdirpath }}'})">
+                    onclick="request('/post', {delete_folder : '{{ subdirpath }}'}, true)">
                 <i class="fas fa-trash-alt"></i>
             </button>
         </div>
@@ -82,7 +82,7 @@
                 <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
             <button type="submit" class="btn btn-danger btn-sm btn-space"
-                    onclick="request('/post', {delete_music_file : '{{ filepath }}'})">
+                    onclick="request('/post', {delete_music_file : '{{ filepath }}'}, true)">
                 <i class="fas fa-trash-alt"></i>
             </button>
         </div>
@@ -305,7 +305,7 @@
 
         var playlist_ver = 0;
 
-        function request(url, _data){
+        function request(url, _data, refresh=false){
             $.ajax({
                 type: 'POST',
                 url: '/post',
@@ -320,6 +320,9 @@
                     }
                 }
             });
+            if(refresh){
+                location.reload()
+            }
         }
 
         function displayPlaylist(data){
