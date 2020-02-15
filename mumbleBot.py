@@ -304,7 +304,7 @@ class MumbleBot:
                     logging.info("bot: add to playlist: " + filename)
                     var.playlist.append(music)
                     self.send_msg(var.config.get(
-                        'strings', 'file_added') % music['title'], text)
+                        'strings', 'file_added') + music['title'], text)
 
                 # if parameter is {path}
                 else:
@@ -322,7 +322,7 @@ class MumbleBot:
                         logging.info("bot: add to playlist: " + parameter)
                         music = var.playlist.append(music)
                         self.send_msg(var.config.get(
-                            'strings', 'file_added') % music['title'], text)
+                            'strings', 'file_added') + music['title'], text)
                         return
 
                     # if parameter is {folder}
@@ -346,7 +346,7 @@ class MumbleBot:
                         logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
                         files = var.playlist.extend(files)
                         self.send_msg(var.config.get(
-                            'strings', 'file_added') % "<br> ".join([file['title'] for file in files]),
+                            'strings', 'file_added') + "<br> ".join([file['title'] for file in files]),
                                       text)
                     else:
                         # try to do a partial match
@@ -362,7 +362,7 @@ class MumbleBot:
                             logging.info("bot: add to playlist: " + matches[0][1])
                             music = var.playlist.append(music)
                             self.send_msg(var.config.get(
-                                'strings', 'file_added') % "{} ({})".format(music['title'], music['path']),
+                                'strings', 'file_added') + "{} ({})".format(music['title'], music['path']),
                                           text)
                         else:
                             msg = var.config.get(
@@ -379,7 +379,7 @@ class MumbleBot:
                 music_folder = var.config.get('bot', 'music_folder')
                 if parameter is not None:
                     files = util.get_recursive_filelist_sorted(music_folder)
-                    msg = ""
+                    msg = var.config.get('strings', 'file_added')
                     count = 0
                     try:
                         for file in files:
@@ -391,11 +391,16 @@ class MumbleBot:
                                          'user': user}
                                 logging.info("bot: add to playlist: " + file)
                                 music = var.playlist.append(music)
-                                msg += "<br> {} ({})".format(music['title'], music['path'])
 
-                        self.send_msg(var.config.get('strings', 'file_added') % msg, text)
+                                newline = "<br> {} ({})".format(music['title'], music['path'])
+                                if len(msg) + len(newline) > 5000:
+                                    self.send_msg(msg, text)
+                                    msg = ""
+                                msg += newline
 
-                        if count == 0:
+                        if count != 0:
+                            self.send_msg(msg, text)
+                        else:
                             self.send_msg(var.config.get('strings', 'no_file'), text)
 
                     except re.error as e:
