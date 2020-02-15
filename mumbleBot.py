@@ -304,6 +304,8 @@ class MumbleBot:
                              'user': user}
                     logging.info("bot: add to playlist: " + filename)
                     var.playlist.append(music)
+                    self.send_msg(var.config.get(
+                        'strings', 'file_added') % music['title'], text)
 
                 # if parameter is {path}
                 else:
