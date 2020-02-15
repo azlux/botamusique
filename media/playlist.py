@@ -59,10 +59,14 @@ class PlayList:
 
         if index == -1:
             index = self.current_index
+
+        removed = self.playlist[index]
         del self.playlist[index]
 
         if self.current_index <= index:
             self.next()
+
+        return removed
 
     def current_item(self):
         return self.playlist[self.current_index]

@@ -632,9 +632,9 @@ class MumbleBot:
             elif command == var.config.get('command', 'remove'):
                 # Allow to remove specific music into the queue with a number
                 if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
-                    and int(parameter) < len(var.playlist.playlist):
+                    and int(parameter) <= var.playlist.length():
 
-                    removed = var.playlist.remove(int(parameter))
+                    removed = var.playlist.remove(int(parameter) - 1)
 
                     # the Title isn't here if the music wasn't downloaded
                     self.send_msg(var.config.get('strings', 'removing_item') % (
