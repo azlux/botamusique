@@ -277,9 +277,9 @@ class MumbleBot:
             if command == var.config.get('command', 'play'):
                 if var.playlist.length() > 0:
                     if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
-                            and int(parameter) < len(var.playlist.playlist):
+                            and int(parameter) <= len(var.playlist.playlist):
                         self.stop()
-                        self.launch_music(int(parameter))
+                        self.launch_music(int(parameter) - 1)
                     elif self.is_pause:
                         self.resume()
                         self.send_msg(self.formatted_current_playing())
@@ -337,7 +337,7 @@ class MumbleBot:
                         files = music_library.get_files(parameter)
 
                         files = list(map(lambda file:
-                            {'type': 'file', 'path': os.path.join(parameter, file), 'user': 'Web'}, files))
+                            {'type': 'file', 'path': os.path.join(parameter, file), 'user': user}, files))
 
                         logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
                         files = var.playlist.extend(files)
@@ -634,7 +634,7 @@ class MumbleBot:
                 if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
                     and int(parameter) < len(var.playlist.playlist):
 
-                    removed = var.playlist.delete(int(parameter))
+                    removed = var.playlist.remove(int(parameter))
 
                     # the Title isn't here if the music wasn't downloaded
                     self.send_msg(var.config.get('strings', 'removing_item') % (
@@ -673,7 +673,13 @@ class MumbleBot:
                 self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'repeat'):
-                var.playlist.append(var.playlist.current_item())
+                repeat = 1
+                if parameter is not None and parameter.isdigit():
+                    repeat = int(parameter)
+
+                for _ in range(repeat):
+                    var.playlist.append(var.playlist.current_item())
+
                 music = var.playlist.current_item()
                 if music['type'] == 'file':
                     logging.info("bot: add to playlist: " + music['path'])
