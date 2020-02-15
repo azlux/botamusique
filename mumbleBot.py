@@ -348,21 +348,29 @@ class MumbleBot:
                                       text)
                     else:
                         # try to do a partial match
-                        matches = [file for file in util.get_recursive_filelist_sorted(
-                            music_folder) if parameter.lower() in file.lower()]
+                        files = util.get_recursive_filelist_sorted(music_folder)
+                        matches = [(index, file) for index, file in enumerate(files) if parameter.lower() in file.lower()]
                         if len(matches) == 0:
                             self.send_msg(var.config.get(
                                 'strings', 'no_file'), text)
                         elif len(matches) == 1:
                             music = {'type': 'file',
-                                     'path': matches[0],
+                                     'path': matches[0][1],
                                      'user': user}
-                            logging.info("bot: add to playlist: " + matches[0])
+                            logging.info("bot: add to playlist: " + matches[0][1])
                             var.playlist.append(music)
+                            self.send_msg(var.config.get(
+                                'strings', 'file_added') % "{} <br> ({})".format(music['title'], music['path']),
+                                          text)
                         else:
                             msg = var.config.get(
-                                'strings', 'multiple_matches') + '<br />'
-                            msg += '<br />'.join(matches)
+                                'strings', 'multiple_matches')
+                            for match in matches:
+                                newline = "<br> <b>{:0>3d}</b> - {:s}".format(match[0], match[1])
+                                if len(msg) + len(newline) > 5000:
+                                    self.send_msg(msg, text)
+                                    msg = ""
+                                msg += newline
                             self.send_msg(msg, text)
 
             elif command == var.config.get('command', 'play_url') and parameter:
@@ -667,10 +675,12 @@ class MumbleBot:
                 else:
                     msg = var.config.get(
                         'strings', 'queue_contents') + '<br />'
-                    i = 1
-                    for value in var.playlist.playlist:
-                        msg += '[{}] ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['url'])
-                        i += 1
+                    for i, value in enumerate(var.playlist.playlist):
+                        newline = '<b>{}</b> ({}) {}<br />'.format(i, value['type'], value['title'] if 'title' in value else value['url'])
+                        if len(msg) + len(newline) > 5000:
+                            self.send_msg(msg, text)
+                            msg = ""
+                        msg +=  newline
 
                 self.send_msg(msg, text)
 
