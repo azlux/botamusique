@@ -105,30 +105,31 @@ def index():
                            music_library=music_library,
                            os=os,
                            playlist=var.playlist,
-                           user=var.user
+                           user=var.user,
+                           paused=var.botamusique.is_pause
                            )
 
 @web.route("/playlist", methods=['GET'])
 @requires_auth
 def playlist():
     if var.playlist.length() == 0:
-        return jsonify([render_template('playlist.html',
+        return jsonify({'items': [render_template('playlist.html',
                                m=False,
                                index=-1
                                )]
-                       )
+                        })
 
-    data = []
+    items = []
 
     for index, item in enumerate(var.playlist.playlist):
-         data.append(render_template('playlist.html',
+         items.append(render_template('playlist.html',
                                      index=index,
                                      m=item,
                                      playlist=var.playlist
                                      )
                      )
 
-    return jsonify(data)
+    return jsonify({ 'items': items })
 
 @web.route("/post", methods=['POST'])
 @requires_auth
@@ -218,7 +219,7 @@ def post():
             logging.info("web: jump to: " + str(music['path'] if 'path' in music else music['url']))
 
             if len(var.playlist.playlist) >= int(request.form['play_music']):
-                var.botamusique.pause()
+                var.botamusique.stop()
                 var.botamusique.launch_music(int(request.form['play_music']))
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
@@ -239,9 +240,13 @@ def post():
             if action == "randomize":
                 var.playlist.randomize()
             elif action == "stop":
-                var.botamusique.pause()
-            elif action == "clear":
                 var.botamusique.stop()
+            elif action == "pause":
+                var.botamusique.pause()
+            elif action == "resume":
+                var.botamusique.resume()
+            elif action == "clear":
+                var.botamusique.clear()
             elif action == "volume_up":
                 if var.botamusique.volume_set + 0.03 < 1.0:
                     var.botamusique.volume_set = var.botamusique.volume_set + 0.03
@@ -255,7 +260,10 @@ def post():
                     var.botamusique.volume_set = 0
                 logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
 
-        return jsonify({'ver': var.playlist.version})
+        if(var.playlist.length() > 0):
+            return jsonify({'ver': var.playlist.version, 'empty': False, 'play': not var.botamusique.is_pause})
+        else:
+            return jsonify({'ver': var.playlist.version, 'empty': True, 'play': False})
 
 @web.route('/upload', methods=["POST"])
 def upload():

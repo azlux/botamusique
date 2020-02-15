@@ -124,8 +124,19 @@
                                     onclick="request('/post', {action : 'randomize'})">
                                 <i class="fas fa-random" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="btn btn-danger btn-space"
-                                    onclick="request('/post', {action : 'stop'})">
+
+                            <button type="button" id="play-btn" class="btn btn-info btn-space"
+                                    onclick="request('/post', {action : 'resume'})" disabled>
+                                <i class="fas fa-play" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="pause-btn" class="btn btn-warning btn-space"
+                                    onclick="request('/post', {action : 'pause'})" disabled>
+                                <i class="fas fa-pause" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="stop-btn" class="btn btn-danger btn-space"
+                                    onclick="request('/post', {action : 'stop'})" disabled>
                                 <i class="fas fa-stop" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -301,20 +312,25 @@
                 data : _data,
                 statusCode : {
                     200 : function(data) {
-                        if (data.ver > playlist_ver) {
+                        if (data.ver !== playlist_ver) {
                             updatePlaylist();
                             playlist_ver = data.ver;
                         }
+                        updateControls(data.empty, data.play);
                     }
                 }
             });
         }
 
         function displayPlaylist(data){
+            // console.info(data);
             $("#playlist-table tr").remove();
-            $.each(data, function(index, item){
+
+            var items = data.items;
+            $.each(items, function(index, item){
                 $("#playlist-table").append(item);
-            })
+            });
+
         }
 
         function updatePlaylist(){
@@ -327,6 +343,23 @@
             });
         }
 
+        function updateControls(empty, play){
+            if(empty){
+                $("#play-btn").prop("disabled", true);
+                $("#pause-btn").prop("disabled", true);
+                $("#stop-btn").prop("disabled", true);
+            }else{
+                if(play){
+                    $("#play-btn").prop("disabled", true);
+                    $("#pause-btn").prop("disabled", false);
+                    $("#stop-btn").prop("disabled", false);
+                }else{
+                    $("#play-btn").prop("disabled", false);
+                    $("#pause-btn").prop("disabled", true);
+                    $("#stop-btn").prop("disabled", true);
+                }
+            }
+        }
 
         // Check the version of playlist to see if update is needed.
         setInterval(function(){
@@ -335,10 +368,11 @@
                 url : '/post',
                 statusCode : {
                     200 : function(data){
-                        if(data.ver > playlist_ver){
+                        if(data.ver !== playlist_ver){
                             updatePlaylist();
                             playlist_ver = data.ver;
                         }
+                        updateControls(data.empty, data.play);
                     }
                 }
             });
