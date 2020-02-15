@@ -135,10 +135,6 @@ def playlist():
 @requires_auth
 def post():
     folder_path = var.music_folder
-    files = util.get_recursive_filelist_sorted(var.music_folder)
-    music_library = util.Dir(folder_path)
-    for file in files:
-        music_library.add_file(file)
     if request.method == 'POST':
         logging.debug("Post request: "+ str(request.form))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
@@ -148,7 +144,7 @@ def post():
                         'path' : request.form['add_file_bottom'],
                         'title' : '',
                         'user' : 'Web'}
-                var.playlist.append(var.botamusique.get_music_tag_info(item, path))
+                var.playlist.append(util.get_music_tag_info(item))
                 logging.info('web: add to playlist(bottom): ' + item['path'])
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
@@ -160,7 +156,7 @@ def post():
                         'user' : 'Web'}
                 var.playlist.insert(
                     var.playlist.current_index + 1,
-                    var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path'])
+                    util.get_music_tag_info(item)
                 )
                 logging.info('web: add to playlist(next): ' + item['path'])
 
@@ -176,13 +172,18 @@ def post():
             print('folder:', folder)
 
             if os.path.isdir(var.config.get('bot', 'music_folder') + folder):
+
+                files = util.get_recursive_filelist_sorted(var.music_folder)
+                music_library = util.Dir(folder_path)
+                for file in files:
+                    music_library.add_file(file)
+
                 if 'add_folder_recursively' in request.form:
                     files = music_library.get_files_recursively(folder)
                 else:
                     files = music_library.get_files(folder)
 
-                files = list(map(lambda file: var.botamusique.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}, \
-                                                                                 var.config.get('bot', 'music_folder') + os.path.join(folder, file)), files))
+                files = list(map(lambda file: util.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}), files))
 
                 logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
                 var.playlist.extend(files)

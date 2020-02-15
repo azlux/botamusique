@@ -1,5 +1,6 @@
 import youtube_dl
 import variables as var
+import util
 import random
 
 class PlayList:
@@ -9,7 +10,10 @@ class PlayList:
 
     def append(self, item):
         self.version += 1
+        item = util.get_music_tag_info(item)
         self.playlist.append(item)
+
+        return item
 
     def insert(self, index, item):
         self.version += 1
@@ -27,7 +31,11 @@ class PlayList:
 
     def extend(self, items):
         self.version += 1
+        items = list(map(
+            lambda item: util.get_music_tag_info(item),
+            items))
         self.playlist.extend(items)
+        return items
 
     def next(self):
         self.version += 1

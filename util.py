@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# coding=utf-8
 
 import hashlib
 import magic
@@ -6,10 +7,15 @@ import os
 import variables as var
 import zipfile
 import urllib.request
+import mutagen
+import re
 import subprocess as sp
 import logging
 import youtube_dl
 from importlib import reload
+from PIL import Image
+from io import BytesIO
+import base64
 
 def get_recursive_filelist_sorted(path):
     filelist = []
@@ -33,6 +39,73 @@ def get_recursive_filelist_sorted(path):
 
     filelist.sort()
     return filelist
+
+
+def get_music_tag_info(music):
+
+    if "path" in music:
+        uri = var.config.get('bot', 'music_folder') + music["path"]
+
+        if os.path.isfile(uri):
+            match = re.search("(.+)\.(.+)", uri)
+            if match is None:
+                return music
+
+            file_no_ext = match[1]
+            ext = match[2]
+
+            try:
+                im = None
+                path_thumbnail = file_no_ext + "jpg"
+                if os.path.isfile(path_thumbnail):
+                    im = Image.open(path_thumbnail)
+
+                if ext == "mp3":
+                    # title: TIT2
+                    # artist: TPE1, TPE2
+                    # album: TALB
+                    # cover artwork: APIC:
+                    tags = mutagen.File(uri)
+                    if 'TIT2' in tags:
+                        music['title'] = tags['TIT2'].text[0]
+                    if 'TPE1' in tags: # artist
+                        music['artist'] = tags['TPE1'].text[0]
+
+                    if im is None:
+                        if "APIC:" in tags:
+                            im = Image.open(BytesIO(tags["APIC:"].data))
+
+                elif ext == "m4a" or ext == "m4b" or ext == "mp4" or ext == "m4p":
+                    # title: ©nam (\xa9nam)
+                    # artist: ©ART
+                    # album: ©alb
+                    # cover artwork: covr
+                    tags = mutagen.File(uri)
+                    if '©nam' in tags:
+                        music['title'] = tags['©nam'][0]
+                    if '©ART' in tags: # artist
+                        music['artist'] = tags['©ART'][0]
+
+                        if im is None:
+                            if "covr" in tags:
+                                im = Image.open(BytesIO(tags["covr"][0]))
+
+                if im:
+                    im.thumbnail((100, 100), Image.ANTIALIAS)
+                    buffer = BytesIO()
+                    im = im.convert('RGB')
+                    im.save(buffer, format="JPEG")
+                    music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+                    return music
+            except:
+                raise
+
+    # if nothing found
+    match = re.search("([^\.]+)\.?.*", os.path.basename(uri))
+    music['title'] = match[1]
+
+    return music
 
 
 # - zips all files of the given zippath (must be a directory)

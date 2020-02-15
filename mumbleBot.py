@@ -19,10 +19,6 @@ import hashlib
 import youtube_dl
 import logging
 import util
-import base64
-from PIL import Image
-from io import BytesIO
-import mutagen
 import re
 import media.url
 import media.file
@@ -297,17 +293,57 @@ class MumbleBot:
                 self.send_msg(var.config.get('strings', 'paused'))
 
             elif command == var.config.get('command', 'play_file') and parameter:
+
                 music_folder = var.config.get('bot', 'music_folder')
-                # sanitize "../" and so on
-                path = os.path.abspath(os.path.join(music_folder, parameter))
-                if path.startswith(music_folder):
+                # if parameter is {index}
+                if parameter.isdigit():
+                    files = util.get_recursive_filelist_sorted(music_folder)
+                    filename = files[int(parameter)].replace(music_folder, '')
+                    music = {'type': 'file',
+                             'path': filename,
+                             'user': user}
+                    logging.info("bot: add to playlist: " + filename)
+                    var.playlist.append(music)
+
+                # if parameter is {path}
+                else:
+                    # sanitize "../" and so on
+                    path = os.path.abspath(os.path.join(music_folder, parameter))
+                    if not path.startswith(os.path.abspath(music_folder)):
+                        self.send_msg(var.config.get(
+                            'strings', 'no_file'), text)
+                        return
+
                     if os.path.isfile(path):
-                        filename = path.replace(music_folder, '')
                         music = {'type': 'file',
-                                 'path': filename,
+                                 'path': parameter,
                                  'user': user}
-                        logging.info("bot: add to playlist: " + filename)
-                        var.playlist.append(music)
+                        logging.info("bot: add to playlist: " + parameter)
+                        music = var.playlist.append(music)
+                        self.send_msg(var.config.get(
+                            'strings', 'file_added') % music['title'], text)
+                        return
+
+                    # if parameter is {folder}
+                    elif os.path.isdir(path):
+                        if not parameter.endswith('/'):
+                            parameter += '/'
+
+                        files = util.get_recursive_filelist_sorted(music_folder)
+                        music_library = util.Dir(music_folder)
+                        for file in files:
+                            music_library.add_file(file)
+
+                        files = music_library.get_files(parameter)
+
+                        files = list(map(lambda file:
+                            {'type': 'file', 'path': os.path.join(parameter, file), 'user': 'Web'}, files))
+
+                        logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
+                        files = var.playlist.extend(files)
+                        self.send_msg(var.config.get(
+                            'strings', 'file_added') % "<br> ".join([file['title'] for file in files]),
+                                      text)
                     else:
                         # try to do a partial match
                         matches = [file for file in util.get_recursive_filelist_sorted(
@@ -326,9 +362,6 @@ class MumbleBot:
                                 'strings', 'multiple_matches') + '<br />'
                             msg += '<br />'.join(matches)
                             self.send_msg(msg, text)
-                else:
-                    self.send_msg(var.config.get('strings', 'bad_file'), text)
-                self.async_download_next()
 
             elif command == var.config.get('command', 'play_url') and parameter:
                 music = {'type': 'url',
@@ -614,7 +647,10 @@ class MumbleBot:
 
                 files = util.get_recursive_filelist_sorted(folder_path)
                 if files:
-                    self.send_msg('<br>'.join(files), text)
+                    msg = "<br> <b>Files available:</b>"
+                    for index, files in enumerate(files):
+                        msg +=  "<br> <b>{:0>3d}</b> - {:s}".format(index, files)
+                    self.send_msg(msg, text)
                 else:
                     self.send_msg(var.config.get('strings', 'no_file'), text)
 
@@ -734,43 +770,42 @@ class MumbleBot:
                     var.playlist.remove()
                     return
             uri = music['path']
-            if self.update_music_tag_info():
-                music = var.playlist.current_item()
 
-                thumbnail_html = ''
-                if 'thumbnail' in music:
-                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                     music['thumbnail'] + '"/>'
-                display = ''
-                if 'artist' in music:
-                    display = music['artist'] + ' - '
-                if 'title' in music:
-                    display += music['title']
+            music = var.playlist.current_item()
 
-                if var.config.getboolean('bot', 'announce_current_music'):
-                    self.send_msg(var.config.get(
-                        'strings', 'now_playing') % (display, thumbnail_html))
+            thumbnail_html = ''
+            if 'thumbnail' in music:
+                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 music['thumbnail'] + '"/>'
+            display = ''
+            if 'artist' in music:
+                display = music['artist'] + ' - '
+            if 'title' in music:
+                display += music['title']
+
+            if var.config.getboolean('bot', 'announce_current_music'):
+                self.send_msg(var.config.get(
+                    'strings', 'now_playing') % (display, thumbnail_html))
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + \
                 var.playlist.current_item()["path"]
 
-            if self.update_music_tag_info(uri):
-                music = var.playlist.current_item()
+            music = var.playlist.current_item()
 
-                thumbnail_html = ''
-                if 'thumbnail' in music:
-                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                     music['thumbnail'] + '"/>'
-                display = ''
-                if 'artist' in music:
-                    display = music['artist'] + ' - '
-                if 'title' in music:
-                    display += music['title']
+            thumbnail_html = ''
+            if 'thumbnail' in music:
+                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 music['thumbnail'] + '"/>'
+            display = ''
+            if 'artist' in music:
+                display = music['artist'] + ' - '
+            if 'title' in music:
+                display += music['title']
 
-                if var.config.getboolean('bot', 'announce_current_music'):
-                    self.send_msg(var.config.get(
-                        'strings', 'now_playing') % (display, thumbnail_html))
+            if var.config.getboolean('bot', 'announce_current_music'):
+                self.send_msg(var.config.get(
+                    'strings', 'now_playing') % (display, thumbnail_html))
 
         elif music["type"] == "radio":
             uri = music["url"]
@@ -860,6 +895,7 @@ class MumbleBot:
                         ydl.extract_info(url)
                         if 'ready' in music and music['ready'] == "downloading":
                             music['ready'] = "yes"
+                            music = util.get_music_tag_info(music)
                     except youtube_dl.utils.DownloadError:
                         pass
                     else:
@@ -901,91 +937,6 @@ class MumbleBot:
         self.is_playing = True
         self.is_pause = False
         self.last_volume_cycle_time = time.time()
-
-
-    def update_music_tag_info(self, uri=""):
-        music = var.playlist.current_item()
-        if not music['type'] == 'file' and not music['type'] == 'url':
-            return False
-
-        # get the Path
-        if uri == "":
-            if 'path' in music:
-                uri = music['path']
-            else:
-                return False
-
-        if os.path.isfile(uri):
-            music = self.get_music_tag_info(music, uri)
-            var.playlist.update(music)
-            return True
-        else:
-            return False
-
-    def get_music_tag_info(self, music, uri=""):
-        if not uri:
-            uri = music['path']
-
-        if os.path.isfile(uri):
-            match = re.search("(.+)\.(.+)", uri)
-            if match is None:
-                return music
-
-            file_no_ext = match[1]
-            ext = match[2]
-
-            try:
-                im = None
-                path_thumbnail = file_no_ext + "jpg"
-                if os.path.isfile(path_thumbnail):
-                    im = Image.open(path_thumbnail)
-
-                if ext == "mp3":
-                    # title: TIT2
-                    # artist: TPE1, TPE2
-                    # album: TALB
-                    # cover artwork: APIC:
-                    tags = mutagen.File(uri)
-                    if 'TIT2' in tags:
-                        music['title'] = tags['TIT2'].text[0]
-                    if 'TPE1' in tags: # artist
-                        music['artist'] = tags['TPE1'].text[0]
-
-                    if im is None:
-                        if "APIC:" in tags:
-                            im = Image.open(BytesIO(tags["APIC:"].data))
-
-                elif ext == "m4a" or ext == "m4b" or ext == "mp4" or ext == "m4p":
-                    # title: ©nam (\xa9nam)
-                    # artist: ©ART
-                    # album: ©alb
-                    # cover artwork: covr
-                    tags = mutagen.File(uri)
-                    if '©nam' in tags:
-                        music['title'] = tags['©nam'][0]
-                    if '©ART' in tags: # artist
-                        music['artist'] = tags['©ART'][0]
-
-                        if im is None:
-                            if "covr" in tags:
-                                im = Image.open(BytesIO(tags["covr"][0]))
-
-                if im:
-                    im.thumbnail((100, 100), Image.ANTIALIAS)
-                    buffer = BytesIO()
-                    im = im.convert('RGB')
-                    im.save(buffer, format="JPEG")
-                    music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-                    return music
-            except:
-                pass
-
-        # if nothing found
-        match = re.search("([^\.]+)\.?.*", os.path.basename(uri))
-        music['title'] = match[1]
-
-        return music
 
 
     def async_download_next(self):
