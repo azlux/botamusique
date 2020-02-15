@@ -649,7 +649,12 @@ class MumbleBot:
                 if files:
                     msg = "<br> <b>Files available:</b>"
                     for index, files in enumerate(files):
-                        msg +=  "<br> <b>{:0>3d}</b> - {:s}".format(index, files)
+                        newline = "<br> <b>{:0>3d}</b> - {:s}".format(index, files)
+                        if len(msg) + len(newline) > 5000:
+                            self.send_msg(msg, text)
+                            msg = ""
+                        msg +=  newline
+
                     self.send_msg(msg, text)
                 else:
                     self.send_msg(var.config.get('strings', 'no_file'), text)
