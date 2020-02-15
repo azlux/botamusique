@@ -328,8 +328,10 @@ class MumbleBot:
 
                     # if parameter is {folder}
                     elif os.path.isdir(path):
-                        if not parameter.endswith('/'):
-                            parameter += '/'
+                        if parameter != '.' and parameter != './':
+                            parameter = os.path.dirname(parameter) + "/"
+                        else:
+                            parameter = ""
 
                         files = util.get_recursive_filelist_sorted(music_folder)
                         music_library = util.Dir(music_folder)
@@ -670,7 +672,7 @@ class MumbleBot:
                     self.send_msg(var.config.get('strings', 'no_file'), text)
 
             elif command == var.config.get('command', 'queue'):
-                if len(var.playlist.playlist) <= 1:
+                if len(var.playlist.playlist) == 0:
                     msg = var.config.get('strings', 'queue_empty')
                 else:
                     msg = var.config.get(
@@ -691,12 +693,12 @@ class MumbleBot:
 
                 for _ in range(repeat):
                     var.playlist.append(var.playlist.current_item())
+                    music = var.playlist.current_item()
+                    if music['type'] == 'file':
+                        logging.info("bot: add to playlist: " + music['path'])
+                    else:
+                        logging.info("bot: add to playlist: " + music['url'])
 
-                music = var.playlist.current_item()
-                if music['type'] == 'file':
-                    logging.info("bot: add to playlist: " + music['path'])
-                else:
-                    logging.info("bot: add to playlist: " + music['url'])
 
             else:
                 self.mumble.users[text.actor].send_text_message( command + ": " +  \
