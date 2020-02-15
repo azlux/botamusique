@@ -37,10 +37,10 @@
                 <input type="text" value="{{ subdirpath }}" name="directory" hidden>
                 <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
-            <form method="post">
-                <input type="text" value="{{ subdirpath }}" name="delete_folder" hidden>
-                <button type="submit" class="btn btn-danger btn-sm btn-space"><i class="fas fa-trash-alt"></i></button>
-            </form>
+            <button type="submit" class="btn btn-danger btn-sm btn-space"
+                    onclick="request('/post', {delete_folder : '{{ subdirpath }}'})">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
     </li>
     <div class="collapse multi-collapse" id="multiCollapse-{{ subdirid }}">
@@ -81,10 +81,10 @@
                 <input type="text" value="{{ filepath }}" name="file" hidden>
                 <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
-            <form method="post">
-                <input type="text" value="{{ filepath }}" name="delete_music_file" hidden>
-                <button type="submit" class="btn btn-danger btn-sm btn-space"><i class="fas fa-trash-alt"></i></button>
-            </form>
+            <button type="submit" class="btn btn-danger btn-sm btn-space"
+                    onclick="request('/post', {delete_music_file : '{{ filepath }}'})">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
     </li>
     {% endfor %}

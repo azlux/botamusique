@@ -212,6 +212,9 @@ def post():
                     var.botamusique.pause()
                     var.playlist.remove(int(request.form['delete_music']))
                     var.botamusique.launch_music()
+                elif var.playlist.current_index > int(request.form['delete_music']):
+                    var.playlist.current_index -= 1
+                    var.playlist.remove(int(request.form['delete_music']))
                 else:
                     var.playlist.remove(int(request.form['delete_music']))
 
