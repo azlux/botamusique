@@ -690,18 +690,32 @@ class MumbleBot:
                 folder_path = var.config.get('bot', 'music_folder')
 
                 files = util.get_recursive_filelist_sorted(folder_path)
-                if files:
-                    msg = "<br> <b>Files available:</b>"
-                    for index, files in enumerate(files):
-                        newline = "<br> <b>{:0>3d}</b> - {:s}".format(index, files)
+                msg = "<br> <b>Files available:</b>" if not parameter else "<br> <b>Matched files:</b>"
+                try:
+                    count = 0
+                    for index, file in enumerate(files):
+                        if parameter:
+                            match = re.search(parameter, file)
+                            if not match:
+                                continue
+
+                        count += 1
+                        newline = "<br> <b>{:0>3d}</b> - {:s}".format(index, file)
                         if len(msg) + len(newline) > 5000:
                             self.send_msg(msg, text)
                             msg = ""
-                        msg +=  newline
+                        msg += newline
 
+                    if count != 0:
+                        self.send_msg(msg, text)
+                    else:
+                        self.send_msg(var.config.get('strings', 'no_file'), text)
+
+                except re.error as e:
+                    msg = var.config.get('strings', 'wrong_pattern') % str(e)
                     self.send_msg(msg, text)
-                else:
-                    self.send_msg(var.config.get('strings', 'no_file'), text)
+
+
 
             elif command == var.config.get('command', 'queue'):
                 if len(var.playlist.playlist) == 0:
