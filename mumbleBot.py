@@ -247,56 +247,6 @@ class MumbleBot:
                     self.mumble.users[text.actor].send_text_message(
                         var.config.get('strings', 'bad_command') % command)
 
-    def formatted_current_playing(self):
-        if var.playlist.length() > 0:
-            reply = ""
-            current_music = var.playlist.current_item()
-            source = current_music["type"]
-            if source == "radio":
-                reply = "[radio] {title} on {url} by {user}".format(
-                    title=media.radio.get_radio_title(
-                        current_music["url"]),
-                    url=current_music["title"],
-                    user=current_music["user"]
-                )
-            elif source == "url" and 'from_playlist' in current_music:
-                thumbnail_html = ''
-                if 'thumbnail' in current_music:
-                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                     current_music['thumbnail'] + '"/>'
-                reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
-                    title=current_music["title"],
-                    url=current_music["playlist_url"],
-                    playlist=current_music["playlist_title"],
-                    user=current_music["user"],
-                    thumb=thumbnail_html
-                )
-            elif source == "url":
-                thumbnail_html = ''
-                if 'thumbnail' in current_music:
-                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                     current_music['thumbnail'] + '"/>'
-                reply = "[url] <a href=\"{url}\">{title}</a> by {user} <br> {thumb}".format(
-                    title=current_music["title"],
-                    url=current_music["url"],
-                    user=current_music["user"],
-                    thumb=thumbnail_html
-                )
-            elif source == "file":
-                thumbnail_html = ''
-                if 'thumbnail' in current_music:
-                    thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                     current_music['thumbnail'] + '"/>'
-                reply = "[file] {title} by {user} <br> {thumb}".format(
-                    title=current_music['artist'] + ' - ' + current_music['title'],
-                    user=current_music["user"],
-                    thumb=thumbnail_html
-                )
-            else:
-                logging.error(current_music)
-            return reply
-        else:
-            return None
 
     @staticmethod
     def is_admin(user):
