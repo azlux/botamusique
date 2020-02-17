@@ -627,7 +627,7 @@ def cmd_queue(bot, user, text, command, parameter):
         send_multi_lines(bot, msgs, text)
 
 
-def cmd_ramdon(bot, user, text, command, parameter):
+def cmd_random(bot, user, text, command, parameter):
     bot.stop()
     var.playlist.randomize()
     bot.resume()
