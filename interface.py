@@ -242,7 +242,9 @@ def post():
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
+                var.botamusique.stop()
                 var.playlist.randomize()
+                var.botamusique.resume()
             elif action == "stop":
                 var.botamusique.stop()
             elif action == "pause":

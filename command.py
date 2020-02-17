@@ -47,6 +47,7 @@ def register_all_commands(bot):
     bot.register_command(var.config.get('command', 'remove'), cmd_remove)
     bot.register_command(var.config.get('command', 'list_file'), cmd_list_file)
     bot.register_command(var.config.get('command', 'queue'), cmd_queue)
+    bot.register_command(var.config.get('command', 'ramdom'), cmd_random)
 
 def send_multi_lines(bot, lines, text):
     msg = ""
@@ -624,3 +625,9 @@ def cmd_queue(bot, user, text, command, parameter):
             msgs.append(newline)
 
         send_multi_lines(bot, msgs, text)
+
+
+def cmd_ramdon(bot, user, text, command, parameter):
+    bot.stop()
+    var.playlist.randomize()
+    bot.resume()
