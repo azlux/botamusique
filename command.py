@@ -47,7 +47,7 @@ def register_all_commands(bot):
     bot.register_command(var.config.get('command', 'remove'), cmd_remove)
     bot.register_command(var.config.get('command', 'list_file'), cmd_list_file)
     bot.register_command(var.config.get('command', 'queue'), cmd_queue)
-    bot.register_command(var.config.get('command', 'ramdom'), cmd_random)
+    bot.register_command(var.config.get('command', 'random'), cmd_random)
 
 def send_multi_lines(bot, lines, text):
     msg = ""
