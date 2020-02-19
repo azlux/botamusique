@@ -447,7 +447,8 @@ class MumbleBot:
     def volume_cycle(self):
         delta = time.time() - self.last_volume_cycle_time
 
-        if self.ducking_release < time.time():
+        if self.on_ducking and self.ducking_release < time.time():
+            self._clear_pymumble_soundqueue()
             self.on_ducking = False
 
         if delta > 0.001:
@@ -556,6 +557,15 @@ class MumbleBot:
             own_channel.send_text_message(msg)
         else:
             self.mumble.users[text.actor].send_text_message(msg)
+
+    # TODO: this is a temporary workaround for issue #44 of pymumble.
+    def _clear_pymumble_soundqueue(self):
+        for id, user in self.mumble.users.items():
+            user.sound.lock.acquire()
+            user.sound.queue.clear()
+            user.sound.lock.release()
+        logging.debug("bot: pymumble soundqueue cleared.")
+
 
 
 def start_web_interface(addr, port):
