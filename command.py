@@ -132,7 +132,7 @@ def cmd_play(bot, user, text, command, parameter):
         elif bot.is_pause:
             bot.resume()
         else:
-            bot.send_msg(var.config.get('strings', 'not_playing'), text)
+            bot.send_msg(util.format_current_playing(), text)
     else:
         bot.send_msg(var.config.get('strings', 'queue_empty'), text)
 
