@@ -183,18 +183,24 @@ def post():
                 else:
                     files = music_library.get_files(folder)
 
-                files = list(map(lambda file: util.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}), files))
+                files = list(map(lambda file: util.get_music_tag_info(
+                    {'type':'file',
+                     'path': os.path.join(folder, file),
+                     'user':'Web'}), files))
 
-                logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
+                for file in files:
+                    logging.info("web: add to playlist: %s" % file['path'])
+
                 var.playlist.extend(files)
 
         elif 'add_url' in request.form:
-            var.playlist.append({'type':'url',
+            music = {'type':'url',
                                  'url': request.form['add_url'],
                                  'user': 'Web',
-                                 'ready': 'validation'})
+                                 'ready': 'validation'}
+            media.url.get_url_info(music)
+            var.playlist.append(music)
             logging.info("web: add to playlist: " + request.form['add_url'])
-            media.url.get_url_info()
             var.playlist.playlist[-1]['ready'] = "no"
 
         elif 'add_radio' in request.form:

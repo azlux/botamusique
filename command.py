@@ -62,66 +62,25 @@ def send_multi_lines(bot, lines, text):
 
     bot.send_msg(msg, text)
 
-
-def formatted_current_playing():
-    if var.playlist.length() > 0:
-        reply = ""
-        current_music = var.playlist.current_item()
-        source = current_music["type"]
-        if source == "radio":
-            reply = "[radio] {title} on {url} by {user}".format(
-                title=media.radio.get_radio_title(
-                    current_music["url"]),
-                url=current_music["title"],
-                user=current_music["user"]
-            )
-        elif source == "url" and 'from_playlist' in current_music:
-            thumbnail_html = ''
-            if 'thumbnail' in current_music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 current_music['thumbnail'] + '"/>'
-            reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
-                title=current_music["title"],
-                url=current_music["playlist_url"],
-                playlist=current_music["playlist_title"],
-                user=current_music["user"],
-                thumb=thumbnail_html
-            )
-        elif source == "url":
-            thumbnail_html = ''
-            if 'thumbnail' in current_music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 current_music['thumbnail'] + '"/>'
-            reply = "[url] <a href=\"{url}\">{title}</a> by {user} <br> {thumb}".format(
-                title=current_music["title"],
-                url=current_music["url"],
-                user=current_music["user"],
-                thumb=thumbnail_html
-            )
-        elif source == "file":
-            thumbnail_html = ''
-            if 'thumbnail' in current_music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 current_music['thumbnail'] + '"/>'
-            reply = "[file] {title} by {user} <br> {thumb}".format(
-                title=current_music['artist'] + ' - ' + current_music['title'],
-                user=current_music["user"],
-                thumb=thumbnail_html
-            )
-        else:
-            logging.error(current_music)
-        return reply
+# Parse the html from the message to get the URL
+def get_url_from_input(string):
+    if string.startswith('http'):
+        return string
+    p = re.compile('href="(.+?)"', re.IGNORECASE)
+    res = re.search(p, string)
+    if res:
+        return res.group(1)
     else:
-        return None
+        return False
+
 
 
 # ---------------- Commands ------------------
 
 
 def cmd_joinme(bot, user, text, command, parameter):
-    bot.mumble.users.mybot.move_in(
-        bot.mumble.users[text.actor]['channel_id'], token=parameter)
-    return
+    channel_id = bot.mumble.users[text.actor]['channel_id']
+    bot.mumble.channels[channel_id].move_in()
 
 
 def cmd_user_ban(bot, user, text, command, parameter):
@@ -172,7 +131,7 @@ def cmd_play(bot, user, text, command, parameter):
             bot.launch_music(int(parameter) - 1)
         elif bot.is_pause:
             bot.resume()
-            bot.send_msg(formatted_current_playing())
+            bot.send_msg(util.format_current_playing())
         else:
             bot.send_msg(var.config.get('strings', 'not_playing'), text)
     else:
@@ -302,11 +261,6 @@ def cmd_play_url(bot, user, text, command, parameter):
             bot.send_msg(var.config.get(
                 'strings', 'too_long'), text)
         else:
-            for i in var.db.options("url_ban"):
-                if music['url'] == i:
-                    bot.mumble.users[text.actor].send_text_message(
-                        var.config.get('strings', 'url_ban'))
-                    return
             music['ready'] = "no"
             var.playlist.append(music)
             logging.info("bot: add to playlist: " + music['url'])
@@ -317,12 +271,20 @@ def cmd_play_url(bot, user, text, command, parameter):
 
 
 def cmd_play_playlist(bot, user, text, command, parameter):
-    offset = 1  # if you want to start the playlist at a specific index
+    offset = 0  # if you want to start the playlist at a specific index
     try:
         offset = int(parameter.split(" ")[-1])
     except ValueError:
         pass
-    if media.playlist.get_playlist_info(url=bot.get_url_from_input(parameter), start_index=offset, user=user):
+
+    url = get_url_from_input(parameter)
+    logging.debug("bot: fetching media info from playlist url %s" % url)
+    items = media.playlist.get_playlist_info(url=url, start_index=offset, user=user)
+    if len(items) > 0:
+        var.playlist.extend(items)
+        for music in items:
+            logging.info("bot: add to playlist: %s (%s)" % (music['title'], music['url']))
+
         bot.async_download_next()
 
 
@@ -557,7 +519,7 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
 def cmd_current_music(bot, user, text, command, parameter):
     reply = ""
     if len(var.playlist.playlist) > 0:
-        reply = formatted_current_playing()
+        reply = util.format_current_playing()
     else:
         reply = var.config.get('strings', 'not_playing')
 
@@ -620,8 +582,14 @@ def cmd_queue(bot, user, text, command, parameter):
     else:
         msgs = [ var.config.get('strings', 'queue_contents') ]
         for i, value in enumerate(var.playlist.playlist):
-            newline = '<b>{}</b> ({}) {}'.format(i + 1, value['type'],
-                                                       value['title'] if 'title' in value else value['url'])
+            newline = ''
+            if i == var.playlist.current_index:
+                newline = '<b>{} ({}) {}</b>'.format(i + 1, value['type'],
+                                                           value['title'] if 'title' in value else value['url'])
+            else:
+                newline = '<b>{}</b> ({}) {}'.format(i + 1, value['type'],
+                                                     value['title'] if 'title' in value else value['url'])
+
             msgs.append(newline)
 
         send_multi_lines(bot, msgs, text)
@@ -630,4 +598,4 @@ def cmd_queue(bot, user, text, command, parameter):
 def cmd_random(bot, user, text, command, parameter):
     bot.stop()
     var.playlist.randomize()
-    bot.resume()
+    bot.launch_music(int(parameter))

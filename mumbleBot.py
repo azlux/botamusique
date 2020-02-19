@@ -288,42 +288,11 @@ class MumbleBot:
                     var.playlist.remove()
                     return
             uri = music['path']
-
             music = var.playlist.current_item()
-
-            thumbnail_html = ''
-            if 'thumbnail' in music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 music['thumbnail'] + '"/>'
-            display = ''
-            if 'artist' in music:
-                display = music['artist'] + ' - '
-            if 'title' in music:
-                display += music['title']
-
-            if var.config.getboolean('bot', 'announce_current_music'):
-                self.send_msg(var.config.get(
-                    'strings', 'now_playing') % (display, thumbnail_html))
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + \
                 var.playlist.current_item()["path"]
-
-            music = var.playlist.current_item()
-
-            thumbnail_html = ''
-            if 'thumbnail' in music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 music['thumbnail'] + '"/>'
-            display = ''
-            if 'artist' in music:
-                display = music['artist'] + ' - '
-            if 'title' in music:
-                display += music['title']
-
-            if var.config.getboolean('bot', 'announce_current_music'):
-                self.send_msg(var.config.get(
-                    'strings', 'now_playing') % (display, thumbnail_html))
 
         elif music["type"] == "radio":
             uri = music["url"]
@@ -332,9 +301,8 @@ class MumbleBot:
                 title = media.radio.get_radio_server_description(uri)
                 music["title"] = title
 
-            if var.config.getboolean('bot', 'announce_current_music'):
-                self.send_msg(var.config.get('strings', 'now_playing') %
-                              (music["title"], "URL: " + uri))
+        if var.config.getboolean('bot', 'announce_current_music'):
+            self.send_msg(var.config.get('strings', 'now_playing') + util.format_current_playing())
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
@@ -348,6 +316,8 @@ class MumbleBot:
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
         self.is_pause = False
+        self.song_start_at = -1
+        self.playhead = 0
         self.last_volume_cycle_time = time.time()
 
     def download_music(self, index=-1):
@@ -448,12 +418,15 @@ class MumbleBot:
             command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
                        uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
 
+        if var.config.getboolean('bot', 'announce_current_music'):
+            self.send_msg(var.config.get('strings', 'now_playing') + util.format_current_playing())
 
         logging.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
         self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
         self.is_playing = True
         self.is_pause = False
+        self.song_start_at = -1
         self.last_volume_cycle_time = time.time()
 
 
@@ -492,18 +465,6 @@ class MumbleBot:
                 self.on_ducking = True
             self.ducking_release = time.time() + 1 # ducking release after 1s
 
-
-    @staticmethod
-    # Parse the html from the message to get the URL
-    def get_url_from_input(string):
-        if string.startswith('http'):
-            return string
-        p = re.compile('href="(.+?)"', re.IGNORECASE)
-        res = re.search(p, string)
-        if res:
-            return res.group(1)
-        else:
-            return False
 
     # Main loop of the Bot
     def loop(self):

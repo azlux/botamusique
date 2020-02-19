@@ -43,6 +43,8 @@ def get_recursive_filelist_sorted(path):
 
 def get_music_tag_info(music):
 
+    uri = ""
+
     if "path" in music:
         uri = var.config.get('bot', 'music_folder') + music["path"]
 
@@ -99,13 +101,70 @@ def get_music_tag_info(music):
 
                     return music
             except:
-                raise
+                pass
+    else:
+        uri = music['url']
 
     # if nothing found
-    match = re.search("([^\.]+)\.?.*", os.path.basename(uri))
-    music['title'] = match[1]
+    if 'title' not in music:
+        match = re.search("([^\.]+)\.?.*", os.path.basename(uri))
+        music['title'] = match[1]
 
     return music
+
+
+def format_current_playing():
+    if var.playlist.length() > 0:
+        reply = ""
+        current_music = var.playlist.current_item()
+        source = current_music["type"]
+        if source == "radio":
+            reply = "[radio] {title} on {url} by {user}".format(
+                title=media.radio.get_radio_title(
+                    current_music["url"]),
+                url=current_music["title"],
+                user=current_music["user"]
+            )
+        elif source == "url" and 'from_playlist' in current_music:
+            thumbnail_html = ''
+            if 'thumbnail' in current_music:
+                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 current_music['thumbnail'] + '"/>'
+            reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
+                title=current_music["title"],
+                url=current_music["playlist_url"],
+                playlist=current_music["playlist_title"],
+                user=current_music["user"],
+                thumb=thumbnail_html
+            )
+        elif source == "url":
+            thumbnail_html = ''
+            if 'thumbnail' in current_music:
+                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 current_music['thumbnail'] + '"/>'
+            reply = "[url] <a href=\"{url}\">{title}</a> by {user} <br> {thumb}".format(
+                title=current_music["title"],
+                url=current_music["url"],
+                user=current_music["user"],
+                thumb=thumbnail_html
+            )
+        elif source == "file":
+            thumbnail_html = ''
+            if 'thumbnail' in current_music:
+                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                                 current_music['thumbnail'] + '"/>'
+            reply = "[file] {title} by {user} <br> {thumb}".format(
+                title=(current_music['artist'] + ' - ' + current_music['title']) if 'artist' in current_music \
+                    else current_music['title'],
+                user=current_music["user"],
+                thumb=thumbnail_html
+            )
+        else:
+            logging.error(current_music)
+        return reply
+    else:
+        return None
+
 
 
 # - zips all files of the given zippath (must be a directory)
