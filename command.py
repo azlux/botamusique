@@ -153,7 +153,7 @@ def cmd_play_file(bot, user, text, command, parameter):
             music = {'type': 'file',
                      'path': filename,
                      'user': user}
-            logging.info("bot: add to playlist: " + filename)
+            logging.info("cmd: add to playlist: " + filename)
             var.playlist.append(music)
             bot.send_msg(var.config.get('strings', 'file_added') + music['title'], text)
 
@@ -169,7 +169,7 @@ def cmd_play_file(bot, user, text, command, parameter):
             music = {'type': 'file',
                      'path': parameter,
                      'user': user}
-            logging.info("bot: add to playlist: " + parameter)
+            logging.info("cmd: add to playlist: " + parameter)
             music = var.playlist.append(music)
             bot.send_msg(var.config.get('strings', 'file_added') + music['title'], text)
             return
@@ -192,7 +192,7 @@ def cmd_play_file(bot, user, text, command, parameter):
             files = list(map(lambda file:
                              {'type': 'file', 'path': os.path.join(parameter, file), 'user': user}, files))
 
-            logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
+            logging.info("cmd: add to playlist: " + ", ".join([file['path'] for file in files]))
             files = var.playlist.extend(files)
             bot.send_msg(var.config.get('strings', 'file_added')
                          + "<br> ".join([file['title'] for file in files]), text)
@@ -207,7 +207,7 @@ def cmd_play_file(bot, user, text, command, parameter):
                 music = {'type': 'file',
                          'path': matches[0][1],
                          'user': user}
-                logging.info("bot: add to playlist: " + matches[0][1])
+                logging.info("cmd: add to playlist: " + matches[0][1])
                 music = var.playlist.append(music)
                 bot.send_msg(var.config.get( 'strings', 'file_added')
                              + "{} ({})".format(music['title'], music['path']), text)
@@ -232,7 +232,7 @@ def cmd_play_file_match(bot, user, text, command, parameter):
                     music = {'type': 'file',
                              'path': file,
                              'user': user}
-                    logging.info("bot: add to playlist: " + file)
+                    logging.info("cmd: add to playlist: " + file)
                     music = var.playlist.append(music)
 
                     msgs.append("{} ({})".format(music['title'], music['path']))
@@ -263,7 +263,7 @@ def cmd_play_url(bot, user, text, command, parameter):
         else:
             music['ready'] = "no"
             var.playlist.append(music)
-            logging.info("bot: add to playlist: " + music['url'])
+            logging.info("cmd: add to playlist: " + music['url'])
             bot.async_download_next()
     else:
         bot.send_msg(var.config.get(
@@ -278,12 +278,12 @@ def cmd_play_playlist(bot, user, text, command, parameter):
         pass
 
     url = get_url_from_input(parameter)
-    logging.debug("bot: fetching media info from playlist url %s" % url)
+    logging.debug("cmd: fetching media info from playlist url %s" % url)
     items = media.playlist.get_playlist_info(url=url, start_index=offset, user=user)
     if len(items) > 0:
         var.playlist.extend(items)
         for music in items:
-            logging.info("bot: add to playlist: %s (%s)" % (music['title'], music['url']))
+            logging.info("cmd: add to playlist: %s (%s)" % (music['title'], music['url']))
 
         bot.async_download_next()
 
@@ -309,26 +309,26 @@ def cmd_play_radio(bot, user, text, command, parameter):
                      'url': url,
                      'user': user}
             var.playlist.append(music)
-            logging.info("bot: add to playlist: " + music['url'])
+            logging.info("cmd: add to playlist: " + music['url'])
             bot.async_download_next()
         else:
             bot.send_msg(var.config.get('strings', 'bad_url'))
 
 
 def cmd_rb_query(bot, user, text, command, parameter):
-    logging.info('bot: Querying radio stations')
+    logging.info('cmd: Querying radio stations')
     if not parameter:
         logging.debug('rbquery without parameter')
         msg = var.config.get('strings', 'rb_query_empty')
         bot.send_msg(msg, text)
     else:
-        logging.debug('bot: Found query parameter: ' + parameter)
+        logging.debug('cmd: Found query parameter: ' + parameter)
         # bot.send_msg('Searching for stations - this may take some seconds...', text)
         rb_stations = radiobrowser.getstations_byname(parameter)
         msg = var.config.get('strings', 'rb_query_result') + " :"
         msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th></tr>'
         if not rb_stations:
-            logging.debug('bot: No matches found for rbquery ' + parameter)
+            logging.debug('cmd: No matches found for rbquery ' + parameter)
             bot.send_msg('Radio-Browser found no matches for ' + parameter, text)
         else:
             for s in rb_stations:
@@ -377,13 +377,13 @@ def cmd_rb_query(bot, user, text, command, parameter):
 
 
 def cmd_rb_play(bot, user, text, command, parameter):
-    logging.debug('bot: Play a station by ID')
+    logging.debug('cmd: Play a station by ID')
     if not parameter:
         logging.debug('rbplay without parameter')
         msg = var.config.get('strings', 'rb_play_empty')
         bot.send_msg(msg, text)
     else:
-        logging.debug('bot: Retreiving url for station ID ' + parameter)
+        logging.debug('cmd: Retreiving url for station ID ' + parameter)
         rstation = radiobrowser.getstationname_byid(parameter)
         stationname = rstation[0]['name']
         country = rstation[0]['country']
@@ -397,21 +397,21 @@ def cmd_rb_play(bot, user, text, command, parameter):
         msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
                '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td><td>%s</td></tr></table>' \
                % (parameter, stationname, genre, codec, bitrate, country, homepage)
-        logging.debug('bot: Added station to playlist %s' % stationname)
+        logging.debug('cmd: Added station to playlist %s' % stationname)
         bot.send_msg(msg, text)
         url = radiobrowser.geturl_byid(parameter)
         if url != "-1":
-            logging.info('bot: Found url: ' + url)
+            logging.info('cmd: Found url: ' + url)
             music = {'type': 'radio',
                      'title': stationname,
                      'artist': homepage,
                      'url': url,
                      'user': user}
             var.playlist.append(music)
-            logging.info("bot: add to playlist: " + music['url'])
+            logging.info("cmd: add to playlist: " + music['url'])
             bot.async_download_next()
         else:
-            logging.info('bot: No playable url found.')
+            logging.info('cmd: No playable url found.')
             msg += "No playable url found for this station, please try another station."
             bot.send_msg(msg, text)
 
@@ -468,7 +468,7 @@ def cmd_volume(bot, user, text, command, parameter):
         bot.send_msg(var.config.get('strings', 'change_volume') % (
             int(bot.volume_set * 100), bot.mumble.users[text.actor]['name']), text)
         var.db.set('bot', 'volume', str(bot.volume_set))
-        logging.info('bot: volume set to %d' % (bot.volume_set * 100))
+        logging.info('cmd: volume set to %d' % (bot.volume_set * 100))
     else:
         bot.send_msg(var.config.get(
             'strings', 'current_volume') % int(bot.volume_set * 100), text)
@@ -482,14 +482,14 @@ def cmd_ducking(bot, user, text, command, parameter):
         bot.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
                                           bot.ducking_sound_received)
         bot.mumble.set_receive_sound(True)
-        logging.info('bot: ducking is on')
+        logging.info('cmd: ducking is on')
         msg = "Ducking on."
         bot.send_msg(msg, text)
     elif parameter == "off":
         bot.is_ducking = False
         bot.mumble.set_receive_sound(False)
         msg = "Ducking off."
-        logging.info('bot: ducking is off')
+        logging.info('cmd: ducking is off')
         bot.send_msg(msg, text)
 
 
@@ -510,7 +510,7 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
         bot.send_msg(var.config.get('strings', 'change_ducking_volume') % (
             int(bot.ducking_volume * 100), bot.mumble.users[text.actor]['name']), text)
         # var.db.set('bot', 'volume', str(bot.volume_set))
-        logging.info('bot: volume on ducking set to %d' % (bot.ducking_volume * 100))
+        logging.info('cmd: volume on ducking set to %d' % (bot.ducking_volume * 100))
     else:
         bot.send_msg(var.config.get(
             'strings', 'current_ducking_volume') % int(bot.ducking_volume * 100), text)
