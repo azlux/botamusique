@@ -283,12 +283,11 @@ class MumbleBot:
                 return
             elif music["ready"] != "yes":
                 logging.info("Current music wasn't ready, Downloading...")
-                self.download_music()
-                if music == False:
+                music = self.download_music()
+                if not music:
                     var.playlist.remove()
                     return
             uri = music['path']
-            music = var.playlist.current_item()
 
         elif music["type"] == "file":
             uri = var.config.get('bot', 'music_folder') + \
@@ -389,6 +388,7 @@ class MumbleBot:
                     else:
                         break
             var.playlist.playlist[index] = music
+            return music
 
     def resume(self):
         music = var.playlist.current_item()

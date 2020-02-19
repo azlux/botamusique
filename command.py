@@ -284,8 +284,6 @@ def cmd_play_playlist(bot, user, text, command, parameter):
         for music in items:
             logging.info("cmd: add to playlist: %s (%s)" % (music['title'], music['url']))
 
-        bot.async_download_next()
-
 
 def cmd_play_radio(bot, user, text, command, parameter):
     if not parameter:
