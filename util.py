@@ -41,12 +41,11 @@ def get_recursive_filelist_sorted(path):
     return filelist
 
 
-def get_music_tag_info(music):
-
-    uri = ""
+def get_music_tag_info(music, uri = ""):
 
     if "path" in music:
-        uri = var.config.get('bot', 'music_folder') + music["path"]
+        if not uri:
+            uri = var.config.get('bot', 'music_folder') + music["path"]
 
         if os.path.isfile(uri):
             match = re.search("(.+)\.(.+)", uri)
@@ -58,7 +57,7 @@ def get_music_tag_info(music):
 
             try:
                 im = None
-                path_thumbnail = file_no_ext + "jpg"
+                path_thumbnail = file_no_ext + ".jpg"
                 if os.path.isfile(path_thumbnail):
                     im = Image.open(path_thumbnail)
 

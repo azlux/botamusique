@@ -334,8 +334,10 @@ class MumbleBot:
         if music['ready'] == "validation":
             logging.info("bot: verifying the duration of url (%s) %s " % (music['title'], url))
 
-            music = media.url.get_url_info(music)
             if music:
+                if 'duration' not in music:
+                    music = media.url.get_url_info(music)
+
                 if music['duration'] > var.config.getint('bot', 'max_track_duration'):
                     # Check the length, useful in case of playlist, it wasn't checked before)
                     logging.info(
@@ -393,6 +395,7 @@ class MumbleBot:
                         pass
                     else:
                         break
+            music = util.get_music_tag_info(music, music['path'])
             var.playlist.playlist[index] = music
             return music
 
