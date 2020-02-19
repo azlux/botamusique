@@ -282,9 +282,10 @@ class MumbleBot:
             if music["ready"] == "downloading":
                 return
             elif music["ready"] != "yes":
-                logging.info("Current music wasn't ready, Downloading...")
+                logging.info("bot: current music isn't ready, downloading...")
                 music = self.download_music()
                 if not music:
+                    logging.info("bot: removing music from the playlist: %s" % music['url'])
                     var.playlist.remove()
                     return
             uri = music['path']
@@ -322,9 +323,17 @@ class MumbleBot:
     def download_music(self, index=-1):
         if index == -1:
             index = var.playlist.current_index
-
         music = var.playlist.playlist[index]
-        if music['type'] == 'url' and music['ready'] == "validation":
+
+        if music['type'] != 'url':
+            # then no need to download
+            return music
+
+        url = music['url']
+
+        if music['ready'] == "validation":
+            logging.info("bot: verifying the duration of url (%s) %s " % (music['title'], url))
+
             music = media.url.get_url_info(music)
             if music:
                 if music['duration'] > var.config.getint('bot', 'max_track_duration'):
@@ -336,19 +345,18 @@ class MumbleBot:
                 else:
                     music['ready'] = "no"
             else:
-                logging.error("Error while fetching info from the URL")
+                logging.error("bot: error while fetching info from the URL")
                 self.send_msg(var.config.get('strings', 'unable_download'))
                 return False
 
-        if music['type'] == 'url' and music['ready'] == "no":
+        if music['ready'] == "no":
             # download the music
             music['ready'] = "downloading"
 
             url = music['url']
             url_hash = hashlib.md5(url.encode()).hexdigest()
 
-            logging.info("bot: Download url:" + url)
-            logging.debug(music)
+            logging.info("bot: downloading url (%s) %s " % (music['title'], url))
 
             path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
             mp3 = path.replace(".%(ext)s", ".mp3")
@@ -374,8 +382,6 @@ class MumbleBot:
             self.send_msg(var.config.get(
                 'strings', "download_in_progress") % music['title'])
 
-            logging.info("Information before start downloading: " +
-                         str(music['title']))
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 for i in range(2):  # Always try 2 times
                     try:
@@ -501,7 +507,7 @@ class MumbleBot:
                     self.next()
                 if not self.is_pause and len(var.playlist.playlist) > 0:
                     if var.playlist.current_item()['type'] in ['radio', 'file'] \
-                            or (var.playlist.current_item()['type'] == 'url' and var.playlist.current_item()['ready'] not in ['validation', 'downloading']):
+                            or (var.playlist.current_item()['type'] == 'url' and var.playlist.current_item()['ready'] not in ['downloading']):
                         # Check if the music can be start before launch the music
                         self.launch_music()
                         self.async_download_next()

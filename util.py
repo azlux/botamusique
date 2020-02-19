@@ -130,7 +130,7 @@ def format_current_playing():
             if 'thumbnail' in current_music:
                 thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                                  current_music['thumbnail'] + '"/>'
-            reply = "[playlist] {title} (from the playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
+            reply = "[url] {title} (from playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
                 title=current_music["title"],
                 url=current_music["playlist_url"],
                 playlist=current_music["playlist_title"],
