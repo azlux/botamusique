@@ -131,7 +131,6 @@ def cmd_play(bot, user, text, command, parameter):
             bot.launch_music(int(parameter) - 1)
         elif bot.is_pause:
             bot.resume()
-            bot.send_msg(util.format_current_playing())
         else:
             bot.send_msg(var.config.get('strings', 'not_playing'), text)
     else:
@@ -598,4 +597,4 @@ def cmd_queue(bot, user, text, command, parameter):
 def cmd_random(bot, user, text, command, parameter):
     bot.stop()
     var.playlist.randomize()
-    bot.launch_music(int(parameter))
+    bot.launch_music(0)
