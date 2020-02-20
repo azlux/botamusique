@@ -120,7 +120,7 @@ class PlayList:
             return
 
         items = list(var.db.items("playlist_item"))
-        items.sort(key=lambda v: v[0])
+        items.sort(key=lambda v: int(v[0]))
         self.playlist = list(map(lambda v: json.loads(v[1]), items))
         self.current_index = current_index
 
