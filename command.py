@@ -189,14 +189,24 @@ def cmd_play_file(bot, user, text, command, parameter):
                 music_library.add_file(file)
 
             files = music_library.get_files(parameter)
+            msgs = [var.config.get('strings', 'file_added')]
+            count = 0
 
-            files = list(map(lambda file:
-                             {'type': 'file', 'path': os.path.join(parameter, file), 'user': user}, files))
+            for file in files:
+                count += 1
+                music = {'type': 'file',
+                         'path': file,
+                         'user': user}
+                logging.info("cmd: add to playlist: " + file)
+                music = var.playlist.append(music)
 
-            logging.info("cmd: add to playlist: " + ", ".join([file['path'] for file in files]))
-            files = var.playlist.extend(files)
-            bot.send_msg(var.config.get('strings', 'file_added')
-                         + "<br> ".join([file['title'] for file in files]), text)
+                msgs.append("{} ({})".format(music['title'], music['path']))
+
+            if count != 0:
+                send_multi_lines(bot, msgs, text)
+            else:
+                bot.send_msg(var.config.get('strings', 'no_file'), text)
+
         else:
             # try to do a partial match
             files = util.get_recursive_filelist_sorted(music_folder)
@@ -247,7 +257,7 @@ def cmd_play_file_match(bot, user, text, command, parameter):
             msg = var.config.get('strings', 'wrong_pattern') % str(e)
             bot.send_msg(msg, text)
     else:
-        bot.send_msg(var.config.get('strings', 'wrong_parameter') % command)
+        bot.send_msg(var.config.get('strings', 'bad_parameter') % command)
 
 
 def cmd_play_url(bot, user, text, command, parameter):
@@ -543,13 +553,23 @@ def cmd_remove(bot, user, text, command, parameter):
     if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
             and int(parameter) <= var.playlist.length():
 
-        removed = var.playlist.remove(int(parameter) - 1)
+        index = int(parameter) - 1
+
+        removed = None
+        if index == var.playlist.current_index:
+            removed = var.playlist.remove(index)
+            var.botamusique.stop()
+            var.botamusique.launch_music(index)
+        else:
+            removed = var.playlist.remove(index)
 
         # the Title isn't here if the music wasn't downloaded
         bot.send_msg(var.config.get('strings', 'removing_item') % (
             removed['title'] if 'title' in removed else removed['url']), text)
+
+        logging.info("cmd: delete from playlist: " + str(removed['path'] if 'path' in removed else removed['url']))
     else:
-        bot.send_msg(var.config.get('strings', 'wrong_parameter') % command)
+        bot.send_msg(var.config.get('strings', 'bad_parameter') % command)
 
 
 def cmd_list_file(bot, user, text, command, parameter):

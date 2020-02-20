@@ -213,16 +213,14 @@ def post():
             music = var.playlist.playlist[int(request.form['delete_music'])]
             logging.info("web: delete from playlist: " + str(music['path'] if 'path' in music else music['url']))
 
-            if len(var.playlist.playlist) >= int(request.form['delete_music']):
-                if var.playlist.current_index == int(request.form['delete_music']):
-                    var.botamusique.pause()
+            if var.playlist.length() >= int(request.form['delete_music']):
+                if int(request.form['delete_music']) == var.playlist.current_index:
                     var.playlist.remove(int(request.form['delete_music']))
-                    var.botamusique.launch_music()
-                elif var.playlist.current_index > int(request.form['delete_music']):
-                    var.playlist.current_index -= 1
-                    var.playlist.remove(int(request.form['delete_music']))
+                    var.botamusique.stop()
+                    var.botamusique.launch_music(int(request.form['delete_music']))
                 else:
                     var.playlist.remove(int(request.form['delete_music']))
+
 
         elif 'play_music' in request.form:
             music = var.playlist.playlist[int(request.form['play_music'])]

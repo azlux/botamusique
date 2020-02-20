@@ -64,8 +64,8 @@ class PlayList:
         removed = self.playlist[index]
         del self.playlist[index]
 
-        if self.current_index <= index:
-            self.next()
+        if self.current_index > index:
+            self.current_index -= 1
 
         return removed
 

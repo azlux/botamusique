@@ -170,7 +170,7 @@ class MumbleBot:
         logging.info(
             "\nSIGINT caught, quitting, {} more to kill".format(2 - self.nb_exit))
         self.exit = True
-        self.clear()
+        self.pause()
         if self.nb_exit > 1:
             logging.info("Forced Quit")
             sys.exit(0)
