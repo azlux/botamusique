@@ -122,6 +122,7 @@ class PlayList:
         items = list(var.db.items("playlist_item"))
         items.sort(key=lambda v: v[0])
         self.playlist = list(map(lambda v: json.loads(v[1]), items))
+        self.current_index = current_index
 
 
 def get_playlist_info(url, start_index=0, user=""):
