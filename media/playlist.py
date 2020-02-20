@@ -2,6 +2,7 @@ import youtube_dl
 import variables as var
 import util
 import random
+import json
 
 class PlayList:
     playlist = []
@@ -106,6 +107,21 @@ class PlayList:
         self.version += 1
         self.playlist = []
         self.current_index = 0
+
+    def save(self):
+        var.db.remove_section("playlist_item")
+        var.db.set("playlist", "current_index", self.current_index)
+        for index, item in enumerate(self.playlist):
+            var.db.set("playlist_item", str(index), json.dumps(item))
+
+    def load(self):
+        current_index = var.db.getint("playlist", "current_index", fallback=-1)
+        if current_index == -1:
+            return
+
+        items = list(var.db.items("playlist_item"))
+        items.sort(key=lambda v: v[0])
+        self.playlist = list(map(lambda v: json.loads(v[1]), items))
 
 
 def get_playlist_info(url, start_index=0, user=""):

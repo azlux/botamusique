@@ -202,11 +202,6 @@ def zipdir(zippath, zipname_prefix=None):
     return zipname
 
 
-def write_db():
-    with open(var.dbfile, 'w') as f:
-        var.db.write(f)
-
-
 def get_user_ban():
     res = "List of ban hash"
     for i in var.db.items("user_ban"):
@@ -240,14 +235,12 @@ def update(version):
 def user_ban(user):
     var.db.set("user_ban", user, None)
     res = "User " + user + " banned"
-    write_db()
     return res
 
 
 def user_unban(user):
     var.db.remove_option("user_ban", user)
     res = "Done"
-    write_db()
     return res
 
 
@@ -261,14 +254,12 @@ def get_url_ban():
 def url_ban(url):
     var.db.set("url_ban", url, None)
     res = "url " + url + " banned"
-    write_db()
     return res
 
 
 def url_unban(url):
     var.db.remove_option("url_ban", url)
     res = "Done"
-    write_db()
     return res
 
 

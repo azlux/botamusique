@@ -21,6 +21,7 @@ import logging
 
 import util
 import command
+from database import Database
 import media.url
 import media.file
 import media.playlist
@@ -67,7 +68,7 @@ class MumbleBot:
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
         self.volume_set = var.config.getfloat('bot', 'volume')
-        if db.has_option('bot', 'volume'):
+        if var.db.has_option('bot', 'volume'):
             self.volume_set = var.db.getfloat('bot', 'volume')
 
         self.volume = self.volume_set
@@ -152,10 +153,15 @@ class MumbleBot:
         self.is_ducking = False
         self.on_ducking = False
         self.ducking_release = time.time()
-        if var.config.getboolean("bot", "ducking"):
+
+
+        if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking", fallback=False)\
+                or var.config.getboolean("bot", "ducking"):
             self.is_ducking = True
             self.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
+            self.ducking_volume = var.db.getfloat("bot", "ducking_volume", fallback=self.ducking_volume)
             self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
+            self.ducking_threshold = var.db.getfloat("bot", "ducking_threshold", fallback=self.ducking_threshold)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
@@ -323,7 +329,7 @@ class MumbleBot:
     def download_music(self, index=-1):
         if index == -1:
             index = var.playlist.current_index
-        music = var.playlist.playlist[index]
+        music = var.playlist.current_item()
 
         if music['type'] != 'url':
             # then no need to download
@@ -396,7 +402,7 @@ class MumbleBot:
                     else:
                         break
             music = util.get_music_tag_info(music, music['path'])
-            var.playlist.playlist[index] = music
+            var.playlist.update(music)
             return music
 
     def resume(self):
@@ -521,8 +527,9 @@ class MumbleBot:
         time.sleep(0.5)
 
         if self.exit:
-            # The db is not fixed config like url/user ban and volume
-            util.write_db()
+            if var.config.getboolean('debug', 'save_playlist', fallback=True):
+                logging.info("bot: save playlist into database")
+                var.playlist.save()
 
     def clear(self):
         # Kill the ffmpeg thread and empty the playlist
@@ -590,7 +597,7 @@ if __name__ == '__main__':
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini',
                         help='Load configuration from this file. Default: configuration.ini')
     parser.add_argument("--db", dest='db', type=str,
-                        default='db.ini', help='database file. Default db.ini')
+                        default='database.db', help='database file. Default: database.db')
 
     parser.add_argument("-q", "--quiet", dest="quiet",
                         action="store_true", help="Only Error logs")
@@ -620,26 +627,13 @@ if __name__ == '__main__':
     parsed_configs = config.read(
         ['configuration.default.ini', args.config], encoding='utf-8')
 
-
-
-    db = configparser.ConfigParser(
-        interpolation=None, allow_no_value=True, delimiters='²')
-    db.read(var.dbfile, encoding='utf-8')
-
-    if 'url_ban' not in db.sections():
-        db.add_section('url_ban')
-    if 'bot' not in db.sections():
-        db.add_section('bot')
-    if 'user_ban' not in db.sections():
-        db.add_section('user_ban')
-
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(
             args.config), file=sys.stderr)
         sys.exit()
 
     var.config = config
-    var.db = db
+    var.db = Database(var.dbfile)
 
     # Setup logger
     root = logging.getLogger()
@@ -657,7 +651,12 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     root.addHandler(handler)
 
-    # Start the bot, loop.
     var.botamusique = MumbleBot(args)
     command.register_all_commands(var.botamusique)
+
+    if var.config.getboolean('debug', 'save_playlist', fallback=True):
+        logging.info("bot: load playlist from previous session")
+        var.playlist.load()
+
+    # Start the main loop.
     var.botamusique.loop()

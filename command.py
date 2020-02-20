@@ -15,6 +15,7 @@ import util
 import variables as var
 from librb import radiobrowser
 from media.playlist import PlayList
+from database import Database
 
 
 def register_all_commands(bot):
@@ -48,6 +49,7 @@ def register_all_commands(bot):
     bot.register_command(var.config.get('command', 'list_file'), cmd_list_file)
     bot.register_command(var.config.get('command', 'queue'), cmd_queue)
     bot.register_command(var.config.get('command', 'random'), cmd_random)
+    bot.register_command(var.config.get('command', 'drop_database'), cmd_drop_database)
 
 def send_multi_lines(bot, lines, text):
     msg = ""
@@ -433,7 +435,7 @@ def cmd_clear(bot, user, text, command, parameter):
 
 def cmd_kill(bot, user, text, command, parameter):
     if bot.is_admin(user):
-        bot.clear()
+        bot.pause()
         bot.exit = True
     else:
         bot.mumble.users[text.actor].send_text_message(
@@ -474,6 +476,7 @@ def cmd_volume(bot, user, text, command, parameter):
 def cmd_ducking(bot, user, text, command, parameter):
     if parameter == "" or parameter == "on":
         bot.is_ducking = True
+        var.db.set('bot', 'ducking', True)
         bot.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
         bot.ducking_threshold = var.config.getint("bot", "ducking_threshold", fallback=5000)
         bot.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
@@ -485,6 +488,7 @@ def cmd_ducking(bot, user, text, command, parameter):
     elif parameter == "off":
         bot.is_ducking = False
         bot.mumble.set_receive_sound(False)
+        var.db.set('bot', 'ducking', False)
         msg = "Ducking off."
         logging.info('cmd: ducking is off')
         bot.send_msg(msg, text)
@@ -493,6 +497,7 @@ def cmd_ducking(bot, user, text, command, parameter):
 def cmd_ducking_threshold(bot, user, text, command, parameter):
     if parameter is not None and parameter.isdigit():
         bot.ducking_threshold = int(parameter)
+        var.db.set('bot', 'ducking_threshold', str(bot.ducking_threshold))
         msg = "Ducking threshold set to %d." % bot.ducking_threshold
         bot.send_msg(msg, text)
     else:
@@ -507,6 +512,7 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
         bot.send_msg(var.config.get('strings', 'change_ducking_volume') % (
             int(bot.ducking_volume * 100), bot.mumble.users[text.actor]['name']), text)
         # var.db.set('bot', 'volume', str(bot.volume_set))
+        var.db.set('bot', 'ducking_volume', str(bot.ducking_volume))
         logging.info('cmd: volume on ducking set to %d' % (bot.ducking_volume * 100))
     else:
         bot.send_msg(var.config.get(
@@ -596,3 +602,8 @@ def cmd_random(bot, user, text, command, parameter):
     bot.stop()
     var.playlist.randomize()
     bot.launch_music(0)
+
+def cmd_drop_database(bot, user, text, command, parameter):
+    var.db.drop_table()
+    var.db = Database(var.dbfile)
+    bot.send_msg(var.config.get('strings', 'database_dropped'), text)
