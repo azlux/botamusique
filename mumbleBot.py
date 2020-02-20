@@ -287,7 +287,7 @@ class MumbleBot:
             # Check if the music is ready to be played
             if music["ready"] == "downloading":
                 return
-            elif music["ready"] != "yes":
+            elif music["ready"] != "yes" or not os.path.exists(music['path']):
                 logging.info("bot: current music isn't ready, downloading...")
                 music = self.download_music()
                 if not music:
@@ -357,7 +357,7 @@ class MumbleBot:
                 self.send_msg(var.config.get('strings', 'unable_download'))
                 return False
 
-        if music['ready'] == "no":
+        else:
             # download the music
             music['ready'] = "downloading"
 
@@ -449,8 +449,8 @@ class MumbleBot:
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         logging.info("bot: Async download next asked ")
-        if len(var.playlist.playlist) > 1 and var.playlist.next_item()['type'] == 'url' \
-                and var.playlist.next_item()['ready'] in ["no", "validation"]:
+        if var.playlist.length() > 1 and var.playlist.next_item()['type'] == 'url' \
+                and (var.playlist.next_item()['ready'] in ["no", "validation"] or not os.path.exists(music['path'])):
             th = threading.Thread(
                 target=self.download_music, kwargs={'index': var.playlist.next_index()})
         else:
