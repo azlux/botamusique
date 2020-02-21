@@ -219,7 +219,7 @@
                     <div class="card-body">
                         <form action="./upload" method="post" enctype="multipart/form-data">
                             <div class="row" style="margin-bottom: 5px;">
-                                <div id="uploadBox" class="col-lg-8 input-group">
+                                <div id="uploadBox" class="col-lg-7 input-group">
                                     <div id="uploadField" style="display: flex; width: 100%">
                                         <div class="custom-file btn-space">
                                             <input type="file" name="file[]" class="custom-file-input" id="uploadSelectFile"
@@ -238,10 +238,9 @@
                                                 <option value="{{ dir }}">
                                             {% endfor %}
                                     </datalist>
-
-                                    <button class="btn btn-outline-secondary" type="submit"
-                                            id="uploadSubmit">Upload</button>
                                 </div>
+                                <button class="btn btn-outline-secondary btn-space" type="submit"
+                                        id="uploadSubmit">Upload</button>
                             </div>
                         </form>
                     </div>
