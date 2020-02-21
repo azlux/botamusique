@@ -233,25 +233,33 @@ class MumbleBot:
                         return
 
 
-            if command in self.cmd_handle:
-                self.cmd_handle[command](self, user, text, command, parameter)
-            else:
-                # try partial match
-                cmds = self.cmd_handle.keys()
-                matches = []
-                for cmd in cmds:
-                    if cmd.startswith(command):
-                        matches.append(cmd)
-
-                if len(matches) == 1:
-                    logging.info("bot: {:s} matches {:s}".format(command, matches[0]))
-                    self.cmd_handle[matches[0]](self, user, text, command, parameter)
-                elif len(matches) > 1:
-                    self.mumble.users[text.actor].send_text_message(
-                        var.config.get('strings', 'which_command') % "<br>".join(matches))
+            command_exc = ""
+            try:
+                if command in self.cmd_handle:
+                    command_exc = command
+                    self.cmd_handle[command](self, user, text, command, parameter)
                 else:
-                    self.mumble.users[text.actor].send_text_message(
-                        var.config.get('strings', 'bad_command') % command)
+                    # try partial match
+                    cmds = self.cmd_handle.keys()
+                    matches = []
+                    for cmd in cmds:
+                        if cmd.startswith(command):
+                            matches.append(cmd)
+
+                    if len(matches) == 1:
+                        logging.info("bot: {:s} matches {:s}".format(command, matches[0]))
+                        command_exc = matches[0]
+                        self.cmd_handle[matches[0]](self, user, text, command, parameter)
+                    elif len(matches) > 1:
+                        self.mumble.users[text.actor].send_text_message(
+                            var.config.get('strings', 'which_command') % "<br>".join(matches))
+                    else:
+                        self.mumble.users[text.actor].send_text_message(
+                            var.config.get('strings', 'bad_command') % command)
+            except:
+                error = str(sys.exc_info()[1])
+                logging.error("bot: command %s failed with error %s" % (command_exc, error))
+                self.send_msg(var.config.get('strings', 'error_executing_command') % (command_exc, error), text)
 
 
     @staticmethod

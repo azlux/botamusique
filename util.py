@@ -98,8 +98,6 @@ def get_music_tag_info(music, uri = ""):
                     im = im.convert('RGB')
                     im.save(buffer, format="JPEG")
                     music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-                    return music
             except:
                 pass
     else:

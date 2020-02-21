@@ -263,7 +263,7 @@ def cmd_play_file_match(bot, user, text, command, parameter):
 def cmd_play_url(bot, user, text, command, parameter):
     music = {'type': 'url',
              # grab the real URL
-             'url': bot.get_url_from_input(parameter),
+             'url': get_url_from_input(parameter),
              'user': user,
              'ready': 'validation'}
 
