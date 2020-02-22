@@ -22,10 +22,13 @@ class PlayList:
         if index == -1:
             index = self.current_index
 
+        item = util.get_music_tag_info(item)
         self.playlist.insert(index, item)
 
         if index <= self.current_index:
             self.current_index += 1
+
+        return item
 
     def length(self):
         return len(self.playlist)

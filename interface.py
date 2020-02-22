@@ -144,8 +144,8 @@ def post():
                         'path' : request.form['add_file_bottom'],
                         'title' : '',
                         'user' : 'Web'}
-                var.playlist.append(util.get_music_tag_info(item))
-                logging.info('web: add to playlist(bottom): ' + item['path'])
+                item = var.playlist.append(util.get_music_tag_info(item))
+                logging.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.config.get('bot', 'music_folder') + request.form['add_file_next']
@@ -154,11 +154,11 @@ def post():
                         'path' : request.form['add_file_next'],
                         'title' : '',
                         'user' : 'Web'}
-                var.playlist.insert(
+                item = var.playlist.insert(
                     var.playlist.current_index + 1,
-                    util.get_music_tag_info(item)
+                    item
                 )
-                logging.info('web: add to playlist(next): ' + item['path'])
+                logging.info('web: add to playlist(next): ' + util.format_debug_song_string(item))
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -183,15 +183,16 @@ def post():
                 else:
                     files = music_library.get_files(folder)
 
-                files = list(map(lambda file: util.get_music_tag_info(
+                files = list(map(lambda file:
                     {'type':'file',
                      'path': os.path.join(folder, file),
-                     'user':'Web'}), files))
+                     'user':'Web'}, files))
+
+                files = var.playlist.extend(files)
 
                 for file in files:
-                    logging.info("web: add to playlist: %s" % file['path'])
+                    logging.info("web: add to playlist: %s" %  util.format_debug_song_string(file))
 
-                var.playlist.extend(files)
 
         elif 'add_url' in request.form:
             music = {'type':'url',
@@ -199,19 +200,19 @@ def post():
                                  'user': 'Web',
                                  'ready': 'validation'}
             media.url.get_url_info(music)
-            var.playlist.append(music)
-            logging.info("web: add to playlist: " + request.form['add_url'])
+            music = var.playlist.append(music)
+            logging.info("web: add to playlist: " + util.format_debug_song_string(music))
             var.playlist.playlist[-1]['ready'] = "no"
 
         elif 'add_radio' in request.form:
-            var.playlist.append({'type': 'radio',
+            music = var.playlist.append({'type': 'radio',
                                  'path': request.form['add_radio'],
                                  'user': "Web"})
-            logging.info("web: add to playlist: " + request.form['add_radio'])
+            logging.info("web: add to playlist: " + util.format_debug_song_string(music))
 
         elif 'delete_music' in request.form:
             music = var.playlist.playlist[int(request.form['delete_music'])]
-            logging.info("web: delete from playlist: " + str(music['path'] if 'path' in music else music['url']))
+            logging.info("web: delete from playlist: " + util.format_debug_song_string(music))
 
             if var.playlist.length() >= int(request.form['delete_music']):
                 if int(request.form['delete_music']) == var.playlist.current_index:
@@ -224,7 +225,7 @@ def post():
 
         elif 'play_music' in request.form:
             music = var.playlist.playlist[int(request.form['play_music'])]
-            logging.info("web: jump to: " + str(music['path'] if 'path' in music else music['url']))
+            logging.info("web: jump to: " + util.format_debug_song_string(music))
 
             if len(var.playlist.playlist) >= int(request.form['play_music']):
                 var.botamusique.stop()

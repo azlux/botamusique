@@ -303,7 +303,7 @@ class MumbleBot:
         else:
             music = var.playlist.jump(index)
 
-        logging.info("bot: play music " + str(music['path'] if 'path' in music else music['url']))
+        logging.info("bot: play music " + util.format_debug_song_string(music))
         if music["type"] == "url":
             # Delete older music is the tmp folder is too big
             media.system.clear_tmp_folder(var.config.get(
@@ -316,7 +316,7 @@ class MumbleBot:
                 logging.info("bot: current music isn't ready, downloading...")
                 music = self.download_music()
                 if not music:
-                    logging.info("bot: removing music from the playlist: %s" % music['url'])
+                    logging.info("bot: removing music from the playlist: %s" % util.format_debug_song_string(music))
                     var.playlist.remove()
                     return
             uri = music['path']

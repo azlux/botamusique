@@ -113,36 +113,70 @@ def get_music_tag_info(music, uri = ""):
 def format_song_string(music):
     display = ''
     source = music["type"]
+    title = music["title"] if "title" in music else "Unknown title"
+    artist = music["artist"] if "artist" in music else "Unknown artist"
 
     if source == "radio":
-        display = "[radio] {title} on {url} by {user}".format(
-            title=media.radio.get_radio_title(
-                music["url"]),
-            url=music["title"],
+        display = "[radio] {title} from {url} by {user}".format(
+            title=media.radio.get_radio_title(music["url"]),
+            url=music["url"],
             user=music["user"]
         )
     elif source == "url" and 'from_playlist' in music:
-        display = "[url] {title} (from playlist <a href=\"{url}\">{playlist}</a> by {user}".format(
-            title=music["title"],
+        display = "[url] {title} (from playlist <a href=\"{url}\">{playlist}</a>) by {user}".format(
+            title=title,
             url=music["playlist_url"],
             playlist=music["playlist_title"],
             user=music["user"]
         )
     elif source == "url":
         display = "[url] <a href=\"{url}\">{title}</a> by {user}".format(
-            title=music["title"],
+            title=title,
             url=music["url"],
             user=music["user"]
         )
     elif source == "file":
-        display = "[file] {title} by {user}".format(
-            title=(music['artist'] + ' - ' + music['title']) if 'artist' in music \
-                else music['title'],
+        display = "[file] {artist} - {title} by {user}".format(
+            title=title,
+            artist=artist,
             user=music["user"]
         )
 
     return display
 
+def format_debug_song_string(music):
+    display = ''
+    source = music["type"]
+    title = music["title"] if "title" in music else "??"
+    artist = music["artist"] if "artist" in music else "??"
+
+    if source == "radio":
+        display = "[radio] {url} by {user}".format(
+            url=music["url"],
+            user=music["user"]
+        )
+    elif source == "url" and 'from_playlist' in music:
+        display = "[url] {title} ({url}) from playlist {playlist} by {user}".format(
+            title=title,
+            url=music["url"],
+            playlist=music["playlist_title"],
+            user=music["user"]
+        )
+    elif source == "url":
+        display = "[url] {title} ({url}) by {user}".format(
+            title=title,
+            url=music["url"],
+            user=music["user"]
+        )
+    elif source == "file":
+        display = "[file] {artist} - {title} ({path}) by {user}".format(
+            title=title,
+            artist=artist,
+            path=music["path"],
+            user=music["user"]
+        )
+
+    return display
 
 def format_current_playing():
     music = var.playlist.current_item()
