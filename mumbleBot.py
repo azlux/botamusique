@@ -60,11 +60,11 @@ type : file
     user
 """
 
-version = 5
-
-
 class MumbleBot:
+    version = 5
+
     def __init__(self, args):
+        logging.info("bot: botamusique version %d, starting..." % self.version)
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
         self.volume_set = var.config.getfloat('bot', 'volume')
@@ -108,6 +108,11 @@ class MumbleBot:
             tt.daemon = True
             tt.start()
 
+        if var.config.getboolean("bot", "auto_check_update"):
+            th = threading.Thread(
+                target=self.check_update)
+            th.daemon = True
+            th.start()
 
         if args.host:
             host = args.host
@@ -178,6 +183,15 @@ class MumbleBot:
             logging.info("Forced Quit")
             sys.exit(0)
         self.nb_exit += 1
+
+    def check_update(self):
+        logging.debug("update: checking for updates...")
+        new_version = util.new_release_version()
+        if new_version > self.version:
+            logging.info("update: new version %d found, current installed version %d." % (new_version, self.version))
+            self.send_msg(var.config.get('strings', 'new_version_found'))
+        else:
+            logging.debug("update: no new version found.")
 
     def register_command(self, cmd, handle):
         cmds = cmd.split(",")
@@ -463,7 +477,7 @@ class MumbleBot:
         if var.playlist.length() > 1 and var.playlist.next_item()['type'] == 'url' \
                 and (var.playlist.next_item()['ready'] in ["no", "validation"] or not os.path.exists(music['path'])):
             th = threading.Thread(
-                target=self.download_music, kwargs={'index': var.playlist.next_index()})
+                target=self.download_music)
         else:
             return
         logging.info("bot: Start downloading next in thread")

@@ -455,9 +455,8 @@ def cmd_kill(bot, user, text, command, parameter):
 def cmd_update(bot, user, text, command, parameter):
     if bot.is_admin(user):
         bot.mumble.users[text.actor].send_text_message(
-            "Starting the update")
-        # Need to be improved
-        msg = util.update(version)
+            var.config.get('strings', 'start_updating'))
+        msg = util.update(bot.version)
         bot.mumble.users[text.actor].send_text_message(msg)
     else:
         bot.mumble.users[text.actor].send_text_message(

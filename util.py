@@ -206,29 +206,31 @@ def get_user_ban():
         res += "<br/>" + i[0]
     return res
 
+def new_release_version():
+    v = int(urllib.request.urlopen(urllib.request.Request("https://azlux.fr/botamusique/version")).read())
+    return v
 
 def update(version):
-    v = int(urllib.request.urlopen(urllib.request.Request("https://azlux.fr/botamusique/version")).read())
+    v = new_release_version()
     if v > version:
-        logging.info('New version, starting update')
+        logging.info('update: new version, start updating...')
         tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh']).decode()
         logging.debug(tp)
-        logging.info('Update pip librairies dependancies')
+        logging.info('update: update pip librairies dependancies')
         tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
-        msg = "New version installed"
+        msg = "New version installed, please restart the bot."
         
     else:
-        logging.info('Starting update youtube-dl via pip3')
+        logging.info('update: starting update youtube-dl via pip3')
         tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
         msg = ""
         if "Requirement already up-to-date" in tp:
             msg += "Youtube-dl is up-to-date"
         else:
-            msg += "Update done : " + tp.split('Successfully installed')[1]
+            msg += "Update done: " + tp.split('Successfully installed')[1]
     reload(youtube_dl)
     msg += "<br/> Youtube-dl reloaded"
     return msg
-
 
 def user_ban(user):
     var.db.set("user_ban", user, None)
