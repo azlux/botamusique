@@ -73,7 +73,10 @@ class MumbleBot:
 
         self.volume = self.volume_set
 
-        self.channel = args.channel
+        if args.channel:
+            self.channel = args.channel
+        else:
+            self.channel = var.config.get("server", "channel", fallback=None)
 
         if args.verbose:
             root.setLevel(logging.DEBUG)
