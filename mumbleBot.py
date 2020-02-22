@@ -11,6 +11,7 @@ import configparser
 import audioop
 import subprocess as sp
 import argparse
+import os
 import os.path
 import pymumble.pymumble_py3 as pymumble
 import interface
@@ -94,6 +95,7 @@ class MumbleBot:
         self.exit = False
         self.nb_exit = 0
         self.thread = None
+        self.thread_stderr = None
         self.is_playing = False
         self.is_pause = False
         self.playhead = -1
@@ -104,13 +106,12 @@ class MumbleBot:
             wi_port = var.config.getint("webinterface", "listening_port")
             interface.init_proxy()
             tt = threading.Thread(
-                target=start_web_interface, args=(wi_addr, wi_port))
+                target=start_web_interface, name="WebThread", args=(wi_addr, wi_port))
             tt.daemon = True
             tt.start()
 
         if var.config.getboolean("bot", "auto_check_update"):
-            th = threading.Thread(
-                target=self.check_update)
+            th = threading.Thread(target=self.check_update, name="UpdateThread")
             th.daemon = True
             th.start()
 
@@ -281,7 +282,7 @@ class MumbleBot:
 
     @staticmethod
     def is_admin(user):
-        list_admin = var.config.get('bot', 'admin').strip().split(';')
+        list_admin = var.config.get('bot', 'admin').rstrip().split(';')
         if user in list_admin:
             return True
         else:
@@ -343,8 +344,13 @@ class MumbleBot:
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
                    uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
         logging.info("bot: execute ffmpeg command: " + " ".join(command))
+
         # The ffmpeg process is a thread
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        # prepare pipe for catching stderr of ffmpeg
+        pipe_rd, pipe_wd = os.pipe()
+        util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
+        self.thread_stderr = os.fdopen(pipe_rd)
+        self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.is_playing = True
         self.is_pause = False
         self.song_start_at = -1
@@ -463,7 +469,11 @@ class MumbleBot:
 
         logging.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
-        self.thread = sp.Popen(command, stdout=sp.PIPE, bufsize=480)
+        # prepare pipe for catching stderr of ffmpeg
+        pipe_rd, pipe_wd = os.pipe()
+        util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
+        self.thread_stderr = os.fdopen(pipe_rd)
+        self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.is_playing = True
         self.is_pause = False
         self.song_start_at = -1
@@ -477,7 +487,7 @@ class MumbleBot:
         if var.playlist.length() > 1 and var.playlist.next_item()['type'] == 'url' \
                 and (var.playlist.next_item()['ready'] in ["no", "validation"] or not os.path.exists(music['path'])):
             th = threading.Thread(
-                target=self.download_music)
+                target=self.download_music, name="DownloadThread")
         else:
             return
         logging.info("bot: Start downloading next in thread")
@@ -523,6 +533,14 @@ class MumbleBot:
                 self.playhead = time.time() - self.song_start_at
 
                 raw_music = self.thread.stdout.read(480)
+
+                try:
+                    stderr_msg = self.thread_stderr.readline()
+                    if stderr_msg:
+                        logging.debug("ffmpeg: " + stderr_msg.strip("\n"))
+                except:
+                    pass
+
                 if raw_music:
                     # Adjust the volume and send it to mumble
                     self.volume_cycle()
@@ -662,7 +680,7 @@ if __name__ == '__main__':
 
     # Setup logger
     root = logging.getLogger()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('[%(asctime)s %(levelname)s %(threadName)s] %(message)s', "%b %d %H:%M:%S")
     root.setLevel(logging.INFO)
 
     logfile = var.config.get('bot', 'logfile')

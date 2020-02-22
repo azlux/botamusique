@@ -4,6 +4,7 @@
 import hashlib
 import magic
 import os
+import sys
 import variables as var
 import zipfile
 import urllib.request
@@ -15,6 +16,7 @@ import youtube_dl
 from importlib import reload
 from PIL import Image
 from io import BytesIO
+from sys import platform
 import base64
 import media
 
@@ -289,6 +291,45 @@ def url_unban(url):
     var.db.remove_option("url_ban", url)
     res = "Done"
     return res
+
+def pipe_no_wait(pipefd):
+    ''' Used to fetch the STDERR of ffmpeg. pipefd is the file descriptor returned from os.pipe()'''
+    if platform == "linux" or platform == "linux2" or platform == "darwin":
+        import fcntl
+        import os
+        try:
+            fl = fcntl.fcntl(pipefd, fcntl.F_GETFL)
+            fcntl.fcntl(pipefd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        except:
+            print(sys.exc_info()[1])
+            return False
+        else:
+            return True
+
+    elif platform == "win32":
+        # https://stackoverflow.com/questions/34504970/non-blocking-read-on-os-pipe-on-windows
+        import msvcrt
+        import os
+
+        from ctypes import windll, byref, wintypes, GetLastError, WinError
+        from ctypes.wintypes import HANDLE, DWORD, POINTER, BOOL
+
+        LPDWORD = POINTER(DWORD)
+        PIPE_NOWAIT = wintypes.DWORD(0x00000001)
+        ERROR_NO_DATA = 232
+
+        SetNamedPipeHandleState = windll.kernel32.SetNamedPipeHandleState
+        SetNamedPipeHandleState.argtypes = [HANDLE, LPDWORD, LPDWORD, LPDWORD]
+        SetNamedPipeHandleState.restype = BOOL
+
+        h = msvcrt.get_osfhandle(pipefd)
+
+        res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
+        if res == 0:
+            print(WinError())
+            return False
+        return True
+
 
 
 class Dir(object):
