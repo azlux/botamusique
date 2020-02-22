@@ -333,7 +333,7 @@ class MumbleBot:
                 music["title"] = title
 
         if var.config.getboolean('bot', 'announce_current_music'):
-            self.send_msg(var.config.get('strings', 'now_playing') + util.format_current_playing())
+            self.send_msg(util.format_current_playing())
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"

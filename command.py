@@ -530,8 +530,8 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
 
 def cmd_current_music(bot, user, text, command, parameter):
     reply = ""
-    if len(var.playlist.playlist) > 0:
-        reply = util.format_current_playing()
+    if var.playlist.length() > 0:
+        bot.send_msg(util.format_current_playing())
     else:
         reply = var.config.get('strings', 'not_playing')
 

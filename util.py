@@ -110,59 +110,53 @@ def get_music_tag_info(music, uri = ""):
 
     return music
 
+def format_song_string(music):
+    display = ''
+    source = music["type"]
+
+    if source == "radio":
+        display = "[radio] {title} on {url} by {user}".format(
+            title=media.radio.get_radio_title(
+                music["url"]),
+            url=music["title"],
+            user=music["user"]
+        )
+    elif source == "url" and 'from_playlist' in music:
+        display = "[url] {title} (from playlist <a href=\"{url}\">{playlist}</a> by {user}".format(
+            title=music["title"],
+            url=music["playlist_url"],
+            playlist=music["playlist_title"],
+            user=music["user"]
+        )
+    elif source == "url":
+        display = "[url] <a href=\"{url}\">{title}</a> by {user}".format(
+            title=music["title"],
+            url=music["url"],
+            user=music["user"]
+        )
+    elif source == "file":
+        display = "[file] {title} by {user}".format(
+            title=(music['artist'] + ' - ' + music['title']) if 'artist' in music \
+                else music['title'],
+            user=music["user"]
+        )
+
+    return display
+
 
 def format_current_playing():
-    if var.playlist.length() > 0:
-        reply = ""
-        current_music = var.playlist.current_item()
-        source = current_music["type"]
-        if source == "radio":
-            reply = "[radio] {title} on {url} by {user}".format(
-                title=media.radio.get_radio_title(
-                    current_music["url"]),
-                url=current_music["title"],
-                user=current_music["user"]
-            )
-        elif source == "url" and 'from_playlist' in current_music:
-            thumbnail_html = ''
-            if 'thumbnail' in current_music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 current_music['thumbnail'] + '"/>'
-            reply = "[url] {title} (from playlist <a href=\"{url}\">{playlist}</a> by {user} <br> {thumb}".format(
-                title=current_music["title"],
-                url=current_music["playlist_url"],
-                playlist=current_music["playlist_title"],
-                user=current_music["user"],
-                thumb=thumbnail_html
-            )
-        elif source == "url":
-            thumbnail_html = ''
-            if 'thumbnail' in current_music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 current_music['thumbnail'] + '"/>'
-            reply = "[url] <a href=\"{url}\">{title}</a> by {user} <br> {thumb}".format(
-                title=current_music["title"],
-                url=current_music["url"],
-                user=current_music["user"],
-                thumb=thumbnail_html
-            )
-        elif source == "file":
-            thumbnail_html = ''
-            if 'thumbnail' in current_music:
-                thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                                 current_music['thumbnail'] + '"/>'
-            reply = "[file] {title} by {user} <br> {thumb}".format(
-                title=(current_music['artist'] + ' - ' + current_music['title']) if 'artist' in current_music \
-                    else current_music['title'],
-                user=current_music["user"],
-                thumb=thumbnail_html
-            )
-        else:
-            logging.error(current_music)
-        return reply
-    else:
-        return None
+    music = var.playlist.current_item()
+    display = format_song_string(music)
 
+    thumbnail_html = ''
+    if 'thumbnail' in music:
+        thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
+                         music['thumbnail'] + '"/>'
+
+    display = (var.config.get(
+        'strings', 'now_playing') % (display, thumbnail_html))
+
+    return display
 
 
 # - zips all files of the given zippath (must be a directory)
