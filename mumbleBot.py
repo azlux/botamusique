@@ -130,6 +130,11 @@ class MumbleBot:
         else:
             password = var.config.get("server", "password")
 
+        if args.channel:
+            self.channel = args.channel
+        else:
+            self.channel = var.config.get("server", "channel")
+
         if args.certificate:
             certificate = args.certificate
         else:
