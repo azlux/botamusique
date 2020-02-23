@@ -136,7 +136,8 @@ def playlist():
 def post():
     folder_path = var.music_folder
     if request.method == 'POST':
-        logging.debug("Post request: "+ str(request.form))
+        if request.form:
+            logging.debug("Post request: "+ str(request.form))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.config.get('bot', 'music_folder') + request.form['add_file_bottom']
             if os.path.isfile(path):
