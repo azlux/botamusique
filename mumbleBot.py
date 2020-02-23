@@ -320,10 +320,10 @@ class MumbleBot:
                 return
             elif music["ready"] != "yes" or not os.path.exists(music['path']):
                 logging.info("bot: current music isn't ready, downloading...")
-                music = self.download_music()
-                if not music:
+                downloaded_music = self.download_music()
+                if not downloaded_music:
                     logging.info("bot: removing music from the playlist: %s" % util.format_debug_song_string(music))
-                    var.playlist.remove()
+                    var.playlist.remove(index)
                     return
             uri = music['path']
 
@@ -438,7 +438,7 @@ class MumbleBot:
                     else:
                         break
             music = util.get_music_tag_info(music, music['path'])
-            var.playlist.update(music)
+            var.playlist.update(music, index)
             return music
 
     def resume(self):
@@ -492,10 +492,10 @@ class MumbleBot:
         if var.playlist.length() > 1 and var.playlist.next_item()['type'] == 'url' \
                 and (var.playlist.next_item()['ready'] in ["no", "validation"] or not os.path.exists(music['path'])):
             th = threading.Thread(
-                target=self.download_music, name="DownloadThread")
+                target=self.download_music, name="DownloadThread", args=(var.playlist.next_item(),))
         else:
             return
-        logging.info("bot: Start downloading next in thread")
+        logging.info("bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist.next_item()))
         th.daemon = True
         th.start()
 
