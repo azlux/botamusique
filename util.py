@@ -6,6 +6,7 @@ import magic
 import os
 import sys
 import variables as var
+import constants
 import zipfile
 import urllib.request
 import mutagen
@@ -189,8 +190,7 @@ def format_current_playing():
         thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                          music['thumbnail'] + '"/>'
 
-    display = (var.config.get(
-        'strings', 'now_playing') % (display, thumbnail_html))
+    display = (constants.strings.NOW_PLAYING % (display, thumbnail_html))
 
     return display
 

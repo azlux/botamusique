@@ -23,6 +23,7 @@ import traceback
 
 import util
 import command
+import constants
 from database import Database
 import media.url
 import media.file
@@ -196,7 +197,7 @@ class MumbleBot:
         new_version = util.new_release_version()
         if new_version > self.version:
             logging.info("update: new version %d found, current installed version %d." % (new_version, self.version))
-            self.send_msg(var.config.get('strings', 'new_version_found'))
+            self.send_msg(constants.strings.NEW_VERSION_FOUND)
         else:
             logging.debug("update: no new version found.")
 
@@ -235,25 +236,25 @@ class MumbleBot:
             # Anti stupid guy function
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
                 self.mumble.users[text.actor].send_text_message(
-                    var.config.get('strings', 'not_in_my_channel'))
+                    constants.strings.NOT_IN_MY_CHANNEL)
                 return
 
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
                 self.mumble.users[text.actor].send_text_message(
-                    var.config.get('strings', 'pm_not_allowed'))
+                    constants.strings.PM_NOT_ALLOWED)
                 return
 
             for i in var.db.items("user_ban"):
                 if user.lower() == i[0]:
                     self.mumble.users[text.actor].send_text_message(
-                        var.config.get('strings', 'user_ban'))
+                        constants.strings.USER_BAN)
                     return
 
             if parameter:
                 for i in var.db.items("url_ban"):
                     if self.get_url_from_input(parameter.lower()) == i[0]:
                         self.mumble.users[text.actor].send_text_message(
-                            var.config.get('strings', 'url_ban'))
+                            constants.strings.URL_BAN)
                         return
 
 
@@ -276,15 +277,15 @@ class MumbleBot:
                         self.cmd_handle[matches[0]](self, user, text, command, parameter)
                     elif len(matches) > 1:
                         self.mumble.users[text.actor].send_text_message(
-                            var.config.get('strings', 'which_command') % "<br>".join(matches))
+                            constants.strings.WHICH_COMMAND % "<br>".join(matches))
                     else:
                         self.mumble.users[text.actor].send_text_message(
-                            var.config.get('strings', 'bad_command') % command)
+                            constants.strings.BAD_COMMAND % command)
             except:
                 error_traceback = traceback.format_exc()
                 error = error_traceback.rstrip().split("\n")[-1]
                 logging.error("bot: command %s failed with error %s:\n" % (command_exc, error_traceback))
-                self.send_msg(var.config.get('strings', 'error_executing_command') % (command_exc, error), text)
+                self.send_msg(constants.strings.ERROR_EXECUTING_COMMAND % (command_exc, error), text)
 
 
     @staticmethod
@@ -394,13 +395,13 @@ class MumbleBot:
                         # Check the length, useful in case of playlist, it wasn't checked before)
                         logging.info(
                             "the music " + music["url"] + " has a duration of " + music['duration'] + "s -- too long")
-                        self.send_msg(var.config.get('strings', 'too_long'))
+                        self.send_msg(constants.strings.TOO_LONG)
                         return False
                     else:
                         music['ready'] = "no"
                 else:
                     logging.error("bot: error while fetching info from the URL")
-                    self.send_msg(var.config.get('strings', 'unable_download'))
+                    self.send_msg(constants.strings.UNABLE_DOWNLOAD)
                     return False
 
             # download the music
@@ -675,8 +676,7 @@ if __name__ == '__main__':
 
     var.dbfile = args.db
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
-    parsed_configs = config.read(
-        ['configuration.default.ini', args.config], encoding='utf-8')
+    parsed_configs = config.read(['configuration.default.ini', args.config], encoding='utf-8')
 
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(
