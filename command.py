@@ -1,3 +1,4 @@
+# coding=utf-8
 import logging
 import os.path
 import pymumble.pymumble_py3 as pymumble
@@ -606,7 +607,7 @@ def cmd_queue(bot, user, text, command, parameter):
         for i, value in enumerate(var.playlist.playlist):
             newline = ''
             if i == var.playlist.current_index:
-                newline = '<b>{} ({}) {}</b>'.format(i + 1, value['type'],
+                newline = '<b>{} ▶ ({}) {} ◀</b>'.format(i + 1, value['type'],
                                                            value['title'] if 'title' in value else value['url'])
             else:
                 newline = '<b>{}</b> ({}) {}'.format(i + 1, value['type'],
