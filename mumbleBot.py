@@ -393,53 +393,52 @@ class MumbleBot:
                 self.send_msg(var.config.get('strings', 'unable_download'))
                 return False
 
-        else:
-            # download the music
-            music['ready'] = "downloading"
+        # download the music
+        music['ready'] = "downloading"
 
-            url = music['url']
-            url_hash = hashlib.md5(url.encode()).hexdigest()
+        url = music['url']
+        url_hash = hashlib.md5(url.encode()).hexdigest()
 
-            logging.info("bot: downloading url (%s) %s " % (music['title'], url))
+        logging.info("bot: downloading url (%s) %s " % (music['title'], url))
 
-            path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
-            mp3 = path.replace(".%(ext)s", ".mp3")
-            music['path'] = mp3
+        path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
+        mp3 = path.replace(".%(ext)s", ".mp3")
+        music['path'] = mp3
 
-            # if os.path.isfile(mp3):
-            #    audio = EasyID3(mp3)
-            #    var.playlist[index]['title'] = audio["title"][0]
-            ydl_opts = ""
+        # if os.path.isfile(mp3):
+        #    audio = EasyID3(mp3)
+        #    var.playlist[index]['title'] = audio["title"][0]
+        ydl_opts = ""
 
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'outtmpl': path,
-                'noplaylist': True,
-                'writethumbnail': True,
-                'updatetime': False,
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192'},
-                    {'key': 'FFmpegMetadata'}]
-            }
-            self.send_msg(var.config.get(
-                'strings', "download_in_progress") % music['title'])
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': path,
+            'noplaylist': True,
+            'writethumbnail': True,
+            'updatetime': False,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192'},
+                {'key': 'FFmpegMetadata'}]
+        }
+        self.send_msg(var.config.get(
+            'strings', "download_in_progress") % music['title'])
 
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                for i in range(2):  # Always try 2 times
-                    try:
-                        ydl.extract_info(url)
-                        if 'ready' in music and music['ready'] == "downloading":
-                            music['ready'] = "yes"
-                            music = util.get_music_tag_info(music)
-                    except youtube_dl.utils.DownloadError:
-                        pass
-                    else:
-                        break
-            music = util.get_music_tag_info(music, music['path'])
-            var.playlist.update(music, index)
-            return music
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            for i in range(2):  # Always try 2 times
+                try:
+                    ydl.extract_info(url)
+                    if 'ready' in music and music['ready'] == "downloading":
+                        music['ready'] = "yes"
+                        music = util.get_music_tag_info(music)
+                except youtube_dl.utils.DownloadError:
+                    pass
+                else:
+                    break
+        music = util.get_music_tag_info(music, music['path'])
+        var.playlist.update(music, index)
+        return music
 
     def resume(self):
         music = var.playlist.current_item()
