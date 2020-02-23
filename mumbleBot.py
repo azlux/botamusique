@@ -217,7 +217,7 @@ class MumbleBot:
             # in can you use https://github.com/Natenom/mumblemoderator-module-collection/tree/master/os-suffixes , you want to split the username
             user = user.split()[0]
 
-        if message[0] == var.config.get('command', 'command_symbol'):
+        if message[0] in var.config.get('command', 'command_symbol'):
             # remove the symbol from the message
             message = message[1:].split(' ', 1)
 
@@ -473,7 +473,7 @@ class MumbleBot:
                        uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
 
         if var.config.getboolean('bot', 'announce_current_music'):
-            self.send_msg(var.config.get('strings', 'now_playing') + util.format_current_playing())
+            self.send_msg(util.format_current_playing())
 
         logging.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
