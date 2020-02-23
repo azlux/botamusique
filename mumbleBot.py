@@ -19,6 +19,7 @@ import variables as var
 import hashlib
 import youtube_dl
 import logging
+import traceback
 
 import util
 import command
@@ -280,8 +281,9 @@ class MumbleBot:
                         self.mumble.users[text.actor].send_text_message(
                             var.config.get('strings', 'bad_command') % command)
             except:
-                error = str(sys.exc_info()[1])
-                logging.error("bot: command %s failed with error %s" % (command_exc, error))
+                error_traceback = traceback.format_exc()
+                error = error_traceback.rstrip().split("\n")[-1]
+                logging.error("bot: command %s failed with error %s:\n" % (command_exc, error_traceback))
                 self.send_msg(var.config.get('strings', 'error_executing_command') % (command_exc, error), text)
 
 
@@ -365,7 +367,7 @@ class MumbleBot:
     def download_music(self, index=-1):
         if index == -1:
             index = var.playlist.current_index
-        music = var.playlist.current_item()
+        music = var.playlist.playlist[index]
 
         if music['type'] != 'url':
             # then no need to download
@@ -373,70 +375,72 @@ class MumbleBot:
 
         url = music['url']
 
-        if music['ready'] == "validation":
-            logging.info("bot: verifying the duration of url (%s) %s " % (music['title'], url))
-
-            if music:
-                if 'duration' not in music:
-                    music = media.url.get_url_info(music)
-
-                if music['duration'] > var.config.getint('bot', 'max_track_duration'):
-                    # Check the length, useful in case of playlist, it wasn't checked before)
-                    logging.info(
-                        "the music " + music["url"] + " has a duration of " + music['duration'] + "s -- too long")
-                    self.send_msg(var.config.get('strings', 'too_long'))
-                    return False
-                else:
-                    music['ready'] = "no"
-            else:
-                logging.error("bot: error while fetching info from the URL")
-                self.send_msg(var.config.get('strings', 'unable_download'))
-                return False
-
-        # download the music
-        music['ready'] = "downloading"
-
-        url = music['url']
         url_hash = hashlib.md5(url.encode()).hexdigest()
-
-        logging.info("bot: downloading url (%s) %s " % (music['title'], url))
 
         path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
         mp3 = path.replace(".%(ext)s", ".mp3")
         music['path'] = mp3
 
-        # if os.path.isfile(mp3):
-        #    audio = EasyID3(mp3)
-        #    var.playlist[index]['title'] = audio["title"][0]
-        ydl_opts = ""
+        # Download only if music is not existed
+        if not os.path.isfile(mp3):
+            if music['ready'] == "validation":
+                logging.info("bot: verifying the duration of url (%s) %s " % (music['title'], url))
 
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'outtmpl': path,
-            'noplaylist': True,
-            'writethumbnail': True,
-            'updatetime': False,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192'},
-                {'key': 'FFmpegMetadata'}]
-        }
-        self.send_msg(var.config.get(
-            'strings', "download_in_progress") % music['title'])
+                if music:
+                    if 'duration' not in music:
+                        music = media.url.get_url_info(music)
 
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            for i in range(2):  # Always try 2 times
-                try:
-                    ydl.extract_info(url)
-                    if 'ready' in music and music['ready'] == "downloading":
-                        music['ready'] = "yes"
-                        music = util.get_music_tag_info(music)
-                except youtube_dl.utils.DownloadError:
-                    pass
+                    if music['duration'] > var.config.getint('bot', 'max_track_duration'):
+                        # Check the length, useful in case of playlist, it wasn't checked before)
+                        logging.info(
+                            "the music " + music["url"] + " has a duration of " + music['duration'] + "s -- too long")
+                        self.send_msg(var.config.get('strings', 'too_long'))
+                        return False
+                    else:
+                        music['ready'] = "no"
                 else:
-                    break
+                    logging.error("bot: error while fetching info from the URL")
+                    self.send_msg(var.config.get('strings', 'unable_download'))
+                    return False
+
+            # download the music
+            music['ready'] = "downloading"
+
+
+            logging.info("bot: downloading url (%s) %s " % (music['title'], url))
+            ydl_opts = ""
+
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': path,
+                'noplaylist': True,
+                'writethumbnail': True,
+                'updatetime': False,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192'},
+                    {'key': 'FFmpegMetadata'}]
+            }
+            self.send_msg(var.config.get(
+                'strings', "download_in_progress") % music['title'])
+
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+                for i in range(2):  # Always try 2 times
+                    try:
+                        ydl.extract_info(url)
+                        if 'ready' in music and music['ready'] == "downloading":
+                            music['ready'] = "yes"
+                    except youtube_dl.utils.DownloadError:
+                        pass
+                    else:
+                        break
+        else:
+            logging.info("bot: music file existed, skip downloading " + mp3)
+            music['ready'] = "yes"
+
         music = util.get_music_tag_info(music, music['path'])
+
         var.playlist.update(music, index)
         return music
 
@@ -489,9 +493,9 @@ class MumbleBot:
         # Do nothing in case the next music is already downloaded
         logging.info("bot: Async download next asked ")
         if var.playlist.length() > 1 and var.playlist.next_item()['type'] == 'url' \
-                and (var.playlist.next_item()['ready'] in ["no", "validation"] or not os.path.exists(music['path'])):
+                and (var.playlist.next_item()['ready'] in ["no", "validation"]):
             th = threading.Thread(
-                target=self.download_music, name="DownloadThread", args=(var.playlist.next_item(),))
+                target=self.download_music, name="DownloadThread", args=(var.playlist.next_index(),))
         else:
             return
         logging.info("bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist.next_item()))

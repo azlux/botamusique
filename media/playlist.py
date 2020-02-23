@@ -137,15 +137,15 @@ def get_playlist_info(url, start_index=0, user=""):
         for i in range(2):
             try:
                 info = ydl.extract_info(url, download=False)
-                # if url is not a playlist but a video
-                if 'entries' not in info and 'webpage_url' in info:
-                    music = {'type': 'url',
-                             'title': info['title'],
-                             'url': info['webpage_url'],
-                             'user': user,
-                             'ready': 'validation'}
-                    items.append(music)
-                    return items
+                # # if url is not a playlist but a video
+                # if 'entries' not in info and 'webpage_url' in info:
+                #     music = {'type': 'url',
+                #              'title': info['title'],
+                #              'url': info['webpage_url'],
+                #              'user': user,
+                #              'ready': 'validation'}
+                #     items.append(music)
+                #     return items
 
                 playlist_title = info['title']
                 for j in range(start_index, min(len(info['entries']), start_index + var.config.getint('bot', 'max_track_playlist'))):
@@ -163,7 +163,7 @@ def get_playlist_info(url, start_index=0, user=""):
                              'playlist_url': url,
                              'ready': 'validation'}
                     items.append(music)
-            except youtube_dl.utils.DownloadError:
+            except:
                 pass
 
     return items
