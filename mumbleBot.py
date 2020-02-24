@@ -423,7 +423,7 @@ class MumbleBot:
                     'preferredquality': '192'},
                     {'key': 'FFmpegMetadata'}]
             }
-            self.send_msg(constants.strings('download_in_progress', music['title']))
+            self.send_msg(constants.strings('download_in_progress', item=music['title']))
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 for i in range(2):  # Always try 2 times
