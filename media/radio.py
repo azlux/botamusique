@@ -68,6 +68,6 @@ def get_radio_title(url):
                 title = m.group(1)
                 if title:
                     return title.decode()
-    except (urllib.error.URLError, urllib.error.HTTPError):
+    except (urllib.error.URLError, urllib.error.HTTPError, http.client.BadStatusLine):
         pass
-    return 'Unable to get the music title'
+    return 'Unknown title'

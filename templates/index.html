@@ -37,10 +37,10 @@
                 <input type="text" value="{{ subdirpath }}" name="directory" hidden>
                 <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
-            <form method="post">
-                <input type="text" value="{{ subdirpath }}" name="delete_folder" hidden>
-                <button type="submit" class="btn btn-danger btn-sm btn-space"><i class="fas fa-trash-alt"></i></button>
-            </form>
+            <button type="submit" class="btn btn-danger btn-sm btn-space"
+                    onclick="request('/post', {delete_folder : '{{ subdirpath }}'}, true)">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
     </li>
     <div class="collapse multi-collapse" id="multiCollapse-{{ subdirid }}">
@@ -81,10 +81,10 @@
                 <input type="text" value="{{ filepath }}" name="file" hidden>
                 <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
             </form>
-            <form method="post">
-                <input type="text" value="{{ filepath }}" name="delete_music_file" hidden>
-                <button type="submit" class="btn btn-danger btn-sm btn-space"><i class="fas fa-trash-alt"></i></button>
-            </form>
+            <button type="submit" class="btn btn-danger btn-sm btn-space"
+                    onclick="request('/post', {delete_music_file : '{{ filepath }}'}, true)">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
     </li>
     {% endfor %}
@@ -124,8 +124,19 @@
                                     onclick="request('/post', {action : 'randomize'})">
                                 <i class="fas fa-random" aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="btn btn-danger btn-space"
-                                    onclick="request('/post', {action : 'stop'})">
+
+                            <button type="button" id="play-btn" class="btn btn-info btn-space"
+                                    onclick="request('/post', {action : 'resume'})" disabled>
+                                <i class="fas fa-play" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="pause-btn" class="btn btn-warning btn-space"
+                                    onclick="request('/post', {action : 'pause'})" disabled>
+                                <i class="fas fa-pause" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="stop-btn" class="btn btn-danger btn-space"
+                                    onclick="request('/post', {action : 'stop'})" disabled>
                                 <i class="fas fa-stop" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -208,7 +219,7 @@
                     <div class="card-body">
                         <form action="./upload" method="post" enctype="multipart/form-data">
                             <div class="row" style="margin-bottom: 5px;">
-                                <div id="uploadBox" class="col-lg-8 input-group">
+                                <div id="uploadBox" class="col-lg-7 input-group">
                                     <div id="uploadField" style="display: flex; width: 100%">
                                         <div class="custom-file btn-space">
                                             <input type="file" name="file[]" class="custom-file-input" id="uploadSelectFile"
@@ -227,10 +238,9 @@
                                                 <option value="{{ dir }}">
                                             {% endfor %}
                                     </datalist>
-
-                                    <button class="btn btn-outline-secondary" type="submit"
-                                            id="uploadSubmit">Upload</button>
                                 </div>
+                                <button class="btn btn-primary btn-space" type="submit"
+                                        id="uploadSubmit" style="margin-left: -5px;">Upload!</button>
                             </div>
                         </form>
                     </div>
@@ -239,7 +249,7 @@
         </div>
         </div>
 
-        <div class="bs-docs-section">
+        <div class="bs-docs-section" style="margin-bottom: 150px;">
             <div class="row">
             <div class="col">
                 <div class="card">
@@ -247,13 +257,12 @@
                         <h5 class="card-title">Add URL</h5>
                     </div>
                     <div class="card-body">
-                        <form method="post">
-                            <label>Add Youtube/Soundcloud URL</label>
-                            <div class="input-group">
-                                <input class="form-control btn-space" type="text" name="add_url">
-                                <button type="submit" class="btn btn-primary">Add URL</button>
-                            </div>
-                        </form>
+                        <label>Add Youtube/Soundcloud URL</label>
+                        <div class="input-group">
+                            <input class="form-control btn-space" type="text" id="add_url_input" placeholder="URL...">
+                            <button type="submit" class="btn btn-primary"
+                            onclick="request('/post', {add_url :  $('#add_url_input')[0].value })">Add URL</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -263,13 +272,12 @@
                         <h5 class="card-title">Add Radio</h5>
                     </div>
                     <div class="card-body">
-                        <form method="post">
-                            <label>Add Radio URL</label>
-                            <div class="input-group">
-                                <input class="form-control btn-space" type="text" name="add_radio">
-                                <button type="submit" class="btn btn-primary">Add Radio</button>
-                            </div>
-                        </form>
+                        <label>Add Radio URL</label>
+                        <div class="input-group">
+                            <input class="form-control btn-space" type="text" id="add_radio_input" placeholder="Radio Address...">
+                            <button type="submit" class="btn btn-primary"
+                            onclick="request('/post', {add_radio : $('#add_radio_input')[0].value })">Add Radio</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -294,27 +302,35 @@
 
         var playlist_ver = 0;
 
-        function request(url, _data){
+        function request(url, _data, refresh=false){
             $.ajax({
                 type: 'POST',
                 url: '/post',
                 data : _data,
                 statusCode : {
                     200 : function(data) {
-                        if (data.ver > playlist_ver) {
+                        if (data.ver !== playlist_ver) {
                             updatePlaylist();
                             playlist_ver = data.ver;
                         }
+                        updateControls(data.empty, data.play);
                     }
                 }
             });
+            if(refresh){
+                location.reload()
+            }
         }
 
         function displayPlaylist(data){
+            // console.info(data);
             $("#playlist-table tr").remove();
-            $.each(data, function(index, item){
+
+            var items = data.items;
+            $.each(items, function(index, item){
                 $("#playlist-table").append(item);
-            })
+            });
+
         }
 
         function updatePlaylist(){
@@ -327,6 +343,23 @@
             });
         }
 
+        function updateControls(empty, play){
+            if(empty){
+                $("#play-btn").prop("disabled", true);
+                $("#pause-btn").prop("disabled", true);
+                $("#stop-btn").prop("disabled", true);
+            }else{
+                if(play){
+                    $("#play-btn").prop("disabled", true);
+                    $("#pause-btn").prop("disabled", false);
+                    $("#stop-btn").prop("disabled", false);
+                }else{
+                    $("#play-btn").prop("disabled", false);
+                    $("#pause-btn").prop("disabled", true);
+                    $("#stop-btn").prop("disabled", true);
+                }
+            }
+        }
 
         // Check the version of playlist to see if update is needed.
         setInterval(function(){
@@ -335,10 +368,11 @@
                 url : '/post',
                 statusCode : {
                     200 : function(data){
-                        if(data.ver > playlist_ver){
+                        if(data.ver !== playlist_ver){
                             updatePlaylist();
                             playlist_ver = data.ver;
                         }
+                        updateControls(data.empty, data.play);
                     }
                 }
             });

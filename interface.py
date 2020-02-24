@@ -14,6 +14,7 @@ import errno
 import media
 import logging
 import time
+import constants
 
 
 class ReverseProxied(object):
@@ -105,41 +106,39 @@ def index():
                            music_library=music_library,
                            os=os,
                            playlist=var.playlist,
-                           user=var.user
+                           user=var.user,
+                           paused=var.botamusique.is_pause
                            )
 
 @web.route("/playlist", methods=['GET'])
 @requires_auth
 def playlist():
     if var.playlist.length() == 0:
-        return jsonify([render_template('playlist.html',
+        return jsonify({'items': [render_template('playlist.html',
                                m=False,
                                index=-1
                                )]
-                       )
+                        })
 
-    data = []
+    items = []
 
     for index, item in enumerate(var.playlist.playlist):
-         data.append(render_template('playlist.html',
+         items.append(render_template('playlist.html',
                                      index=index,
                                      m=item,
                                      playlist=var.playlist
                                      )
                      )
 
-    return jsonify(data)
+    return jsonify({ 'items': items })
 
 @web.route("/post", methods=['POST'])
 @requires_auth
 def post():
     folder_path = var.music_folder
-    files = util.get_recursive_filelist_sorted(var.music_folder)
-    music_library = util.Dir(folder_path)
-    for file in files:
-        music_library.add_file(file)
     if request.method == 'POST':
-        logging.debug("Post request: "+ str(request.form))
+        if request.form:
+            logging.debug("Post request: "+ str(request.form))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.config.get('bot', 'music_folder') + request.form['add_file_bottom']
             if os.path.isfile(path):
@@ -147,8 +146,8 @@ def post():
                         'path' : request.form['add_file_bottom'],
                         'title' : '',
                         'user' : 'Web'}
-                var.playlist.append(var.botamusique.get_music_tag_info(item, path))
-                logging.info('web: add to playlist(bottom): ' + item['path'])
+                item = var.playlist.append(util.get_music_tag_info(item))
+                logging.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.config.get('bot', 'music_folder') + request.form['add_file_next']
@@ -157,11 +156,11 @@ def post():
                         'path' : request.form['add_file_next'],
                         'title' : '',
                         'user' : 'Web'}
-                var.playlist.insert(
+                item = var.playlist.insert(
                     var.playlist.current_index + 1,
-                    var.botamusique.get_music_tag_info(item, var.config.get('bot', 'music_folder') + item['path'])
+                    item
                 )
-                logging.info('web: add to playlist(next): ' + item['path'])
+                logging.info('web: add to playlist(next): ' + util.format_debug_song_string(item))
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -175,50 +174,63 @@ def post():
             print('folder:', folder)
 
             if os.path.isdir(var.config.get('bot', 'music_folder') + folder):
+
+                files = util.get_recursive_filelist_sorted(var.music_folder)
+                music_library = util.Dir(folder_path)
+                for file in files:
+                    music_library.add_file(file)
+
                 if 'add_folder_recursively' in request.form:
                     files = music_library.get_files_recursively(folder)
                 else:
                     files = music_library.get_files(folder)
 
-                files = list(map(lambda file: var.botamusique.get_music_tag_info({'type':'file','path': os.path.join(folder, file), 'user':'Web'}, \
-                                                                                 var.config.get('bot', 'music_folder') + os.path.join(folder, file)), files))
+                files = list(map(lambda file:
+                    {'type':'file',
+                     'path': os.path.join(folder, file),
+                     'user':'Web'}, files))
 
-                logging.info("web: add to playlist: " + " ,".join([file['path'] for file in files]))
-                var.playlist.extend(files)
+                files = var.playlist.extend(files)
+
+                for file in files:
+                    logging.info("web: add to playlist: %s" %  util.format_debug_song_string(file))
+
 
         elif 'add_url' in request.form:
-            var.playlist.append({'type':'url',
+            music = {'type':'url',
                                  'url': request.form['add_url'],
                                  'user': 'Web',
-                                 'ready': 'validation'})
-            logging.info("web: add to playlist: " + request.form['add_url'])
-            media.url.get_url_info()
+                                 'ready': 'validation'}
+            media.url.get_url_info(music)
+            music = var.playlist.append(music)
+            logging.info("web: add to playlist: " + util.format_debug_song_string(music))
             var.playlist.playlist[-1]['ready'] = "no"
 
         elif 'add_radio' in request.form:
-            var.playlist.append({'type': 'radio',
+            music = var.playlist.append({'type': 'radio',
                                  'path': request.form['add_radio'],
                                  'user': "Web"})
-            logging.info("web: add to playlist: " + request.form['add_radio'])
+            logging.info("web: add to playlist: " + util.format_debug_song_string(music))
 
         elif 'delete_music' in request.form:
             music = var.playlist.playlist[int(request.form['delete_music'])]
-            logging.info("web: delete from playlist: " + str(music['path'] if 'path' in music else music['url']))
+            logging.info("web: delete from playlist: " + util.format_debug_song_string(music))
 
-            if len(var.playlist.playlist) >= int(request.form['delete_music']):
-                if var.playlist.current_index == int(request.form['delete_music']):
-                    var.botamusique.pause()
+            if var.playlist.length() >= int(request.form['delete_music']):
+                if int(request.form['delete_music']) == var.playlist.current_index:
                     var.playlist.remove(int(request.form['delete_music']))
-                    var.botamusique.launch_music()
+                    var.botamusique.stop()
+                    var.botamusique.launch_music(int(request.form['delete_music']))
                 else:
                     var.playlist.remove(int(request.form['delete_music']))
 
+
         elif 'play_music' in request.form:
             music = var.playlist.playlist[int(request.form['play_music'])]
-            logging.info("web: jump to: " + str(music['path'] if 'path' in music else music['url']))
+            logging.info("web: jump to: " + util.format_debug_song_string(music))
 
             if len(var.playlist.playlist) >= int(request.form['play_music']):
-                var.botamusique.pause()
+                var.botamusique.stop()
                 var.botamusique.launch_music(int(request.form['play_music']))
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
@@ -237,11 +249,17 @@ def post():
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
-                var.playlist.randomize()
-            elif action == "stop":
-                var.botamusique.pause()
-            elif action == "clear":
                 var.botamusique.stop()
+                var.playlist.randomize()
+                var.botamusique.resume()
+            elif action == "stop":
+                var.botamusique.stop()
+            elif action == "pause":
+                var.botamusique.pause()
+            elif action == "resume":
+                var.botamusique.resume()
+            elif action == "clear":
+                var.botamusique.clear()
             elif action == "volume_up":
                 if var.botamusique.volume_set + 0.03 < 1.0:
                     var.botamusique.volume_set = var.botamusique.volume_set + 0.03
@@ -255,7 +273,10 @@ def post():
                     var.botamusique.volume_set = 0
                 logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
 
-        return jsonify({'ver': var.playlist.version})
+        if(var.playlist.length() > 0):
+            return jsonify({'ver': var.playlist.version, 'empty': False, 'play': not var.botamusique.is_pause})
+        else:
+            return jsonify({'ver': var.playlist.version, 'empty': True, 'play': False})
 
 @web.route('/upload', methods=["POST"])
 def upload():

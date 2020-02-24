@@ -111,3 +111,5 @@ configuration.ini
 
 music_folder/
 tmp/
+
+database.db
