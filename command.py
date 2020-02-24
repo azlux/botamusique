@@ -289,7 +289,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
             msg += "<br />" + i[0] + comment
         bot.send_msg(msg, text)
     else:
-        if var.config.has_option('radio', command, parameter):
+        if var.config.has_option('radio', parameter):
             parameter = var.config.get('radio', parameter)
             parameter = parameter.split()[0]
         url = util.get_url_from_input(parameter)
