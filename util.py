@@ -20,6 +20,7 @@ from io import BytesIO
 from sys import platform
 import base64
 import media
+import media.radio
 
 def get_recursive_filelist_sorted(path):
     filelist = []
@@ -190,7 +191,7 @@ def format_current_playing():
         thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                          music['thumbnail'] + '"/>'
 
-    display = (constants.strings.NOW_PLAYING % (display, thumbnail_html))
+    display = (constants.strings('now_playing', item=display, thumb=thumbnail_html))
 
     return display
 
@@ -417,3 +418,16 @@ class Dir(object):
             val.render_text(ident + 1)
         for file in self.files:
             print('{}{}'.format(' ' * (ident + 1) * 4, file))
+
+
+# Parse the html from the message to get the URL
+
+def get_url_from_input(string):
+    if string.startswith('http'):
+        return string
+    p = re.compile('href="(.+?)"', re.IGNORECASE)
+    res = re.search(p, string)
+    if res:
+        return res.group(1)
+    else:
+        return False

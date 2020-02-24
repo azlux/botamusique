@@ -3,10 +3,7 @@ import logging
 import os.path
 import pymumble.pymumble_py3 as pymumble
 import re
-import time
-import configparser
 
-import interface
 import constants
 import media.file
 import media.playlist
@@ -16,42 +13,41 @@ import media.url
 import util
 import variables as var
 from librb import radiobrowser
-from media.playlist import PlayList
 from database import Database
 
 
 def register_all_commands(bot):
-    bot.register_command(constants.commands.JOINME, cmd_joinme)
-    bot.register_command(constants.commands.USER_BAN, cmd_user_ban)
-    bot.register_command(constants.commands.USER_UNBAN, cmd_user_unban)
-    bot.register_command(constants.commands.URL_BAN, cmd_url_ban)
-    bot.register_command(constants.commands.URL_UNBAN, cmd_url_unban)
-    bot.register_command(constants.commands.PLAY, cmd_play)
-    bot.register_command(constants.commands.PAUSE, cmd_pause)
-    bot.register_command(constants.commands.PLAY_FILE, cmd_play_file)
-    bot.register_command(constants.commands.PLAY_FILE_MATCH, cmd_play_file_match)
-    bot.register_command(constants.commands.PLAY_URL, cmd_play_url)
-    bot.register_command(constants.commands.PLAY_PLAYLIST, cmd_play_playlist)
-    bot.register_command(constants.commands.PLAY_RADIO, cmd_play_radio)
-    bot.register_command(constants.commands.RB_QUERY, cmd_rb_query)
-    bot.register_command(constants.commands.RB_PLAY, cmd_rb_play)
-    bot.register_command(constants.commands.HELP, cmd_help)
-    bot.register_command(constants.commands.STOP, cmd_stop)
-    bot.register_command(constants.commands.CLEAR, cmd_clear)
-    bot.register_command(constants.commands.KILL, cmd_kill)
-    bot.register_command(constants.commands.UPDATE, cmd_update)
-    bot.register_command(constants.commands.STOP_AND_GETOUT, cmd_stop_and_getout)
-    bot.register_command(constants.commands.VOLUME, cmd_volume)
-    bot.register_command(constants.commands.DUCKING, cmd_ducking)
-    bot.register_command(constants.commands.DUCKING_THRESHOLD, cmd_ducking_threshold)
-    bot.register_command(constants.commands.DUCKING_VOLUME, cmd_ducking_volume)
-    bot.register_command(constants.commands.CURRENT_MUSIC, cmd_current_music)
-    bot.register_command(constants.commands.SKIP, cmd_skip)
-    bot.register_command(constants.commands.REMOVE, cmd_remove)
-    bot.register_command(constants.commands.LIST_FILE, cmd_list_file)
-    bot.register_command(constants.commands.QUEUE, cmd_queue)
-    bot.register_command(constants.commands.RANDOM, cmd_random)
-    bot.register_command(constants.commands.DROP_DATABASE, cmd_drop_database)
+    bot.register_command(constants.commands('joinme'), cmd_joinme)
+    bot.register_command(constants.commands('user_ban'), cmd_user_ban)
+    bot.register_command(constants.commands('user_unban'), cmd_user_unban)
+    bot.register_command(constants.commands('url_ban'), cmd_url_ban)
+    bot.register_command(constants.commands('url_unban'), cmd_url_unban)
+    bot.register_command(constants.commands('play'), cmd_play)
+    bot.register_command(constants.commands('pause'), cmd_pause)
+    bot.register_command(constants.commands('play_file'), cmd_play_file)
+    bot.register_command(constants.commands('play_file_match'), cmd_play_file_match)
+    bot.register_command(constants.commands('play_url'), cmd_play_url)
+    bot.register_command(constants.commands('play_playlist'), cmd_play_playlist)
+    bot.register_command(constants.commands('play_radio'), cmd_play_radio)
+    bot.register_command(constants.commands('rb_query'), cmd_rb_query)
+    bot.register_command(constants.commands('rb_play'), cmd_rb_play)
+    bot.register_command(constants.commands('help'), cmd_help)
+    bot.register_command(constants.commands('stop'), cmd_stop)
+    bot.register_command(constants.commands('clear'), cmd_clear)
+    bot.register_command(constants.commands('kill'), cmd_kill)
+    bot.register_command(constants.commands('update'), cmd_update)
+    bot.register_command(constants.commands('stop_and_getout'), cmd_stop_and_getout)
+    bot.register_command(constants.commands('volume'), cmd_volume)
+    bot.register_command(constants.commands('ducking'), cmd_ducking)
+    bot.register_command(constants.commands('ducking_threshold'), cmd_ducking_threshold)
+    bot.register_command(constants.commands('ducking_volume'), cmd_ducking_volume)
+    bot.register_command(constants.commands('current_music'), cmd_current_music)
+    bot.register_command(constants.commands('skip'), cmd_skip)
+    bot.register_command(constants.commands('remove'), cmd_remove)
+    bot.register_command(constants.commands('list_file'), cmd_list_file)
+    bot.register_command(constants.commands('queue'), cmd_queue)
+    bot.register_command(constants.commands('random'), cmd_random)
+    bot.register_command(constants.commands('drop_database'), cmd_drop_database)
 
 def send_multi_lines(bot, lines, text):
     msg = ""
@@ -65,19 +61,6 @@ def send_multi_lines(bot, lines, text):
         msg += newline
 
     bot.send_msg(msg, text)
-
-# Parse the html from the message to get the URL
-def get_url_from_input(string):
-    if string.startswith('http'):
-        return string
-    p = re.compile('href="(.+?)"', re.IGNORECASE)
-    res = re.search(p, string)
-    if res:
-        return res.group(1)
-    else:
-        return False
-
-
 
 # ---------------- Commands ------------------
 
@@ -94,7 +77,7 @@ def cmd_user_ban(bot, user, text, command, parameter):
         else:
             bot.mumble.users[text.actor].send_text_message(util.get_user_ban())
     else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings.NOT_ADMIN)
+        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
     return
 
 
@@ -103,27 +86,27 @@ def cmd_user_unban(bot, user, text, command, parameter):
         if parameter:
             bot.mumble.users[text.actor].send_text_message(util.user_unban(parameter))
     else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings.NOT_ADMIN)
+        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
     return
 
 
 def cmd_url_ban(bot, user, text, command, parameter):
     if bot.is_admin(user):
         if parameter:
-            bot.mumble.users[text.actor].send_text_message(util.url_ban(bot.get_url_from_input(parameter)))
+            bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(parameter)))
         else:
             bot.mumble.users[text.actor].send_text_message(util.get_url_ban())
     else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings.NOT_ADMIN)
+        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
     return
 
 
 def cmd_url_unban(bot, user, text, command, parameter):
     if bot.is_admin(user):
         if parameter:
-            bot.mumble.users[text.actor].send_text_message(util.url_unban(bot.get_url_from_input(parameter)))
+            bot.mumble.users[text.actor].send_text_message(util.url_unban(util.get_url_from_input(parameter)))
     else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings.NOT_ADMIN)
+        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
     return
 
 
@@ -138,12 +121,12 @@ def cmd_play(bot, user, text, command, parameter):
         else:
             bot.send_msg(util.format_current_playing(), text)
     else:
-        bot.send_msg(constants.strings.QUEUE_EMPTY, text)
+        bot.send_msg(constants.strings('queue_empty'), text)
 
 
 def cmd_pause(bot, user, text, command, parameter):
     bot.pause()
-    bot.send_msg(constants.strings.PAUSED)
+    bot.send_msg(constants.strings('paused'))
 
 
 def cmd_play_file(bot, user, text, command, parameter):
@@ -157,15 +140,15 @@ def cmd_play_file(bot, user, text, command, parameter):
                      'path': filename,
                      'user': user}
             logging.info("cmd: add to playlist: " + filename)
-            var.playlist.append(music)
-            bot.send_msg(constants.strings.FILE_ADDED + music['title'], text)
+            music = var.playlist.append(music)
+            bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
 
     # if parameter is {path}
     else:
         # sanitize "../" and so on
         path = os.path.abspath(os.path.join(music_folder, parameter))
         if not path.startswith(os.path.abspath(music_folder)):
-            bot.send_msg(constants.strings.NO_FILE, text)
+            bot.send_msg(constants.strings('no_file'), text)
             return
 
         if os.path.isfile(path):
@@ -174,7 +157,7 @@ def cmd_play_file(bot, user, text, command, parameter):
                      'user': user}
             logging.info("cmd: add to playlist: " + parameter)
             music = var.playlist.append(music)
-            bot.send_msg(constants.strings.FILE_ADDED + music['title'], text)
+            bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
             return
 
         # if parameter is {folder}
@@ -191,7 +174,7 @@ def cmd_play_file(bot, user, text, command, parameter):
                 music_library.add_file(file)
 
             files = music_library.get_files(parameter)
-            msgs = [constants.strings.FILE_ADDED]
+            msgs = [constants.strings('multiple_file_added')]
             count = 0
 
             for file in files:
@@ -207,24 +190,23 @@ def cmd_play_file(bot, user, text, command, parameter):
             if count != 0:
                 send_multi_lines(bot, msgs, text)
             else:
-                bot.send_msg(constants.strings.NO_FILE, text)
+                bot.send_msg(constants.strings('no_file'), text)
 
         else:
             # try to do a partial match
             files = util.get_recursive_filelist_sorted(music_folder)
             matches = [(index, file) for index, file in enumerate(files) if parameter.lower() in file.lower()]
             if len(matches) == 0:
-                bot.send_msg(constants.strings.NO_FILE, text)
+                bot.send_msg(constants.strings('no_file'), text)
             elif len(matches) == 1:
                 music = {'type': 'file',
                          'path': matches[0][1],
                          'user': user}
                 logging.info("cmd: add to playlist: " + matches[0][1])
                 music = var.playlist.append(music)
-                bot.send_msg(constants.strings.FILE_ADDED
-                             + "{} ({})".format(music['title'], music['path']), text)
+                bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
             else:
-                msgs = [ constants.strings.MULTIPLE_MATCHES ]
+                msgs = [ constants.strings('multiple_matches')]
                 for match in matches:
                     msgs.append("<b>{:0>3d}</b> - {:s}".format(match[0], match[1]))
                 send_multi_lines(bot, msgs, text)
@@ -234,7 +216,7 @@ def cmd_play_file_match(bot, user, text, command, parameter):
     music_folder = var.config.get('bot', 'music_folder')
     if parameter is not None:
         files = util.get_recursive_filelist_sorted(music_folder)
-        msgs = [ constants.strings.FILE_ADDED ]
+        msgs = [ constants.strings('file_added')]
         count = 0
         try:
             for file in files:
@@ -252,32 +234,32 @@ def cmd_play_file_match(bot, user, text, command, parameter):
             if count != 0:
                 send_multi_lines(bot, msgs, text)
             else:
-                bot.send_msg(constants.strings.NO_FILE, text)
+                bot.send_msg(constants.strings('no_file'), text)
 
         except re.error as e:
-            msg = constants.strings.WRONG_PATTERN % str(e)
+            msg = constants.strings('wrong_pattern', error=str(e))
             bot.send_msg(msg, text)
     else:
-        bot.send_msg(constants.strings.BAD_PARAMETER % command)
+        bot.send_msg(constants.strings('bad_parameter', command))
 
 
 def cmd_play_url(bot, user, text, command, parameter):
     music = {'type': 'url',
              # grab the real URL
-             'url': get_url_from_input(parameter),
+             'url': util.get_url_from_input(parameter),
              'user': user,
              'ready': 'validation'}
 
     if media.url.get_url_info(music):
         if music['duration'] > var.config.getint('bot', 'max_track_duration'):
-            bot.send_msg(constants.strings.TOO_LONG, text)
+            bot.send_msg(constants.strings('too_long'), text)
         else:
             music['ready'] = "no"
             var.playlist.append(music)
             logging.info("cmd: add to playlist: " + music['url'])
             bot.async_download_next()
     else:
-        bot.send_msg(constants.strings.UNABLE_DOWNLOAD, text)
+        bot.send_msg(constants.strings('unable_download'), text)
 
 
 def cmd_play_playlist(bot, user, text, command, parameter):
@@ -287,19 +269,19 @@ def cmd_play_playlist(bot, user, text, command, parameter):
     except ValueError:
         pass
 
-    url = get_url_from_input(parameter)
+    url = util.get_url_from_input(parameter)
     logging.debug("cmd: fetching media info from playlist url %s" % url)
     items = media.playlist.get_playlist_info(url=url, start_index=offset, user=user)
     if len(items) > 0:
         var.playlist.extend(items)
         for music in items:
-            logging.info("cmd: add to playlist: %s (%s)" % (music['title'], music['url']))
+            logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
 
 
 def cmd_play_radio(bot, user, text, command, parameter):
     if not parameter:
         all_radio = var.config.items('radio')
-        msg = constants.strings.PRECONFIGURATED_RADIO + " :"
+        msg = constants.strings('preconfigurated_radio')
         for i in all_radio:
             comment = ""
             if len(i[1].split(maxsplit=1)) == 2:
@@ -310,7 +292,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
         if var.config.has_option('radio', command, parameter):
             parameter = var.config.get('radio', parameter)
             parameter = parameter.split()[0]
-        url = bot.get_url_from_input(parameter)
+        url = util.get_url_from_input(parameter)
         if url:
             music = {'type': 'radio',
                      'url': url,
@@ -319,20 +301,20 @@ def cmd_play_radio(bot, user, text, command, parameter):
             logging.info("cmd: add to playlist: " + music['url'])
             bot.async_download_next()
         else:
-            bot.send_msg(constants.strings.BAD_URL)
+            bot.send_msg(constants.strings('bad_url'))
 
 
 def cmd_rb_query(bot, user, text, command, parameter):
     logging.info('cmd: Querying radio stations')
     if not parameter:
         logging.debug('rbquery without parameter')
-        msg = constants.strings.RB_QUERY_EMPTY
+        msg = constants.strings('rb_query_empty')
         bot.send_msg(msg, text)
     else:
         logging.debug('cmd: Found query parameter: ' + parameter)
         # bot.send_msg('Searching for stations - this may take some seconds...', text)
         rb_stations = radiobrowser.getstations_byname(parameter)
-        msg = constants.strings.RB_QUERY_RESULT + " :"
+        msg = constants.strings('rb_query_result')
         msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th></tr>'
         if not rb_stations:
             logging.debug('cmd: No matches found for rbquery ' + parameter)
@@ -355,7 +337,7 @@ def cmd_rb_query(bot, user, text, command, parameter):
             # Shorten message if message too long (stage I)
             else:
                 logging.debug('Result too long stage I')
-                msg = constants.strings.RB_QUERY_RESULT + " :" + ' (shortened L1)'
+                msg = constants.strings('rb_query_result') + ' (shortened L1)'
                 msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th></tr>'
                 for s in rb_stations:
                     stationid = s['id']
@@ -368,7 +350,7 @@ def cmd_rb_query(bot, user, text, command, parameter):
                 # Shorten message if message too long (stage II)
                 else:
                     logging.debug('Result too long stage II')
-                    msg = constants.strings.RB_QUERY_RESULT + " :" + ' (shortened L2)'
+                    msg = constants.strings('rb_query_result') + ' (shortened L2)'
                     msg += '!rbplay ID - Station Name'
                     for s in rb_stations:
                         stationid = s['id']
@@ -387,7 +369,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
     logging.debug('cmd: Play a station by ID')
     if not parameter:
         logging.debug('rbplay without parameter')
-        msg = constants.strings.RB_PLAY_EMPTY
+        msg = constants.strings('rb_play_empty')
         bot.send_msg(msg, text)
     else:
         logging.debug('cmd: Retreiving url for station ID ' + parameter)
@@ -424,19 +406,19 @@ def cmd_rb_play(bot, user, text, command, parameter):
 
 
 def cmd_help(bot, user, text, command, parameter):
-    bot.send_msg(constants.strings.HELP, text)
+    bot.send_msg(constants.strings('help'), text)
     if bot.is_admin(user):
-        bot.send_msg(constants.strings.ADMIN_HELP, text)
+        bot.send_msg(constants.strings('admin_help'), text)
 
 
 def cmd_stop(bot, user, text, command, parameter):
     bot.stop()
-    bot.send_msg(constants.strings.STOPPED, text)
+    bot.send_msg(constants.strings('stopped'), text)
 
 
 def cmd_clear(bot, user, text, command, parameter):
     bot.clear()
-    bot.send_msg(constants.strings.CLEARED, text)
+    bot.send_msg(constants.strings('cleared'), text)
 
 
 def cmd_kill(bot, user, text, command, parameter):
@@ -445,18 +427,18 @@ def cmd_kill(bot, user, text, command, parameter):
         bot.exit = True
     else:
         bot.mumble.users[text.actor].send_text_message(
-            constants.strings.NOT_ADMIN)
+            constants.strings('not_admin'))
 
 
 def cmd_update(bot, user, text, command, parameter):
     if bot.is_admin(user):
         bot.mumble.users[text.actor].send_text_message(
-            constants.strings.START_UPDATING)
+            constants.strings('start_updating'))
         msg = util.update(bot.version)
         bot.mumble.users[text.actor].send_text_message(msg)
     else:
         bot.mumble.users[text.actor].send_text_message(
-            constants.strings.NOT_ADMIN)
+            constants.strings('not_admin'))
 
 
 def cmd_stop_and_getout(bot, user, text, command, parameter):
@@ -469,12 +451,12 @@ def cmd_volume(bot, user, text, command, parameter):
     # The volume is a percentage
     if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.volume_set = float(float(parameter) / 100)
-        bot.send_msg(constants.strings.CHANGE_VOLUME % (
-            int(bot.volume_set * 100), bot.mumble.users[text.actor]['name']), text)
+        bot.send_msg(constants.strings('change_volume',
+            volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']), text)
         var.db.set('bot', 'volume', str(bot.volume_set))
         logging.info('cmd: volume set to %d' % (bot.volume_set * 100))
     else:
-        bot.send_msg(constants.strings.CURRENT_VOLUME % int(bot.volume_set * 100), text)
+        bot.send_msg(constants.strings('current_volume', volume=int(bot.volume_set * 100)), text)
 
 
 def cmd_ducking(bot, user, text, command, parameter):
@@ -513,13 +495,13 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
     # The volume is a percentage
     if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.ducking_volume = float(float(parameter) / 100)
-        bot.send_msg(constants.strings.CHANGE_DUCKING_VOLUME % (
-            int(bot.ducking_volume * 100), bot.mumble.users[text.actor]['name']), text)
+        bot.send_msg(constants.strings('change_ducking_volume',
+            volume=int(bot.ducking_volume * 100), user=bot.mumble.users[text.actor]['name']), text)
         # var.db.set('bot', 'volume', str(bot.volume_set))
         var.db.set('bot', 'ducking_volume', str(bot.ducking_volume))
         logging.info('cmd: volume on ducking set to %d' % (bot.ducking_volume * 100))
     else:
-        bot.send_msg(constants.strings.CURRENT_DUCKING_VOLUME % int(bot.ducking_volume * 100), text)
+        bot.send_msg(constants.strings('current_ducking_volume', volume=int(bot.ducking_volume * 100)), text)
 
 
 def cmd_current_music(bot, user, text, command, parameter):
@@ -527,8 +509,7 @@ def cmd_current_music(bot, user, text, command, parameter):
     if var.playlist.length() > 0:
         bot.send_msg(util.format_current_playing())
     else:
-        reply = constants.strings.NOT_PLAYING
-
+        reply = constants.strings('not_playing')
     bot.send_msg(reply, text)
 
 
@@ -537,7 +518,7 @@ def cmd_skip(bot, user, text, command, parameter):
         bot.launch_music()
         bot.async_download_next()
     else:
-        bot.send_msg(constants.strings.QUEUE_EMPTY, text)
+        bot.send_msg(constants.strings('queue_empty'), text)
 
 
 def cmd_remove(bot, user, text, command, parameter):
@@ -556,12 +537,12 @@ def cmd_remove(bot, user, text, command, parameter):
             removed = var.playlist.remove(index)
 
         # the Title isn't here if the music wasn't downloaded
-        bot.send_msg(constants.strings.REMOVING_ITEM % (
-            removed['title'] if 'title' in removed else removed['url']), text)
+        bot.send_msg(constants.strings('removing_item',
+            item=removed['title'] if 'title' in removed else removed['url']), text)
 
         logging.info("cmd: delete from playlist: " + str(removed['path'] if 'path' in removed else removed['url']))
     else:
-        bot.send_msg(constants.strings.BAD_PARAMETER % command)
+        bot.send_msg(constants.strings('bad_parameter', command=command))
 
 
 def cmd_list_file(bot, user, text, command, parameter):
@@ -583,19 +564,19 @@ def cmd_list_file(bot, user, text, command, parameter):
         if count != 0:
             send_multi_lines(bot, msgs, text)
         else:
-            bot.send_msg(constants.strings.NO_FILE, text)
+            bot.send_msg(constants.strings('no_file'), text)
 
     except re.error as e:
-        msg = constants.strings.WRONG_PATTERN % str(e)
+        msg = constants.strings('wrong_pattern', error=str(e))
         bot.send_msg(msg, text)
 
 
 def cmd_queue(bot, user, text, command, parameter):
     if len(var.playlist.playlist) == 0:
-        msg = constants.strings.QUEUE_EMPTY
+        msg = constants.strings('queue_empty')
         bot.send_msg(msg, text)
     else:
-        msgs = [ constants.strings.QUEUE_CONTENTS ]
+        msgs = [ constants.strings('queue_contents')]
         for i, value in enumerate(var.playlist.playlist):
             newline = ''
             if i == var.playlist.current_index:
@@ -618,4 +599,4 @@ def cmd_random(bot, user, text, command, parameter):
 def cmd_drop_database(bot, user, text, command, parameter):
     var.db.drop_table()
     var.db = Database(var.dbfile)
-    bot.send_msg(constants.strings.DATABASE_DROPPED, text)
+    bot.send_msg(constants.strings('database_dropped'), text)
