@@ -104,8 +104,8 @@ You need to install the opus codec (not embedded in all system): `apt install li
 ### Contributors
 If you want to participate, You're welcome to fork and submit pull requests (fixes and new features).
 
-The following people joined the collaborators for a faster development, big thanks:
-- @slipenbois
+The following people joined the collaborators for a faster development, big thanks to them:
+- @TerryGeng
 - @mertkutay
 
 Feel free to ask me if you want to help actively without using pull requests.
