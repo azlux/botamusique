@@ -1,101 +1,133 @@
 # botamusique
 
-Botamusique is a mumble bot who plays music on a mumble channel.
+Botamusique is a [Mumble](https://www.mumble.info/) music bot.
 Predicted functionalities will be those people would expect from any classic music player.
 
-botamusique can play:
-- Radio stations from url
-- Radio stations from http://www.radio-browser.info API (query from > 24k stations)
-- Youtube/Soundcloud URL (everything supported by youtube-dl)
-- Music in local folders (which can be uploaded through a web interface)
+## Features
+
+1. **Support multiple music sources:**
+    - Music in local folders (which can be uploaded through the web interface).
+    - Youtube/Soundcloud URLs and playlists (everything supported by youtube-dl).
+    - Radio stations from url and from http://www.radio-browser.info API (query from > 24k stations).
+2. **User-friendly web remote control interface.** Powered by flask. Which supports
+    - Playlist management,
+    - File management,
+    - Upload files, etc.
+3. **Powerful command system.** Commands and words the bot says are fully customizable. Support partial-match for commands.
+4. **Ducking.** The bot would automatically lower its volume if people are talking.
+
+## Screenshots
+
+![botamusique in Mumble channel](https://user-images.githubusercontent.com/2306637/75210917-68fbf680-57bd-11ea-9cf8-c0871edff13f.jpg)
+
+![botamusique web interface](https://user-images.githubusercontent.com/2306637/75210648-9b592400-57bc-11ea-851a-c56907acf702.jpg)
 
 -----
 ## Menu
+1. [Installation](#installation)
+1. [Configuration](#configuration)
 1. [Web Interface](#web-interface)
-2. [Installation](#installation)
-3. [Update](#udpate)
-4. [Generate a certificate](#optional-generate-a-certificate)
-5. [Starting the bot](#starting-the-bot)
-6. [Custom commands](#custom-commands)
-7. [Known issues](#known-issues)
-8. [Contributors](#contributors)
-
-
-### Web interface
-**Disabled by default.** You need to enable it in `configuration.ini`.
-It works, and we are still making it better.
-
-You need to create a folder for all your songs. Organize your songs by subfolder.
-The main folder needs to be set in `configuration.ini` (with a '/' at the end).
+1. [Starting the bot](#starting-the-bot)
+1. [Update](#udpate)
+1. [Known issues](#known-issues)
+1. [Contributors](#contributors)
 
 ### Installation
-1. You need python3 with opuslib and protobuf (look at the requirement of pymumble).
-2. The Bot uses ffmpeg, so you know what you have to do if ffmpeg isn't in your package manager. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
-To install botamusique (**recommended**, stable and with build-in auto-update support):
+#### Dependencies
+1. Install python3.
+1. Install [Opus Codec](https://www.opus-codec.org/) (which should be already installed if you installed Mumble or Murmur, or you may try to install `opus-tools` with you package manager).
+1. Install ffmpeg. If ffmpeg isn't in your package manager, you may need to find another source. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
+
+#### Install botamusique
+Stable release (**recommended**, with build-in auto-update support):
 ```
 curl -Lo botamusique.tar.gz https://azlux.fr/botamusique/sources.tar.gz
 tar -xzf botamusique.tar.gz
 cd botamusique
 python3 -m venv venv
 venv/bin/pip install wheel
+venv/bin/pip install -r pymumble/requirements.txt
 venv/bin/pip install -r requirements.txt
 ```
 
-For the version of the master branch, you can use Git installation commands (no build-in auto-update support):
+For the version of the master branch (no build-in auto-update support):
 ```
-apt install python3-venv ffmpeg libjpeg-dev zlibc zlib1g zlib1g-dev
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
 cd botamusique
 python3 -m venv venv
 venv/bin/pip install wheel
+venv/bin/pip install -r pymumble/requirements.txt
 venv/bin/pip install -r requirements.txt
 ```
 
-### Update
-If using the recommended install, you can send `!update` to the bot (command by default).
+### Configuration
+Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
 
-If using git, you need to update manually:
+#### Basic settints
+1. Usually the first thing is to set the Murmur server you'd like the bot to connect to. You may also specify which channel the bot stays, and tokens used by the bot.
 ```
-git pull --all
-git submodule update
-venv/bin/pip install --upgrade -r requirements.txt
+[server]
+host = 127.0.0.1
+port = 64738
+````
+
+2. You need to specify a folder that stores your music file. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
+```
+[bot]
+music_folder = music_folder/
+tmp_folder = /tmp/
 ```
 
+#### Sections explained
+- `server`: configuration about the server. This will be overridden by the `./mumbleBot.py` parameters.
+- `bot`: basic configuration of the bot, eg. name, comment, folder, default volume, etc.
+- `webinterface`: basic configuration about the interface.
+- `commands`: you can customize the command you want for each action (eg. put `help = helpme` , the bot will respond to `!helpme`)
+- `radio`: a list of default radio (eg. play a jazz radio with the command `!radio jazz`)
+- `strings`: you can customize all words the bot can say.
+- `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
 
-### (Optional) Generate a certificate
-`$ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
+#### (Optional) Generate a certificate
+Otherwise you wouldn't able to register the bot into your Murmur server.
+Please do the following:
+`openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
+
+### Web interface
+**Disabled by default** for performance and security reasons. You need to enable it in `configuration.ini`.
+```
+[webinterface]
+enabled = True
+```
+
+Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would to accept requests from public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control.
 
 ### Starting the bot
-`$ venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C /path/to/botamusique.pem`
+`venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C /path/to/botamusique.pem`
 
 The bot listens the 8181 port so you should properly set the forwarding rules in you NAT configuration to let other peoples access the web interface. (DISABLED)
 
 If you want information about autoStart and auto-Restart the bot, [you can have help on the wiki.](https://github.com/azlux/botamusique/wiki/AutoStart---AutoRestart)
 
-### Configuration
-You can copy the file `configuration.default.ini` into `configuration.ini` and customize all variable. Everything can be changed but don't remove the default file.
+### Update
+If you enable `audo_check_update`, the bot will check for updates every time it starts.
+If you are using the recommended install, you can send `!update` to the bot (command by default).
 
-Sections explained:
-- `server`: configuration about the server and bot name. This is overridden by the `./mumbleBot.py` parameters.
-- `bot`: basic configuration of the bot, eg. comment, folder, default volume, etc.
-- `webinterface`: basic configuration about the interface (disabled by default)
-- `command`: you can customize the command you want for each action (if you put `help = helpme` , the bot will respond to `!helpme` )
-- `radio`: here you can provide a list of default radio ( I can play a jazz radio with the command `!radio jazz`)
-- `strings`: you can customize all string the bot can say.
-- `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
-
+If you are using git, you need to update manually:
+```
+git pull --all
+git submodule update
+venv/bin/pip install --upgrade -r requirements.txt
+```
 ### Known Issues
 
-During installation, you may encounter the following error:
+1. During installation, you may encounter the following error:
 ```
 ImportError: libtiff.so.5: cannot open shared object file: No such file or directory
 ```
 You need to install a missing library: `apt install libtiff5`
 
----
-
-In the beginning, you may encounter the following error even if you have installed all requirements:
+2. In the beginning, you may encounter the following error even if you have installed all requirements:
 ```
 Exception: Could not find opus library. Make sure it is installed.
 ```
