@@ -66,8 +66,8 @@ def send_multi_lines(bot, lines, text):
 
 
 def cmd_joinme(bot, user, text, command, parameter):
-    channel_id = bot.mumble.users[text.actor]['channel_id']
-    bot.mumble.channels[channel_id].move_in()
+    bot.mumble.users.myself.move_in(
+        bot.mumble.users[text.actor]['channel_id'], token=parameter)
 
 
 def cmd_user_ban(bot, user, text, command, parameter):
