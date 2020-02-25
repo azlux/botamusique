@@ -3,6 +3,7 @@
 Botamusique is a [Mumble](https://www.mumble.info/) music bot.
 Predicted functionalities will be those people would expect from any classic music player.
 
+
 ## Features
 
 1. **Support multiple music sources:**
@@ -16,11 +17,13 @@ Predicted functionalities will be those people would expect from any classic mus
 3. **Powerful command system.** Commands and words the bot says are fully customizable. Support partial-match for commands.
 4. **Ducking.** The bot would automatically lower its volume if people are talking.
 
+
 ## Screenshots
 
 ![botamusique in Mumble channel](https://user-images.githubusercontent.com/2306637/75210917-68fbf680-57bd-11ea-9cf8-c0871edff13f.jpg)
 
 ![botamusique web interface](https://user-images.githubusercontent.com/2306637/75210648-9b592400-57bc-11ea-851a-c56907acf702.jpg)
+
 
 -----
 ## Menu
@@ -61,6 +64,7 @@ venv/bin/pip install -r pymumble/requirements.txt
 venv/bin/pip install -r requirements.txt
 ```
 
+
 ### Configuration
 Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
 
@@ -93,6 +97,7 @@ Otherwise you wouldn't able to register the bot into your Murmur server.
 Please do the following:
 `openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
 
+
 ### Web interface
 **Disabled by default** for performance and security reasons. You need to enable it in `configuration.ini`.
 ```
@@ -100,14 +105,26 @@ Please do the following:
 enabled = True
 ```
 
-Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would to accept requests from public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control.
+Default binding address is
+```
+listening_addr = 127.0.0.1
+listening_port = 8181
+```
+
+You can access the web interface through http://127.0.0.1:8181 if you keep it unchanged.
+
+Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would to accept requests from public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to your router to the bot.
+
 
 ### Starting the bot
+If you have set up everything in your `configuration.ini`, you can
+`venv/bin/python mumbleBot.py --config configuration.ini`
+
+Or you can
 `venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C /path/to/botamusique.pem`
 
-The bot listens the 8181 port so you should properly set the forwarding rules in you NAT configuration to let other peoples access the web interface. (DISABLED)
+If you want information about auto-starting and auto-restarting of the bot, [you can check out the wiki.](https://github.com/azlux/botamusique/wiki/AutoStart---AutoRestart)
 
-If you want information about autoStart and auto-Restart the bot, [you can have help on the wiki.](https://github.com/azlux/botamusique/wiki/AutoStart---AutoRestart)
 
 ### Update
 If you enable `audo_check_update`, the bot will check for updates every time it starts.
@@ -119,6 +136,8 @@ git pull --all
 git submodule update
 venv/bin/pip install --upgrade -r requirements.txt
 ```
+
+
 ### Known Issues
 
 1. During installation, you may encounter the following error:
@@ -132,6 +151,7 @@ You need to install a missing library: `apt install libtiff5`
 Exception: Could not find opus library. Make sure it is installed.
 ```
 You need to install the opus codec (not embedded in all system): `apt install libopus0`
+
 
 ### Contributors
 If you want to participate, You're welcome to fork and submit pull requests (fixes and new features).
