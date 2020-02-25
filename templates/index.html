@@ -97,8 +97,8 @@
 <head>
     <meta charset="UTF-8">
     <title>botamusique web interface</title>
-    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/custom.css">
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/custom.css">
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
 </head>
@@ -121,33 +121,33 @@
                     <div class="card-body">
                         <div class="btn-group" style="margin-bottom: 5px;">
                             <button type="button" class="btn btn-primary btn-space"
-                                    onclick="request('/post', {action : 'randomize'})">
+                                    onclick="request('post', {action : 'randomize'})">
                                 <i class="fas fa-random" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" id="play-btn" class="btn btn-info btn-space"
-                                    onclick="request('/post', {action : 'resume'})" disabled>
+                                    onclick="request('post', {action : 'resume'})" disabled>
                                 <i class="fas fa-play" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" id="pause-btn" class="btn btn-warning btn-space"
-                                    onclick="request('/post', {action : 'pause'})" disabled>
+                                    onclick="request('post', {action : 'pause'})" disabled>
                                 <i class="fas fa-pause" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" id="stop-btn" class="btn btn-danger btn-space"
-                                    onclick="request('/post', {action : 'stop'})" disabled>
+                                    onclick="request('post', {action : 'stop'})" disabled>
                                 <i class="fas fa-stop" aria-hidden="true"></i>
                             </button>
                         </div>
 
                         <div class="btn-group" style="float: right;">
                             <button type="button" class="btn btn-warning btn-space"
-                                    onclick="request('/post', {action : 'volume_down'})">
+                                    onclick="request('post', {action : 'volume_down'})">
                                 <i class="fa fa-volume-down" aria-hidden="true"></i>
                             </button>
                             <button type="button" class="btn btn-warning btn-space"
-                                    onclick="request('/post', {action : 'volume_up'})">
+                                    onclick="request('post', {action : 'volume_up'})">
                                 <i class="fa fa-volume-up" aria-hidden="true"></i>
                             </button>
                         </div>
@@ -170,7 +170,7 @@
 
                         <div class="btn-group">
                             <button type="button" class="btn btn-danger btn-space"
-                                    onclick="request('/post', {action : 'clear'})">
+                                    onclick="request('post', {action : 'clear'})">
                                 <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
                             </button>
                         </div>
@@ -285,9 +285,9 @@
         </div>
     </div>
 
-    <script src="/static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
-    <script src="/static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <script src="/static/js/fontawesome.all.js" crossorigin="anonymous"></script>
+    <script src="static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+    <script src="static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="static/js/fontawesome.all.js" crossorigin="anonymous"></script>
 
     <script>
         $('#uploadSelectFile').on('change', function () {
@@ -305,7 +305,7 @@
         function request(url, _data, refresh=false){
             $.ajax({
                 type: 'POST',
-                url: '/post',
+                url: 'post',
                 data : _data,
                 statusCode : {
                     200 : function(data) {
@@ -336,7 +336,7 @@
         function updatePlaylist(){
             $.ajax({
                 type: 'GET',
-                url: '/playlist',
+                url: 'playlist',
                 statusCode : {
                     200 : displayPlaylist
                 }
@@ -365,7 +365,7 @@
         setInterval(function(){
             $.ajax({
                 type: 'POST',
-                url : '/post',
+                url : 'post',
                 statusCode : {
                     200 : function(data){
                         if(data.ver !== playlist_ver){
