@@ -531,8 +531,9 @@ def cmd_remove(bot, user, text, command, parameter):
         removed = None
         if index == var.playlist.current_index:
             removed = var.playlist.remove(index)
-            var.botamusique.stop()
-            var.botamusique.launch_music(index)
+            if bot.is_playing and not bot.is_pause:
+                bot.stop()
+                bot.launch_music(index)
         else:
             removed = var.playlist.remove(index)
 
