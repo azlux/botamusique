@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from functools import wraps
-from flask import Flask, render_template, request, redirect, send_file, Response, jsonify
+from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort
 import variables as var
 import util
 from datetime import datetime
@@ -132,6 +132,19 @@ def playlist():
 
     return jsonify({ 'items': items })
 
+def status():
+    if (var.playlist.length() > 0):
+        return jsonify({'ver': var.playlist.version,
+                        'empty': False,
+                        'play': not var.botamusique.is_pause,
+                        'mode': var.playlist.mode})
+    else:
+        return jsonify({'ver': var.playlist.version,
+                        'empty': True,
+                        'play': False,
+                        'mode': var.playlist.mode})
+
+
 @web.route("/post", methods=['POST'])
 @requires_auth
 def post():
@@ -145,7 +158,7 @@ def post():
                 item = {'type': 'file',
                         'path' : request.form['add_file_bottom'],
                         'title' : '',
-                        'user' : 'Web'}
+                        'user' : 'Remote Control'}
                 item = var.playlist.append(util.get_music_tag_info(item))
                 logging.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
 
@@ -155,7 +168,7 @@ def post():
                 item = {'type': 'file',
                         'path' : request.form['add_file_next'],
                         'title' : '',
-                        'user' : 'Web'}
+                        'user' : 'Remote Control'}
                 item = var.playlist.insert(
                     var.playlist.current_index + 1,
                     item
@@ -188,7 +201,7 @@ def post():
                 files = list(map(lambda file:
                     {'type':'file',
                      'path': os.path.join(folder, file),
-                     'user':'Web'}, files))
+                     'user':'Remote Control'}, files))
 
                 files = var.playlist.extend(files)
 
@@ -199,7 +212,7 @@ def post():
         elif 'add_url' in request.form:
             music = {'type':'url',
                                  'url': request.form['add_url'],
-                                 'user': 'Web',
+                                 'user': 'Remote Control',
                                  'ready': 'validation'}
             music = var.botamusique.validate_music(music)
             if music:
@@ -212,7 +225,7 @@ def post():
         elif 'add_radio' in request.form:
             music = var.playlist.append({'type': 'radio',
                                  'path': request.form['add_radio'],
-                                 'user': "Web"})
+                                 'user': "Remote Control"})
             logging.info("web: add to playlist: " + util.format_debug_song_string(music))
 
         elif 'delete_music' in request.form:
@@ -265,11 +278,17 @@ def post():
             if action == "randomize":
                 var.botamusique.stop()
                 var.playlist.set_mode("random")
+                var.db.set('playlist', 'playback_mode', "random")
+                logging.info("web: playback mode changed to random.")
                 var.botamusique.resume()
             if action == "one-shot":
                 var.playlist.set_mode("one-shot")
+                var.db.set('playlist', 'playback_mode', "one-shot")
+                logging.info("web: playback mode changed to one-shot.")
             if action == "repeat":
                 var.playlist.set_mode("repeat")
+                var.db.set('playlist', 'playback_mode', "repeat")
+                logging.info("web: playback mode changed to one-shot.")
             elif action == "stop":
                 var.botamusique.stop()
             elif action == "pause":
@@ -293,10 +312,7 @@ def post():
                 var.db.set('bot', 'volume', str(var.botamusique.volume_set))
                 logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
 
-        if(var.playlist.length() > 0):
-            return jsonify({'ver': var.playlist.version, 'empty': False, 'play': not var.botamusique.is_pause})
-        else:
-            return jsonify({'ver': var.playlist.version, 'empty': True, 'play': False})
+    return status()
 
 @web.route('/upload', methods=["POST"])
 def upload():
@@ -358,8 +374,8 @@ def download():
                 try:
                     return send_file(filepath, as_attachment=True)
                 except Exception as e:
-                    self.log.exception(e)
-                    self.Error(400)
+                    logging.exception(e)
+                    abort(404)
     elif 'directory' in request.args:
         requested_dir = request.args['directory']
         folder_path = var.music_folder
@@ -373,8 +389,8 @@ def download():
             try:
                 return send_file(zipfile, as_attachment=True)
             except Exception as e:
-                self.log.exception(e)
-                self.Error(400)
+                logging.exception(e)
+                abort(404)
 
     return redirect("./", code=400)
 

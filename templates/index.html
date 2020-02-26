@@ -120,11 +120,6 @@
 
                     <div class="card-body">
                         <div class="btn-group" style="margin-bottom: 5px;">
-                            <button type="button" class="btn btn-primary btn-space"
-                                    onclick="request('post', {action : 'randomize'})">
-                                <i class="fas fa-random" aria-hidden="true"></i>
-                            </button>
-
                             <button type="button" id="play-btn" class="btn btn-info btn-space"
                                     onclick="request('post', {action : 'resume'})" disabled>
                                 <i class="fas fa-play" aria-hidden="true"></i>
@@ -142,6 +137,28 @@
                         </div>
 
                         <div class="btn-group" style="float: right;">
+                            <button type="button" id="oneshot-btn" class="btn btn-primary btn-space"
+                                    title="One-shot Playlist"
+                                    style="height: 38px; width: 45px"
+                                    onclick="request('post', {action : 'one-shot'})">
+                                <span class="fa-stack" style="font-size: 0.9em; margin-left:-8px; margin-top:-2px;">
+                                  <i class="fas fa-slash fa-stack-1x"></i>
+                                  <i class="fas fa-redo fa-stack-1x"></i>
+                                </span>
+                            </button>
+
+                            <button type="button" id="random-btn" class="btn btn-primary btn-space"
+                                    title="Randomize Playlist"
+                                    onclick="request('post', {action : 'randomize'})">
+                                <i class="fas fa-random" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="repeat-btn" class="btn btn-primary btn-space"
+                                    title="Repeat Playlist"
+                                    onclick="request('post', {action : 'repeat'})">
+                                <i class="fas fa-redo" aria-hidden="true"></i>
+                            </button>
+
                             <button type="button" class="btn btn-warning btn-space"
                                     onclick="request('post', {action : 'volume_down'})">
                                 <i class="fa fa-volume-down" aria-hidden="true"></i>
@@ -313,7 +330,7 @@
                             updatePlaylist();
                             playlist_ver = data.ver;
                         }
-                        updateControls(data.empty, data.play);
+                        updateControls(data.empty, data.play, data.mode);
                     }
                 }
             });
@@ -343,7 +360,7 @@
             });
         }
 
-        function updateControls(empty, play){
+        function updateControls(empty, play, mode){
             if(empty){
                 $("#play-btn").prop("disabled", true);
                 $("#pause-btn").prop("disabled", true);
@@ -359,6 +376,20 @@
                     $("#stop-btn").prop("disabled", true);
                 }
             }
+            if(mode === "one-shot"){
+                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
+                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary");
+            }else if(mode === "repeat"){
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
+                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary");
+            }else if(mode === "random"){
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary");
+                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+            }
+
         }
 
         // Check the version of playlist to see if update is needed.
@@ -372,7 +403,7 @@
                             updatePlaylist();
                             playlist_ver = data.ver;
                         }
-                        updateControls(data.empty, data.play);
+                        updateControls(data.empty, data.play, data.mode);
                     }
                 }
             });
