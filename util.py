@@ -45,12 +45,21 @@ def get_recursive_filelist_sorted(path):
     filelist.sort()
     return filelist
 
+def get_music_path(music):
+    uri = ''
+    if music["type"] == "url":
+        uri = music['path']
+    elif music["type"] == "file":
+        uri = var.config.get('bot', 'music_folder') + music["path"]
+    elif music["type"] == "radio":
+        uri = music['url']
 
-def get_music_tag_info(music, uri = ""):
+    return uri
 
+
+def get_music_tag_info(music):
     if "path" in music:
-        if not uri:
-            uri = var.config.get('bot', 'music_folder') + music["path"]
+        uri = get_music_path(music)
 
         if os.path.isfile(uri):
             match = re.search("(.+)\.(.+)", uri)

@@ -201,10 +201,13 @@ def post():
                                  'url': request.form['add_url'],
                                  'user': 'Web',
                                  'ready': 'validation'}
-            media.url.get_url_info(music)
-            music = var.playlist.append(music)
-            logging.info("web: add to playlist: " + util.format_debug_song_string(music))
-            var.playlist.playlist[-1]['ready'] = "no"
+            music = var.botamusique.validate_music(music)
+            if music:
+                var.playlist.append(music)
+                logging.info("web: add to playlist: " + util.format_debug_song_string(music))
+                if var.playlist.length() == 2:
+                    # If I am the second item on the playlist. (I am the next one!)
+                    var.botamusique.async_download_next()
 
         elif 'add_radio' in request.form:
             music = var.playlist.append({'type': 'radio',

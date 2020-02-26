@@ -367,6 +367,41 @@ class MumbleBot:
         self.playhead = 0
         self.last_volume_cycle_time = time.time()
 
+    def validate_music(self, music):
+        url = music['url']
+
+        url_hash = hashlib.md5(url.encode()).hexdigest()
+
+        path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
+        mp3 = path.replace(".%(ext)s", ".mp3")
+        music['path'] = mp3
+
+        # Download only if music is not existed
+        if os.path.isfile(mp3):
+            logging.info("bot: file existed for url %s " % music['url'])
+            music['ready'] = 'yes'
+            return music
+
+        music = media.url.get_url_info(music)
+
+        logging.info("bot: verifying the duration of url %s " % music['url'])
+
+        if music:
+            if music['duration'] > var.config.getint('bot', 'max_track_duration'):
+                # Check the length, useful in case of playlist, it wasn't checked before)
+                logging.info(
+                    "the music " + music["url"] + " has a duration of " + music['duration'] + "s -- too long")
+                self.send_msg(constants.strings('too_long'))
+                return False
+            else:
+                music['ready'] = "no"
+
+            return music
+        else:
+            logging.error("bot: error while fetching info from the URL")
+            self.send_msg(constants.strings('unable_download'))
+            return False
+
     def download_music(self, index=-1):
         if index == -1:
             index = var.playlist.current_index
@@ -386,26 +421,6 @@ class MumbleBot:
 
         # Download only if music is not existed
         if not os.path.isfile(mp3):
-            if music['ready'] == "validation":
-                logging.info("bot: verifying the duration of url (%s) %s " % (music['title'], url))
-
-                if music:
-                    if 'duration' not in music:
-                        music = media.url.get_url_info(music)
-
-                    if music['duration'] > var.config.getint('bot', 'max_track_duration'):
-                        # Check the length, useful in case of playlist, it wasn't checked before)
-                        logging.info(
-                            "the music " + music["url"] + " has a duration of " + music['duration'] + "s -- too long")
-                        self.send_msg(constants.strings('too_long'))
-                        return False
-                    else:
-                        music['ready'] = "no"
-                else:
-                    logging.error("bot: error while fetching info from the URL")
-                    self.send_msg(constants.strings('unable_download'))
-                    return False
-
             # download the music
             music['ready'] = "downloading"
 
@@ -441,7 +456,7 @@ class MumbleBot:
             logging.info("bot: music file existed, skip downloading " + mp3)
             music['ready'] = "yes"
 
-        music = util.get_music_tag_info(music, music['path'])
+        music = util.get_music_tag_info(music)
 
         var.playlist.update(music, index)
         return music
@@ -491,7 +506,7 @@ class MumbleBot:
     def async_download_next(self):
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
-        logging.info("bot: Async download next asked ")
+        logging.debug("bot: Async download next asked ")
         if var.playlist.length() > 1 and var.playlist.next_item()['type'] == 'url' \
                 and (var.playlist.next_item()['ready'] in ["no", "validation"]):
             th = threading.Thread(
@@ -508,8 +523,8 @@ class MumbleBot:
             index = var.playlist.current_index
         music = var.playlist.playlist[index]
 
-        # if music['type'] == 'radio':
-        #     return True
+        if music['type'] == 'radio':
+            return True
 
         if not 'path' in music:
             return False

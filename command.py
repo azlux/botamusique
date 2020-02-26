@@ -250,16 +250,14 @@ def cmd_play_url(bot, user, text, command, parameter):
              'user': user,
              'ready': 'validation'}
 
-    if media.url.get_url_info(music):
-        if music['duration'] > var.config.getint('bot', 'max_track_duration'):
-            bot.send_msg(constants.strings('too_long'), text)
-        else:
-            music['ready'] = "no"
-            var.playlist.append(music)
-            logging.info("cmd: add to playlist: " + music['url'])
-            if var.playlist.length() == 2:
-                # If I am the second item on the playlist. (I am the next one!)
-                bot.async_download_next()
+    music = bot.validate_music(music)
+    if music:
+        var.playlist.append(music)
+        logging.info("cmd: add to playlist: " + music['url'])
+        bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
+        if var.playlist.length() == 2:
+            # If I am the second item on the playlist. (I am the next one!)
+            bot.async_download_next()
     else:
         bot.send_msg(constants.strings('unable_download'), text)
 
