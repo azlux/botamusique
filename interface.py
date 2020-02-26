@@ -288,7 +288,7 @@ def post():
             if action == "repeat":
                 var.playlist.set_mode("repeat")
                 var.db.set('playlist', 'playback_mode', "repeat")
-                logging.info("web: playback mode changed to one-shot.")
+                logging.info("web: playback mode changed to repeat.")
             elif action == "stop":
                 var.botamusique.stop()
             elif action == "pause":
