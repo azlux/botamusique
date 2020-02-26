@@ -59,7 +59,11 @@ class PlayList(list):
         logging.debug("playlist: Next into the queue")
 
         if self.current_index < len(self) - 1:
-            self.current_index += 1
+            if self.mode == "one-shot":
+                super().__delitem__(self.current_index)
+            else:
+                self.current_index += 1
+
             return self[self.current_index]
         else:
             self.current_index = 0
