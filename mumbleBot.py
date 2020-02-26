@@ -422,7 +422,7 @@ class MumbleBot:
     def download_music(self, index=-1):
         if index == -1:
             index = var.playlist.current_index
-        music = var.playlist.playlist[index]
+        music = var.playlist[index]
 
         if music['type'] != 'url':
             # then no need to download
@@ -496,7 +496,7 @@ class MumbleBot:
     def check_item_path_or_remove(self, index = -1):
         if index == -1:
             index = var.playlist.current_index
-        music = var.playlist.playlist[index]
+        music = var.playlist[index]
 
         if music['type'] == 'radio':
             return True
@@ -563,8 +563,8 @@ class MumbleBot:
                 if self.is_playing:
                     # get next music
                     self.is_playing = False
-                if not self.is_pause and len(var.playlist.playlist) > 0:
-                    self.next()
+                if not self.is_pause and len(var.playlist) > 0:
+                    var.playlist.next()
                     self.launch_music()
                     self.async_download_next()
 
@@ -604,10 +604,6 @@ class MumbleBot:
     #      Play Control
     # =======================
 
-    def next(self):
-        logging.debug("bot: Next into the queue")
-        return var.playlist.next()
-
     def clear(self):
         # Kill the ffmpeg thread and empty the playlist
         if self.thread:
@@ -626,7 +622,7 @@ class MumbleBot:
         self.is_pause = True
         self.song_start_at = -1
         self.playhead = 0
-        self.next()
+        var.playlist.next()
         logging.info("bot: music stopped.")
 
     def pause(self):

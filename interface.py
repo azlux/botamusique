@@ -122,7 +122,7 @@ def playlist():
 
     items = []
 
-    for index, item in enumerate(var.playlist.playlist):
+    for index, item in enumerate(var.playlist):
          items.append(render_template('playlist.html',
                                      index=index,
                                      m=item,
@@ -216,7 +216,7 @@ def post():
             logging.info("web: add to playlist: " + util.format_debug_song_string(music))
 
         elif 'delete_music' in request.form:
-            music = var.playlist.playlist[int(request.form['delete_music'])]
+            music = var.playlist[int(request.form['delete_music'])]
             logging.info("web: delete from playlist: " + util.format_debug_song_string(music))
 
             if var.playlist.length() >= int(request.form['delete_music']):
@@ -230,10 +230,10 @@ def post():
 
 
         elif 'play_music' in request.form:
-            music = var.playlist.playlist[int(request.form['play_music'])]
+            music = var.playlist[int(request.form['play_music'])]
             logging.info("web: jump to: " + util.format_debug_song_string(music))
 
-            if len(var.playlist.playlist) >= int(request.form['play_music']):
+            if len(var.playlist) >= int(request.form['play_music']):
                 var.botamusique.stop()
                 var.botamusique.launch_music(int(request.form['play_music']))
 

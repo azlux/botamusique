@@ -113,7 +113,7 @@ def cmd_url_unban(bot, user, text, command, parameter):
 def cmd_play(bot, user, text, command, parameter):
     if var.playlist.length() > 0:
         if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
-                and int(parameter) <= len(var.playlist.playlist):
+                and int(parameter) <= len(var.playlist):
             bot.stop()
             bot.launch_music(int(parameter) - 1)
         elif bot.is_pause:
@@ -575,12 +575,12 @@ def cmd_list_file(bot, user, text, command, parameter):
 
 
 def cmd_queue(bot, user, text, command, parameter):
-    if len(var.playlist.playlist) == 0:
+    if len(var.playlist) == 0:
         msg = constants.strings('queue_empty')
         bot.send_msg(msg, text)
     else:
         msgs = [ constants.strings('queue_contents')]
-        for i, value in enumerate(var.playlist.playlist):
+        for i, value in enumerate(var.playlist):
             newline = ''
             if i == var.playlist.current_index:
                 newline = '<b>{} ▶ ({}) {} ◀</b>'.format(i + 1, value['type'],

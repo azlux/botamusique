@@ -3,16 +3,19 @@ import variables as var
 import util
 import random
 import json
+import logging
 
-class PlayList:
-    playlist = []
+class PlayList(list):
     current_index = 0
     version = 0 # increase by one after each change
+
+    def __init__(self, *args):
+        super().__init__(*args)
 
     def append(self, item):
         self.version += 1
         item = util.get_music_tag_info(item)
-        self.playlist.append(item)
+        super().append(item)
 
         return item
 
@@ -23,7 +26,7 @@ class PlayList:
             index = self.current_index
 
         item = util.get_music_tag_info(item)
-        self.playlist.insert(index, item)
+        super().insert(index, item)
 
         if index <= self.current_index:
             self.current_index += 1
@@ -31,41 +34,46 @@ class PlayList:
         return item
 
     def length(self):
-        return len(self.playlist)
+        return len(self)
 
     def extend(self, items):
         self.version += 1
         items = list(map(
             lambda item: util.get_music_tag_info(item),
             items))
-        self.playlist.extend(items)
+        super().extend(items)
         return items
 
     def next(self):
         self.version += 1
-        if len(self.playlist) == 0:
+        if len(self) == 0:
             return False
+
+        logging.debug("playlist: Next into the queue")
 
         self.current_index = self.next_index()
 
-        return self.playlist[self.current_index]
+        return self[self.current_index]
 
     def update(self, item, index=-1):
         self.version += 1
         if index == -1:
             index = self.current_index
-        self.playlist[index] = item
+        self[index] = item
+
+    def __delitem__(self, key):
+        return self.remove(key)
 
     def remove(self, index=-1):
         self.version += 1
-        if index > len(self.playlist) - 1:
+        if index > len(self) - 1:
             return False
 
         if index == -1:
             index = self.current_index
 
-        removed = self.playlist[index]
-        del self.playlist[index]
+        removed = self[index]
+        super().__delitem__(index)
 
         if self.current_index > index:
             self.current_index -= 1
@@ -73,48 +81,48 @@ class PlayList:
         return removed
 
     def current_item(self):
-        return self.playlist[self.current_index]
+        return self[self.current_index]
 
     def next_index(self):
-        if len(self.playlist) == 0:
+        if len(self) == 0:
             return False
 
-        if self.current_index < len(self.playlist) - 1:
+        if self.current_index < len(self) - 1:
             return self.current_index + 1
         else:
             return 0
 
     def next_item(self):
-        if len(self.playlist) == 0:
+        if len(self) == 0:
             return False
 
-        return self.playlist[self.next_index()]
+        return self[self.next_index()]
 
     def jump(self, index):
         self.version += 1
         self.current_index = index
-        return self.playlist[index]
+        return self[index]
 
     def randomize(self):
         # current_index will lose track after shuffling, thus we take current music out before shuffling
         #current = self.current_item()
-        #del self.playlist[self.current_index]
+        #del self[self.current_index]
 
-        random.shuffle(self.playlist)
+        random.shuffle(self)
 
-        #self.playlist.insert(0, current)
+        #self.insert(0, current)
         self.current_index = 0
         self.version += 1
 
     def clear(self):
         self.version += 1
-        self.playlist = []
         self.current_index = 0
+        self.clear()
 
     def save(self):
         var.db.remove_section("playlist_item")
         var.db.set("playlist", "current_index", self.current_index)
-        for index, item in enumerate(self.playlist):
+        for index, item in enumerate(self):
             var.db.set("playlist_item", str(index), json.dumps(item))
 
     def load(self):
@@ -124,7 +132,7 @@ class PlayList:
 
         items = list(var.db.items("playlist_item"))
         items.sort(key=lambda v: int(v[0]))
-        self.playlist = list(map(lambda v: json.loads(v[1]), items))
+        self.extend(list(map(lambda v: json.loads(v[1]), items)))
         self.current_index = current_index
 
 
