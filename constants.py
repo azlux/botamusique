@@ -13,7 +13,7 @@ def strings(option, *argv, **kwargs):
             return formatted
         except KeyError as e:
             raise KeyError(
-                "Missed placeholder {{{placeholder}}} in string '{string}'. ".format(placeholder=str(e).strip("'"), string=option) +
+                "Missed/Unexpected placeholder {{{placeholder}}} in string '{string}'. ".format(placeholder=str(e).strip("'"), string=option) +
                 "Please restore you configuration file back to default if necessary.")
         except TypeError as e:
             raise KeyError(

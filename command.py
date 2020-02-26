@@ -257,7 +257,9 @@ def cmd_play_url(bot, user, text, command, parameter):
             music['ready'] = "no"
             var.playlist.append(music)
             logging.info("cmd: add to playlist: " + music['url'])
-            bot.async_download_next()
+            if var.playlist.length() == 2:
+                # If I am the second item on the playlist. (I am the next one!)
+                bot.async_download_next()
     else:
         bot.send_msg(constants.strings('unable_download'), text)
 
@@ -514,7 +516,8 @@ def cmd_current_music(bot, user, text, command, parameter):
 
 
 def cmd_skip(bot, user, text, command, parameter):
-    if bot.next():  # Is no number send, just skip the current music
+    if var.playlist.length() > 0:
+        bot.stop()
         bot.launch_music()
         bot.async_download_next()
     else:

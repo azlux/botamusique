@@ -331,6 +331,8 @@ class MumbleBot:
             uri = music['path']
 
         elif music["type"] == "file":
+            if not self.check_item_path_or_remove():
+                return
             uri = var.config.get('bot', 'music_folder') + \
                 var.playlist.current_item()["path"]
 
@@ -445,32 +447,33 @@ class MumbleBot:
         return music
 
     def resume(self):
+        self.is_playing = True
+        self.is_pause = False
+
         music = var.playlist.current_item()
+
+        if music['type'] == 'radio' or self.playhead == 0 or not self.check_item_path_or_remove():
+            self.launch_music()
+            return
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
         else:
             ffmpeg_debug = "warning"
 
-        if music["type"] != "radio":
-            logging.info("bot: resume music at %.2f seconds" % self.playhead)
+        logging.info("bot: resume music at %.2f seconds" % self.playhead)
 
-            uri = ""
-            if music["type"] == "url":
-                uri = music['path']
+        uri = ""
+        if music["type"] == "url":
+            uri = music['path']
 
-            elif music["type"] == "file":
-                uri = var.config.get('bot', 'music_folder') + \
-                      var.playlist.current_item()["path"]
+        elif music["type"] == "file":
+            uri = var.config.get('bot', 'music_folder') + \
+                  var.playlist.current_item()["path"]
 
-            command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-ss', "%f" % self.playhead, '-i',
-                       uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
+        command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-ss', "%f" % self.playhead, '-i',
+                   uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
 
-        else:
-            logging.info("bot: resume radio")
-            uri = music["url"]
-            command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
-                       uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
 
         if var.config.getboolean('bot', 'announce_current_music'):
             self.send_msg(util.format_current_playing())
@@ -482,9 +485,6 @@ class MumbleBot:
         util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
-        self.is_playing = True
-        self.is_pause = False
-        self.song_start_at = -1
         self.last_volume_cycle_time = time.time()
 
 
@@ -496,11 +496,39 @@ class MumbleBot:
                 and (var.playlist.next_item()['ready'] in ["no", "validation"]):
             th = threading.Thread(
                 target=self.download_music, name="DownloadThread", args=(var.playlist.next_index(),))
+            logging.info(
+                "bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist.next_item()))
+            th.daemon = True
+            th.start()
         else:
             return
-        logging.info("bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist.next_item()))
-        th.daemon = True
-        th.start()
+
+    def check_item_path_or_remove(self, index = -1):
+        if index == -1:
+            index = var.playlist.current_index
+        music = var.playlist.playlist[index]
+
+        # if music['type'] == 'radio':
+        #     return True
+
+        if not 'path' in music:
+            return False
+        else:
+            if music["type"] == "url":
+                uri = music['path']
+                if not os.path.exists(uri):
+                    music['ready'] = 'validation'
+                    return False
+
+            elif music["type"] == "file":
+                uri = var.config.get('bot', 'music_folder') + music["path"]
+                if not os.path.exists(uri):
+                    logging.info("bot: music file missed. removing music from the playlist: %s" % util.format_debug_song_string(music))
+                    self.send_msg(constants.strings('file_missed', file=music["path"]))
+                    var.playlist.remove(index)
+                    return False
+
+        return True
 
     def volume_cycle(self):
         delta = time.time() - self.last_volume_cycle_time
@@ -564,13 +592,10 @@ class MumbleBot:
                 if self.is_playing:
                     # get next music
                     self.is_playing = False
-                    self.next()
                 if not self.is_pause and len(var.playlist.playlist) > 0:
-                    if var.playlist.current_item()['type'] in ['radio', 'file'] \
-                            or (var.playlist.current_item()['type'] == 'url' and var.playlist.current_item()['ready'] not in ['downloading']):
-                        # Check if the music can be start before launch the music
-                        self.launch_music()
-                        self.async_download_next()
+                    self.next()
+                    self.launch_music()
+                    self.async_download_next()
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             # Empty the buffer before exit
