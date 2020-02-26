@@ -8,13 +8,13 @@ import logging
 class PlayList(list):
     current_index = -1
     version = 0 # increase by one after each change
-    mode = "one-shot" # "loop", "random"
+    mode = "one-shot" # "repeat", "random"
 
     def __init__(self, *args):
         super().__init__(*args)
 
     def set_mode(self, mode):
-        # modes are "one-shot", "loop", "random"
+        # modes are "one-shot", "repeat", "random"
         self.mode = mode
         if mode == "random":
             self.randomize()
@@ -66,7 +66,7 @@ class PlayList(list):
             if self.mode == "one-shot":
                 self.clear()
                 return False
-            elif self.mode == "loop":
+            elif self.mode == "repeat":
                 return self[0]
             elif self.mode == "random":
                 self.randomize()

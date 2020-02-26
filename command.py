@@ -611,7 +611,7 @@ def cmd_mode(bot, user, text, command, parameter):
     if not parameter:
         bot.send_msg(constants.strings("current_mode", mode=var.playlist.mode), text)
         return
-    if not parameter in ["one-shot", "loop", "random"]:
+    if not parameter in ["one-shot", "repeat", "random"]:
         bot.send_msg(constants.strings('unknown_mode', mode=parameter), text)
     else:
         var.db.set('playlist', 'playback_mode', parameter)

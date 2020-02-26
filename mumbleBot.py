@@ -758,7 +758,7 @@ if __name__ == '__main__':
     else:
         playback_mode = var.config.get('bot', 'playback_mode', fallback="one-shot")
 
-    if playback_mode in ["one-shot", "loop", "random"]:
+    if playback_mode in ["one-shot", "repeat", "random"]:
         var.playlist.set_mode(playback_mode)
 
     if var.config.getboolean('bot', 'save_playlist', fallback=True):

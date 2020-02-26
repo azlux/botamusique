@@ -268,8 +268,8 @@ def post():
                 var.botamusique.resume()
             if action == "one-shot":
                 var.playlist.set_mode("one-shot")
-            if action == "loop":
-                var.playlist.set_mode("loop")
+            if action == "repeat":
+                var.playlist.set_mode("repeat")
             elif action == "stop":
                 var.botamusique.stop()
             elif action == "pause":
