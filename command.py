@@ -218,7 +218,7 @@ def cmd_play_file_match(bot, user, text, command, parameter):
     music_folder = var.config.get('bot', 'music_folder')
     if parameter is not None:
         files = util.get_recursive_filelist_sorted(music_folder)
-        msgs = [ constants.strings('file_added')]
+        msgs = [ constants.strings('multiple_file_added')]
         count = 0
         try:
             for file in files:
