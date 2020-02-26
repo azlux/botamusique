@@ -90,8 +90,6 @@ class MumbleBot:
             root.setLevel(logging.ERROR)
             logging.error("Starting in ERROR loglevel")
 
-        var.playlist = PlayList()
-
         var.user = args.user
         var.music_folder = var.config.get('bot', 'music_folder')
         var.is_proxified = var.config.getboolean(
@@ -100,7 +98,6 @@ class MumbleBot:
         self.nb_exit = 0
         self.thread = None
         self.thread_stderr = None
-        self.is_playing = False
         self.is_pause = False
         self.playhead = -1
         self.song_start_at = -1
@@ -378,7 +375,6 @@ class MumbleBot:
         util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
-        self.is_playing = True
         self.is_pause = False
         self.song_start_at = -1
         self.playhead = 0
@@ -560,11 +556,7 @@ class MumbleBot:
 
             if self.thread is None or not raw_music:
                 # Not music into the buffet
-                if self.is_playing:
-                    # get next music
-                    self.is_playing = False
-                if not self.is_pause and len(var.playlist) > 0:
-                    var.playlist.next()
+                if not self.is_pause and var.playlist.next():
                     self.launch_music()
                     self.async_download_next()
 
@@ -610,34 +602,37 @@ class MumbleBot:
             self.thread.kill()
             self.thread = None
         var.playlist.clear()
-        self.is_playing = False
         logging.info("bot: music stopped. playlist trashed.")
 
     def stop(self):
+        # stop and move to the next item in the playlist
+        self.is_pause = True
+        self.kill_ffmpeg()
+        self.playhead = 0
+        var.playlist.next()
+        logging.info("bot: music stopped.")
+
+    def kill_ffmpeg(self):
         # Kill the ffmpeg thread
         if self.thread:
             self.thread.kill()
             self.thread = None
-        self.is_playing = False
-        self.is_pause = True
         self.song_start_at = -1
-        self.playhead = 0
-        var.playlist.next()
-        logging.info("bot: music stopped.")
 
     def pause(self):
         # Kill the ffmpeg thread
         if self.thread:
             self.thread.kill()
             self.thread = None
-        self.is_playing = False
         self.is_pause = True
         self.song_start_at = -1
         logging.info("bot: music paused at %.2f seconds." % self.playhead)
 
     def resume(self):
-        self.is_playing = True
         self.is_pause = False
+
+        if var.playlist.current_index == -1:
+            var.playlist.next()
 
         music = var.playlist.current_item()
 
@@ -700,7 +695,7 @@ if __name__ == '__main__':
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini',
                         help='Load configuration from this file. Default: configuration.ini')
     parser.add_argument("--db", dest='db', type=str,
-                        default='database.db', help='database file. Default: database.db')
+                        default=None, help='database file. Default: database.db')
 
     parser.add_argument("-q", "--quiet", dest="quiet",
                         action="store_true", help="Only Error logs")
@@ -725,9 +720,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    var.dbfile = args.db
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
     parsed_configs = config.read(['configuration.default.ini', args.config], encoding='utf-8')
+    var.dbfile = args.db if args.db is not None else config.get("bot", "database_path", fallback="database.db")
 
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(
@@ -753,6 +748,7 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     root.addHandler(handler)
 
+    var.playlist = PlayList() # playlist should be initialized after the database
     var.botamusique = MumbleBot(args)
     command.register_all_commands(var.botamusique)
 

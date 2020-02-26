@@ -47,6 +47,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('list_file'), cmd_list_file)
     bot.register_command(constants.commands('queue'), cmd_queue)
     bot.register_command(constants.commands('random'), cmd_random)
+    bot.register_command(constants.commands('mode'), cmd_mode)
     bot.register_command(constants.commands('drop_database'), cmd_drop_database)
 
 def send_multi_lines(bot, lines, text):
@@ -533,9 +534,17 @@ def cmd_remove(bot, user, text, command, parameter):
         removed = None
         if index == var.playlist.current_index:
             removed = var.playlist.remove(index)
-            if bot.is_playing and not bot.is_pause:
-                bot.stop()
-                bot.launch_music(index)
+
+            if index < len(var.playlist):
+                if not bot.is_pause:
+                    bot.kill_ffmpeg()
+                    var.playlist.current_index -= 1
+                    # then the bot will move to next item
+
+            else: # if item deleted is the last item of the queue
+                var.playlist.current_index -= 1
+                if not bot.is_pause:
+                    bot.kill_ffmpeg()
         else:
             removed = var.playlist.remove(index)
 
@@ -593,11 +602,24 @@ def cmd_queue(bot, user, text, command, parameter):
 
         send_multi_lines(bot, msgs, text)
 
-
 def cmd_random(bot, user, text, command, parameter):
     bot.stop()
     var.playlist.randomize()
     bot.launch_music(0)
+
+def cmd_mode(bot, user, text, command, parameter):
+    if not parameter:
+        bot.send_msg(constants.strings("current_mode", mode=var.playlist.mode), text)
+        return
+    if not parameter in ["one-shot", "loop", "random"]:
+        bot.send_msg(constants.strings('unknown_mode', mode=parameter), text)
+    else:
+        var.playlist.set_mode(parameter)
+        if parameter == "random":
+            bot.stop()
+            var.playlist.randomize()
+            bot.launch_music(0)
+
 
 def cmd_drop_database(bot, user, text, command, parameter):
     var.db.drop_table()

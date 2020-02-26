@@ -220,13 +220,23 @@ def post():
             logging.info("web: delete from playlist: " + util.format_debug_song_string(music))
 
             if var.playlist.length() >= int(request.form['delete_music']):
-                if int(request.form['delete_music']) == var.playlist.current_index:
-                    var.playlist.remove(int(request.form['delete_music']))
-                    if var.botamusique.is_playing and not var.botamusique.is_pause:
-                        var.botamusique.stop()
-                        var.botamusique.launch_music(int(request.form['delete_music']))
+                index = int(request.form['delete_music'])
+
+                if index == var.playlist.current_index:
+                    var.playlist.remove(index)
+
+                    if index < len(var.playlist):
+                        if not var.botamusique.is_pause:
+                            var.botamusique.kill_ffmpeg()
+                            var.playlist.current_index -= 1
+                            # then the bot will move to next item
+
+                    else:  # if item deleted is the last item of the queue
+                        var.playlist.current_index -= 1
+                        if not var.botamusique.is_pause:
+                            var.botamusique.kill_ffmpeg()
                 else:
-                    var.playlist.remove(int(request.form['delete_music']))
+                    var.playlist.remove(index)
 
 
         elif 'play_music' in request.form:
@@ -254,8 +264,12 @@ def post():
             action = request.form['action']
             if action == "randomize":
                 var.botamusique.stop()
-                var.playlist.randomize()
+                var.playlist.set_mode("random")
                 var.botamusique.resume()
+            if action == "one-shot":
+                var.playlist.set_mode("one-shot")
+            if action == "loop":
+                var.playlist.set_mode("loop")
             elif action == "stop":
                 var.botamusique.stop()
             elif action == "pause":
@@ -269,12 +283,14 @@ def post():
                     var.botamusique.volume_set = var.botamusique.volume_set + 0.03
                 else:
                     var.botamusique.volume_set = 1.0
+                var.db.set('bot', 'volume', str(var.botamusique.volume_set))
                 logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
             elif action == "volume_down":
                 if var.botamusique.volume_set - 0.03 > 0:
                     var.botamusique.volume_set = var.botamusique.volume_set - 0.03
                 else:
                     var.botamusique.volume_set = 0
+                var.db.set('bot', 'volume', str(var.botamusique.volume_set))
                 logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
 
         if(var.playlist.length() > 0):

@@ -6,11 +6,19 @@ import json
 import logging
 
 class PlayList(list):
-    current_index = 0
+    current_index = -1
     version = 0 # increase by one after each change
+    mode = "one-shot" # "loop", "random"
 
     def __init__(self, *args):
         super().__init__(*args)
+
+    def set_mode(self, mode):
+        # modes are "one-shot", "loop", "random"
+        self.mode = mode
+        var.db.set('playlist', 'mode', mode)
+        if mode == "random":
+            self.randomize()
 
     def append(self, item):
         self.version += 1
@@ -45,15 +53,27 @@ class PlayList(list):
         return items
 
     def next(self):
-        self.version += 1
         if len(self) == 0:
             return False
 
+        self.version += 1
         logging.debug("playlist: Next into the queue")
 
-        self.current_index = self.next_index()
-
-        return self[self.current_index]
+        if self.current_index < len(self) - 1:
+            self.current_index += 1
+            return self[self.current_index]
+        else:
+            self.current_index = 0
+            if self.mode == "one-shot":
+                self.clear()
+                return False
+            elif self.mode == "loop":
+                return self[0]
+            elif self.mode == "random":
+                self.randomize()
+                return self[0]
+            else:
+                raise TypeError("Unknown playlist mode '%s'." % self.mode)
 
     def update(self, item, index=-1):
         self.version += 1
@@ -116,8 +136,8 @@ class PlayList(list):
 
     def clear(self):
         self.version += 1
-        self.current_index = 0
-        self.clear()
+        self.current_index = -1
+        super().clear()
 
     def save(self):
         var.db.remove_section("playlist_item")
