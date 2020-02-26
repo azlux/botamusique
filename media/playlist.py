@@ -16,7 +16,6 @@ class PlayList(list):
     def set_mode(self, mode):
         # modes are "one-shot", "loop", "random"
         self.mode = mode
-        var.db.set('playlist', 'mode', mode)
         if mode == "random":
             self.randomize()
 

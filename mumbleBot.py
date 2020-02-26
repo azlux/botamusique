@@ -752,7 +752,16 @@ if __name__ == '__main__':
     var.botamusique = MumbleBot(args)
     command.register_all_commands(var.botamusique)
 
-    if var.config.getboolean('debug', 'save_playlist', fallback=True):
+    playback_mode = None
+    if var.db.has_option("playlist", "playback_mode"):
+        playback_mode = var.db.get('playlist', 'playback_mode')
+    else:
+        playback_mode = var.config.get('bot', 'playback_mode', fallback="one-shot")
+
+    if playback_mode in ["one-shot", "loop", "random"]:
+        var.playlist.set_mode(playback_mode)
+
+    if var.config.getboolean('bot', 'save_playlist', fallback=True):
         logging.info("bot: load playlist from previous session")
         var.playlist.load()
 

@@ -614,7 +614,11 @@ def cmd_mode(bot, user, text, command, parameter):
     if not parameter in ["one-shot", "loop", "random"]:
         bot.send_msg(constants.strings('unknown_mode', mode=parameter), text)
     else:
+        var.db.set('playlist', 'playback_mode', parameter)
         var.playlist.set_mode(parameter)
+        logging.info("command: playback mode changed to %s." % parameter)
+        bot.send_msg(constants.strings("change_mode", mode=var.playlist.mode,
+                                       user=bot.mumble.users[text.actor]['name']), text)
         if parameter == "random":
             bot.stop()
             var.playlist.randomize()
