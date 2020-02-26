@@ -121,6 +121,7 @@ def cmd_play(bot, user, text, command, parameter):
         else:
             bot.send_msg(util.format_current_playing(), text)
     else:
+        bot.is_pause = False
         bot.send_msg(constants.strings('queue_empty'), text)
 
 
