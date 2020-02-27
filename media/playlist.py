@@ -18,6 +18,10 @@ class PlayList(list):
         self.mode = mode
         if mode == "random":
             self.randomize()
+        if mode == "one-shot" and self.current_index > 0:
+            for i in range(self.current_index):
+                super().__delitem__(0)
+            self.current_index = 0
 
     def append(self, item):
         self.version += 1
@@ -122,9 +126,15 @@ class PlayList(list):
         return self[self.next_index()]
 
     def jump(self, index):
+        if self.mode == "one-shot":
+            for i in range(index):
+                super().__delitem__(0)
+            self.current_index = 0
+        else:
+            self.current_index = index
+
         self.version += 1
-        self.current_index = index
-        return self[index]
+        return self[self.current_index]
 
     def randomize(self):
         # current_index will lose track after shuffling, thus we take current music out before shuffling
@@ -157,6 +167,15 @@ class PlayList(list):
         items.sort(key=lambda v: int(v[0]))
         self.extend(list(map(lambda v: json.loads(v[1]), items)))
         self.current_index = current_index
+
+    def _debug_print(self):
+        print("===== Playlist(%d) ====" % self.current_index)
+        for index, item in enumerate(self):
+            if index == self.current_index:
+                print("-> %d %s" % (index, item['title']))
+            else:
+                print("%d %s" % (index, item['title']))
+        print("=====      End     ====")
 
 
 def get_playlist_info(url, start_index=0, user=""):

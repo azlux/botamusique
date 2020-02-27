@@ -257,7 +257,7 @@ def post():
             logging.info("web: jump to: " + util.format_debug_song_string(music))
 
             if len(var.playlist) >= int(request.form['play_music']):
-                var.botamusique.stop()
+                var.botamusique.kill_ffmpeg()
                 var.botamusique.launch_music(int(request.form['play_music']))
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:

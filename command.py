@@ -113,10 +113,13 @@ def cmd_url_unban(bot, user, text, command, parameter):
 
 def cmd_play(bot, user, text, command, parameter):
     if var.playlist.length() > 0:
-        if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
-                and int(parameter) <= len(var.playlist):
-            bot.stop()
-            bot.launch_music(int(parameter) - 1)
+        if parameter is not None:
+            if parameter.isdigit() and int(parameter) > 0 and int(parameter) <= len(var.playlist):
+                bot.kill_ffmpeg()
+                bot.launch_music(int(parameter) - 1)
+            else:
+                bot.send_msg(constants.strings('invalid_index', index=parameter), text)
+
         elif bot.is_pause:
             bot.resume()
         else:
