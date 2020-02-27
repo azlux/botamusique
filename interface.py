@@ -240,14 +240,14 @@ def post():
 
                     if index < len(var.playlist):
                         if not var.botamusique.is_pause:
-                            var.botamusique.kill_ffmpeg()
+                            var.botamusique.interrupt_playing()
                             var.playlist.current_index -= 1
                             # then the bot will move to next item
 
                     else:  # if item deleted is the last item of the queue
                         var.playlist.current_index -= 1
                         if not var.botamusique.is_pause:
-                            var.botamusique.kill_ffmpeg()
+                            var.botamusique.interrupt_playing()
                 else:
                     var.playlist.remove(index)
 
@@ -257,7 +257,7 @@ def post():
             logging.info("web: jump to: " + util.format_debug_song_string(music))
 
             if len(var.playlist) >= int(request.form['play_music']):
-                var.botamusique.kill_ffmpeg()
+                var.botamusique.interrupt_playing()
                 var.botamusique.launch_music(int(request.form['play_music']))
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
@@ -276,11 +276,10 @@ def post():
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
-                var.botamusique.stop()
+                var.botamusique.interrupt_playing()
                 var.playlist.set_mode("random")
                 var.db.set('playlist', 'playback_mode', "random")
                 logging.info("web: playback mode changed to random.")
-                var.botamusique.resume()
             if action == "one-shot":
                 var.playlist.set_mode("one-shot")
                 var.db.set('playlist', 'playback_mode', "one-shot")

@@ -115,7 +115,7 @@ def cmd_play(bot, user, text, command, parameter):
     if var.playlist.length() > 0:
         if parameter is not None:
             if parameter.isdigit() and int(parameter) > 0 and int(parameter) <= len(var.playlist):
-                bot.kill_ffmpeg()
+                bot.interrupt_playing()
                 bot.launch_music(int(parameter) - 1)
             else:
                 bot.send_msg(constants.strings('invalid_index', index=parameter), text)
@@ -540,14 +540,14 @@ def cmd_remove(bot, user, text, command, parameter):
 
             if index < len(var.playlist):
                 if not bot.is_pause:
-                    bot.kill_ffmpeg()
+                    bot.interrupt_playing()
                     var.playlist.current_index -= 1
                     # then the bot will move to next item
 
             else: # if item deleted is the last item of the queue
                 var.playlist.current_index -= 1
                 if not bot.is_pause:
-                    bot.kill_ffmpeg()
+                    bot.interrupt_playing()
         else:
             removed = var.playlist.remove(index)
 
@@ -606,9 +606,8 @@ def cmd_queue(bot, user, text, command, parameter):
         send_multi_lines(bot, msgs, text)
 
 def cmd_random(bot, user, text, command, parameter):
-    bot.stop()
+    bot.interrupt_playing()
     var.playlist.randomize()
-    bot.launch_music(0)
 
 def cmd_mode(bot, user, text, command, parameter):
     if not parameter:

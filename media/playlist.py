@@ -144,7 +144,7 @@ class PlayList(list):
         random.shuffle(self)
 
         #self.insert(0, current)
-        self.current_index = 0
+        self.current_index = -1
         self.version += 1
 
     def clear(self):

@@ -607,12 +607,12 @@ class MumbleBot:
     def stop(self):
         # stop and move to the next item in the playlist
         self.is_pause = True
-        self.kill_ffmpeg()
+        self.interrupt_playing()
         self.playhead = 0
         var.playlist.next()
         logging.info("bot: music stopped.")
 
-    def kill_ffmpeg(self):
+    def interrupt_playing(self):
         # Kill the ffmpeg thread
         if self.thread:
             self.thread.kill()
