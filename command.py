@@ -114,7 +114,7 @@ def cmd_url_unban(bot, user, text, command, parameter):
 
 def cmd_play(bot, user, text, command, parameter):
     if var.playlist.length() > 0:
-        if parameter is not None:
+        if parameter:
             if parameter.isdigit() and int(parameter) > 0 and int(parameter) <= len(var.playlist):
                 bot.interrupt_playing()
                 bot.launch_music(int(parameter) - 1)
@@ -219,7 +219,7 @@ def cmd_play_file(bot, user, text, command, parameter):
 
 def cmd_play_file_match(bot, user, text, command, parameter):
     music_folder = var.config.get('bot', 'music_folder')
-    if parameter is not None:
+    if parameter:
         files = util.get_recursive_filelist_sorted(music_folder)
         msgs = [ constants.strings('multiple_file_added')]
         count = 0
@@ -454,7 +454,7 @@ def cmd_stop_and_getout(bot, user, text, command, parameter):
 
 def cmd_volume(bot, user, text, command, parameter):
     # The volume is a percentage
-    if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
+    if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.volume_set = float(float(parameter) / 100)
         bot.send_msg(constants.strings('change_volume',
             volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']), text)
@@ -486,7 +486,7 @@ def cmd_ducking(bot, user, text, command, parameter):
 
 
 def cmd_ducking_threshold(bot, user, text, command, parameter):
-    if parameter is not None and parameter.isdigit():
+    if parameter and parameter.isdigit():
         bot.ducking_threshold = int(parameter)
         var.db.set('bot', 'ducking_threshold', str(bot.ducking_threshold))
         msg = "Ducking threshold set to %d." % bot.ducking_threshold
@@ -498,7 +498,7 @@ def cmd_ducking_threshold(bot, user, text, command, parameter):
 
 def cmd_ducking_volume(bot, user, text, command, parameter):
     # The volume is a percentage
-    if parameter is not None and parameter.isdigit() and 0 <= int(parameter) <= 100:
+    if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.ducking_volume = float(float(parameter) / 100)
         bot.send_msg(constants.strings('change_ducking_volume',
             volume=int(bot.ducking_volume * 100), user=bot.mumble.users[text.actor]['name']), text)
@@ -529,7 +529,7 @@ def cmd_skip(bot, user, text, command, parameter):
 
 def cmd_remove(bot, user, text, command, parameter):
     # Allow to remove specific music into the queue with a number
-    if parameter is not None and parameter.isdigit() and int(parameter) > 0 \
+    if parameter and parameter.isdigit() and int(parameter) > 0 \
             and int(parameter) <= var.playlist.length():
 
         index = int(parameter) - 1
@@ -611,7 +611,7 @@ def cmd_random(bot, user, text, command, parameter):
 
 def cmd_repeat(bot, user, text, command, parameter):
     repeat = 1
-    if parameter is not None and parameter.isdigit():
+    if parameter and parameter.isdigit():
         repeat = int(parameter)
 
     music = var.playlist.current_item()
