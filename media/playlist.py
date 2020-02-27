@@ -16,9 +16,13 @@ class PlayList(list):
     def set_mode(self, mode):
         # modes are "one-shot", "repeat", "random"
         self.mode = mode
+
         if mode == "random":
             self.randomize()
-        if mode == "one-shot" and self.current_index > 0:
+
+        elif mode == "one-shot" and self.current_index > 0:
+            # remove items before current item
+            self.version += 1
             for i in range(self.current_index):
                 super().__delitem__(0)
             self.current_index = 0
