@@ -9,7 +9,7 @@ Predicted functionalities will be those people would expect from any classic mus
 1. **Support multiple music sources:**
     - Music in local folders (which can be uploaded through the web interface).
     - Youtube/Soundcloud URLs and playlists (everything supported by youtube-dl).
-    - Radio stations from url and from http://www.radio-browser.info API (query from > 24k stations).
+    - Radio stations from url and http://www.radio-browser.info API (query from > 24k stations).
 2. **User-friendly web remote control interface.** Powered by flask. Which supports
     - Playlist management,
     - File management,
@@ -31,7 +31,7 @@ Predicted functionalities will be those people would expect from any classic mus
 1. [Configuration](#configuration)
 1. [Web Interface](#web-interface)
 1. [Starting the bot](#starting-the-bot)
-1. [Update](#udpate)
+1. [Update](#update)
 1. [Known issues](#known-issues)
 1. [Contributors](#contributors)
 
@@ -39,7 +39,7 @@ Predicted functionalities will be those people would expect from any classic mus
 
 #### Dependencies
 1. Install python3.
-1. Install [Opus Codec](https://www.opus-codec.org/) (which should be already installed if you installed Mumble or Murmur, or you may try to install `opus-tools` with you package manager).
+1. Install [Opus Codec](https://www.opus-codec.org/) (which should be already installed if you installed Mumble or Murmur, or you may try to install `opus-tools` with your package manager).
 1. Install ffmpeg. If ffmpeg isn't in your package manager, you may need to find another source. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
 #### Install botamusique
@@ -68,8 +68,8 @@ venv/bin/pip install -r requirements.txt
 ### Configuration
 Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
 
-#### Basic settints
-1. Usually the first thing is to set the Murmur server you'd like the bot to connect to. You may also specify which channel the bot stays, and tokens used by the bot.
+#### Basic settings
+1. Usually, the first thing is to set the Murmur server you'd like the bot to connect to. You may also specify which channel the bot stays, and tokens used by the bot.
 ```
 [server]
 host = 127.0.0.1
@@ -93,7 +93,7 @@ tmp_folder = /tmp/
 - `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
 
 #### (Optional) Generate a certificate
-Otherwise you wouldn't able to register the bot into your Murmur server.
+Otherwise, you wouldn't able to register the bot into your Murmur server.
 Please do the following:
 `openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
 
@@ -113,7 +113,7 @@ listening_port = 8181
 
 You can access the web interface through http://127.0.0.1:8181 if you keep it unchanged.
 
-Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would to accept requests from public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to your router to the bot.
+Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would to accept requests from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to your router to the bot.
 
 
 ### Starting the bot
@@ -123,7 +123,9 @@ If you have set up everything in your `configuration.ini`, you can
 Or you can
 `venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C /path/to/botamusique.pem`
 
-If you want information about auto-starting and auto-restarting of the bot, [you can check out the wiki.](https://github.com/azlux/botamusique/wiki/AutoStart---AutoRestart)
+If you want information about auto-starting and auto-restarting of the bot, [you can check out the wiki].(https://github.com/azlux/botamusique/wiki/Run-botamusique-as-a-daemon-In-the-background)
+
+**For the detailed manual of using botamusique, please see the [wiki](https://github.com/azlux/botamusique/wiki).**
 
 
 ### Update
