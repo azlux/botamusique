@@ -188,7 +188,8 @@ def get_playlist_info(url, start_index=0, user=""):
         'extract_flat': 'in_playlist'
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        for i in range(2):
+        attempts = var.config.getint('bot', 'download_attempts', fallback=2)
+        for i in range(attempts):
             try:
                 info = ydl.extract_info(url, download=False)
                 # # if url is not a playlist but a video

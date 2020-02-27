@@ -292,7 +292,7 @@ class MumbleBot:
             except:
                 error_traceback = traceback.format_exc()
                 error = error_traceback.rstrip().split("\n")[-1]
-                logging.error("bot: command %s failed with error %s:\n" % (command_exc, error_traceback))
+                logging.error("bot: command %s failed with error: %s\n" % (command_exc, error_traceback))
                 self.send_msg(constants.strings('error_executing_command', command=command_exc, error=error), text)
 
     def send_msg(self, msg, text=None):
@@ -342,6 +342,7 @@ class MumbleBot:
                     logging.info("bot: removing music from the playlist: %s" % util.format_debug_song_string(music))
                     var.playlist.remove(index)
                     return
+                music = downloaded_music
             uri = music['path']
 
         elif music["type"] == "file":
@@ -456,19 +457,26 @@ class MumbleBot:
             self.send_msg(constants.strings('download_in_progress', item=music['title']))
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                for i in range(2):  # Always try 2 times
+                attempts = var.config.getint('bot', 'download_attempts', fallback=2)
+                download_succeed = False
+                for i in range(attempts):
+                    logging.info("bot: download attempts %d / %d" % (i+1, attempts))
                     try:
                         ydl.extract_info(url)
-                        if 'ready' in music and music['ready'] == "downloading":
-                            music['ready'] = "yes"
-                    except youtube_dl.utils.DownloadError:
-                        pass
-                    else:
-                        break
+                        music['ready'] = "yes"
+                        download_succeed = True
+                    except:
+                        error_traceback = traceback.format_exc()
+                        logging.error("bot: download failed with error:\n %s" % error_traceback)
+
+                if not download_succeed:
+                    self.send_msg(constants.strings('unable_download'))
+                    return False
         else:
             logging.info("bot: music file existed, skip downloading " + mp3)
             music['ready'] = "yes"
 
+        logging.info("bot: finished downloading url (%s) %s, saved to %s." % (music['title'], url, music['path']))
         music = util.get_music_tag_info(music)
 
         var.playlist.update(music, index)
