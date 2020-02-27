@@ -566,7 +566,7 @@ class MumbleBot:
         time.sleep(0.5)
 
         if self.exit:
-            if var.config.getboolean('debug', 'save_playlist', fallback=True):
+            if var.config.getboolean('bot', 'save_playlist', fallback=True):
                 logging.info("bot: save playlist into database")
                 var.playlist.save()
 
