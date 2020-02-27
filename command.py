@@ -47,6 +47,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('list_file'), cmd_list_file)
     bot.register_command(constants.commands('queue'), cmd_queue)
     bot.register_command(constants.commands('random'), cmd_random)
+    bot.register_command(constants.commands('repeat'), cmd_repeat)
     bot.register_command(constants.commands('mode'), cmd_mode)
     bot.register_command(constants.commands('drop_database'), cmd_drop_database)
 
@@ -144,8 +145,8 @@ def cmd_play_file(bot, user, text, command, parameter):
             music = {'type': 'file',
                      'path': filename,
                      'user': user}
-            logging.info("cmd: add to playlist: " + filename)
             music = var.playlist.append(music)
+            logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
             bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
 
     # if parameter is {path}
@@ -160,8 +161,8 @@ def cmd_play_file(bot, user, text, command, parameter):
             music = {'type': 'file',
                      'path': parameter,
                      'user': user}
-            logging.info("cmd: add to playlist: " + parameter)
             music = var.playlist.append(music)
+            logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
             bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
             return
 
@@ -187,9 +188,8 @@ def cmd_play_file(bot, user, text, command, parameter):
                 music = {'type': 'file',
                          'path': file,
                          'user': user}
-                logging.info("cmd: add to playlist: " + file)
                 music = var.playlist.append(music)
-
+                logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
                 msgs.append("{} ({})".format(music['title'], music['path']))
 
             if count != 0:
@@ -207,8 +207,8 @@ def cmd_play_file(bot, user, text, command, parameter):
                 music = {'type': 'file',
                          'path': matches[0][1],
                          'user': user}
-                logging.info("cmd: add to playlist: " + matches[0][1])
                 music = var.playlist.append(music)
+                logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
                 bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
             else:
                 msgs = [ constants.strings('multiple_matches')]
@@ -231,8 +231,8 @@ def cmd_play_file_match(bot, user, text, command, parameter):
                     music = {'type': 'file',
                              'path': file,
                              'user': user}
-                    logging.info("cmd: add to playlist: " + file)
                     music = var.playlist.append(music)
+                    logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
 
                     msgs.append("{} ({})".format(music['title'], music['path']))
 
@@ -257,8 +257,8 @@ def cmd_play_url(bot, user, text, command, parameter):
 
     music = bot.validate_music(music)
     if music:
-        var.playlist.append(music)
-        logging.info("cmd: add to playlist: " + music['url'])
+        music = var.playlist.append(music)
+        logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
         bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
         if var.playlist.length() == 2:
             # If I am the second item on the playlist. (I am the next one!)
@@ -303,7 +303,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
                      'url': url,
                      'user': user}
             var.playlist.append(music)
-            logging.info("cmd: add to playlist: " + music['url'])
+            logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
             bot.async_download_next()
         else:
             bot.send_msg(constants.strings('bad_url'))
@@ -402,7 +402,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
                      'url': url,
                      'user': user}
             var.playlist.append(music)
-            logging.info("cmd: add to playlist: " + music['url'])
+            logging.info("cmd: add to playlist: " + util.format_debug_song_string(music))
             bot.async_download_next()
         else:
             logging.info('cmd: No playable url found.')
@@ -608,6 +608,21 @@ def cmd_queue(bot, user, text, command, parameter):
 def cmd_random(bot, user, text, command, parameter):
     bot.interrupt_playing()
     var.playlist.randomize()
+
+def cmd_repeat(bot, user, text, command, parameter):
+    repeat = 1
+    if parameter is not None and parameter.isdigit():
+        repeat = int(parameter)
+
+    music = var.playlist.current_item()
+    for _ in range(repeat):
+        var.playlist.insert(
+            var.playlist.current_index + 1,
+            music
+        )
+        logging.info("bot: add to playlist: " + util.format_debug_song_string(music))
+
+    bot.send_msg(constants.strings("repeat", song=util.format_song_string(music), n=str(repeat)), text)
 
 def cmd_mode(bot, user, text, command, parameter):
     if not parameter:
