@@ -733,8 +733,8 @@ if __name__ == '__main__':
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
     parsed_configs = config.read([util.solve_filepath('configuration.default.ini'), util.solve_filepath(args.config)],
                                  encoding='utf-8')
-    var.dbfile = args.db if args.db is not None else config.get("bot", "database_path",
-                                                                fallback=util.solve_filepath("database.db"))
+    var.dbfile = args.db if args.db is not None else util.solve_filepath(
+        config.get("bot", "database_path", fallback="database.db"))
 
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(args.config))
