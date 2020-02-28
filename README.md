@@ -9,8 +9,8 @@ Predicted functionalities will be those people would expect from any classic mus
 1. **Support multiple music sources:**
     - Music in local folders (which can be uploaded through the web interface).
     - Youtube/Soundcloud URLs and playlists (everything supported by youtube-dl).
-    - Radio stations from url and http://www.radio-browser.info API (query from > 24k stations).
-2. **User-friendly web remote control interface.** Powered by flask. Which supports
+    - Radio stations from URL and http://www.radio-browser.info API (query from > 24k stations).
+2. **User-friendly web remote control interface.** Powered by Flask. Which supports
     - Playlist management,
     - File management,
     - Upload files, etc.
@@ -113,7 +113,7 @@ listening_port = 8181
 
 You can access the web interface through http://127.0.0.1:8181 if you keep it unchanged.
 
-Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would to accept requests from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to your router to the bot.
+Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would like to accept requests from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to your router to the bot.
 
 
 ### Starting the bot
@@ -123,7 +123,7 @@ If you have set up everything in your `configuration.ini`, you can
 Or you can
 `venv/bin/python mumbleBot.py -s HOST -u BOTNAME -P PASSWORD -p PORT -c CHANNEL -C /path/to/botamusique.pem`
 
-If you want information about auto-starting and auto-restarting of the bot, [you can check out the wiki].(https://github.com/azlux/botamusique/wiki/Run-botamusique-as-a-daemon-In-the-background)
+If you want information about auto-starting and auto-restarting of the bot, you can check out the wiki page [Run botamusique as a daemon In the background](https://github.com/azlux/botamusique/wiki/Run-botamusique-as-a-daemon-In-the-background).
 
 **For the detailed manual of using botamusique, please see the [wiki](https://github.com/azlux/botamusique/wiki).**
 
