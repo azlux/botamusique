@@ -56,7 +56,7 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
-
+log = logging.getLogger("bot")
 
 def init_proxy():
     global web
@@ -73,7 +73,7 @@ def check_auth(username, password):
 
 def authenticate():
     """Sends a 401 response that enables basic auth"""
-    logging.info("Web Interface login failed.")
+    global log
     return Response(
     'Could not verify your access level for that URL.\n'
     'You have to login with proper credentials', 401,
@@ -82,10 +82,11 @@ def authenticate():
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        global log
         auth = request.authorization
         if var.config.getboolean("webinterface", "require_auth") and (not auth or not check_auth(auth.username, auth.password)):
             if auth:
-                logging.info("Web Interface login attempt, user: %s" % auth.username)
+                log.info("web: Failed login attempt, user: %s" % auth.username)
             return authenticate()
         return f(*args, **kwargs)
     return decorated
@@ -148,10 +149,12 @@ def status():
 @web.route("/post", methods=['POST'])
 @requires_auth
 def post():
+    global log
+
     folder_path = var.music_folder
     if request.method == 'POST':
         if request.form:
-            logging.debug("Post request: "+ str(request.form))
+            log.debug("web: Post request from %s: %s" % ( request.remote_addr, str(request.form)))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.music_folder + request.form['add_file_bottom']
             if os.path.isfile(path):
@@ -160,7 +163,7 @@ def post():
                         'title' : '',
                         'user' : 'Remote Control'}
                 item = var.playlist.append(util.get_music_tag_info(item))
-                logging.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
+                log.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.music_folder + request.form['add_file_next']
@@ -173,7 +176,7 @@ def post():
                     var.playlist.current_index + 1,
                     item
                 )
-                logging.info('web: add to playlist(next): ' + util.format_debug_song_string(item))
+                log.info('web: add to playlist(next): ' + util.format_debug_song_string(item))
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -206,7 +209,7 @@ def post():
                 files = var.playlist.extend(files)
 
                 for file in files:
-                    logging.info("web: add to playlist: %s" %  util.format_debug_song_string(file))
+                    log.info("web: add to playlist: %s" %  util.format_debug_song_string(file))
 
 
         elif 'add_url' in request.form:
@@ -217,7 +220,7 @@ def post():
             music = var.botamusique.validate_music(music)
             if music:
                 var.playlist.append(music)
-                logging.info("web: add to playlist: " + util.format_debug_song_string(music))
+                log.info("web: add to playlist: " + util.format_debug_song_string(music))
                 if var.playlist.length() == 2:
                     # If I am the second item on the playlist. (I am the next one!)
                     var.botamusique.async_download_next()
@@ -226,11 +229,11 @@ def post():
             music = var.playlist.append({'type': 'radio',
                                  'path': request.form['add_radio'],
                                  'user': "Remote Control"})
-            logging.info("web: add to playlist: " + util.format_debug_song_string(music))
+            log.info("web: add to playlist: " + util.format_debug_song_string(music))
 
         elif 'delete_music' in request.form:
             music = var.playlist[int(request.form['delete_music'])]
-            logging.info("web: delete from playlist: " + util.format_debug_song_string(music))
+            log.info("web: delete from playlist: " + util.format_debug_song_string(music))
 
             if var.playlist.length() >= int(request.form['delete_music']):
                 index = int(request.form['delete_music'])
@@ -254,7 +257,7 @@ def post():
 
         elif 'play_music' in request.form:
             music = var.playlist[int(request.form['play_music'])]
-            logging.info("web: jump to: " + util.format_debug_song_string(music))
+            log.info("web: jump to: " + util.format_debug_song_string(music))
 
             if len(var.playlist) >= int(request.form['play_music']):
                 var.botamusique.interrupt_playing()
@@ -263,13 +266,13 @@ def post():
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
             path = var.music_folder + request.form['delete_music_file']
             if os.path.isfile(path):
-                logging.info("web: delete file " + path)
+                log.info("web: delete file " + path)
                 os.remove(path)
 
         elif 'delete_folder' in request.form and ".." not in request.form['delete_folder']:
             path = var.music_folder + request.form['delete_folder']
             if os.path.isdir(path):
-                logging.info("web: delete folder " + path)
+                log.info("web: delete folder " + path)
                 shutil.rmtree(path)
                 time.sleep(0.1)
 
@@ -279,15 +282,15 @@ def post():
                 var.botamusique.interrupt_playing()
                 var.playlist.set_mode("random")
                 var.db.set('playlist', 'playback_mode', "random")
-                logging.info("web: playback mode changed to random.")
+                log.info("web: playback mode changed to random.")
             if action == "one-shot":
                 var.playlist.set_mode("one-shot")
                 var.db.set('playlist', 'playback_mode', "one-shot")
-                logging.info("web: playback mode changed to one-shot.")
+                log.info("web: playback mode changed to one-shot.")
             if action == "repeat":
                 var.playlist.set_mode("repeat")
                 var.db.set('playlist', 'playback_mode', "repeat")
-                logging.info("web: playback mode changed to repeat.")
+                log.info("web: playback mode changed to repeat.")
             elif action == "stop":
                 var.botamusique.stop()
             elif action == "pause":
@@ -302,19 +305,21 @@ def post():
                 else:
                     var.botamusique.volume_set = 1.0
                 var.db.set('bot', 'volume', str(var.botamusique.volume_set))
-                logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
+                log.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
             elif action == "volume_down":
                 if var.botamusique.volume_set - 0.03 > 0:
                     var.botamusique.volume_set = var.botamusique.volume_set - 0.03
                 else:
                     var.botamusique.volume_set = 0
                 var.db.set('bot', 'volume', str(var.botamusique.volume_set))
-                logging.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
+                log.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
 
     return status()
 
 @web.route('/upload', methods=["POST"])
 def upload():
+    global log
+
     files = request.files.getlist("file[]")
     if not files:
         return redirect("./", code=406)
@@ -331,10 +336,10 @@ def upload():
         elif '../' in targetdir:
             return redirect("./", code=406)
 
-        logging.info('Uploading file:')
-        logging.info(' - filename: ' + filename)
-        logging.info(' - targetdir: ' + targetdir)
-        logging.info(' - mimetype: ' + file.mimetype)
+        log.info('web: Uploading file from %s:' % request.remote_addr)
+        log.info('web: - filename: ' + filename)
+        log.info('web: - targetdir: ' + targetdir)
+        log.info('web:  - mimetype: ' + file.mimetype)
 
         if "audio" in file.mimetype:
             storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
@@ -349,7 +354,7 @@ def upload():
                     return redirect("./", code=500)
 
             filepath = os.path.join(storagepath, filename)
-            logging.info(' - filepath: ' + filepath)
+            log.info(' - filepath: ' + filepath)
             if os.path.exists(filepath):
                 return redirect("./", code=406)
 
@@ -362,8 +367,11 @@ def upload():
 
 @web.route('/download', methods=["GET"])
 def download():
+    global log
+
     if 'file' in request.args:
         requested_file = request.args['file']
+        log.info('web: Download of file %s requested from %s:' % (requested_file, request.remote_addr))
         if '../' not in requested_file:
             folder_path = var.music_folder
             files = util.get_recursive_filelist_sorted(var.music_folder)
@@ -373,7 +381,7 @@ def download():
                 try:
                     return send_file(filepath, as_attachment=True)
                 except Exception as e:
-                    logging.exception(e)
+                    log.exception(e)
                     abort(404)
     elif 'directory' in request.args:
         requested_dir = request.args['directory']
@@ -388,7 +396,7 @@ def download():
             try:
                 return send_file(zipfile, as_attachment=True)
             except Exception as e:
-                logging.exception(e)
+                log.exception(e)
                 abort(404)
 
     return redirect("./", code=400)

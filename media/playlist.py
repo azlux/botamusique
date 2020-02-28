@@ -64,7 +64,7 @@ class PlayList(list):
             return False
 
         self.version += 1
-        logging.debug("playlist: Next into the queue")
+        #logging.debug("playlist: Next into the queue")
 
         if self.current_index < len(self) - 1:
             if self.mode == "one-shot" and self.current_index != -1:

@@ -8,5 +8,7 @@ dbfile = None
 db = None
 config = None
 
+bot_logger = None
+
 music_folder = ""
 tmp_folder = ""

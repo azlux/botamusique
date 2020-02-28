@@ -1,8 +1,12 @@
 import logging
 import os
 
+log = logging.getLogger("bot")
+
 
 def get_size_folder(path):
+    global log
+
     folder_size = 0
     for (path, dirs, files) in os.walk(path):
         for file in files:
@@ -12,6 +16,8 @@ def get_size_folder(path):
 
 
 def clear_tmp_folder(path, size):
+    global log
+
     if size == -1:
         return
     elif size == 0:
@@ -29,10 +35,10 @@ def clear_tmp_folder(path, size):
             for idx, file in enumerate(all_files):
                 size_tp += os.path.getsize(file)
                 if int(size_tp / (1024 * 1024)) > size:
-                    logging.info("Cleaning tmp folder")
+                    log.info("Cleaning tmp folder")
                     to_remove = all_files[:idx]
                     print(to_remove)
                     for f in to_remove:
-                        logging.debug("Removing " + f)
+                        log.debug("Removing " + f)
                         os.remove(os.path.join(path, f))
                     return

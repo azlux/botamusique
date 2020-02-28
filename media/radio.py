@@ -19,7 +19,7 @@ def get_radio_server_description(url):
         response = urllib.request.urlopen(request)
         data = json.loads(response.read().decode("utf-8"))
         title_server = data['servertitle']
-        logging.info("TITLE FOUND SHOUTCAST: " + title_server)
+        # logging.info("TITLE FOUND SHOUTCAST: " + title_server)
     except urllib.error.HTTPError:
         pass
     except http.client.BadStatusLine:
@@ -40,7 +40,7 @@ def get_radio_server_description(url):
                 title_server = source['server_name']
                 if 'server_description' in source:
                     title_server += ' - ' + source['server_description']
-                logging.info("TITLE FOUND ICECAST: " + title_server)
+                # logging.info("TITLE FOUND ICECAST: " + title_server)
                 if not title_server:
                     title_server = url
         except urllib.error.URLError:

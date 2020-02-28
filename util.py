@@ -22,6 +22,8 @@ import base64
 import media
 import media.radio
 
+log = logging.getLogger("bot")
+
 def solve_filepath(path):
     if not path:
         return ''
@@ -261,17 +263,19 @@ def new_release_version():
     return v
 
 def update(version):
+    global log
+
     v = new_release_version()
     if v > version:
-        logging.info('update: new version, start updating...')
+        log.info('update: new version, start updating...')
         tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh']).decode()
-        logging.debug(tp)
-        logging.info('update: update pip librairies dependancies')
+        log.debug(tp)
+        log.info('update: update pip librairies dependancies')
         tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
         msg = "New version installed, please restart the bot."
         
     else:
-        logging.info('update: starting update youtube-dl via pip3')
+        log.info('update: starting update youtube-dl via pip3')
         tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
         msg = ""
         if "Requirement already up-to-date" in tp:
