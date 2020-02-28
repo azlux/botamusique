@@ -711,6 +711,7 @@ def start_web_interface(addr, port):
     werkzeug_logger.addHandler(handler)
 
     interface.init_proxy()
+    interface.web.env = 'development'
     interface.web.run(port=port, host=addr)
 
 
