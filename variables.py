@@ -1,9 +1,12 @@
-current_music = None
+botamusique = None
 playlist = None
+
 user = ""
-music_folder = ""
 is_proxified = False
+
 dbfile = None
 db = None
 config = None
-botamusique = None
+
+music_folder = ""
+tmp_folder = ""

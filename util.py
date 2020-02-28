@@ -22,6 +22,16 @@ import base64
 import media
 import media.radio
 
+def solve_filepath(path):
+    if not path:
+        return ''
+
+    if path[0] == '/':
+        return path
+    else:
+        mydir = os.path.dirname(os.path.realpath(__file__))
+        return mydir + '/' + path
+
 def get_recursive_filelist_sorted(path):
     filelist = []
     for root, dirs, files in os.walk(path):
@@ -50,7 +60,7 @@ def get_music_path(music):
     if music["type"] == "url":
         uri = music['path']
     elif music["type"] == "file":
-        uri = var.config.get('bot', 'music_folder') + music["path"]
+        uri = var.music_folder + music["path"]
     elif music["type"] == "radio":
         uri = music['url']
 
@@ -213,7 +223,7 @@ def format_current_playing():
 #       - hash is a sha1 of the string representation of the directories' contents (which are
 #           zipped)
 def zipdir(zippath, zipname_prefix=None):
-    zipname = var.config.get('bot', 'tmp_folder')
+    zipname = var.tmp_folder
     if zipname_prefix and '../' not in zipname_prefix:
         zipname += zipname_prefix.strip().replace('/', '_') + '_'
 

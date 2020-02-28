@@ -153,7 +153,7 @@ def post():
         if request.form:
             logging.debug("Post request: "+ str(request.form))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
-            path = var.config.get('bot', 'music_folder') + request.form['add_file_bottom']
+            path = var.music_folder + request.form['add_file_bottom']
             if os.path.isfile(path):
                 item = {'type': 'file',
                         'path' : request.form['add_file_bottom'],
@@ -163,7 +163,7 @@ def post():
                 logging.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
-            path = var.config.get('bot', 'music_folder') + request.form['add_file_next']
+            path = var.music_folder + request.form['add_file_next']
             if os.path.isfile(path):
                 item = {'type': 'file',
                         'path' : request.form['add_file_next'],
@@ -186,7 +186,7 @@ def post():
 
             print('folder:', folder)
 
-            if os.path.isdir(var.config.get('bot', 'music_folder') + folder):
+            if os.path.isdir(var.music_folder + folder):
 
                 files = util.get_recursive_filelist_sorted(var.music_folder)
                 music_library = util.Dir(folder_path)
@@ -261,13 +261,13 @@ def post():
                 var.botamusique.launch_music(int(request.form['play_music']))
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
-            path = var.config.get('bot', 'music_folder') + request.form['delete_music_file']
+            path = var.music_folder + request.form['delete_music_file']
             if os.path.isfile(path):
                 logging.info("web: delete file " + path)
                 os.remove(path)
 
         elif 'delete_folder' in request.form and ".." not in request.form['delete_folder']:
-            path = var.config.get('bot', 'music_folder') + request.form['delete_folder']
+            path = var.music_folder + request.form['delete_folder']
             if os.path.isdir(path):
                 logging.info("web: delete folder " + path)
                 shutil.rmtree(path)

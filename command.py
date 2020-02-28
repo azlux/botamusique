@@ -136,12 +136,11 @@ def cmd_pause(bot, user, text, command, parameter):
 
 
 def cmd_play_file(bot, user, text, command, parameter):
-    music_folder = var.config.get('bot', 'music_folder')
     # if parameter is {index}
     if parameter.isdigit():
-        files = util.get_recursive_filelist_sorted(music_folder)
+        files = util.get_recursive_filelist_sorted(var.music_folder)
         if int(parameter) < len(files):
-            filename = files[int(parameter)].replace(music_folder, '')
+            filename = files[int(parameter)].replace(var.music_folder, '')
             music = {'type': 'file',
                      'path': filename,
                      'user': user}
@@ -152,8 +151,8 @@ def cmd_play_file(bot, user, text, command, parameter):
     # if parameter is {path}
     else:
         # sanitize "../" and so on
-        path = os.path.abspath(os.path.join(music_folder, parameter))
-        if not path.startswith(os.path.abspath(music_folder)):
+        path = os.path.abspath(os.path.join(var.music_folder, parameter))
+        if not path.startswith(os.path.abspath(var.music_folder)):
             bot.send_msg(constants.strings('no_file'), text)
             return
 
@@ -174,8 +173,8 @@ def cmd_play_file(bot, user, text, command, parameter):
             else:
                 parameter = ""
 
-            files = util.get_recursive_filelist_sorted(music_folder)
-            music_library = util.Dir(music_folder)
+            files = util.get_recursive_filelist_sorted(var.music_folder)
+            music_library = util.Dir(var.music_folder)
             for file in files:
                 music_library.add_file(file)
 
@@ -199,7 +198,7 @@ def cmd_play_file(bot, user, text, command, parameter):
 
         else:
             # try to do a partial match
-            files = util.get_recursive_filelist_sorted(music_folder)
+            files = util.get_recursive_filelist_sorted(var.music_folder)
             matches = [(index, file) for index, file in enumerate(files) if parameter.lower() in file.lower()]
             if len(matches) == 0:
                 bot.send_msg(constants.strings('no_file'), text)
@@ -218,7 +217,7 @@ def cmd_play_file(bot, user, text, command, parameter):
 
 
 def cmd_play_file_match(bot, user, text, command, parameter):
-    music_folder = var.config.get('bot', 'music_folder')
+    music_folder = var.music_folder
     if parameter:
         files = util.get_recursive_filelist_sorted(music_folder)
         msgs = [ constants.strings('multiple_file_added')]
@@ -561,7 +560,7 @@ def cmd_remove(bot, user, text, command, parameter):
 
 
 def cmd_list_file(bot, user, text, command, parameter):
-    folder_path = var.config.get('bot', 'music_folder')
+    folder_path = var.music_folder
 
     files = util.get_recursive_filelist_sorted(folder_path)
     msgs = [ "<br> <b>Files available:</b>" if not parameter else "<br> <b>Matched files:</b>" ]

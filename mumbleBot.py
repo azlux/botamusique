@@ -91,7 +91,8 @@ class MumbleBot:
             logging.error("Starting in ERROR loglevel")
 
         var.user = args.user
-        var.music_folder = var.config.get('bot', 'music_folder')
+        var.music_folder = util.solve_filepath(var.config.get('bot', 'music_folder'))
+        var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
         var.is_proxified = var.config.getboolean(
             "webinterface", "is_web_proxified")
         self.exit = False
@@ -139,7 +140,7 @@ class MumbleBot:
         if args.certificate:
             certificate = args.certificate
         else:
-            certificate = var.config.get("server", "certificate")
+            certificate = util.solve_filepath(var.config.get("server", "certificate"))
 
         if args.tokens:
             tokens = args.tokens
@@ -329,8 +330,7 @@ class MumbleBot:
         logging.info("bot: play music " + util.format_debug_song_string(music))
         if music["type"] == "url":
             # Delete older music is the tmp folder is too big
-            media.system.clear_tmp_folder(var.config.get(
-                'bot', 'tmp_folder'), var.config.getint('bot', 'tmp_folder_max_size'))
+            media.system.clear_tmp_folder(var.tmp_folder, var.config.getint('bot', 'tmp_folder_max_size'))
 
             # Check if the music is ready to be played
             if music["ready"] == "downloading":
@@ -348,8 +348,7 @@ class MumbleBot:
         elif music["type"] == "file":
             if not self.check_item_path_or_remove():
                 return
-            uri = var.config.get('bot', 'music_folder') + \
-                var.playlist.current_item()["path"]
+            uri = var.music_folder + var.playlist.current_item()["path"]
 
         elif music["type"] == "radio":
             uri = music["url"]
@@ -386,7 +385,7 @@ class MumbleBot:
 
         url_hash = hashlib.md5(url.encode()).hexdigest()
 
-        path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
+        path = var.tmp_folder + url_hash + ".%(ext)s"
         mp3 = path.replace(".%(ext)s", ".mp3")
         music['path'] = mp3
 
@@ -429,7 +428,7 @@ class MumbleBot:
 
         url_hash = hashlib.md5(url.encode()).hexdigest()
 
-        path = var.config.get('bot', 'tmp_folder') + url_hash + ".%(ext)s"
+        path = var.tmp_folder + url_hash + ".%(ext)s"
         mp3 = path.replace(".%(ext)s", ".mp3")
         music['path'] = mp3
 
@@ -519,7 +518,7 @@ class MumbleBot:
                     return False
 
             elif music["type"] == "file":
-                uri = var.config.get('bot', 'music_folder') + music["path"]
+                uri = var.music_folder + music["path"]
                 if not os.path.exists(uri):
                     logging.info("bot: music file missed. removing music from the playlist: %s" % util.format_debug_song_string(music))
                     self.send_msg(constants.strings('file_missed', file=music["path"]))
@@ -664,8 +663,7 @@ class MumbleBot:
             uri = music['path']
 
         elif music["type"] == "file":
-            uri = var.config.get('bot', 'music_folder') + \
-                  var.playlist.current_item()["path"]
+            uri = var.music_folder + var.playlist.current_item()["path"]
 
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-ss', "%f" % self.playhead, '-i',
                    uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
@@ -733,8 +731,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
-    parsed_configs = config.read(['configuration.default.ini', args.config], encoding='utf-8')
-    var.dbfile = args.db if args.db is not None else config.get("bot", "database_path", fallback="database.db")
+    parsed_configs = config.read([util.solve_filepath('configuration.default.ini'), util.solve_filepath(args.config)],
+                                 encoding='utf-8')
+    var.dbfile = args.db if args.db is not None else config.get("bot", "database_path",
+                                                                fallback=util.solve_filepath("database.db"))
 
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(args.config))
@@ -748,7 +748,7 @@ if __name__ == '__main__':
     formatter = logging.Formatter('[%(asctime)s %(levelname)s %(threadName)s] %(message)s', "%b %d %H:%M:%S")
     root.setLevel(logging.INFO)
 
-    logfile = var.config.get('bot', 'logfile')
+    logfile = util.solve_filepath(var.config.get('bot', 'logfile'))
 
     handler = None
     if logfile:
