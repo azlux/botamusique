@@ -737,8 +737,7 @@ if __name__ == '__main__':
     var.dbfile = args.db if args.db is not None else config.get("bot", "database_path", fallback="database.db")
 
     if len(parsed_configs) == 0:
-        logging.error('Could not read configuration from file \"{}\"'.format(
-            args.config), file=sys.stderr)
+        logging.error('Could not read configuration from file \"{}\"'.format(args.config))
         sys.exit()
 
     var.config = config
