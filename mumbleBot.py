@@ -462,10 +462,13 @@ class MumbleBot:
                     self.log.info("bot: download attempts %d / %d" % (i+1, attempts))
                     try:
                         ydl.extract_info(url)
-                        if os.path.exists(mp3) and os.stat(mp3).st_size > 0:
-                            music['ready'] = "yes"
-                            download_succeed = True
-                            break
+                        if os.path.exists(mp3):
+                            if os.stat(mp3).st_size > 0:
+                                music['ready'] = "yes"
+                                download_succeed = True
+                                break
+                            else:
+                                os.remove(mp3)
                         else:
                             self.log.error("bot: download failed: file not existed or file size is 0.")
                     except:
