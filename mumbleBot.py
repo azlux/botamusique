@@ -20,6 +20,7 @@ import youtube_dl
 import logging
 import logging.handlers
 import traceback
+from packaging import version
 
 import util
 import command
@@ -32,6 +33,7 @@ import media.radio
 import media.system
 from librb import radiobrowser
 from media.playlist import PlayList
+
 
 """
 FORMAT OF A MUSIC INTO THE PLAYLIST
@@ -65,7 +67,7 @@ type : file
 
 
 class MumbleBot:
-    version = 5
+    version = 5.1
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
@@ -196,7 +198,7 @@ class MumbleBot:
     def check_update(self):
         self.log.debug("update: checking for updates...")
         new_version = util.new_release_version()
-        if new_version > self.version:
+        if version.parse(new_version) > version.parse(self.version):
             self.log.info("update: new version %d found, current installed version %d." % (new_version, self.version))
             self.send_msg(constants.strings('new_version_found'))
         else:

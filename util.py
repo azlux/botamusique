@@ -21,8 +21,10 @@ from sys import platform
 import base64
 import media
 import media.radio
+from packaging import version
 
 log = logging.getLogger("bot")
+
 
 def solve_filepath(path):
     if not path:
@@ -34,7 +36,8 @@ def solve_filepath(path):
         mydir = os.path.dirname(os.path.realpath(__file__))
         return mydir + '/' + path
 
-def get_recursive_filelist_sorted(path):
+
+def get_recursive_file_list_sorted(path):
     filelist = []
     for root, dirs, files in os.walk(path):
         relroot = root.replace(path, '', 1)
@@ -56,6 +59,7 @@ def get_recursive_filelist_sorted(path):
 
     filelist.sort()
     return filelist
+
 
 def get_music_path(music):
     uri = ''
@@ -95,7 +99,7 @@ def get_music_tag_info(music):
                     tags = mutagen.File(uri)
                     if 'TIT2' in tags:
                         music['title'] = tags['TIT2'].text[0]
-                    if 'TPE1' in tags: # artist
+                    if 'TPE1' in tags:  # artist
                         music['artist'] = tags['TPE1'].text[0]
 
                     if im is None:
@@ -110,7 +114,7 @@ def get_music_tag_info(music):
                     tags = mutagen.File(uri)
                     if '©nam' in tags:
                         music['title'] = tags['©nam'][0]
-                    if '©ART' in tags: # artist
+                    if '©ART' in tags:  # artist
                         music['artist'] = tags['©ART'][0]
 
                         if im is None:
@@ -134,6 +138,7 @@ def get_music_tag_info(music):
         music['title'] = match[1]
 
     return music
+
 
 def format_song_string(music):
     display = ''
@@ -169,6 +174,7 @@ def format_song_string(music):
 
     return display
 
+
 def format_debug_song_string(music):
     display = ''
     source = music["type"]
@@ -203,6 +209,7 @@ def format_debug_song_string(music):
 
     return display
 
+
 def format_current_playing():
     music = var.playlist.current_item()
     display = format_song_string(music)
@@ -229,7 +236,7 @@ def zipdir(zippath, zipname_prefix=None):
     if zipname_prefix and '../' not in zipname_prefix:
         zipname += zipname_prefix.strip().replace('/', '_') + '_'
 
-    files = get_recursive_filelist_sorted(zippath)
+    files = get_recursive_file_list_sorted(zippath)
     hash = hashlib.sha1((str(files).encode())).hexdigest()
     zipname += hash + '.zip'
 
@@ -258,22 +265,25 @@ def get_user_ban():
         res += "<br/>" + i[0]
     return res
 
+
 def new_release_version():
-    v = int(urllib.request.urlopen(urllib.request.Request("https://azlux.fr/botamusique/version")).read())
-    return v
+    v = urllib.request.urlopen(urllib.request.Request("https://packages.azlux.fr/botamusique/version")).read()
+    return v.rstrip().decode()
+
 
 def update(version):
     global log
 
-    v = new_release_version()
-    if v > version:
+    new_version = new_release_version()
+    if version.parse(new_version) > version.parse(version):
         log.info('update: new version, start updating...')
-        tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh']).decode()
+        target = var.config.get('bot','target_version')
+        tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh', target]).decode()
         log.debug(tp)
         log.info('update: update pip librairies dependancies')
         tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
         msg = "New version installed, please restart the bot."
-        
+
     else:
         log.info('update: starting update youtube-dl via pip3')
         tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
@@ -285,6 +295,7 @@ def update(version):
     reload(youtube_dl)
     msg += "<br/> Youtube-dl reloaded"
     return msg
+
 
 def user_ban(user):
     var.db.set("user_ban", user, None)
@@ -315,6 +326,7 @@ def url_unban(url):
     var.db.remove_option("url_ban", url)
     res = "Done"
     return res
+
 
 def pipe_no_wait(pipefd):
     ''' Used to fetch the STDERR of ffmpeg. pipefd is the file descriptor returned from os.pipe()'''
@@ -353,7 +365,6 @@ def pipe_no_wait(pipefd):
             print(WinError())
             return False
         return True
-
 
 
 class Dir(object):
@@ -432,7 +443,7 @@ class Dir(object):
 
             for key, val in self.subdirs.items():
                 files.extend(map(lambda file: key + '/' + file, val.get_files_recursively()))
-        
+
         return files
 
     def render_text(self, ident=0):

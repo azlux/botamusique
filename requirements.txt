@@ -6,3 +6,4 @@ python-magic
 Pillow
 mutagen
 requests
+packaging
