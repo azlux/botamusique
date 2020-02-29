@@ -71,7 +71,7 @@ class MumbleBot:
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
-        self.log.info("bot: botamusique version %d, starting..." % self.version)
+        self.log.info("bot: botamusique version %s, starting..." % self.version)
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
         self.volume_set = var.config.getfloat('bot', 'volume')
