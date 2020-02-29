@@ -271,11 +271,11 @@ def new_release_version():
     return v.rstrip().decode()
 
 
-def update(version):
+def update(current_version):
     global log
 
     new_version = new_release_version()
-    if version.parse(new_version) > version.parse(version):
+    if version.parse(new_version) > version.parse(current_version):
         log.info('update: new version, start updating...')
         target = var.config.get('bot','target_version')
         tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh', target]).decode()
