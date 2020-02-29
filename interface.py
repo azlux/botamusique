@@ -96,7 +96,7 @@ def requires_auth(f):
 @requires_auth
 def index():
     folder_path = var.music_folder
-    files = util.get_recursive_filelist_sorted(var.music_folder)
+    files = util.get_recursive_file_list_sorted(var.music_folder)
     music_library = util.Dir(folder_path)
     for file in files:
         music_library.add_file(file)
@@ -191,7 +191,7 @@ def post():
 
             if os.path.isdir(var.music_folder + folder):
 
-                files = util.get_recursive_filelist_sorted(var.music_folder)
+                files = util.get_recursive_file_list_sorted(var.music_folder)
                 music_library = util.Dir(folder_path)
                 for file in files:
                     music_library.add_file(file)
@@ -374,7 +374,7 @@ def download():
         log.info('web: Download of file %s requested from %s:' % (requested_file, request.remote_addr))
         if '../' not in requested_file:
             folder_path = var.music_folder
-            files = util.get_recursive_filelist_sorted(var.music_folder)
+            files = util.get_recursive_file_list_sorted(var.music_folder)
 
             if requested_file in files:
                 filepath = os.path.join(folder_path, requested_file)
