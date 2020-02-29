@@ -67,7 +67,7 @@ type : file
 
 
 class MumbleBot:
-    version = '5.1'
+    version = '5.2'
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
