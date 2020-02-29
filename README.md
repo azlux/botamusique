@@ -43,9 +43,9 @@ Predicted functionalities will be those people would expect from any classic mus
 1. Install ffmpeg. If ffmpeg isn't in your package manager, you may need to find another source. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
 #### Install botamusique
-Stable release (**recommended**, with build-in auto-update support):
+Stable release (**recommended**):
 ```
-curl -Lo botamusique.tar.gz https://azlux.fr/botamusique/sources.tar.gz
+curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources.tar.gz
 tar -xzf botamusique.tar.gz
 cd botamusique
 python3 -m venv venv
@@ -54,7 +54,7 @@ venv/bin/pip install -r pymumble/requirements.txt
 venv/bin/pip install -r requirements.txt
 ```
 
-For the version of the master branch (no build-in auto-update support):
+Testing version (from master):
 ```
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
 cd botamusique
