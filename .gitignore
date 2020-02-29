@@ -113,3 +113,6 @@ music_folder/
 tmp/
 
 database.db
+
+# Pycharm
+.idea/

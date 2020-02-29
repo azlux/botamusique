@@ -275,14 +275,16 @@ def update(current_version):
     global log
 
     new_version = new_release_version()
-    if version.parse(new_version) > version.parse(current_version):
+    target = var.config.get('bot', 'target_version')
+    if version.parse(new_version) > version.parse(current_version) or target == "testing":
         log.info('update: new version, start updating...')
-        target = var.config.get('bot','target_version')
         tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh', target]).decode()
         log.debug(tp)
-        log.info('update: update pip librairies dependancies')
-        tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
+        log.info('update: update pip libraries dependencies')
+        sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
         msg = "New version installed, please restart the bot."
+        if target == "testing":
+            msg += tp.replace('\n', '<br/>')
 
     else:
         log.info('update: starting update youtube-dl via pip3')
