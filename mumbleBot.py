@@ -199,7 +199,7 @@ class MumbleBot:
         self.log.debug("update: checking for updates...")
         new_version = util.new_release_version()
         if version.parse(new_version) > version.parse(self.version):
-            self.log.info("update: new version %d found, current installed version %d." % (new_version, self.version))
+            self.log.info("update: new version %s found, current installed version %s." % (new_version, self.version))
             self.send_msg(constants.strings('new_version_found'))
         else:
             self.log.debug("update: no new version found.")
