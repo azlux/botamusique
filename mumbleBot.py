@@ -183,6 +183,10 @@ class MumbleBot:
                                                self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
+        # Debug use
+        self._display_rms = False
+        self._max_rms = 0
+
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
 
@@ -590,6 +594,7 @@ class MumbleBot:
         if self.on_ducking and self.ducking_release < time.time():
             self._clear_pymumble_soundqueue()
             self.on_ducking = False
+            self._max_rms = 0
 
         if delta > 0.001:
             if self.is_ducking and self.on_ducking:
@@ -600,7 +605,16 @@ class MumbleBot:
         self.last_volume_cycle_time = time.time()
 
     def ducking_sound_received(self, user, sound):
-        if audioop.rms(sound.pcm, 2) > self.ducking_threshold:
+        rms = audioop.rms(sound.pcm, 2)
+        self._max_rms = max(rms, self._max_rms)
+        if self._display_rms:
+            if rms < self.ducking_threshold:
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(rms/200), end='\r')
+            else:
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(self.ducking_threshold/200) \
+                      + '+'*int((rms - self.ducking_threshold)/200), end='\r')
+
+        if rms > self.ducking_threshold:
             if self.on_ducking is False:
                 self.log.debug("bot: ducking triggered")
                 self.on_ducking = True

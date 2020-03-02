@@ -54,6 +54,9 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('mode'), cmd_mode)
     bot.register_command(constants.commands('drop_database'), cmd_drop_database)
 
+    # Just for debug use
+    bot.register_command('rtrms', cmd_real_time_rms)
+
 def send_multi_lines(bot, lines, text):
     global log
 
@@ -762,10 +765,13 @@ def cmd_mode(bot, user, text, command, parameter):
             var.playlist.randomize()
             bot.launch_music(0)
 
-
 def cmd_drop_database(bot, user, text, command, parameter):
     global log
 
     var.db.drop_table()
     var.db = Database(var.dbfile)
     bot.send_msg(constants.strings('database_dropped'), text)
+
+# Just for debug use
+def cmd_real_time_rms(bot, user, text, command, parameter):
+    bot._display_rms = not bot._display_rms
