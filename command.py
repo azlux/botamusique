@@ -441,7 +441,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
             msg += "No playable url found for this station, please try another station."
             bot.send_msg(msg, text)
 
-yt_last_result = None
+yt_last_result = []
 yt_last_page = 0 # TODO: if we keep adding global variables, we need to consider sealing all commands up into classes.
 
 def cmd_yt_query(bot, user, text, command, parameter):

@@ -471,6 +471,8 @@ def get_url_from_input(string):
         return False
 
 def youtube_search(query):
+    global log
+
     query_url = "https://www.youtube.com/results?search_query=" + urllib.parse.quote(query, safe="")
 
     try:
@@ -479,10 +481,9 @@ def youtube_search(query):
         results = re.findall("watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
                              "(?:user|channel).*?>(.*?)<", response) # (id, title, uploader)
 
-        print(results)
-
         if len(results) > 0:
             return results
     except:
-        print(traceback.format_exc().split("During")[0])
+        error_traceback = traceback.format_exc().split("During")[0]
+        log.error("util: youtube query failed with error:\n %s" % error_traceback)
         return False
