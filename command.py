@@ -32,6 +32,8 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('play_radio'), cmd_play_radio)
     bot.register_command(constants.commands('rb_query'), cmd_rb_query)
     bot.register_command(constants.commands('rb_play'), cmd_rb_play)
+    bot.register_command(constants.commands('yt_query'), cmd_yt_query)
+    bot.register_command(constants.commands('yt_play'), cmd_yt_play)
     bot.register_command(constants.commands('help'), cmd_help)
     bot.register_command(constants.commands('stop'), cmd_stop)
     bot.register_command(constants.commands('clear'), cmd_clear)
@@ -438,6 +440,55 @@ def cmd_rb_play(bot, user, text, command, parameter):
             log.info('cmd: No playable url found.')
             msg += "No playable url found for this station, please try another station."
             bot.send_msg(msg, text)
+
+yt_last_result = None
+yt_last_page = 0 # TODO: if we keep adding global variables, we need to consider sealing all commands up into classes.
+
+def cmd_yt_query(bot, user, text, command, parameter):
+    global log, yt_last_result, yt_last_page
+    item_per_page = 5
+
+    if parameter:
+        # if next page
+        if parameter.startswith("-n"):
+            yt_last_page += 1
+            if len(yt_last_result) > yt_last_page * item_per_page:
+                msg = _yt_format_result(yt_last_result, yt_last_page * item_per_page, item_per_page)
+                bot.send_msg(constants.strings('yt_result', result_table=msg), text)
+            else:
+                bot.send_msg(constants.strings('yt_no_more'))
+
+        # if query
+        else:
+            results = util.youtube_search(parameter)
+            if results:
+                yt_last_result = results
+                yt_last_page = 0
+                msg = _yt_format_result(results, 0, item_per_page)
+                bot.send_msg(constants.strings('yt_result', result_table=msg), text)
+            else:
+                bot.send_msg(constants.strings('yt_query_error'))
+    else:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
+
+def _yt_format_result(results, start, count):
+    msg = '<table><tr><th width="10%">Index</th><th>Title</th><th width="20%">Uploader</th></tr>'
+    for index, item in enumerate(results[start:start+count]):
+        msg += '<tr><td>{index:d}</td><td>{title}</td><td>{uploader}</td></tr>'.format(
+            index=index + 1 + start, title=item[1], uploader=item[2])
+    msg += '</table>'
+
+    return msg
+
+
+def cmd_yt_play(bot, user, text, command, parameter):
+    global log, yt_last_result
+
+    if parameter and parameter.isdigit() and 0 < int(parameter) - 1 < len(yt_last_result):
+        url = "https://www.youtube.com/watch?v=" + yt_last_result[int(parameter) - 1][0]
+        cmd_play_url(bot, user, text, command, url)
+    else:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
 
 def cmd_help(bot, user, text, command, parameter):

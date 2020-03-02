@@ -18,6 +18,8 @@ from importlib import reload
 from PIL import Image
 from io import BytesIO
 from sys import platform
+import traceback
+import urllib.parse, urllib.request, urllib.error
 import base64
 import media
 import media.radio
@@ -466,4 +468,21 @@ def get_url_from_input(string):
     if res:
         return res.group(1)
     else:
+        return False
+
+def youtube_search(query):
+    query_url = "https://www.youtube.com/results?search_query=" + urllib.parse.quote(query, safe="")
+
+    try:
+        request = urllib.request.Request(query_url)
+        response = urllib.request.urlopen(request).read().decode("utf-8")
+        results = re.findall("watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
+                             "(?:user|channel).*?>(.*?)<", response) # (id, title, uploader)
+
+        print(results)
+
+        if len(results) > 0:
+            return results
+    except:
+        print(traceback.format_exc().split("During")[0])
         return False

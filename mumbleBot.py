@@ -238,7 +238,7 @@ class MumbleBot:
                 command = message[0]
                 parameter = ''
                 if len(message) > 1:
-                    parameter = message[1]
+                    parameter = message[1].rstrip()
             else:
                 return
 
