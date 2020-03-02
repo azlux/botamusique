@@ -466,6 +466,7 @@ class MumbleBot:
                         ydl.extract_info(url)
                         music['ready'] = "yes"
                         download_succeed = True
+                        break
                     except:
                         error_traceback = traceback.format_exc().split("During")[0]
                         self.log.error("bot: download failed with error:\n %s" % error_traceback)
