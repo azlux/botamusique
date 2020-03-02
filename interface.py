@@ -12,6 +12,7 @@ import random
 from werkzeug.utils import secure_filename
 import errno
 import media
+import media.radio
 import logging
 import time
 import constants
@@ -226,9 +227,12 @@ def post():
                     var.botamusique.async_download_next()
 
         elif 'add_radio' in request.form:
+            url = request.form['add_radio']
             music = var.playlist.append({'type': 'radio',
-                                 'path': request.form['add_radio'],
+                                 'url': url,
                                  'user': "Remote Control"})
+            log.info("web: fetching radio server description")
+            music["name"] = media.radio.get_radio_server_description(url)
             log.info("web: add to playlist: " + util.format_debug_song_string(music))
 
         elif 'delete_music' in request.form:

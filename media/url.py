@@ -10,7 +10,6 @@ def get_url_info(music):
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         for i in range(2):
             try:
-                print(var.playlist)
                 info = ydl.extract_info(music['url'], download=False)
                 music['duration'] = info['duration'] / 60
                 music['title'] = info['title']

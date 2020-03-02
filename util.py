@@ -8,7 +8,7 @@ import sys
 import variables as var
 import constants
 import zipfile
-import urllib.request
+import requests
 import mutagen
 import re
 import subprocess as sp
@@ -149,29 +149,30 @@ def format_song_string(music):
     artist = music["artist"] if "artist" in music else "Unknown artist"
 
     if source == "radio":
-        display = "[radio] {title} from {url} by {user}".format(
-            title=media.radio.get_radio_title(music["url"]),
+        display = constants.strings("now_playing_radio",
             url=music["url"],
+            title=media.radio.get_radio_title(music["url"]),
+            name=music["name"],
             user=music["user"]
         )
     elif source == "url" and 'from_playlist' in music:
-        display = "[url] {title} (from playlist <a href=\"{url}\">{playlist}</a>) by {user}".format(
-            title=title,
-            url=music["playlist_url"],
-            playlist=music["playlist_title"],
-            user=music["user"]
+        display = constants.strings("now_playing_from_playlist",
+                                    title=title,
+                                    url=music["playlist_url"],
+                                    playlist=music["playlist_title"],
+                                    user=music["user"]
         )
     elif source == "url":
-        display = "[url] <a href=\"{url}\">{title}</a> by {user}".format(
-            title=title,
-            url=music["url"],
-            user=music["user"]
+        display = constants.strings("now_playing_url",
+                                    title=title,
+                                    url=music["url"],
+                                    user=music["user"]
         )
     elif source == "file":
-        display = "[file] {artist} - {title} by {user}".format(
-            title=title,
-            artist=artist,
-            user=music["user"]
+        display = constants.strings("now_playing_file",
+                                    title=title,
+                                    artist=artist,
+                                    user=music["user"]
         )
 
     return display
@@ -184,7 +185,8 @@ def format_debug_song_string(music):
     artist = music["artist"] if "artist" in music else "??"
 
     if source == "radio":
-        display = "[radio] {url} by {user}".format(
+        display = "[radio] {name} ({url}) by {user}".format(
+            name=music["name"],
             url=music["url"],
             user=music["user"]
         )
@@ -216,12 +218,10 @@ def format_current_playing():
     music = var.playlist.current_item()
     display = format_song_string(music)
 
-    thumbnail_html = ''
     if 'thumbnail' in music:
         thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                          music['thumbnail'] + '"/>'
-
-    display = (constants.strings('now_playing', item=display, thumb=thumbnail_html))
+        return display + "<br />" + thumbnail_html
 
     return display
 
@@ -473,17 +473,15 @@ def get_url_from_input(string):
 def youtube_search(query):
     global log
 
-    query_url = "https://www.youtube.com/results?search_query=" + urllib.parse.quote(query, safe="")
-
     try:
-        request = urllib.request.Request(query_url)
-        response = urllib.request.urlopen(request).read().decode("utf-8")
+        r = requests.get("https://www.youtube.com/results", params={'search_query': query}, timeout=5)
         results = re.findall("watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
-                             "(?:user|channel).*?>(.*?)<", response) # (id, title, uploader)
+                             "(?:user|channel).*?>(.*?)<", r.text) # (id, title, uploader)
 
         if len(results) > 0:
             return results
-    except:
+
+    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
         error_traceback = traceback.format_exc().split("During")[0]
         log.error("util: youtube query failed with error:\n %s" % error_traceback)
         return False

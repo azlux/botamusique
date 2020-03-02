@@ -285,7 +285,7 @@ class MumbleBot:
                     if len(matches) == 1:
                         self.log.info("bot: {:s} matches {:s}".format(command, matches[0]))
                         command_exc = matches[0]
-                        self.cmd_handle[matches[0]](self, user, text, command, parameter)
+                        self.cmd_handle[command_exc](self, user, text, command_exc, parameter)
                     elif len(matches) > 1:
                         self.mumble.users[text.actor].send_text_message(
                             constants.strings('which_command', commands="<br>".join(matches)))
@@ -354,10 +354,10 @@ class MumbleBot:
 
         elif music["type"] == "radio":
             uri = music["url"]
-            if 'title' not in music:
+            if 'name' not in music:
                 self.log.info("bot: fetching radio server description")
                 title = media.radio.get_radio_server_description(uri)
-                music["title"] = title
+                music["name"] = title
 
         if var.config.getboolean('bot', 'announce_current_music'):
             self.send_msg(util.format_current_playing())
@@ -469,7 +469,8 @@ class MumbleBot:
                         break
                     except:
                         error_traceback = traceback.format_exc().split("During")[0]
-                        self.log.error("bot: download failed with error:\n %s" % error_traceback)
+                        error = error_traceback.rstrip().split("\n")[-1]
+                        self.log.error("bot: download failed with error:\n %s" % error)
 
                 if not download_succeed:
                     for f in [mp3, path.replace(".%(ext)s", ".jpg"), path.replace(".%(ext)s", ".m4a")]:

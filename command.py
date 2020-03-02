@@ -330,6 +330,10 @@ def cmd_play_radio(bot, user, text, command, parameter):
             music = {'type': 'radio',
                      'url': url,
                      'user': user}
+
+            log.info("bot: fetching radio server description")
+            music["name"] = media.radio.get_radio_server_description(url)
+
             var.playlist.append(music)
             log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
             bot.async_download_next()
@@ -429,7 +433,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
         if url != "-1":
             log.info('cmd: Found url: ' + url)
             music = {'type': 'radio',
-                     'title': stationname,
+                     'name': stationname,
                      'artist': homepage,
                      'url': url,
                      'user': user}
@@ -484,7 +488,7 @@ def _yt_format_result(results, start, count):
 def cmd_yt_play(bot, user, text, command, parameter):
     global log, yt_last_result
 
-    if parameter and parameter.isdigit() and 0 < int(parameter) - 1 < len(yt_last_result):
+    if parameter and parameter.isdigit() and 0 <= int(parameter) - 1 < len(yt_last_result):
         url = "https://www.youtube.com/watch?v=" + yt_last_result[int(parameter) - 1][0]
         cmd_play_url(bot, user, text, command, url)
     else:
