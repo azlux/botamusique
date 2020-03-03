@@ -163,7 +163,7 @@ def post():
                         'path' : request.form['add_file_bottom'],
                         'title' : '',
                         'user' : 'Remote Control'}
-                item = var.playlist.append(util.get_music_tag_info(item))
+                item = var.playlist.append(util.attach_music_tag_info(item))
                 log.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:

@@ -74,8 +74,18 @@ def get_music_path(music):
 
     return uri
 
+def attach_item_id(item):
+    if item['type'] == 'url':
+        item['id'] = hashlib.md5(item['url'].encode()).hexdigest()
+    elif item['type'] == 'file':
+        item['id'] = hashlib.md5(item['path'].encode()).hexdigest()
+    elif item['type'] == 'radio':
+        item['id'] = hashlib.md5(item['url'].encode()).hexdigest()
+    return item
 
-def get_music_tag_info(music):
+def attach_music_tag_info(music):
+    music = attach_item_id(music)
+
     if "path" in music:
         uri = get_music_path(music)
 

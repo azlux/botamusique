@@ -73,7 +73,7 @@ class MumbleBot:
         self.is_pause = False
         self.playhead = -1
         self.song_start_at = -1
-        self.download_in_progress = False
+        #self.download_threads = []
         self.wait_for_downloading = False # flag for the loop are waiting for download to complete in the other thread
 
         if var.config.getboolean("webinterface", "enabled"):
@@ -319,8 +319,10 @@ class MumbleBot:
 
             # Check if the music is ready to be played
             if music["ready"] != "yes" or not os.path.exists(music['path']):
-                self.log.info("bot: current music isn't ready, start to download.")
-                music = self.download_music()
+                self.wait_for_downloading = True
+                self.log.info("bot: current music isn't ready, start downloading.")
+                self.async_download(index)
+                return
 
             if music['ready'] == 'failed':
                 self.log.info("bot: removing music from the playlist: %s" % util.format_debug_song_string(music))
@@ -421,7 +423,7 @@ class MumbleBot:
         if not os.path.isfile(mp3):
             # download the music
             music['ready'] = "downloading"
-            var.playlist.update(music, index)
+            var.playlist.update(music, music['id'])
 
             self.log.info("bot: downloading url (%s) %s " % (music['title'], url))
             ydl_opts = ""
@@ -468,9 +470,9 @@ class MumbleBot:
             self.log.info("bot: music file existed, skip downloading " + mp3)
             music['ready'] = "yes"
 
-        music = util.get_music_tag_info(music)
+        music = util.attach_music_tag_info(music)
 
-        var.playlist.update(music, index)
+        var.playlist.update(music, music['id'])
         self.download_in_progress = False
         return music
 
@@ -485,18 +487,23 @@ class MumbleBot:
             while var.playlist.next_item() and var.playlist.next_item()['ready'] == "validation":
                 music = self.validate_music(var.playlist.next_item())
                 if music:
-                    var.playlist.update(music, var.playlist.next_index())
+                    var.playlist.update(music, music['id'])
                     break
                 else:
                     var.playlist.remove(var.playlist.next_index())
 
             if var.playlist.next_item() and var.playlist.next_item()['ready'] == "no":
-                th = threading.Thread(
-                    target=self.download_music, name="DownloadThread", args=(var.playlist.next_index(),))
-                self.log.info(
-                    "bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist.next_item()))
-                th.daemon = True
-                th.start()
+                self.async_download(var.playlist.next_index())
+
+    def async_download(self, index):
+        th = threading.Thread(
+            target=self.download_music, name="DownloadThread-" + var.playlist[index]['id'][:5], args=(index,))
+        self.log.info(
+            "bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist[index]))
+        th.daemon = True
+        th.start()
+        #self.download_threads.append(th)
+        return th
 
     def check_item_path_or_remove(self, index = -1):
         if index == -1:
@@ -576,7 +583,6 @@ class MumbleBot:
                     else:
                         self._loop_status = 'Empty queue'
                 else:
-                    print(var.playlist.current_item()["ready"])
                     if var.playlist.current_item()["ready"] != "downloading":
                         self.wait_for_downloading = False
                         self.launch_music()

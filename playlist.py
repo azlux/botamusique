@@ -1,5 +1,6 @@
 import json
 import random
+import hashlib
 
 import util
 import variables as var
@@ -7,6 +8,7 @@ import variables as var
 """
 FORMAT OF A MUSIC INTO THE PLAYLIST
 type : url
+    id
     url
     title
     path
@@ -20,12 +22,14 @@ type : url
     playlist_url
 
 type : radio
+    id
     url
     name
     current_title
     user
 
 type : file
+    id
     path
     title
     artist
@@ -63,7 +67,7 @@ class PlayList(list):
 
     def append(self, item):
         self.version += 1
-        item = util.get_music_tag_info(item)
+        item = util.attach_music_tag_info(item)
         super().append(item)
 
         return item
@@ -74,7 +78,7 @@ class PlayList(list):
         if index == -1:
             index = self.current_index
 
-        item = util.get_music_tag_info(item)
+        item = util.attach_music_tag_info(item)
         super().insert(index, item)
 
         if index <= self.current_index:
@@ -88,7 +92,7 @@ class PlayList(list):
     def extend(self, items):
         self.version += 1
         items = list(map(
-            lambda item: util.get_music_tag_info(item),
+            lambda item: util.attach_music_tag_info(item),
             items))
         super().extend(items)
         return items
@@ -120,11 +124,19 @@ class PlayList(list):
             else:
                 raise TypeError("Unknown playlist mode '%s'." % self.mode)
 
-    def update(self, item, index=-1):
+    def find(self, id):
+        for index, item in enumerate(self):
+            if item['id'] == id:
+                return index
+        return None
+
+    def update(self, item, id):
         self.version += 1
-        if index == -1:
-            index = self.current_index
-        self[index] = item
+        index = self.find(id)
+        if index:
+            self[index] = item
+            return True
+        return False
 
     def __delitem__(self, key):
         return self.remove(key)
