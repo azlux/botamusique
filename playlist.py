@@ -218,9 +218,8 @@ class PlayList(list):
         var.db.set("playlist", "current_index", self.current_index)
 
         for index, music in enumerate(self):
-            for music in self:
-                if music['type'] == 'url' and music['ready'] == 'downloading':
-                    music['ready'] = 'no'
+            if music['type'] == 'url' and music['ready'] == 'downloading':
+                music['ready'] = 'no'
 
             var.db.set("playlist_item", str(index), json.dumps(music))
 

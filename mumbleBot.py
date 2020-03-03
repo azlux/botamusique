@@ -583,12 +583,15 @@ class MumbleBot:
                     else:
                         self._loop_status = 'Empty queue'
                 else:
-                    if var.playlist.current_item()["ready"] != "downloading":
-                        self.wait_for_downloading = False
-                        self.launch_music()
-                        self.async_download_next()
+                    if var.playlist.current_item():
+                        if var.playlist.current_item()["ready"] != "downloading":
+                            self.wait_for_downloading = False
+                            self.launch_music()
+                            self.async_download_next()
+                        else:
+                            self._loop_status = 'Wait for downloading'
                     else:
-                        self._loop_status = 'Wait for downloading'
+                        self.wait_for_downloading = False
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             # Empty the buffer before exit
