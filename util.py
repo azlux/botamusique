@@ -158,7 +158,8 @@ def format_song_string(music):
     elif source == "url" and 'from_playlist' in music:
         display = constants.strings("now_playing_from_playlist",
                                     title=title,
-                                    url=music["playlist_url"],
+                                    url=music['url'],
+                                    playlist_url=music["playlist_url"],
                                     playlist=music["playlist_title"],
                                     user=music["user"]
         )
