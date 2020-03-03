@@ -311,6 +311,8 @@ def cmd_play_playlist(bot, user, text, command, parameter):
         var.playlist.extend(items)
         for music in items:
             log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
+    else:
+        bot.send_msg(constants.strings("playlist_fetching_failed"), text)
 
 
 def cmd_play_radio(bot, user, text, command, parameter):

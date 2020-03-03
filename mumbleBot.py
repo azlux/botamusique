@@ -45,7 +45,7 @@ type : url
     artist
     thumbnail
     user
-    ready (validation, no, downloading, yes)
+    ready (validation, no, downloading, yes, failed)
     from_playlist (yes,no)
     playlist_title
     playlist_url
@@ -340,15 +340,19 @@ class MumbleBot:
 
             # Check if the music is ready to be played
             if music["ready"] == "downloading":
-                return
+                self.log.info("bot: current music isn't ready, downloading in progress.")
+                while var.playlist.current_item_downloading():
+                    time.sleep(0.5)
+                music = var.playlist.current_item()
+
             elif music["ready"] != "yes" or not os.path.exists(music['path']):
-                self.log.info("bot: current music isn't ready, downloading...")
-                downloaded_music = self.download_music()
-                if not downloaded_music:
-                    self.log.info("bot: removing music from the playlist: %s" % util.format_debug_song_string(music))
-                    var.playlist.remove(index)
-                    return
-                music = downloaded_music
+                self.log.info("bot: current music isn't ready, start to download.")
+                music = self.download_music()
+
+            if music['ready'] == 'failed':
+                self.log.info("bot: removing music from the playlist: %s" % util.format_debug_song_string(music))
+                var.playlist.remove(index)
+                return
             uri = music['path']
 
         elif music["type"] == "file":
@@ -468,7 +472,6 @@ class MumbleBot:
                     self.log.info("bot: download attempts %d / %d" % (i+1, attempts))
                     try:
                         ydl.extract_info(url)
-                        music['ready'] = "yes"
                         download_succeed = True
                         break
                     except:
@@ -476,17 +479,20 @@ class MumbleBot:
                         error = error_traceback.rstrip().split("\n")[-1]
                         self.log.error("bot: download failed with error:\n %s" % error)
 
-                if not download_succeed:
+                if download_succeed:
+                    music['ready'] = "yes"
+                    self.log.info(
+                        "bot: finished downloading url (%s) %s, saved to %s." % (music['title'], url, music['path']))
+                else:
                     for f in [mp3, path.replace(".%(ext)s", ".jpg"), path.replace(".%(ext)s", ".m4a")]:
                         if os.path.exists(f):
                             os.remove(f)
                     self.send_msg(constants.strings('unable_download'))
-                    return False
+                    music['ready'] = "failed"
         else:
             self.log.info("bot: music file existed, skip downloading " + mp3)
             music['ready'] = "yes"
 
-        self.log.info("bot: finished downloading url (%s) %s, saved to %s." % (music['title'], url, music['path']))
         music = util.get_music_tag_info(music)
 
         var.playlist.update(music, index)
@@ -574,9 +580,10 @@ class MumbleBot:
 
             if self.thread is None or not raw_music:
                 # Not music into the buffet
-                if not self.is_pause and var.playlist.next():
-                    self.launch_music()
-                    self.async_download_next()
+                if not self.is_pause:
+                    if len(var.playlist) > 0 and var.playlist.next():
+                        self.launch_music()
+                        self.async_download_next()
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             # Empty the buffer before exit

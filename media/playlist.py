@@ -114,6 +114,11 @@ class PlayList(list):
     def current_item(self):
         return self[self.current_index]
 
+    def current_item_downloading(self):
+        if self[self.current_index]['type'] == 'url' and self[self.current_index]['ready'] == 'downloading':
+            return True
+        return False
+
     def next_index(self):
         if len(self) == 0:
             return False
