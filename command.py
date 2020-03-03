@@ -57,6 +57,8 @@ def register_all_commands(bot):
 
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms)
+    # bot.register_command('loop', cmd_loop_state)
+    # bot.register_command('item', cmd_item)
 
 def send_multi_lines(bot, lines, text):
     global log
@@ -799,3 +801,10 @@ def cmd_drop_database(bot, user, text, command, parameter):
 # Just for debug use
 def cmd_real_time_rms(bot, user, text, command, parameter):
     bot._display_rms = not bot._display_rms
+
+def cmd_loop_state(bot, user, text, command, parameter):
+    print(bot._loop_status)
+
+def cmd_item(bot, user, text, command, parameter):
+    print(bot.wait_for_downloading)
+    print(var.playlist.current_item())

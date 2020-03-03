@@ -32,38 +32,7 @@ import media.playlist
 import media.radio
 import media.system
 from librb import radiobrowser
-from media.playlist import PlayList
-
-
-"""
-FORMAT OF A MUSIC INTO THE PLAYLIST
-type : url
-    url
-    title
-    path
-    duration
-    artist
-    thumbnail
-    user
-    ready (validation, no, downloading, yes, failed)
-    from_playlist (yes,no)
-    playlist_title
-    playlist_url
-
-type : radio
-    url
-    name
-    current_title
-    user
-
-type : file
-    path
-    title
-    artist
-    duration
-    thumbnail
-    user
-"""
+from playlist import PlayList
 
 
 class MumbleBot:
@@ -104,6 +73,8 @@ class MumbleBot:
         self.is_pause = False
         self.playhead = -1
         self.song_start_at = -1
+        self.download_in_progress = False
+        self.wait_for_downloading = False # flag for the loop are waiting for download to complete in the other thread
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -184,6 +155,7 @@ class MumbleBot:
             self.mumble.set_receive_sound(True)
 
         # Debug use
+        self._loop_status = 'Idle'
         self._display_rms = False
         self._max_rms = 0
 
@@ -325,7 +297,7 @@ class MumbleBot:
     def launch_music(self, index=-1):
         uri = ""
         music = None
-        if var.playlist.length() == 0:
+        if var.playlist.is_empty():
             return
 
         if index == -1:
@@ -333,19 +305,20 @@ class MumbleBot:
         else:
             music = var.playlist.jump(index)
 
+        self.wait_for_downloading = False
+
         self.log.info("bot: play music " + util.format_debug_song_string(music))
         if music["type"] == "url":
             # Delete older music is the tmp folder is too big
             media.system.clear_tmp_folder(var.tmp_folder, var.config.getint('bot', 'tmp_folder_max_size'))
 
-            # Check if the music is ready to be played
-            if music["ready"] == "downloading":
-                self.log.info("bot: current music isn't ready, downloading in progress.")
-                while var.playlist.current_item_downloading():
-                    time.sleep(0.5)
-                music = var.playlist.current_item()
+            if music['ready'] == 'downloading':
+                self.wait_for_downloading = True
+                self.log.info("bot: current music isn't ready, other thread is downloading.")
+                return
 
-            elif music["ready"] != "yes" or not os.path.exists(music['path']):
+            # Check if the music is ready to be played
+            if music["ready"] != "yes" or not os.path.exists(music['path']):
                 self.log.info("bot: current music isn't ready, start to download.")
                 music = self.download_music()
 
@@ -413,7 +386,7 @@ class MumbleBot:
             if music['duration'] > var.config.getint('bot', 'max_track_duration'):
                 # Check the length, useful in case of playlist, it wasn't checked before)
                 self.log.info(
-                    "the music " + music["url"] + " has a duration of " + music['duration'] + "s -- too long")
+                    "the music " + music["url"] + " has a duration of " + str(music['duration']) + "s -- too long")
                 self.send_msg(constants.strings('too_long'))
                 return False
             else:
@@ -446,7 +419,7 @@ class MumbleBot:
         if not os.path.isfile(mp3):
             # download the music
             music['ready'] = "downloading"
-
+            var.playlist.update(music, index)
 
             self.log.info("bot: downloading url (%s) %s " % (music['title'], url))
             ydl_opts = ""
@@ -502,16 +475,25 @@ class MumbleBot:
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         self.log.debug("bot: Async download next asked ")
-        if var.playlist.length() > 1 and var.playlist.next_item()['type'] == 'url' \
-                and (var.playlist.next_item()['ready'] in ["no", "validation"]):
-            th = threading.Thread(
-                target=self.download_music, name="DownloadThread", args=(var.playlist.next_index(),))
-            self.log.info(
-                "bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist.next_item()))
-            th.daemon = True
-            th.start()
-        else:
-            return
+        if var.playlist.next_item() and var.playlist.next_item()['type'] == 'url':
+            # usually, all validation will be done when adding to the list.
+            # however, for performance consideration, youtube playlist won't be validate when added.
+            # the validation has to be done here.
+            while var.playlist.next_item() and var.playlist.next_item()['ready'] == "validation":
+                music = self.validate_music(var.playlist.next_item())
+                if music:
+                    var.playlist.update(music, var.playlist.next_index())
+                    break
+                else:
+                    var.playlist.remove(var.playlist.next_index())
+
+            if var.playlist.next_item() and var.playlist.next_item()['ready'] == "no":
+                th = threading.Thread(
+                    target=self.download_music, name="DownloadThread", args=(var.playlist.next_index(),))
+                self.log.info(
+                    "bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist.next_item()))
+                th.daemon = True
+                th.start()
 
     def check_item_path_or_remove(self, index = -1):
         if index == -1:
@@ -549,12 +531,15 @@ class MumbleBot:
         raw_music = ""
         while not self.exit and self.mumble.is_alive():
 
-            while self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
+            while self.thread and self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 # If the buffer isn't empty, I cannot send new music part, so I wait
+                self._loop_status = 'Wait for buffer %.3f' % self.mumble.sound_output.get_buffer_size()
                 time.sleep(0.01)
+
             if self.thread:
                 # I get raw from ffmpeg thread
                 # move playhead forward
+                self._loop_status = 'Reading raw'
                 if self.song_start_at == -1:
                     self.song_start_at = time.time() - self.playhead
                 self.playhead = time.time() - self.song_start_at
@@ -578,12 +563,23 @@ class MumbleBot:
             else:
                 time.sleep(0.1)
 
-            if self.thread is None or not raw_music:
-                # Not music into the buffet
-                if not self.is_pause:
-                    if len(var.playlist) > 0 and var.playlist.next():
+            if not self.is_pause and (self.thread is None or not raw_music):
+                # ffmpeg thread has gone. indicate that last song has finished. move to the next song.
+                if not self.wait_for_downloading:
+                    if var.playlist.next():
+                    # if downloading in the other thread
                         self.launch_music()
                         self.async_download_next()
+                    else:
+                        self._loop_status = 'Empty queue'
+                else:
+                    print(var.playlist.current_item()["ready"])
+                    if var.playlist.current_item()["ready"] != "downloading":
+                        self.wait_for_downloading = False
+                        self.launch_music()
+                        self.async_download_next()
+                    else:
+                        self._loop_status = 'Wait for downloading'
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             # Empty the buffer before exit
@@ -591,6 +587,7 @@ class MumbleBot:
         time.sleep(0.5)
 
         if self.exit:
+            self._loop_status = "exited"
             if var.config.getboolean('bot', 'save_playlist', fallback=True):
                 self.log.info("bot: save playlist into database")
                 var.playlist.save()
