@@ -24,7 +24,6 @@ def get_playlist_info(url, start_index=0, user=""):
 
                 playlist_title = info['title']
                 for j in range(start_index, min(len(info['entries']), start_index + var.config.getint('bot', 'max_track_playlist'))):
-                    print(info['entries'][j])
                     # Unknow String if No title into the json
                     title = info['entries'][j]['title'] if 'title' in info['entries'][j] else "Unknown Title"
                     # Add youtube url if the url in the json isn't a full url

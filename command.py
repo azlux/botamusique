@@ -68,7 +68,7 @@ def send_multi_lines(bot, lines, text):
     for newline in lines:
         msg += br
         br = "<br>"
-        if len(msg) + len(newline) > 5000:
+        if (len(msg) + len(newline)) > (bot.mumble.get_max_message_length() - 4) != 0: # 4 == len("<br>")
             bot.send_msg(msg, text)
             msg = ""
         msg += newline
@@ -667,6 +667,10 @@ def cmd_last(bot, user, text, command, parameter):
 
 def cmd_remove(bot, user, text, command, parameter):
     global log
+
+    if bot.download_in_progress:
+        bot.send_msg(constants.strings("cannot_change_when_download"))
+        return
 
     # Allow to remove specific music into the queue with a number
     if parameter and parameter.isdigit() and int(parameter) > 0 \

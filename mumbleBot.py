@@ -407,6 +407,8 @@ class MumbleBot:
             # then no need to download
             return music
 
+        self.download_in_progress = True
+
         url = music['url']
 
         url_hash = hashlib.md5(url.encode()).hexdigest()
@@ -469,6 +471,7 @@ class MumbleBot:
         music = util.get_music_tag_info(music)
 
         var.playlist.update(music, index)
+        self.download_in_progress = False
         return music
 
     def async_download_next(self):
