@@ -143,8 +143,6 @@ class URLItem(FileItem):
                 'preferredquality': '192'},
                 {'key': 'FFmpegMetadata'}]
         }
-        # TODO
-        self.send_client_message(constants.strings('download_in_progress', item=self.url))
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             attempts = var.config.getint('bot', 'download_attempts', fallback=2)
@@ -166,6 +164,7 @@ class URLItem(FileItem):
                 self.log.info(
                     "bot: finished downloading url (%s) %s, saved to %s." % (self.title, self.url, self.path))
                 self.downloading = False
+                self._read_thumbnail_from_file(base_path + ".jpg")
                 return True
             else:
                 for f in glob.glob(base_path + "*"):
@@ -210,6 +209,9 @@ class URLItem(FileItem):
             display += "<br />" +  thumbnail_html
 
         return display
+
+    def format_short_string(self):
+        return self.title if self.title else self.url
 
     def display_type(self):
         return constants.strings("url")

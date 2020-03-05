@@ -12,7 +12,7 @@ from librb import radiobrowser
 from database import Database
 from media.playlist import PlaylistItemWrapper
 from media.file import FileItem
-from media.url_from_playlist import URLFromPlaylistItem, get_playlist_info
+from media.url_from_playlist import PlaylistURLItem, get_playlist_info
 from media.url import URLItem
 from media.radio import RadioItem
 
@@ -139,8 +139,10 @@ def cmd_play(bot, user, text, command, parameter):
 
     if var.playlist.length() > 0:
         if parameter:
-            if parameter.isdigit() and 0 <= int(parameter) <= len(var.playlist):
-                var.playlist.point_to(int(parameter) - 1)
+            if parameter.isdigit() and 1 <= int(parameter) <= len(var.playlist):
+                var.playlist.point_to(int(parameter) - 1 - 1) # First "-1" transfer 12345 to 01234, second "-1"
+                                                            # point to the previous item. the loop will next to
+                                                            # the one you want
                 bot.interrupt_playing()
             else:
                 bot.send_msg(constants.strings('invalid_index', index=parameter), text)
@@ -299,7 +301,7 @@ def cmd_play_playlist(bot, user, text, command, parameter):
     log.debug("cmd: fetching media info from playlist url %s" % url)
     items = get_playlist_info(bot, url=url, start_index=offset, user=user)
     if len(items) > 0:
-        var.playlist.extend(items)
+        var.playlist.extend(list(map(lambda item: PlaylistItemWrapper(item, user), items)))
         for music in items:
             log.info("cmd: add to playlist: " + music.format_debug_string())
     else:
@@ -636,8 +638,7 @@ def cmd_last(bot, user, text, command, parameter):
 
     if len(var.playlist) > 0:
         bot.interrupt_playing()
-        bot.launch_music(len(var.playlist) - 1)
-        bot.async_download_next()
+        var.playlist.point_to(len(var.playlist) - 1)
     else:
         bot.send_msg(constants.strings('queue_empty'), text)
 
@@ -669,7 +670,7 @@ def cmd_remove(bot, user, text, command, parameter):
             removed = var.playlist.remove(index)
 
         bot.send_msg(constants.strings('removing_item',
-            item=removed.format_song_string()), text)
+            item=removed.format_short_string()), text)
 
         log.info("cmd: delete from playlist: " + removed.format_debug_string())
     else:
@@ -714,12 +715,13 @@ def cmd_queue(bot, user, text, command, parameter):
         msgs = [ constants.strings('queue_contents')]
         for i, value in enumerate(var.playlist):
             newline = ''
+            music = value.item
             if i == var.playlist.current_index:
-                newline = '<b>{} ▶ ({}) {} ◀</b>'.format(i + 1, value['type'],
-                                                           value['title'] if 'title' in value else value['url'])
+                newline = '<b>{} ▶ ({}) {} ◀</b>'.format(i + 1, music.display_type(),
+                                                           music.format_short_string())
             else:
-                newline = '<b>{}</b> ({}) {}'.format(i + 1, value['type'],
-                                                     value['title'] if 'title' in value else value['url'])
+                newline = '<b>{}</b> ({}) {}'.format(i + 1, music.display_type(),
+                                                           music.format_short_string())
 
             msgs.append(newline)
 

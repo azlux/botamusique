@@ -1,14 +1,13 @@
 import json
 import random
-import hashlib
 import threading
 import logging
 
-import util
 import variables as var
-from media.item import BaseItem
 from media.file import FileItem
 from media.url import URLItem
+from media.url_from_playlist import PlaylistURLItem
+from media.radio import RadioItem
 
 
 class PlaylistItemWrapper:
@@ -27,6 +26,9 @@ class PlaylistItemWrapper:
     def format_song_string(self):
         return self.item.format_song_string(self.user)
 
+    def format_short_string(self):
+        return self.item.format_short_string()
+
     def format_debug_string(self):
         return self.item.format_debug_string()
 
@@ -36,6 +38,10 @@ def dict_to_item(dict):
         return PlaylistItemWrapper(FileItem(var.bot, "", dict), dict['user'])
     elif dict['type'] == 'url':
         return PlaylistItemWrapper(URLItem(var.bot, "", dict), dict['user'])
+    elif dict['type'] == 'url_from_playlist':
+        return PlaylistItemWrapper(PlaylistURLItem(var.bot, "", "", "", "", dict), dict['user'])
+    elif dict['type'] == 'radio':
+        return PlaylistItemWrapper(RadioItem(var.bot, "", "", dict), dict['user'])
 
 
 class PlayList(list):
@@ -79,7 +85,6 @@ class PlayList(list):
         if index == -1:
             index = self.current_index
 
-        item = util.attach_music_tag_info(item)
         super().insert(index, item)
 
         if index <= self.current_index:
@@ -95,9 +100,6 @@ class PlayList(list):
 
     def extend(self, items):
         self.version += 1
-        items = list(map(
-            lambda item: item,
-            items))
         super().extend(items)
         self.pending_items.extend(items)
         self.start_async_validating()

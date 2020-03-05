@@ -330,7 +330,7 @@ class MumbleBot:
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         self.log.debug("bot: Async download next asked ")
-        while var.playlist.next_item() and var.playlist.next_item().item.type == 'url':
+        while var.playlist.next_item() and var.playlist.next_item().item.type in ['url', 'url_from_playlist']:
             # usually, all validation will be done when adding to the list.
             # however, for performance consideration, youtube playlist won't be validate when added.
             # the validation has to be done here.
@@ -390,15 +390,14 @@ class MumbleBot:
                     if var.playlist.next():
                         current = var.playlist.current_item().item
                         if current.validate():
-                            print("validate")
                             if current.is_ready():
-                                print("ready")
                                 self.launch_music()
                                 self.async_download_next()
                             else:
                                 self.log.info("bot: current music isn't ready, start downloading.")
                                 self.wait_for_downloading = True
                                 current.async_prepare()
+                                self.send_msg(constants.strings('download_in_progress', item=current.format_short_string()))
                         else:
                             var.playlist.remove_by_id(current.id)
                     else:

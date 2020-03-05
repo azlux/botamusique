@@ -14,7 +14,7 @@ import errno
 import media
 from media.playlist import PlaylistItemWrapper
 from media.file import FileItem
-from media.url_from_playlist import URLFromPlaylistItem, get_playlist_info
+from media.url_from_playlist import PlaylistURLItem, get_playlist_info
 from media.url import URLItem
 from media.radio import RadioItem
 import logging

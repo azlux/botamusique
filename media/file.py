@@ -30,7 +30,7 @@ class FileItem(BaseItem):
             super().__init__(bot)
             self.path = path
             self.title = ""
-            self.artist = "??"
+            self.artist = ""
             self.thumbnail = None
             if self.path:
                 self.id = hashlib.md5(path.encode()).hexdigest()
@@ -132,9 +132,8 @@ class FileItem(BaseItem):
         return dict
 
     def format_debug_string(self):
-        return "[file] {artist} - {title} ({path})".format(
-            title=self.title,
-            artist=self.artist,
+        return "[file] {descrip} ({path})".format(
+            descrip=self.format_short_string(),
             path=self.path
         )
 
@@ -153,6 +152,13 @@ class FileItem(BaseItem):
             display += "<br />" +  thumbnail_html
 
         return display
+
+    def format_short_string(self):
+        title = self.title if self.title else self.path
+        if self.artist:
+            return self.artist + " - " + title
+        else:
+            return title
 
     def display_type(self):
         return constants.strings("file")

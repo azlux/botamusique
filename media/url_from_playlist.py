@@ -3,7 +3,6 @@ import constants
 import media
 import variables as var
 from media.url import URLItem
-from media.playlist import PlaylistItemWrapper
 
 def get_playlist_info(bot, url, start_index=0, user=""):
     items = []
@@ -33,15 +32,15 @@ def get_playlist_info(bot, url, start_index=0, user=""):
                     # Add youtube url if the url in the json isn't a full url
                     item_url = info['entries'][j]['url'] if info['entries'][j]['url'][0:4] == 'http' \
                         else "https://www.youtube.com/watch?v=" + info['entries'][j]['url']
+                    print(info['entries'][j])
 
-                    music = PlaylistItemWrapper(
-                        URLFromPlaylistItem(
+                    music = PlaylistURLItem(
                             bot,
                             item_url,
                             title,
                             url,
                             playlist_title
-                        ), user)
+                        )
 
                     items.append(music)
             except:
@@ -49,7 +48,7 @@ def get_playlist_info(bot, url, start_index=0, user=""):
 
     return items
 
-class URLFromPlaylistItem(URLItem):
+class PlaylistURLItem(URLItem):
     def __init__(self, bot, url, title, playlist_url, playlist_title, from_dict=None):
         if from_dict is None:
             super().__init__(bot, url)

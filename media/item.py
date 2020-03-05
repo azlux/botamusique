@@ -41,6 +41,7 @@ class BaseItem:
         self.bot = bot
         self.log = logging.getLogger("bot")
         self.type = "base"
+        self.title = ""
 
         if from_dict is None:
             self.id = ""
@@ -82,6 +83,9 @@ class BaseItem:
 
     def format_current_playing(self, user):
         return self.id
+
+    def format_short_string(self):
+        return self.title
 
     def format_debug_string(self):
         return self.id
