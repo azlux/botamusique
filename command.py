@@ -137,13 +137,13 @@ def cmd_url_unban(bot, user, text, command, parameter):
 def cmd_play(bot, user, text, command, parameter):
     global log
 
-    if var.playlist.length() > 0:
+    if len(var.playlist) > 0:
         if parameter:
             if parameter.isdigit() and 1 <= int(parameter) <= len(var.playlist):
                 var.playlist.point_to(int(parameter) - 1 - 1) # First "-1" transfer 12345 to 01234, second "-1"
                                                             # point to the previous item. the loop will next to
                                                             # the one you want
-                bot.interrupt_playing()
+                bot.interrupt()
             else:
                 bot.send_msg(constants.strings('invalid_index', index=parameter), text)
 
@@ -283,7 +283,7 @@ def cmd_play_url(bot, user, text, command, parameter):
 
     log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
     bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
-    if var.playlist.length() == 2:
+    if len(var.playlist) == 2:
         # If I am the second item on the playlist. (I am the next one!)
         bot.async_download_next()
 
@@ -617,7 +617,7 @@ def cmd_current_music(bot, user, text, command, parameter):
     global log
 
     reply = ""
-    if var.playlist.length() > 0:
+    if len(var.playlist) > 0:
         bot.send_msg(var.playlist.current_item().format_current_playing())
     else:
         reply = constants.strings('not_playing')
@@ -627,9 +627,9 @@ def cmd_current_music(bot, user, text, command, parameter):
 def cmd_skip(bot, user, text, command, parameter):
     global log
 
-    if var.playlist.length() > 0:
-        bot.interrupt_playing()
-    else:
+    bot.interrupt()
+
+    if len(var.playlist) == 0:
         bot.send_msg(constants.strings('queue_empty'), text)
 
 
@@ -637,7 +637,7 @@ def cmd_last(bot, user, text, command, parameter):
     global log
 
     if len(var.playlist) > 0:
-        bot.interrupt_playing()
+        bot.interrupt()
         var.playlist.point_to(len(var.playlist) - 1)
     else:
         bot.send_msg(constants.strings('queue_empty'), text)
@@ -648,7 +648,7 @@ def cmd_remove(bot, user, text, command, parameter):
 
     # Allow to remove specific music into the queue with a number
     if parameter and parameter.isdigit() and int(parameter) > 0 \
-            and int(parameter) <= var.playlist.length():
+            and int(parameter) <= len(var.playlist):
 
         index = int(parameter) - 1
 
@@ -658,14 +658,14 @@ def cmd_remove(bot, user, text, command, parameter):
 
             if index < len(var.playlist):
                 if not bot.is_pause:
-                    bot.interrupt_playing()
+                    bot.interrupt()
                     var.playlist.current_index -= 1
                     # then the bot will move to next item
 
             else: # if item deleted is the last item of the queue
                 var.playlist.current_index -= 1
                 if not bot.is_pause:
-                    bot.interrupt_playing()
+                    bot.interrupt()
         else:
             removed = var.playlist.remove(index)
 
@@ -730,7 +730,7 @@ def cmd_queue(bot, user, text, command, parameter):
 def cmd_random(bot, user, text, command, parameter):
     global log
 
-    bot.interrupt_playing()
+    bot.interrupt()
     var.playlist.randomize()
 
 def cmd_repeat(bot, user, text, command, parameter):
@@ -760,14 +760,13 @@ def cmd_mode(bot, user, text, command, parameter):
         bot.send_msg(constants.strings('unknown_mode', mode=parameter), text)
     else:
         var.db.set('playlist', 'playback_mode', parameter)
-        var.playlist.set_mode(parameter)
+        var.playlist = media.playlist.get_playlist(parameter, var.playlist)
         log.info("command: playback mode changed to %s." % parameter)
         bot.send_msg(constants.strings("change_mode", mode=var.playlist.mode,
                                        user=bot.mumble.users[text.actor]['name']), text)
         if parameter == "random":
-            bot.stop()
-            var.playlist.randomize()
-            bot.launch_music(0)
+            bot.interrupt()
+            bot.launch_music()
 
 def cmd_drop_database(bot, user, text, command, parameter):
     global log

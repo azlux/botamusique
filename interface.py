@@ -120,7 +120,7 @@ def index():
 @web.route("/playlist", methods=['GET'])
 @requires_auth
 def playlist():
-    if var.playlist.length() == 0:
+    if len(var.playlist) == 0:
         return jsonify({'items': [render_template('playlist.html',
                                m=False,
                                index=-1
@@ -140,7 +140,7 @@ def playlist():
     return jsonify({ 'items': items })
 
 def status():
-    if (var.playlist.length() > 0):
+    if len(var.playlist) > 0:
         return jsonify({'ver': var.playlist.version,
                         'empty': False,
                         'play': not var.bot.is_pause,
@@ -184,8 +184,6 @@ def post():
             if not folder.endswith('/'):
                 folder += '/'
 
-            print('folder:', folder)
-
             if os.path.isdir(var.music_folder + folder):
 
                 files = util.get_recursive_file_list_sorted(var.music_folder)
@@ -199,10 +197,10 @@ def post():
                     files = music_library.get_files(folder)
 
                 music_wrappers = list(map(
-                    lambda file: PlaylistItemWrapper(FileItem(var.bot, file), user),
+                    lambda file: PlaylistItemWrapper(FileItem(var.bot, folder + file), user),
                     files))
 
-                var.playlist.extend(files)
+                var.playlist.extend(music_wrappers)
 
                 for music_wrapper in music_wrappers:
                     log.info('web: add to playlist: ' + music_wrapper.format_debug_string())
@@ -213,7 +211,7 @@ def post():
             var.playlist.append(music_wrapper)
 
             log.info("web: add to playlist: " + music_wrapper.format_debug_string())
-            if var.playlist.length() == 2:
+            if len(var.playlist) == 2:
                 # If I am the second item on the playlist. (I am the next one!)
                 var.bot.async_download_next()
 
@@ -228,7 +226,7 @@ def post():
             music_wrapper = var.playlist[int(request.form['delete_music'])]
             log.info("web: delete from playlist: " + music_wrapper.format_debug_string())
 
-            if var.playlist.length() >= int(request.form['delete_music']):
+            if len(var.playlist) >= int(request.form['delete_music']):
                 index = int(request.form['delete_music'])
 
                 if index == var.playlist.current_index:
@@ -236,14 +234,14 @@ def post():
 
                     if index < len(var.playlist):
                         if not var.bot.is_pause:
-                            var.bot.interrupt_playing()
+                            var.bot.interrupt()
                             var.playlist.current_index -= 1
                             # then the bot will move to next item
 
                     else:  # if item deleted is the last item of the queue
                         var.playlist.current_index -= 1
                         if not var.bot.is_pause:
-                            var.bot.interrupt_playing()
+                            var.bot.interrupt()
                 else:
                     var.playlist.remove(index)
 
@@ -254,7 +252,8 @@ def post():
 
             if len(var.playlist) >= int(request.form['play_music']):
                 var.playlist.point_to(int(request.form['play_music']) - 1)
-                var.bot.interrupt_playing()
+                var.bot.interrupt()
+                time.sleep(0.1)
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
             path = var.music_folder + request.form['delete_music_file']
@@ -272,16 +271,16 @@ def post():
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
-                var.bot.interrupt_playing()
-                var.playlist.set_mode("random")
+                var.playlist = media.playlist.get_playlist("random", var.playlist)
+                var.bot.interrupt()
                 var.db.set('playlist', 'playback_mode', "random")
                 log.info("web: playback mode changed to random.")
             if action == "one-shot":
-                var.playlist.set_mode("one-shot")
+                var.playlist = media.playlist.get_playlist("one-shot", var.playlist)
                 var.db.set('playlist', 'playback_mode', "one-shot")
                 log.info("web: playback mode changed to one-shot.")
             if action == "repeat":
-                var.playlist.set_mode("repeat")
+                var.playlist = media.playlist.get_playlist("epeat", var.playlist)
                 var.db.set('playlist', 'playback_mode', "repeat")
                 log.info("web: playback mode changed to repeat.")
             elif action == "stop":

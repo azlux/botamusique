@@ -78,7 +78,7 @@ class URLItem(FileItem):
             # Check the length, useful in case of playlist, it wasn't checked before)
             log.info(
                 "url: " + self.url + " has a duration of " + str(self.duration) + " min -- too long")
-            self.send_client_message(constants.strings('too_long'))
+            self.send_client_message(constants.strings('too_long', song=self.title))
             return False
         else:
             self.ready = "validated"

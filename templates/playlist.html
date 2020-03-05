@@ -26,7 +26,11 @@
             <span class="badge badge-secondary">{{ m.display_type() }}</span>
             <br>
             {% if m.type == 'file' %}
-                {{ m.artist }}
+                {% if m.artist %}
+                    {{ m.artist }}
+                {% else %}
+                    ??
+                {% endif %}
             {% elif m.type == 'url_from_playlist' %}
                 <a href="{{ m.playlist_url }}"><i>{{ m.playlist_title|truncate(50) }}</i></a>
             {% else %}

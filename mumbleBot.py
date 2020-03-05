@@ -29,7 +29,7 @@ import media.url
 import media.file
 import media.radio
 import media.system
-from media.playlist import PlayList
+from media.playlist import BasePlayList
 
 
 class MumbleBot:
@@ -472,19 +472,17 @@ class MumbleBot:
         self.log.info("bot: music stopped. playlist trashed.")
 
     def stop(self):
-        # stop and move to the next item in the playlist
+        self.interrupt()
         self.is_pause = True
-        self.interrupt_playing()
-        self.playhead = 0
-        var.playlist.next()
         self.log.info("bot: music stopped.")
 
-    def interrupt_playing(self):
+    def interrupt(self):
         # Kill the ffmpeg thread
         if self.thread:
             self.thread.kill()
             self.thread = None
         self.song_start_at = -1
+        self.playhead = 0
 
     def pause(self):
         # Kill the ffmpeg thread
@@ -522,7 +520,7 @@ class MumbleBot:
 
 
         if var.config.getboolean('bot', 'announce_current_music'):
-            self.send_msg(util.format_current_playing())
+            self.send_msg(var.playlist.current_item().format_current_playing())
 
         self.log.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
@@ -627,15 +625,6 @@ if __name__ == '__main__':
     bot_logger.addHandler(handler)
     var.bot_logger = bot_logger
 
-    var.playlist = PlayList() # playlist should be initialized after the database
-    var.bot = MumbleBot(args)
-    command.register_all_commands(var.bot)
-
-    # load playlist
-    if var.config.getboolean('bot', 'save_playlist', fallback=True):
-        var.bot_logger.info("bot: load playlist from previous session")
-        var.playlist.load()
-
     # load playback mode
     playback_mode = None
     if var.db.has_option("playlist", "playback_mode"):
@@ -644,7 +633,17 @@ if __name__ == '__main__':
         playback_mode = var.config.get('bot', 'playback_mode', fallback="one-shot")
 
     if playback_mode in ["one-shot", "repeat", "random"]:
-        var.playlist.set_mode(playback_mode)
+        var.playlist = media.playlist.get_playlist(playback_mode)
+    else:
+        raise KeyError("Unknown playback mode '%s'" % playback_mode)
+
+    var.bot = MumbleBot(args)
+    command.register_all_commands(var.bot)
+
+    # load playlist
+    if var.config.getboolean('bot', 'save_playlist', fallback=True):
+        var.bot_logger.info("bot: load playlist from previous session")
+        var.playlist.load()
 
     # Start the main loop.
     var.bot.loop()

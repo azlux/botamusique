@@ -122,6 +122,9 @@ class RadioItem(BaseItem):
     def format_current_playing(self, user):
         return constants.strings("now_playing", item=self.format_song_string(user))
 
+    def format_short_string(self):
+        return self.title if self.title else self.url
+
     def display_type(self):
         return constants.strings("radio")
 
