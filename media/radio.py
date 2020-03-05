@@ -1,16 +1,19 @@
 import re
 import logging
-import json
-import http.client
 import struct
 import requests
 import traceback
+import hashlib
+
+from media.item import BaseItem
+import constants
 
 log = logging.getLogger("bot")
 
 def get_radio_server_description(url):
     global log
 
+    log.debug("radio: fetching radio server description")
     p = re.compile('(https?\:\/\/[^\/]*)', re.IGNORECASE)
     res = re.search(p, url)
     base_url = res.group(1)
@@ -50,6 +53,9 @@ def get_radio_server_description(url):
 
 
 def get_radio_title(url):
+    global log
+
+    log.debug("radio: fetching radio server description")
     try:
         r = requests.get(url, headers={'Icy-MetaData': '1'}, stream=True, timeout=5)
         icy_metaint_header = int(r.headers['icy-metaint'])
@@ -67,3 +73,57 @@ def get_radio_title(url):
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
         pass
     return url
+
+class RadioItem(BaseItem):
+    def __init__(self, bot, url, name="", from_dict=None):
+        if from_dict is None:
+            super().__init__(bot)
+            self.url = url
+            if not name:
+                self.title = get_radio_server_description(self.url) # The title of the radio station
+            else:
+                self.title = name
+            self.id = hashlib.md5(url.encode()).hexdigest()
+        else:
+            super().__init__(bot, from_dict)
+            self.url = from_dict['url']
+            self.title = from_dict['title']
+
+        self.type = "radio"
+
+    def validate(self):
+        return True
+
+    def is_ready(self):
+        return True
+
+    def uri(self):
+        return self.url
+
+    def to_dict(self):
+        dict = super().to_dict()
+        dict['url'] = self.url
+        dict['title'] = self.title
+
+    def format_debug_string(self):
+        return "[radio] {name} ({url})".format(
+            name=self.title,
+            url=self.url
+        )
+
+    def format_song_string(self, user):
+        return constants.strings("radio_item",
+                                 url=self.url,
+                                 title=get_radio_title(self.url), # the title of current song
+                                 name=self.title, # the title of radio station
+                                 user=user
+                                 )
+
+    def format_current_playing(self, user):
+        return constants.strings("now_playing", item=self.format_song_string(user))
+
+    def display_type(self):
+        return constants.strings("radio")
+
+
+

@@ -5,15 +5,16 @@ import pymumble.pymumble_py3 as pymumble
 import re
 
 import constants
-import media.file
-import media.playlist
-import media.radio
 import media.system
-import media.url
 import util
 import variables as var
 from librb import radiobrowser
 from database import Database
+from media.playlist import PlaylistItemWrapper
+from media.file import FileItem
+from media.url_from_playlist import URLFromPlaylistItem, get_playlist_info
+from media.url import URLItem
+from media.radio import RadioItem
 
 log = logging.getLogger("bot")
 
@@ -57,8 +58,8 @@ def register_all_commands(bot):
 
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms)
-    # bot.register_command('loop', cmd_loop_state)
-    # bot.register_command('item', cmd_item)
+    bot.register_command('loop', cmd_loop_state)
+    bot.register_command('item', cmd_item)
 
 def send_multi_lines(bot, lines, text):
     global log
@@ -138,16 +139,16 @@ def cmd_play(bot, user, text, command, parameter):
 
     if var.playlist.length() > 0:
         if parameter:
-            if parameter.isdigit() and int(parameter) > 0 and int(parameter) <= len(var.playlist):
+            if parameter.isdigit() and 0 <= int(parameter) <= len(var.playlist):
+                var.playlist.point_to(int(parameter) - 1)
                 bot.interrupt_playing()
-                bot.launch_music(int(parameter) - 1)
             else:
                 bot.send_msg(constants.strings('invalid_index', index=parameter), text)
 
         elif bot.is_pause:
             bot.resume()
         else:
-            bot.send_msg(util.format_current_playing(), text)
+            bot.send_msg(var.playlist.current_item().format_current_playing(), text)
     else:
         bot.is_pause = False
         bot.send_msg(constants.strings('queue_empty'), text)
@@ -168,12 +169,11 @@ def cmd_play_file(bot, user, text, command, parameter):
         files = util.get_recursive_file_list_sorted(var.music_folder)
         if int(parameter) < len(files):
             filename = files[int(parameter)].replace(var.music_folder, '')
-            music = {'type': 'file',
-                     'path': filename,
-                     'user': user}
-            music = var.playlist.append(music)
-            log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
-            bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
+            music_wrapper = PlaylistItemWrapper(FileItem(bot, filename), user)
+            var.playlist.append(music_wrapper)
+            music = music_wrapper.item
+            log.info("cmd: add to playlist: " + music.format_debug_string())
+            bot.send_msg(constants.strings('file_added', item=music.format_song_string(user)), text)
 
     # if parameter is {path}
     else:
@@ -184,12 +184,11 @@ def cmd_play_file(bot, user, text, command, parameter):
             return
 
         if os.path.isfile(path):
-            music = {'type': 'file',
-                     'path': parameter,
-                     'user': user}
-            music = var.playlist.append(music)
-            log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
-            bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
+            music_wrapper = PlaylistItemWrapper(FileItem(bot, parameter), user)
+            var.playlist.append(music_wrapper)
+            music = music_wrapper.item
+            log.info("cmd: add to playlist: " + music.format_debug_string())
+            bot.send_msg(constants.strings('file_added', item=music.format_song_string(user)), text)
             return
 
         # if parameter is {folder}
@@ -211,12 +210,11 @@ def cmd_play_file(bot, user, text, command, parameter):
 
             for file in files:
                 count += 1
-                music = {'type': 'file',
-                         'path': file,
-                         'user': user}
-                music = var.playlist.append(music)
-                log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
-                msgs.append("{} ({})".format(music['title'], music['path']))
+                music_wrapper = PlaylistItemWrapper(FileItem(bot, file), user)
+                var.playlist.append(music_wrapper)
+                music = music_wrapper.item
+                log.info("cmd: add to playlist: " + music.format_debug_string())
+                msgs.append("{} ({})".format(music.title, music.path))
 
             if count != 0:
                 send_multi_lines(bot, msgs, text)
@@ -230,12 +228,12 @@ def cmd_play_file(bot, user, text, command, parameter):
             if len(matches) == 0:
                 bot.send_msg(constants.strings('no_file'), text)
             elif len(matches) == 1:
-                music = {'type': 'file',
-                         'path': matches[0][1],
-                         'user': user}
-                music = var.playlist.append(music)
-                log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
-                bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
+                file = matches[0][1]
+                music_wrapper = PlaylistItemWrapper(FileItem(bot, file), user)
+                var.playlist.append(music_wrapper)
+                music = music_wrapper.item
+                log.info("cmd: add to playlist: " + music.format_debug_string())
+                bot.send_msg(constants.strings('file_added', item=music.format_song_string(user)), text)
             else:
                 msgs = [ constants.strings('multiple_matches')]
                 for match in matches:
@@ -256,13 +254,11 @@ def cmd_play_file_match(bot, user, text, command, parameter):
                 match = re.search(parameter, file)
                 if match:
                     count += 1
-                    music = {'type': 'file',
-                             'path': file,
-                             'user': user}
-                    music = var.playlist.append(music)
-                    log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
-
-                    msgs.append("{} ({})".format(music['title'], music['path']))
+                    music_wrapper = PlaylistItemWrapper(FileItem(bot, file), user)
+                    var.playlist.append(music_wrapper)
+                    music = music_wrapper.item
+                    log.info("cmd: add to playlist: " + music.format_debug_string())
+                    msgs.append("{} ({})".format(music.title, music.path))
 
             if count != 0:
                 send_multi_lines(bot, msgs, text)
@@ -279,22 +275,15 @@ def cmd_play_file_match(bot, user, text, command, parameter):
 def cmd_play_url(bot, user, text, command, parameter):
     global log
 
-    music = {'type': 'url',
-             # grab the real URL
-             'url': util.get_url_from_input(parameter),
-             'user': user,
-             'ready': 'validation'}
+    url = util.get_url_from_input(parameter)
+    music_wrapper = PlaylistItemWrapper(URLItem(bot, url), user)
+    var.playlist.append(music_wrapper)
 
-    music = bot.validate_music(music)
-    if music:
-        music = var.playlist.append(music)
-        log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
-        bot.send_msg(constants.strings('file_added', item=util.format_song_string(music)), text)
-        if var.playlist.length() == 2:
-            # If I am the second item on the playlist. (I am the next one!)
-            bot.async_download_next()
-    else:
-        bot.send_msg(constants.strings('unable_download'), text)
+    log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+    bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+    if var.playlist.length() == 2:
+        # If I am the second item on the playlist. (I am the next one!)
+        bot.async_download_next()
 
 
 def cmd_play_playlist(bot, user, text, command, parameter):
@@ -308,11 +297,11 @@ def cmd_play_playlist(bot, user, text, command, parameter):
 
     url = util.get_url_from_input(parameter)
     log.debug("cmd: fetching media info from playlist url %s" % url)
-    items = media.playlist.get_playlist_info(url=url, start_index=offset, user=user)
+    items = get_playlist_info(bot, url=url, start_index=offset, user=user)
     if len(items) > 0:
         var.playlist.extend(items)
         for music in items:
-            log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
+            log.info("cmd: add to playlist: " + music.format_debug_string())
     else:
         bot.send_msg(constants.strings("playlist_fetching_failed"), text)
 
@@ -335,16 +324,10 @@ def cmd_play_radio(bot, user, text, command, parameter):
             parameter = parameter.split()[0]
         url = util.get_url_from_input(parameter)
         if url:
-            music = {'type': 'radio',
-                     'url': url,
-                     'user': user}
+            music_wrapper = PlaylistItemWrapper(RadioItem(bot, url), user)
 
-            log.info("bot: fetching radio server description")
-            music["name"] = media.radio.get_radio_server_description(url)
-
-            var.playlist.append(music)
-            log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
-            bot.async_download_next()
+            var.playlist.append(music_wrapper)
+            log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
         else:
             bot.send_msg(constants.strings('bad_url'))
 
@@ -440,13 +423,9 @@ def cmd_rb_play(bot, user, text, command, parameter):
         url = radiobrowser.geturl_byid(parameter)
         if url != "-1":
             log.info('cmd: Found url: ' + url)
-            music = {'type': 'radio',
-                     'name': stationname,
-                     'artist': homepage,
-                     'url': url,
-                     'user': user}
-            var.playlist.append(music)
-            log.info("cmd: add to playlist: " + util.format_debug_song_string(music))
+            music_wrapper = PlaylistItemWrapper(RadioItem(bot, url, stationname), user)
+            var.playlist.append(music_wrapper)
+            log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.async_download_next()
         else:
             log.info('cmd: No playable url found.')
@@ -637,7 +616,7 @@ def cmd_current_music(bot, user, text, command, parameter):
 
     reply = ""
     if var.playlist.length() > 0:
-        bot.send_msg(util.format_current_playing())
+        bot.send_msg(var.playlist.current_item().format_current_playing())
     else:
         reply = constants.strings('not_playing')
     bot.send_msg(reply, text)
@@ -647,9 +626,7 @@ def cmd_skip(bot, user, text, command, parameter):
     global log
 
     if var.playlist.length() > 0:
-        bot.stop()
-        bot.launch_music()
-        bot.async_download_next()
+        bot.interrupt_playing()
     else:
         bot.send_msg(constants.strings('queue_empty'), text)
 
@@ -667,10 +644,6 @@ def cmd_last(bot, user, text, command, parameter):
 
 def cmd_remove(bot, user, text, command, parameter):
     global log
-
-    if bot.download_in_progress:
-        bot.send_msg(constants.strings("cannot_change_when_download"))
-        return
 
     # Allow to remove specific music into the queue with a number
     if parameter and parameter.isdigit() and int(parameter) > 0 \
@@ -695,11 +668,10 @@ def cmd_remove(bot, user, text, command, parameter):
         else:
             removed = var.playlist.remove(index)
 
-        # the Title isn't here if the music wasn't downloaded
         bot.send_msg(constants.strings('removing_item',
-            item=removed['title'] if 'title' in removed else removed['url']), text)
+            item=removed.format_song_string()), text)
 
-        log.info("cmd: delete from playlist: " + str(removed['path'] if 'path' in removed else removed['url']))
+        log.info("cmd: delete from playlist: " + removed.format_debug_string())
     else:
         bot.send_msg(constants.strings('bad_parameter', command=command))
 
@@ -772,9 +744,9 @@ def cmd_repeat(bot, user, text, command, parameter):
             var.playlist.current_index + 1,
             music
         )
-        log.info("bot: add to playlist: " + util.format_debug_song_string(music))
+        log.info("bot: add to playlist: " + music.format_debug_string)
 
-    bot.send_msg(constants.strings("repeat", song=util.format_song_string(music), n=str(repeat)), text)
+    bot.send_msg(constants.strings("repeat", song=music.format_song_string, n=str(repeat)), text)
 
 def cmd_mode(bot, user, text, command, parameter):
     global log
@@ -811,4 +783,4 @@ def cmd_loop_state(bot, user, text, command, parameter):
 
 def cmd_item(bot, user, text, command, parameter):
     print(bot.wait_for_downloading)
-    print(var.playlist.current_item())
+    print(var.playlist.current_item().item.to_dict())

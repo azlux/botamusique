@@ -12,7 +12,11 @@ import random
 from werkzeug.utils import secure_filename
 import errno
 import media
-import media.radio
+from media.playlist import PlaylistItemWrapper
+from media.file import FileItem
+from media.url_from_playlist import URLFromPlaylistItem, get_playlist_info
+from media.url import URLItem
+from media.radio import RadioItem
 import logging
 import time
 import constants
@@ -58,6 +62,7 @@ class ReverseProxied(object):
 
 web = Flask(__name__)
 log = logging.getLogger("bot")
+user = 'Remote Control'
 
 def init_proxy():
     global web
@@ -109,7 +114,7 @@ def index():
                            os=os,
                            playlist=var.playlist,
                            user=var.user,
-                           paused=var.botamusique.is_pause
+                           paused=var.bot.is_pause
                            )
 
 @web.route("/playlist", methods=['GET'])
@@ -124,10 +129,10 @@ def playlist():
 
     items = []
 
-    for index, item in enumerate(var.playlist):
+    for index, item_wrapper in enumerate(var.playlist):
          items.append(render_template('playlist.html',
                                      index=index,
-                                     m=item,
+                                     m=item_wrapper.item,
                                      playlist=var.playlist
                                      )
                      )
@@ -138,7 +143,7 @@ def status():
     if (var.playlist.length() > 0):
         return jsonify({'ver': var.playlist.version,
                         'empty': False,
-                        'play': not var.botamusique.is_pause,
+                        'play': not var.bot.is_pause,
                         'mode': var.playlist.mode})
     else:
         return jsonify({'ver': var.playlist.version,
@@ -159,25 +164,16 @@ def post():
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.music_folder + request.form['add_file_bottom']
             if os.path.isfile(path):
-                item = {'type': 'file',
-                        'path' : request.form['add_file_bottom'],
-                        'title' : '',
-                        'user' : 'Remote Control'}
-                item = var.playlist.append(util.attach_music_tag_info(item))
-                log.info('web: add to playlist(bottom): ' + util.format_debug_song_string(item))
+                music_wrapper = PlaylistItemWrapper(FileItem(var.bot, request.form['add_file_bottom']), user)
+                var.playlist.append(music_wrapper)
+                log.info('web: add to playlist(bottom): ' + music_wrapper.format_debug_string())
 
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.music_folder + request.form['add_file_next']
             if os.path.isfile(path):
-                item = {'type': 'file',
-                        'path' : request.form['add_file_next'],
-                        'title' : '',
-                        'user' : 'Remote Control'}
-                item = var.playlist.insert(
-                    var.playlist.current_index + 1,
-                    item
-                )
-                log.info('web: add to playlist(next): ' + util.format_debug_song_string(item))
+                music_wrapper = PlaylistItemWrapper(FileItem(var.bot, request.form['add_file_next']), user)
+                var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
+                log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
 
         elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
             try:
@@ -202,42 +198,35 @@ def post():
                 else:
                     files = music_library.get_files(folder)
 
-                files = list(map(lambda file:
-                    {'type':'file',
-                     'path': os.path.join(folder, file),
-                     'user':'Remote Control'}, files))
+                music_wrappers = list(map(
+                    lambda file: PlaylistItemWrapper(FileItem(var.bot, file), user),
+                    files))
 
-                files = var.playlist.extend(files)
+                var.playlist.extend(files)
 
-                for file in files:
-                    log.info("web: add to playlist: %s" %  util.format_debug_song_string(file))
+                for music_wrapper in music_wrappers:
+                    log.info('web: add to playlist: ' + music_wrapper.format_debug_string())
 
 
         elif 'add_url' in request.form:
-            music = {'type':'url',
-                                 'url': request.form['add_url'],
-                                 'user': 'Remote Control',
-                                 'ready': 'validation'}
-            music = var.botamusique.validate_music(music)
-            if music:
-                var.playlist.append(music)
-                log.info("web: add to playlist: " + util.format_debug_song_string(music))
-                if var.playlist.length() == 2:
-                    # If I am the second item on the playlist. (I am the next one!)
-                    var.botamusique.async_download_next()
+            music_wrapper = PlaylistItemWrapper(URLItem(var.bot, request.form['add_url']), user)
+            var.playlist.append(music_wrapper)
+
+            log.info("web: add to playlist: " + music_wrapper.format_debug_string())
+            if var.playlist.length() == 2:
+                # If I am the second item on the playlist. (I am the next one!)
+                var.bot.async_download_next()
 
         elif 'add_radio' in request.form:
             url = request.form['add_radio']
-            music = var.playlist.append({'type': 'radio',
-                                 'url': url,
-                                 'user': "Remote Control"})
-            log.info("web: fetching radio server description")
-            music["name"] = media.radio.get_radio_server_description(url)
-            log.info("web: add to playlist: " + util.format_debug_song_string(music))
+            music_wrapper = PlaylistItemWrapper(RadioItem(var.bot, url), user)
+            var.playlist.append(music_wrapper)
+
+            log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
 
         elif 'delete_music' in request.form:
-            music = var.playlist[int(request.form['delete_music'])]
-            log.info("web: delete from playlist: " + util.format_debug_song_string(music))
+            music_wrapper = var.playlist[int(request.form['delete_music'])]
+            log.info("web: delete from playlist: " + music_wrapper.format_debug_string())
 
             if var.playlist.length() >= int(request.form['delete_music']):
                 index = int(request.form['delete_music'])
@@ -246,26 +235,26 @@ def post():
                     var.playlist.remove(index)
 
                     if index < len(var.playlist):
-                        if not var.botamusique.is_pause:
-                            var.botamusique.interrupt_playing()
+                        if not var.bot.is_pause:
+                            var.bot.interrupt_playing()
                             var.playlist.current_index -= 1
                             # then the bot will move to next item
 
                     else:  # if item deleted is the last item of the queue
                         var.playlist.current_index -= 1
-                        if not var.botamusique.is_pause:
-                            var.botamusique.interrupt_playing()
+                        if not var.bot.is_pause:
+                            var.bot.interrupt_playing()
                 else:
                     var.playlist.remove(index)
 
 
         elif 'play_music' in request.form:
-            music = var.playlist[int(request.form['play_music'])]
-            log.info("web: jump to: " + util.format_debug_song_string(music))
+            music_wrapper = var.playlist[int(request.form['play_music'])]
+            log.info("web: jump to: " + music_wrapper.format_debug_string())
 
             if len(var.playlist) >= int(request.form['play_music']):
-                var.botamusique.interrupt_playing()
-                var.botamusique.launch_music(int(request.form['play_music']))
+                var.playlist.point_to(int(request.form['play_music']) - 1)
+                var.bot.interrupt_playing()
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
             path = var.music_folder + request.form['delete_music_file']
@@ -283,7 +272,7 @@ def post():
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
-                var.botamusique.interrupt_playing()
+                var.bot.interrupt_playing()
                 var.playlist.set_mode("random")
                 var.db.set('playlist', 'playback_mode', "random")
                 log.info("web: playback mode changed to random.")
@@ -296,27 +285,27 @@ def post():
                 var.db.set('playlist', 'playback_mode', "repeat")
                 log.info("web: playback mode changed to repeat.")
             elif action == "stop":
-                var.botamusique.stop()
+                var.bot.stop()
             elif action == "pause":
-                var.botamusique.pause()
+                var.bot.pause()
             elif action == "resume":
-                var.botamusique.resume()
+                var.bot.resume()
             elif action == "clear":
-                var.botamusique.clear()
+                var.bot.clear()
             elif action == "volume_up":
-                if var.botamusique.volume_set + 0.03 < 1.0:
-                    var.botamusique.volume_set = var.botamusique.volume_set + 0.03
+                if var.bot.volume_set + 0.03 < 1.0:
+                    var.bot.volume_set = var.bot.volume_set + 0.03
                 else:
-                    var.botamusique.volume_set = 1.0
-                var.db.set('bot', 'volume', str(var.botamusique.volume_set))
-                log.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
+                    var.bot.volume_set = 1.0
+                var.db.set('bot', 'volume', str(var.bot.volume_set))
+                log.info("web: volume up to %d" % (var.bot.volume_set * 100))
             elif action == "volume_down":
-                if var.botamusique.volume_set - 0.03 > 0:
-                    var.botamusique.volume_set = var.botamusique.volume_set - 0.03
+                if var.bot.volume_set - 0.03 > 0:
+                    var.bot.volume_set = var.bot.volume_set - 0.03
                 else:
-                    var.botamusique.volume_set = 0
-                var.db.set('bot', 'volume', str(var.botamusique.volume_set))
-                log.info("web: volume up to %d" % (var.botamusique.volume_set * 100))
+                    var.bot.volume_set = 0
+                var.db.set('bot', 'volume', str(var.bot.volume_set))
+                log.info("web: volume up to %d" % (var.bot.volume_set * 100))
 
     return status()
 

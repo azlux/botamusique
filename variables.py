@@ -1,4 +1,4 @@
-botamusique = None
+bot = None
 playlist = None
 
 user = ""
