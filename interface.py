@@ -271,7 +271,10 @@ def post():
         elif 'action' in request.form:
             action = request.form['action']
             if action == "randomize":
-                var.playlist = media.playlist.get_playlist("random", var.playlist)
+                if var.playlist.mode != "random":
+                    var.playlist = media.playlist.get_playlist("random", var.playlist)
+                else:
+                    var.playlist.randomize()
                 var.bot.interrupt()
                 var.db.set('playlist', 'playback_mode', "random")
                 log.info("web: playback mode changed to random.")
@@ -280,7 +283,7 @@ def post():
                 var.db.set('playlist', 'playback_mode', "one-shot")
                 log.info("web: playback mode changed to one-shot.")
             if action == "repeat":
-                var.playlist = media.playlist.get_playlist("epeat", var.playlist)
+                var.playlist = media.playlist.get_playlist("repeat", var.playlist)
                 var.db.set('playlist', 'playback_mode', "repeat")
                 log.info("web: playback mode changed to repeat.")
             elif action == "stop":
