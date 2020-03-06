@@ -6,6 +6,7 @@ import traceback
 import hashlib
 
 from media.item import BaseItem
+from media.item import item_builders, item_loaders, item_id_generators
 import constants
 
 log = logging.getLogger("bot")
@@ -74,6 +75,24 @@ def get_radio_title(url):
         pass
     return url
 
+
+def radio_item_builder(bot, **kwargs):
+    if 'name' in kwargs:
+        return RadioItem(bot, kwargs['url'], kwargs['name'])
+    else:
+        return RadioItem(bot, kwargs['url'], '')
+
+def radio_item_loader(bot, _dict):
+    return RadioItem(bot, "", "", _dict)
+
+def radio_item_id_generator(**kwargs):
+    return hashlib.md5(kwargs['url'].encode()).hexdigest()
+
+item_builders['radio'] = radio_item_builder
+item_loaders['radio'] = radio_item_loader
+item_id_generators['radio'] = radio_item_id_generator
+
+
 class RadioItem(BaseItem):
     def __init__(self, bot, url, name="", from_dict=None):
         if from_dict is None:
@@ -92,6 +111,7 @@ class RadioItem(BaseItem):
         self.type = "radio"
 
     def validate(self):
+        self.version = 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         return True
 
     def is_ready(self):

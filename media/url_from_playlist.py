@@ -2,7 +2,9 @@ import youtube_dl
 import constants
 import media
 import variables as var
-from media.url import URLItem
+import hashlib
+from media.item import item_builders, item_loaders, item_id_generators
+from media.url import URLItem, url_item_id_generator
 
 def get_playlist_info(bot, url, start_index=0, user=""):
     items = []
@@ -47,6 +49,23 @@ def get_playlist_info(bot, url, start_index=0, user=""):
                 pass
 
     return items
+
+
+def playlist_url_item_builder(bot, **kwargs):
+    return PlaylistURLItem(bot,
+                           kwargs['url'],
+                           kwargs['title'],
+                           kwargs['playlist_url'],
+                           kwargs['playlist_title'])
+
+
+def playlist_url_item_loader(bot, _dict):
+    return PlaylistURLItem(bot, "", "", "", "", _dict)
+
+item_builders['url_from_playlist'] = playlist_url_item_builder
+item_loaders['url_from_playlist'] = playlist_url_item_loader
+item_id_generators['url_from_playlist'] = url_item_id_generator
+
 
 class PlaylistURLItem(URLItem):
     def __init__(self, bot, url, title, playlist_url, playlist_title, from_dict=None):

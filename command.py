@@ -9,8 +9,8 @@ import media.system
 import util
 import variables as var
 from librb import radiobrowser
-from database import Database
-from media.playlist import PlaylistItemWrapper
+from database import SettingsDatabase
+from media.playlist import get_item_wrapper
 from media.file import FileItem
 from media.url_from_playlist import PlaylistURLItem, get_playlist_info
 from media.url import URLItem
@@ -171,11 +171,10 @@ def cmd_play_file(bot, user, text, command, parameter):
         files = util.get_recursive_file_list_sorted(var.music_folder)
         if int(parameter) < len(files):
             filename = files[int(parameter)].replace(var.music_folder, '')
-            music_wrapper = PlaylistItemWrapper(FileItem(bot, filename), user)
+            music_wrapper = get_item_wrapper(bot, type='file', path=filename, user=user)
             var.playlist.append(music_wrapper)
-            music = music_wrapper.item
-            log.info("cmd: add to playlist: " + music.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music.format_song_string(user)), text)
+            log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string(user)), text)
 
     # if parameter is {path}
     else:
@@ -186,11 +185,10 @@ def cmd_play_file(bot, user, text, command, parameter):
             return
 
         if os.path.isfile(path):
-            music_wrapper = PlaylistItemWrapper(FileItem(bot, parameter), user)
+            music_wrapper = get_item_wrapper(bot, type='file', path=parameter, user=user)
             var.playlist.append(music_wrapper)
-            music = music_wrapper.item
-            log.info("cmd: add to playlist: " + music.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music.format_song_string(user)), text)
+            log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string(user)), text)
             return
 
         # if parameter is {folder}
@@ -212,11 +210,10 @@ def cmd_play_file(bot, user, text, command, parameter):
 
             for file in files:
                 count += 1
-                music_wrapper = PlaylistItemWrapper(FileItem(bot, file), user)
+                music_wrapper = get_item_wrapper(bot, type='file', path=file, user=user)
                 var.playlist.append(music_wrapper)
-                music = music_wrapper.item
-                log.info("cmd: add to playlist: " + music.format_debug_string())
-                msgs.append("{} ({})".format(music.title, music.path))
+                log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+                msgs.append("{} ({})".format(music_wrapper.item().title, music_wrapper.item().path))
 
             if count != 0:
                 send_multi_lines(bot, msgs, text)
@@ -231,11 +228,10 @@ def cmd_play_file(bot, user, text, command, parameter):
                 bot.send_msg(constants.strings('no_file'), text)
             elif len(matches) == 1:
                 file = matches[0][1]
-                music_wrapper = PlaylistItemWrapper(FileItem(bot, file), user)
+                music_wrapper = get_item_wrapper(bot, type='file', path=file, user=user)
                 var.playlist.append(music_wrapper)
-                music = music_wrapper.item
-                log.info("cmd: add to playlist: " + music.format_debug_string())
-                bot.send_msg(constants.strings('file_added', item=music.format_song_string(user)), text)
+                log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+                bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string(user)), text)
             else:
                 msgs = [ constants.strings('multiple_matches')]
                 for match in matches:
@@ -252,17 +248,18 @@ def cmd_play_file_match(bot, user, text, command, parameter):
         msgs = [ constants.strings('multiple_file_added')]
         count = 0
         try:
+            music_wrappers = []
             for file in files:
                 match = re.search(parameter, file)
                 if match:
                     count += 1
-                    music_wrapper = PlaylistItemWrapper(FileItem(bot, file), user)
-                    var.playlist.append(music_wrapper)
-                    music = music_wrapper.item
-                    log.info("cmd: add to playlist: " + music.format_debug_string())
-                    msgs.append("{} ({})".format(music.title, music.path))
+                    music_wrapper = get_item_wrapper(bot, type='file', path=file, user=user)
+                    music_wrappers.append(music_wrapper)
+                    log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+                    msgs.append("{} ({})".format(music_wrapper.item().title, music_wrapper.item().path))
 
             if count != 0:
+                var.playlist.extend(music_wrappers)
                 send_multi_lines(bot, msgs, text)
             else:
                 bot.send_msg(constants.strings('no_file'), text)
@@ -271,14 +268,14 @@ def cmd_play_file_match(bot, user, text, command, parameter):
             msg = constants.strings('wrong_pattern', error=str(e))
             bot.send_msg(msg, text)
     else:
-        bot.send_msg(constants.strings('bad_parameter', command))
+        bot.send_msg(constants.strings('bad_parameter', command=command))
 
 
 def cmd_play_url(bot, user, text, command, parameter):
     global log
 
     url = util.get_url_from_input(parameter)
-    music_wrapper = PlaylistItemWrapper(URLItem(bot, url), user)
+    music_wrapper = get_item_wrapper(bot, type='url', url=url)
     var.playlist.append(music_wrapper)
 
     log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -326,7 +323,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
             parameter = parameter.split()[0]
         url = util.get_url_from_input(parameter)
         if url:
-            music_wrapper = PlaylistItemWrapper(RadioItem(bot, url), user)
+            music_wrapper = get_item_wrapper(bot, type='radio', url=url)
 
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -425,7 +422,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
         url = radiobrowser.geturl_byid(parameter)
         if url != "-1":
             log.info('cmd: Found url: ' + url)
-            music_wrapper = PlaylistItemWrapper(RadioItem(bot, url, stationname), user)
+            music_wrapper = get_item_wrapper(bot, type='radio', url=url, name=stationname)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.async_download_next()
@@ -713,9 +710,8 @@ def cmd_queue(bot, user, text, command, parameter):
         bot.send_msg(msg, text)
     else:
         msgs = [ constants.strings('queue_contents')]
-        for i, value in enumerate(var.playlist):
+        for i, music in enumerate(var.playlist):
             newline = ''
-            music = value.item
             if i == var.playlist.current_index:
                 newline = '<b>{} ▶ ({}) {} ◀</b>'.format(i + 1, music.display_type(),
                                                            music.format_short_string())
@@ -772,7 +768,7 @@ def cmd_drop_database(bot, user, text, command, parameter):
     global log
 
     var.db.drop_table()
-    var.db = Database(var.dbfile)
+    var.db = SettingsDatabase(var.dbfile)
     bot.send_msg(constants.strings('database_dropped'), text)
 
 # Just for debug use
@@ -784,4 +780,4 @@ def cmd_loop_state(bot, user, text, command, parameter):
 
 def cmd_item(bot, user, text, command, parameter):
     print(bot.wait_for_downloading)
-    print(var.playlist.current_item().item.to_dict())
+    print(var.playlist.current_item().to_dict())

@@ -10,7 +10,7 @@ import json
 
 import util
 import variables as var
-from media.item import BaseItem
+from media.item import BaseItem, item_builders, item_loaders, item_id_generators
 import constants
 
 '''
@@ -23,6 +23,20 @@ type : file
     thumbnail
     user
 '''
+
+def file_item_builder(bot, **kwargs):
+    return FileItem(bot, kwargs['path'])
+
+def file_item_loader(bot, _dict):
+    return FileItem(bot, "", _dict)
+
+def file_item_id_generator(**kwargs):
+    return hashlib.md5(kwargs['path'].encode()).hexdigest()
+
+item_builders['file'] = file_item_builder
+item_loaders['file'] = file_item_loader
+item_id_generators['file'] = file_item_id_generator
+
 
 class FileItem(BaseItem):
     def __init__(self, bot, path, from_dict=None):
@@ -49,7 +63,7 @@ class FileItem(BaseItem):
         self.type = "file"
 
     def uri(self):
-        return var.music_folder + self.path
+        return var.music_folder + self.path if self.path[0] != "/" else self.path
 
     def is_ready(self):
         return True
@@ -61,6 +75,7 @@ class FileItem(BaseItem):
             self.send_client_message(constants.strings('file_missed', file=self.path))
             return False
 
+        self.version = 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         self.ready = "yes"
         return True
 

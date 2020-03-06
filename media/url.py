@@ -10,17 +10,31 @@ import glob
 import constants
 import media
 import variables as var
+from media.item import item_builders, item_loaders, item_id_generators
 from media.file import FileItem
 import media.system
 
 log = logging.getLogger("bot")
+
+def url_item_builder(bot, **kwargs):
+    return URLItem(bot, kwargs['url'])
+
+def url_item_loader(bot, _dict):
+    return URLItem(bot, "", _dict)
+
+def url_item_id_generator(**kwargs):
+    return hashlib.md5(kwargs['url'].encode()).hexdigest()
+
+item_builders['url'] = url_item_builder
+item_loaders['url'] = url_item_loader
+item_id_generators['url'] = url_item_id_generator
 
 
 class URLItem(FileItem):
     def __init__(self, bot, url, from_dict=None):
         self.validating_lock = threading.Lock()
         if from_dict is None:
-            self.url = url
+            self.url = url if url[-1] != "/" else url[:-1]
             self.title = ''
             self.duration = 0
             self.ready = 'pending'
@@ -45,7 +59,7 @@ class URLItem(FileItem):
         self.type = "url"
 
     def uri(self):
-        return self.path
+        return var.music_folder + self.path if self.path[0] != "/" else self.path
 
     def is_ready(self):
         if self.downloading or self.ready != 'yes':
@@ -82,6 +96,7 @@ class URLItem(FileItem):
             return False
         else:
             self.ready = "validated"
+            self.version += 1 # notify wrapper to save me
             return True
 
     # Run in a other thread
@@ -165,6 +180,7 @@ class URLItem(FileItem):
                     "bot: finished downloading url (%s) %s, saved to %s." % (self.title, self.url, self.path))
                 self.downloading = False
                 self._read_thumbnail_from_file(base_path + ".jpg")
+                self.version += 1 # notify wrapper to save me
                 return True
             else:
                 for f in glob.glob(base_path + "*"):

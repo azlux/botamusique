@@ -24,12 +24,13 @@ from packaging import version
 import util
 import command
 import constants
-from database import Database
+from database import SettingsDatabase, MusicDatabase
 import media.url
 import media.file
 import media.radio
 import media.system
 from media.playlist import BasePlayList
+from media.library import MusicLibrary
 
 
 class MumbleBot:
@@ -299,9 +300,9 @@ class MumbleBot:
         assert self.wait_for_downloading == False
 
         music_wrapper = var.playlist.current_item()
-        uri = music_wrapper.item.uri()
+        uri = music_wrapper.uri()
 
-        self.log.info("bot: play music " + music_wrapper.item.format_debug_string())
+        self.log.info("bot: play music " + music_wrapper.format_debug_string())
 
         if var.config.getboolean('bot', 'announce_current_music'):
             self.send_msg(music_wrapper.format_current_playing())
@@ -330,11 +331,11 @@ class MumbleBot:
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         self.log.debug("bot: Async download next asked ")
-        while var.playlist.next_item() and var.playlist.next_item().item.type in ['url', 'url_from_playlist']:
+        while var.playlist.next_item() and var.playlist.next_item().type in ['url', 'url_from_playlist']:
             # usually, all validation will be done when adding to the list.
             # however, for performance consideration, youtube playlist won't be validate when added.
             # the validation has to be done here.
-            next = var.playlist.next_item().item
+            next = var.playlist.next_item()
             if next.validate():
                 if not next.is_ready():
                     next.async_prepare()
@@ -388,7 +389,7 @@ class MumbleBot:
                 # ffmpeg thread has gone. indicate that last song has finished. move to the next song.
                 if not self.wait_for_downloading:
                     if var.playlist.next():
-                        current = var.playlist.current_item().item
+                        current = var.playlist.current_item()
                         if current.validate():
                             if current.is_ready():
                                 self.launch_music()
@@ -403,7 +404,7 @@ class MumbleBot:
                     else:
                         self._loop_status = 'Empty queue'
                 else:
-                    current = var.playlist.current_item().item
+                    current = var.playlist.current_item()
                     if current:
                         if current.is_ready():
                             self.wait_for_downloading = False
@@ -487,7 +488,7 @@ class MumbleBot:
     def pause(self):
         # Kill the ffmpeg thread
         if self.thread:
-            self.pause_at_id = var.playlist.current_item().item.id
+            self.pause_at_id = var.playlist.current_item()
             self.thread.kill()
             self.thread = None
         self.is_pause = True
@@ -502,7 +503,7 @@ class MumbleBot:
 
         music_wrapper = var.playlist.current_item()
 
-        if not music_wrapper or not music_wrapper.item.id == self.pause_at_id or not music_wrapper.item.is_ready():
+        if not music_wrapper or not music_wrapper.id == self.pause_at_id or not music_wrapper.is_ready():
             self.playhead = 0
             return
 
@@ -513,7 +514,7 @@ class MumbleBot:
 
         self.log.info("bot: resume music at %.2f seconds" % self.playhead)
 
-        uri = music_wrapper.item.uri()
+        uri = music_wrapper.uri()
 
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-ss', "%f" % self.playhead, '-i',
                    uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
@@ -607,7 +608,7 @@ if __name__ == '__main__':
         sys.exit()
 
     var.config = config
-    var.db = Database(var.dbfile)
+    var.db = SettingsDatabase(var.dbfile)
 
     # Setup logger
     bot_logger = logging.getLogger("bot")
@@ -624,6 +625,13 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     bot_logger.addHandler(handler)
     var.bot_logger = bot_logger
+
+    if var.config.get("bot", "save_music_library", fallback=True):
+        var.music_db = MusicDatabase(var.dbfile)
+    else:
+        var.music_db = MusicDatabase(":memory:")
+
+    var.library = MusicLibrary(var.music_db)
 
     # load playback mode
     playback_mode = None

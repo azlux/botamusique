@@ -8,40 +8,81 @@ from media.file import FileItem
 from media.url import URLItem
 from media.url_from_playlist import PlaylistURLItem
 from media.radio import RadioItem
-
+from database import MusicDatabase
+from media.library import MusicLibrary
 
 class PlaylistItemWrapper:
-    def __init__(self, item, user):
-        self.item = item
+    def __init__(self, lib, id, type, user):
+        self.lib = lib
+        self.id = id
         self.user = user
+        self.type = type
+        self.log = logging.getLogger("bot")
+        self.version = 1
+
+    def item(self):
+        return self.lib[self.id]
 
     def to_dict(self):
-        dict = self.item.to_dict()
+        dict = self.item().to_dict()
         dict['user'] = self.user
         return dict
 
+    def validate(self):
+        ret = self.item().validate()
+        if ret and self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+        return ret
+
+    def prepare(self):
+        ret = self.item().prepare()
+        if ret and self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+        return ret
+
+    def async_prepare(self):
+        th = threading.Thread(
+            target=self.item().prepare, name="Prepare-" + self.id[:7])
+        self.log.info(
+            "%s: start preparing item in thread: " % self.item().type + self.format_debug_string())
+        th.daemon = True
+        th.start()
+        return th
+
+    def uri(self):
+        return self.item().uri()
+
+    def is_ready(self):
+        return self.item().is_ready()
+
+    def is_failed(self):
+        return self.item().is_failed()
+
     def format_current_playing(self):
-        return self.item.format_current_playing(self.user)
+        return self.item().format_current_playing(self.user)
 
     def format_song_string(self):
-        return self.item.format_song_string(self.user)
+        return self.item().format_song_string(self.user)
 
     def format_short_string(self):
-        return self.item.format_short_string()
+        return self.item().format_short_string()
 
     def format_debug_string(self):
-        return self.item.format_debug_string()
+        return self.item().format_debug_string()
+
+    def display_type(self):
+        return self.item().display_type()
 
 
-def dict_to_item(dict):
-    if dict['type'] == 'file':
-        return PlaylistItemWrapper(FileItem(var.bot, "", dict), dict['user'])
-    elif dict['type'] == 'url':
-        return PlaylistItemWrapper(URLItem(var.bot, "", dict), dict['user'])
-    elif dict['type'] == 'url_from_playlist':
-        return PlaylistItemWrapper(PlaylistURLItem(var.bot, "", "", "", "", dict), dict['user'])
-    elif dict['type'] == 'radio':
-        return PlaylistItemWrapper(RadioItem(var.bot, "", "", dict), dict['user'])
+def get_item_wrapper(bot, **kwargs):
+    item = var.library.get_item(bot, **kwargs)
+    return PlaylistItemWrapper(var.library, item.id, kwargs['type'], kwargs['user'])
+
+def get_item_wrapper_by_id(bot, id, user):
+    item = var.library.get_item_by_id(bot, id)
+    return PlaylistItemWrapper(var.library, item.id, item.type, user)
 
 def get_playlist(mode, _list=None, index=None):
     if _list and index is None:
@@ -61,9 +102,7 @@ def get_playlist(mode, _list=None, index=None):
             return RepeatPlaylist().from_list(_list, index)
         elif mode == "random":
             return RandomPlaylist().from_list(_list, index)
-
     raise
-
 
 class BasePlayList(list):
     def __init__(self):
@@ -154,17 +193,20 @@ class BasePlayList(list):
         if self.current_index > index:
             self.current_index -= 1
 
+        var.music_db.free(removed.id)
         return removed
 
     def remove_by_id(self, id):
         self.version += 1
         to_be_removed = []
         for index, wrapper in enumerate(self):
-            if wrapper.item.id == id:
+            if wrapper.id == id:
                 to_be_removed.append(index)
 
         for index in to_be_removed:
             self.remove(index)
+
+        var.music_db.free(id)
 
     def current_item(self):
         if len(self) == 0:
@@ -198,6 +240,7 @@ class BasePlayList(list):
     def clear(self):
         self.version += 1
         self.current_index = -1
+        var.library.free_all()
         super().clear()
 
     def save(self):
@@ -205,16 +248,23 @@ class BasePlayList(list):
         var.db.set("playlist", "current_index", self.current_index)
 
         for index, music in enumerate(self):
-            var.db.set("playlist_item", str(index), json.dumps(music.to_dict()))
+            var.db.set("playlist_item", str(index), json.dumps({'id': music.id, 'user': music.user }))
 
     def load(self):
         current_index = var.db.getint("playlist", "current_index", fallback=-1)
         if current_index == -1:
             return
 
-        items = list(var.db.items("playlist_item"))
-        items.sort(key=lambda v: int(v[0]))
-        self.from_list(list(map(lambda v: dict_to_item(json.loads(v[1])), items)), current_index)
+        items = var.db.items("playlist_item")
+        if items:
+            music_wrappers = []
+            items.sort(key=lambda v: int(v[0]))
+            for item in items:
+                item = json.loads(item[1])
+                music_wrapper = get_item_wrapper_by_id(var.bot, item['id'], item['user'])
+                if music_wrapper:
+                    music_wrappers.append(music_wrapper)
+            self.from_list(music_wrappers, current_index)
 
     def _debug_print(self):
         print("===== Playlist(%d)=====" % self.current_index)
@@ -235,10 +285,10 @@ class BasePlayList(list):
         self.log.debug("playlist: start validating...")
         self.validating_thread_lock.acquire()
         while len(self.pending_items) > 0:
-            item = self.pending_items.pop().item
+            item = self.pending_items.pop()
             self.log.debug("playlist: validating %s" % item.format_debug_string())
-            if not item.validate() or item.ready == 'failed':
-                # TODO: logging
+            if not item.validate() or item.is_failed():
+                self.log.debug("playlist: validating failed.")
                 self.remove_by_id(item.id)
 
         self.log.debug("playlist: validating finished.")

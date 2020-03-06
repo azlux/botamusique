@@ -11,30 +11,22 @@ from PIL import Image
 import util
 import variables as var
 
-"""
-FORMAT OF A MUSIC INTO THE PLAYLIST
-type : url
-    id
-    url
-    title
-    path
-    duration
-    artist
-    thumbnail
-    user
-    ready (validation, no, downloading, yes, failed)
-    from_playlist (yes,no)
-    playlist_title
-    playlist_url
+item_builders = {}
+item_loaders = {}
+item_id_generators = {}
 
-type : radio
-    id
-    url
-    name
-    current_title
-    user
+def example_builder(bot, **kwargs):
+    return BaseItem(bot)
 
-"""
+def example_loader(bot, _dict):
+    return BaseItem(bot, from_dict=_dict)
+
+def example_id_generator(**kwargs):
+    return ""
+
+item_builders['base'] = example_builder
+item_loaders['base'] = example_loader
+item_id_generators['base'] = example_id_generator
 
 class BaseItem:
     def __init__(self, bot, from_dict=None):
@@ -42,6 +34,9 @@ class BaseItem:
         self.log = logging.getLogger("bot")
         self.type = "base"
         self.title = ""
+        self.path = ""
+        self.tags = []
+        self.version = 0 # if version increase, wrapper will re-save this item
 
         if from_dict is None:
             self.id = ""
@@ -62,21 +57,8 @@ class BaseItem:
     def uri(self):
         raise
 
-    def async_prepare(self):
-        th = threading.Thread(
-            target=self.prepare, name="Prepare-" + self.id[:7])
-        self.log.info(
-            "%s: start preparing item in thread: " % self.type + self.format_debug_string())
-        th.daemon = True
-        th.start()
-        #self.download_threads.append(th)
-        return th
-
     def prepare(self):
         return True
-
-    def play(self):
-        pass
 
     def format_song_string(self, user):
         return self.id
@@ -97,6 +79,6 @@ class BaseItem:
         self.bot.send_msg(msg)
 
     def to_dict(self):
-        return {"type" : "base", "id": self.id, "ready": self.ready}
+        return {"type" : "base", "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}
 
 
