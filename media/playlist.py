@@ -83,7 +83,10 @@ def get_item_wrapper(bot, **kwargs):
 
 def get_item_wrapper_by_id(bot, id, user):
     item = var.library.get_item_by_id(bot, id)
-    return PlaylistItemWrapper(var.library, item.id, item.type, user)
+    if item:
+        return PlaylistItemWrapper(var.library, item.id, item.type, user)
+    else:
+        return None
 
 def get_playlist(mode, _list=None, index=None):
     if _list and index is None:

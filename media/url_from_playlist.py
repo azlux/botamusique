@@ -6,7 +6,7 @@ import hashlib
 from media.item import item_builders, item_loaders, item_id_generators
 from media.url import URLItem, url_item_id_generator
 
-def get_playlist_info(bot, url, start_index=0, user=""):
+def get_playlist_info(url, start_index=0, user=""):
     items = []
     ydl_opts = {
         'extract_flat': 'in_playlist'
@@ -36,13 +36,14 @@ def get_playlist_info(bot, url, start_index=0, user=""):
                         else "https://www.youtube.com/watch?v=" + info['entries'][j]['url']
                     print(info['entries'][j])
 
-                    music = PlaylistURLItem(
-                            bot,
-                            item_url,
-                            title,
-                            url,
-                            playlist_title
-                        )
+                    music = {
+                            "type": "url_from_playlist",
+                            "url": item_url,
+                            "title": title,
+                            "playlist_url": url,
+                            "playlist_title": playlist_title,
+                            "user": user
+                    }
 
                     items.append(music)
             except:

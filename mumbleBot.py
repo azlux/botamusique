@@ -170,6 +170,11 @@ class MumbleBot:
             sys.exit(0)
         self.nb_exit += 1
 
+        if var.config.getboolean('bot', 'save_playlist', fallback=True) \
+                    and var.config.get("bot", "save_music_library", fallback=True):
+            self.log.info("bot: save playlist into database")
+            var.playlist.save()
+
     def check_update(self):
         self.log.debug("update: checking for updates...")
         new_version = util.new_release_version()

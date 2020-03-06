@@ -275,7 +275,7 @@ def cmd_play_url(bot, user, text, command, parameter):
     global log
 
     url = util.get_url_from_input(parameter)
-    music_wrapper = get_item_wrapper(bot, type='url', url=url)
+    music_wrapper = get_item_wrapper(bot, type='url', url=url, user=user)
     var.playlist.append(music_wrapper)
 
     log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -296,9 +296,10 @@ def cmd_play_playlist(bot, user, text, command, parameter):
 
     url = util.get_url_from_input(parameter)
     log.debug("cmd: fetching media info from playlist url %s" % url)
-    items = get_playlist_info(bot, url=url, start_index=offset, user=user)
+    items = get_playlist_info(url=url, start_index=offset, user=user)
     if len(items) > 0:
-        var.playlist.extend(list(map(lambda item: PlaylistItemWrapper(item, user), items)))
+        items = var.playlist.extend(list(map(
+            lambda item: get_item_wrapper(bot, **item), items)))
         for music in items:
             log.info("cmd: add to playlist: " + music.format_debug_string())
     else:

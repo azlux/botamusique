@@ -35,7 +35,7 @@ class URLItem(BaseItem):
     def __init__(self, bot, url, from_dict=None):
         self.validating_lock = threading.Lock()
         if from_dict is None:
-            super().__init__(bot, "")
+            super().__init__(bot)
             self.url = url if url[-1] != "/" else url[:-1]
             self.title = ''
             self.duration = 0
