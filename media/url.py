@@ -6,12 +6,13 @@ import traceback
 from PIL import Image
 import youtube_dl
 import glob
+from io import BytesIO
+import base64
 
 import constants
 import media
 import variables as var
-from media.item import item_builders, item_loaders, item_id_generators
-from media.file import FileItem
+from media.item import BaseItem, item_builders, item_loaders, item_id_generators
 import media.system
 
 log = logging.getLogger("bot")
@@ -30,30 +31,24 @@ item_loaders['url'] = url_item_loader
 item_id_generators['url'] = url_item_id_generator
 
 
-class URLItem(FileItem):
+class URLItem(BaseItem):
     def __init__(self, bot, url, from_dict=None):
         self.validating_lock = threading.Lock()
         if from_dict is None:
+            super().__init__(bot, "")
             self.url = url if url[-1] != "/" else url[:-1]
             self.title = ''
             self.duration = 0
-            self.ready = 'pending'
-            super().__init__(bot, "")
             self.id = hashlib.md5(url.encode()).hexdigest()
-            path = var.tmp_folder + self.id + ".mp3"
-
-            if os.path.isfile(path):
-                self.log.info("url: file existed for url %s " % self.url)
-                self.ready = 'yes'
-                self.path = path
-                self._get_info_from_tag()
-            else:
-                # self._get_info_from_url()
-                pass
+            self.path = var.tmp_folder + self.id + ".mp3"
+            self.thumbnail = ''
         else:
-            super().__init__(bot, "", from_dict)
+            super().__init__(bot, from_dict)
             self.url = from_dict['url']
             self.duration = from_dict['duration']
+            self.path = from_dict['path']
+            self.title = from_dict['title']
+            self.thumbnail = from_dict['thumbnail']
 
         self.downloading = False
         self.type = "url"
@@ -195,11 +190,21 @@ class URLItem(FileItem):
             im = Image.open(path_thumbnail)
             self.thumbnail = self._prepare_thumbnail(im)
 
+    def _prepare_thumbnail(self, im):
+        im.thumbnail((100, 100), Image.ANTIALIAS)
+        buffer = BytesIO()
+        im = im.convert('RGB')
+        im.save(buffer, format="JPEG")
+        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
     def to_dict(self):
         dict = super().to_dict()
         dict['type'] = 'url'
         dict['url'] = self.url
         dict['duration'] = self.duration
+        dict['path'] = self.path
+        dict['title'] = self.title
+        dict['thumbnail'] = self.thumbnail
 
         return dict
 

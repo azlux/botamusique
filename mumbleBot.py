@@ -424,7 +424,8 @@ class MumbleBot:
 
         if self.exit:
             self._loop_status = "exited"
-            if var.config.getboolean('bot', 'save_playlist', fallback=True):
+            if var.config.getboolean('bot', 'save_playlist', fallback=True) \
+                    and var.config.get("bot", "save_music_library", fallback=True):
                 self.log.info("bot: save playlist into database")
                 var.playlist.save()
 

@@ -46,11 +46,10 @@ class FileItem(BaseItem):
             self.title = ""
             self.artist = ""
             self.thumbnail = None
-            if self.path:
-                self.id = hashlib.md5(path.encode()).hexdigest()
-                if os.path.exists(self.uri()):
-                    self._get_info_from_tag()
-                    self.ready = "yes"
+            self.id = hashlib.md5(path.encode()).hexdigest()
+            if os.path.exists(self.uri()):
+                self._get_info_from_tag()
+                self.ready = "yes"
         else:
             super().__init__(bot, from_dict)
             self.path = from_dict['path']
