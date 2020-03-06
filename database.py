@@ -177,6 +177,13 @@ class MusicDatabase:
         conn.commit()
         conn.close()
 
+    def query_all_ids(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT id FROM music").fetchall()
+        conn.close()
+        return list(map(lambda i: i[0], results))
+
     def query_music(self, **kwargs):
         condition = []
         filler = []

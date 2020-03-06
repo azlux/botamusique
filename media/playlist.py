@@ -2,6 +2,7 @@ import json
 import random
 import threading
 import logging
+import random
 
 import variables as var
 from media.file import FileItem
@@ -95,6 +96,8 @@ def get_playlist(mode, _list=None, index=None):
             return RepeatPlaylist()
         elif mode == "random":
             return RandomPlaylist()
+        elif mode == "autoplay":
+            return AutoPlaylist()
     else:
         if mode == "one-shot":
             return OneshotPlaylist().from_list(_list, index)
@@ -102,9 +105,11 @@ def get_playlist(mode, _list=None, index=None):
             return RepeatPlaylist().from_list(_list, index)
         elif mode == "random":
             return RandomPlaylist().from_list(_list, index)
+        elif mode == "autoplay":
+            return AutoPlaylist().from_list(_list, index)
     raise
 
-class BasePlayList(list):
+class BasePlaylist(list):
     def __init__(self):
         super().__init__()
         self.current_index = -1
@@ -295,7 +300,7 @@ class BasePlayList(list):
         self.validating_thread_lock.release()
 
 
-class OneshotPlaylist(BasePlayList):
+class OneshotPlaylist(BasePlaylist):
     def __init__(self):
         super().__init__()
         self.mode = "one-shot"
@@ -344,7 +349,7 @@ class OneshotPlaylist(BasePlayList):
             super().__delitem__(0)
 
 
-class RepeatPlaylist(BasePlayList):
+class RepeatPlaylist(BasePlaylist):
     def __init__(self):
         super().__init__()
         self.mode = "repeat"
@@ -372,7 +377,7 @@ class RepeatPlaylist(BasePlayList):
         return self[self.next_index()]
 
 
-class RandomPlaylist(BasePlayList):
+class RandomPlaylist(BasePlaylist):
     def __init__(self):
         super().__init__()
         self.mode = "random"
@@ -396,3 +401,34 @@ class RandomPlaylist(BasePlayList):
             self.current_index = 0
             return self[0]
 
+
+class AutoPlaylist(BasePlaylist):
+    def __init__(self):
+        super().__init__()
+        self.mode = "autoplay"
+
+    def refresh(self):
+        _list = []
+        ids = var.music_db.query_all_ids()
+        for _ in range(20):
+            _list.append(get_item_wrapper_by_id(var.bot, ids[random.randint(0, len(ids)-1)], 'AutoPlay'))
+        self.from_list(_list, -1)
+
+    # def from_list(self, _list, current_index):
+    #     self.version += 1
+    #     self.refresh()
+    #     return self
+
+    def next(self):
+        if len(self) == 0:
+            return False
+
+        self.version += 1
+
+        if self.current_index < len(self) - 1:
+            self.current_index += 1
+            return self[self.current_index]
+        else:
+            self.refresh()
+            self.current_index = 0
+            return self[0]

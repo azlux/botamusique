@@ -29,7 +29,7 @@ import media.url
 import media.file
 import media.radio
 import media.system
-from media.playlist import BasePlayList
+from media.playlist import BasePlaylist
 from media.library import MusicLibrary
 
 
@@ -640,7 +640,7 @@ if __name__ == '__main__':
     else:
         playback_mode = var.config.get('bot', 'playback_mode', fallback="one-shot")
 
-    if playback_mode in ["one-shot", "repeat", "random"]:
+    if playback_mode in ["one-shot", "repeat", "random", "autoplay"]:
         var.playlist = media.playlist.get_playlist(playback_mode)
     else:
         raise KeyError("Unknown playback mode '%s'" % playback_mode)
