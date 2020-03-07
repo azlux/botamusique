@@ -4,22 +4,15 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort
 import variables as var
 import util
-from datetime import datetime
 import os
 import os.path
 import shutil
-import random
 from werkzeug.utils import secure_filename
 import errno
 import media
-from media.playlist import get_item_wrapper
-from media.file import FileItem
-from media.url_from_playlist import PlaylistURLItem, get_playlist_info
-from media.url import URLItem
-from media.radio import RadioItem
+from media.playlist import get_item_wrapper, get_item_wrapper_by_id
 import logging
 import time
-import constants
 
 
 class ReverseProxied(object):
@@ -101,16 +94,9 @@ def requires_auth(f):
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    folder_path = var.music_folder
-    files = util.get_recursive_file_list_sorted(var.music_folder)
-    music_library = util.Dir(folder_path)
-    for file in files:
-        music_library.add_file(file)
-
-
     return render_template('index.html',
-                           all_files=files,
-                           music_library=music_library,
+                           all_files=var.library.files,
+                           music_library=var.library.dir,
                            os=os,
                            playlist=var.playlist,
                            user=var.user,
@@ -157,14 +143,13 @@ def status():
 def post():
     global log
 
-    folder_path = var.music_folder
     if request.method == 'POST':
         if request.form:
             log.debug("web: Post request from %s: %s" % ( request.remote_addr, str(request.form)))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.music_folder + request.form['add_file_bottom']
             if os.path.isfile(path):
-                music_wrapper = get_item_wrapper(var.bot, type='file', path=request.form['add_file_bottom'], user=user)
+                music_wrapper = get_item_wrapper_by_id(var.bot, var.library.file_id_lookup[request.form['add_file_bottom']], user)
 
                 var.playlist.append(music_wrapper)
                 log.info('web: add to playlist(bottom): ' + music_wrapper.format_debug_string())
@@ -172,7 +157,7 @@ def post():
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.music_folder + request.form['add_file_next']
             if os.path.isfile(path):
-                music_wrapper = get_item_wrapper(var.bot, type='file', path=request.form['add_file_next'], user=user)
+                music_wrapper = get_item_wrapper_by_id(var.bot, var.library.file_id_lookup[request.form['add_file_next']], user)
                 var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
                 log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
 
@@ -186,19 +171,15 @@ def post():
                 folder += '/'
 
             if os.path.isdir(var.music_folder + folder):
-
-                files = util.get_recursive_file_list_sorted(var.music_folder)
-                music_library = util.Dir(folder_path)
-                for file in files:
-                    music_library.add_file(file)
-
+                dir = var.library.dir
                 if 'add_folder_recursively' in request.form:
-                    files = music_library.get_files_recursively(folder)
+                    files = dir.get_files_recursively(folder)
                 else:
-                    files = music_library.get_files(folder)
+                    files = dir.get_files(folder)
 
                 music_wrappers = list(map(
-                    lambda file: get_item_wrapper(var.bot, type='file', path=file, user=user),
+                    lambda file:
+                    get_item_wrapper_by_id(var.bot, var.library.file_id_lookup[folder + file], user),
                 files))
 
                 var.playlist.extend(music_wrappers)
@@ -370,7 +351,7 @@ def download():
         log.info('web: Download of file %s requested from %s:' % (requested_file, request.remote_addr))
         if '../' not in requested_file:
             folder_path = var.music_folder
-            files = util.get_recursive_file_list_sorted(var.music_folder)
+            files = var.library.files
 
             if requested_file in files:
                 filepath = os.path.join(folder_path, requested_file)

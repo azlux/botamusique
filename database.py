@@ -238,3 +238,10 @@ class MusicDatabase:
                                  "WHERE %s" % condition_str, filler)
         conn.commit()
         conn.close()
+
+
+    def drop_table(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE music")
+        conn.close()

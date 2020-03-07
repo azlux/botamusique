@@ -1,13 +1,11 @@
 import logging
-
 from database import MusicDatabase
+import json
+
 from media.item import item_builders, item_loaders, item_id_generators
-from media.file import FileItem
-from media.url import URLItem
-from media.url_from_playlist import PlaylistURLItem
-from media.radio import RadioItem
 from database import MusicDatabase
 import variables as var
+import util
 
 
 class MusicLibrary(dict):
@@ -15,8 +13,10 @@ class MusicLibrary(dict):
         super().__init__()
         self.db = db
         self.log = logging.getLogger("bot")
+        self.dir = None
+        self.files = []
 
-    def get_item_by_id(self, bot, id):
+    def get_item_by_id(self, bot, id): # Why all these functions need a bot? Because it need the bot to send message!
         if id in self:
             return self[id]
 
@@ -26,6 +26,9 @@ class MusicLibrary(dict):
             self[id] = item
             self.log.debug("library: music found in database: %s" % item.format_debug_string())
             return item
+        else:
+            raise KeyError("Unable to fetch item from the database! Please try to refresh the cache by !recache.")
+
 
     def get_item(self, bot, **kwargs):
         # kwargs should provide type and id, and parameters to build the item if not existed in the library.
@@ -59,8 +62,13 @@ class MusicLibrary(dict):
         self.log.debug("library: music save into database: %s" % self[id].format_debug_string())
         self.db.insert_music(self[id].to_dict())
 
-    def delete(self, id):
-        self.db.delete_music(id=id)
+    def delete(self, item):
+        if item.type == 'file' and item.path in self.file_id_lookup:
+            del self.file_id_lookup[item.path]
+            self.files.remove(item.path)
+            self.save_dir_cache()
+
+        self.db.delete_music(id=item.id)
 
     def free(self, id):
         if id in self:
@@ -68,3 +76,31 @@ class MusicLibrary(dict):
 
     def free_all(self):
         self.clear()
+
+    def build_dir_cache(self, bot):
+        self.log.info("library: rebuild directory cache")
+        self.files = []
+        self.file_id_lookup = {}
+        files = util.get_recursive_file_list_sorted(var.music_folder)
+        self.dir = util.Dir(var.music_folder)
+        for file in files:
+            item = self.get_item(bot, type='file', path=file)
+            if item.validate():
+                self.dir.add_file(file)
+                self.files.append(file)
+                self.file_id_lookup[file] = item.id
+
+        self.save_dir_cache()
+
+    def save_dir_cache(self):
+        var.db.set("dir_cache", "files", json.dumps(self.file_id_lookup))
+
+    def load_dir_cache(self, bot):
+        self.log.info("library: load directory cache from database")
+        loaded = json.loads(var.db.get("dir_cache", "files"))
+        self.files = loaded.keys()
+        self.file_id_lookup = loaded
+        self.dir = util.Dir(var.music_folder)
+        for file, id in loaded.items():
+            self.dir.add_file(file)
+

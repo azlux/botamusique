@@ -184,12 +184,12 @@ class MumbleBot:
         else:
             self.log.debug("update: no new version found.")
 
-    def register_command(self, cmd, handle):
+    def register_command(self, cmd, handle, no_partial_match=False):
         cmds = cmd.split(",")
         for command in cmds:
             command = command.strip()
             if command:
-                self.cmd_handle[command] = handle
+                self.cmd_handle[command] = { 'handle': handle, 'partial_match': not no_partial_match}
                 self.log.debug("bot: command added: " + command)
 
     def set_comment(self):
@@ -254,19 +254,19 @@ class MumbleBot:
             try:
                 if command in self.cmd_handle:
                     command_exc = command
-                    self.cmd_handle[command](self, user, text, command, parameter)
+                    self.cmd_handle[command]['handle'](self, user, text, command, parameter)
                 else:
                     # try partial match
                     cmds = self.cmd_handle.keys()
                     matches = []
                     for cmd in cmds:
-                        if cmd.startswith(command):
+                        if cmd.startswith(command) and self.cmd_handle[cmd]['partial_match']:
                             matches.append(cmd)
 
                     if len(matches) == 1:
                         self.log.info("bot: {:s} matches {:s}".format(command, matches[0]))
                         command_exc = matches[0]
-                        self.cmd_handle[command_exc](self, user, text, command_exc, parameter)
+                        self.cmd_handle[command_exc]['handle'](self, user, text, command_exc, parameter)
                     elif len(matches) > 1:
                         self.mumble.users[text.actor].send_text_message(
                             constants.strings('which_command', commands="<br>".join(matches)))
@@ -347,6 +347,7 @@ class MumbleBot:
                 break
             else:
                 var.playlist.remove_by_id(next.id)
+                var.library.delete(next.item())
 
 
     # =======================
@@ -406,6 +407,7 @@ class MumbleBot:
                                 self.send_msg(constants.strings('download_in_progress', item=current.format_short_string()))
                         else:
                             var.playlist.remove_by_id(current.id)
+                            var.library.delete(current.item())
                     else:
                         self._loop_status = 'Empty queue'
                 else:
@@ -653,6 +655,12 @@ if __name__ == '__main__':
 
     var.bot = MumbleBot(args)
     command.register_all_commands(var.bot)
+
+    if var.config.get("bot", "refresh_cache_on_startup", fallback=True)\
+            or not var.db.has_option("dir_cache", "files"):
+        var.library.build_dir_cache(var.bot)
+    else:
+        var.library.load_dir_cache(var.bot)
 
     # load playlist
     if var.config.getboolean('bot', 'save_playlist', fallback=True):

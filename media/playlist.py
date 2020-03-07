@@ -298,6 +298,7 @@ class BasePlaylist(list):
             if not item.validate() or item.is_failed():
                 self.log.debug("playlist: validating failed.")
                 self.remove_by_id(item.id)
+                var.library.delete(item.item())
 
         self.log.debug("playlist: validating finished.")
         self.validating_thread_lock.release()
@@ -421,6 +422,10 @@ class AutoPlaylist(BasePlaylist):
     #     self.version += 1
     #     self.refresh()
     #     return self
+
+    def clear(self):
+        super().clear()
+        self.refresh()
 
     def next(self):
         if len(self) == 0:
