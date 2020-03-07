@@ -10,7 +10,7 @@ import util
 import variables as var
 from librb import radiobrowser
 from database import SettingsDatabase, MusicDatabase
-from media.playlist import get_item_wrapper, get_item_wrapper_by_id
+from media.playlist import get_item_wrapper, get_item_wrapper_by_id, get_item_wrappers_by_tags
 from media.file import FileItem
 from media.url_from_playlist import PlaylistURLItem, get_playlist_info
 from media.url import URLItem
@@ -770,6 +770,40 @@ def cmd_mode(bot, user, text, command, parameter):
         if parameter == "random":
             bot.interrupt()
             bot.launch_music()
+
+def cmd_play_tags(bot, user, text, command, parameter):
+    if not parameter:
+        bot.send_msg(constants.strings('bad_parameter', command=command))
+        return
+
+    msgs = [constants.strings('multiple_file_added') + "<ul>"]
+    count = 0
+
+    tags = parameter.split(",")
+    tags = list(map(lambda t: t.strip(), tags))
+    music_wrappers = get_item_wrappers_by_tags(bot, tags)
+    for music_wrapper in music_wrappers:
+        count += 1
+        log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+        msgs.append("<li><b>{}</b> (<i>{}</i>)</li>".format(music_wrapper.item().title, ", ".join(music_wrapper.item().tags)))
+
+
+    if count != 0:
+        msgs.append("</ul>")
+        var.playlist.extend(music_wrappers)
+        send_multi_lines(bot, msgs, text, "")
+    else:
+        bot.send_msg(constants.strings("no_file"), text)
+
+
+def cmd_tag(bot, user, text, command, parameter):
+    pass
+
+def cmd_untag(bot, user, text, command, parameter):
+    pass
+
+def cmd_list_tagged(bot, user, text, command, parameter):
+    pass
 
 def cmd_drop_database(bot, user, text, command, parameter):
     global log

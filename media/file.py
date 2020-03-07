@@ -74,7 +74,7 @@ class FileItem(BaseItem):
             self.send_client_message(constants.strings('file_missed', file=self.path))
             return False
 
-        self.version = 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
+        self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         self.ready = "yes"
         return True
 

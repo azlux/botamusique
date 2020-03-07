@@ -19,7 +19,7 @@ class PlaylistItemWrapper:
         self.user = user
         self.type = type
         self.log = logging.getLogger("bot")
-        self.version = 1
+        self.version = 0
 
     def item(self):
         return self.lib[self.id]
@@ -55,6 +55,18 @@ class PlaylistItemWrapper:
     def uri(self):
         return self.item().uri()
 
+    def add_tag(self, tag):
+        self.item().add_tag(tag)
+        if self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+
+    def remove_tag(self, tag):
+        self.item().remove_tag(tag)
+        if self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+
     def is_ready(self):
         return self.item().is_ready()
 
@@ -87,6 +99,13 @@ def get_item_wrapper_by_id(bot, id, user):
         return PlaylistItemWrapper(var.library, item.id, item.type, user)
     else:
         return None
+
+def get_item_wrappers_by_tags(bot, tags, user):
+    items = var.library.get_items_by_tags(bot, tags)
+    ret = []
+    for item in items:
+        ret.append(PlaylistItemWrapper(var.library, item.id, item.type, user))
+    return ret
 
 def get_playlist(mode, _list=None, index=None):
     if _list and index is None:

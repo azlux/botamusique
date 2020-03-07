@@ -111,7 +111,7 @@ class RadioItem(BaseItem):
         self.type = "radio"
 
     def validate(self):
-        self.version = 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
+        self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         return True
 
     def is_ready(self):

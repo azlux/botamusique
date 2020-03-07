@@ -48,6 +48,17 @@ class MusicLibrary(dict):
         self[id] = item_builders[kwargs['type']](bot, **kwargs) # newly built item will not be saved immediately
         return self[id]
 
+    def get_items_by_tags(self, bot, tags):
+        music_dicts = self.db.query_music_by_tags(tags)
+        items = []
+        for music_dict in music_dicts:
+            id = music_dicts['id']
+            type = music_dict['type']
+            self[id] = item_loaders[type](bot, music_dict)
+            items.append(self[id])
+
+        return items
+
     def fetch(self, bot, id):
         music_dicts = self.db.query_music(id=id)
         if music_dicts:

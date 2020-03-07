@@ -60,6 +60,16 @@ class BaseItem:
     def prepare(self):
         return True
 
+    def add_tag(self, tag):
+        if tag not in self.tags:
+            self.tags.append(tag)
+            self.version += 1
+
+    def remove_tag(self, tag):
+        if tag not in self.tags:
+            self.tags.remove(tag)
+            self.version += 1
+
     def format_song_string(self, user):
         return self.id
 

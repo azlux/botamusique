@@ -161,7 +161,8 @@ class MusicDatabase:
         id = music_dict['id']
         title = music_dict['title']
         type = music_dict['type']
-        tags = ",".join(music_dict['tags'])
+        tags = ",".join(music_dict['tags']) + ","
+
         del music_dict['id']
         del music_dict['title']
         del music_dict['type']
@@ -192,7 +193,7 @@ class MusicDatabase:
             if isinstance(value, str):
                 condition.append(key + "=?")
                 filler.append(value)
-            else:
+            elif isinstance(value, dict):
                 condition.append(key + " " + value[0] + " ?")
                 filler.append(value[1])
 
@@ -210,7 +211,39 @@ class MusicDatabase:
                 music_dict = json.loads(result[3])
                 music_dict['type'] = result[1]
                 music_dict['title'] = result[2]
-                music_dict['tags'] = result[4].split(",")
+                music_dict['tags'] = result[4].strip(",").split(",")
+                music_dict['id'] = result[0]
+                music_dicts.append(music_dict)
+
+            return music_dicts
+        else:
+            return None
+
+
+    def query_music_by_tags(self, tags):
+        condition = []
+        filler = []
+
+        for tag in tags:
+            condition.append('tags LIKE ?')
+            filler.append("%{:s},%".format(tag))
+
+
+        condition_str = " AND ".join(condition)
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
+                                 "WHERE %s" % condition_str, filler).fetchall()
+        conn.close()
+
+        if len(results) > 0:
+            music_dicts = []
+            for result in results:
+                music_dict = json.loads(result[3])
+                music_dict['type'] = result[1]
+                music_dict['title'] = result[2]
+                music_dict['tags'] = result[4].strip(",").split(",")
                 music_dict['id'] = result[0]
                 music_dicts.append(music_dict)
 
