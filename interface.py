@@ -268,6 +268,10 @@ def post():
                 var.playlist = media.playlist.get_playlist("repeat", var.playlist)
                 var.db.set('playlist', 'playback_mode', "repeat")
                 log.info("web: playback mode changed to repeat.")
+            if action == "autoplay":
+                var.playlist = media.playlist.get_playlist("autoplay", var.playlist)
+                var.db.set('playlist', 'playback_mode', "autoplay")
+                log.info("web: playback mode changed to autoplay.")
             elif action == "stop":
                 var.bot.stop()
             elif action == "pause":

@@ -138,21 +138,27 @@
 
                         <div class="btn-group" style="float: right;">
                             <button type="button" id="oneshot-btn" class="btn btn-primary btn-space"
-                                    title="One-shot Playlist"
-                                    onclick="request('post', {action : 'one-shot'})">
+                                    title="One-shot Mode"
+                                    onclick="request('post', {action : 'one-shot'})" disabled>
                                 <i class="fas fa-tasks" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" id="random-btn" class="btn btn-primary btn-space"
-                                    title="Randomize Playlist"
-                                    onclick="request('post', {action : 'randomize'})">
+                                    title="Random Mode"
+                                    onclick="request('post', {action : 'randomize'})" disabled>
                                 <i class="fas fa-random" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" id="repeat-btn" class="btn btn-primary btn-space"
-                                    title="Repeat Playlist"
-                                    onclick="request('post', {action : 'repeat'})">
+                                    title="Repeat Mode"
+                                    onclick="request('post', {action : 'repeat'})" disabled>
                                 <i class="fas fa-redo" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="autoplay-btn" class="btn btn-primary btn-space"
+                                    title="Autoplay Mode"
+                                    onclick="request('post', {action : 'autoplay'})" disabled>
+                                <i class="fas fa-robot" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" class="btn btn-warning btn-space"
@@ -375,15 +381,23 @@
             if(mode === "one-shot"){
                 $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
                 $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary");
+                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
             }else if(mode === "repeat"){
-                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
                 $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary");
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
+                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
             }else if(mode === "random"){
-                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary");
                 $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
                 $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false); // This is a feature.
+                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+            }else if(mode === "autoplay"){
+                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
             }
 
         }
