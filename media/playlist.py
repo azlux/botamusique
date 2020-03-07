@@ -220,7 +220,7 @@ class BasePlaylist(list):
         if self.current_index > index:
             self.current_index -= 1
 
-        var.music_db.free(removed.id)
+        var.library.free(removed.id)
         return removed
 
     def remove_by_id(self, id):
@@ -233,7 +233,7 @@ class BasePlaylist(list):
         for index in to_be_removed:
             self.remove(index)
 
-        var.music_db.free(id)
+        var.library.free(id)
 
     def current_item(self):
         if len(self) == 0:
