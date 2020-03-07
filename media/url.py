@@ -54,7 +54,7 @@ class URLItem(BaseItem):
         self.type = "url"
 
     def uri(self):
-        return var.music_folder + self.path if self.path[0] != "/" else self.path
+        return self.path
 
     def is_ready(self):
         if self.downloading or self.ready != 'yes':
@@ -80,7 +80,7 @@ class URLItem(BaseItem):
         info = self._get_info_from_url()
         self.validating_lock.release()
 
-        if self.duration == 0 and not info:
+        if not info:
             return False
 
         if self.duration > var.config.getint('bot', 'max_track_duration') != 0:

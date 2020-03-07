@@ -75,7 +75,12 @@ class MusicLibrary(dict):
 
     def delete(self, item):
         if item.type == 'file' and item.path in self.file_id_lookup:
-            del self.file_id_lookup[item.path]
+            self.log.debug("library: DELETE item from the database: %s" % item.format_debug_string())
+
+            if item.id in self:
+                del self[item.id]
+            if item.path in self.file_id_lookup:
+                del self.file_id_lookup[item.path]
             self.files.remove(item.path)
             self.save_dir_cache()
 
@@ -83,9 +88,11 @@ class MusicLibrary(dict):
 
     def free(self, id):
         if id in self:
+            self.log.debug("library: cache freed for item: %s" % self[id].format_debug_string())
             del self[id]
 
     def free_all(self):
+        self.log.debug("library: all cache freed")
         self.clear()
 
     def build_dir_cache(self, bot):
