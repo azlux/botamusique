@@ -189,7 +189,7 @@ def post():
 
 
         elif 'add_url' in request.form:
-            music_wrapper = get_item_wrapper(var.bot, type='url', url=request.form['url'])
+            music_wrapper = get_item_wrapper(var.bot, type='url', url=request.form['url'], user=user)
             var.playlist.append(music_wrapper)
 
             log.info("web: add to playlist: " + music_wrapper.format_debug_string())
@@ -199,7 +199,7 @@ def post():
 
         elif 'add_radio' in request.form:
             url = request.form['add_radio']
-            music_wrapper = get_item_wrapper(var.bot, type='radio', url=url)
+            music_wrapper = get_item_wrapper(var.bot, type='radio', url=url, user=user)
             var.playlist.append(music_wrapper)
 
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())

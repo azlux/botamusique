@@ -91,6 +91,8 @@ class PlaylistItemWrapper:
 
 def get_item_wrapper(bot, **kwargs):
     item = var.library.get_item(bot, **kwargs)
+    if 'user' not in kwargs:
+        raise KeyError("Which user added this song?")
     return PlaylistItemWrapper(var.library, item.id, kwargs['type'], kwargs['user'])
 
 def get_item_wrapper_by_id(bot, id, user):
