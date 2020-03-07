@@ -74,16 +74,16 @@ class MusicLibrary(dict):
         self.db.insert_music(self[id].to_dict())
 
     def delete(self, item):
-        if item.type == 'file' and item.path in self.file_id_lookup:
-            self.log.debug("library: DELETE item from the database: %s" % item.format_debug_string())
+        self.log.debug("library: DELETE item from the database: %s" % item.format_debug_string())
 
-            if item.id in self:
-                del self[item.id]
+        if item.type == 'file' and item.path in self.file_id_lookup:
             if item.path in self.file_id_lookup:
                 del self.file_id_lookup[item.path]
             self.files.remove(item.path)
             self.save_dir_cache()
 
+        if item.id in self:
+            del self[item.id]
         self.db.delete_music(id=item.id)
 
     def free(self, id):
