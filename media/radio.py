@@ -83,7 +83,7 @@ def get_radio_title(url):
             requests.exceptions.Timeout) as e:
         error_traceback = traceback.format_exc()
         error = error_traceback.rstrip().split("\n")[-1]
-        log.debug("radio: unsuccessful attempts on fetching radio title (icy): " + e)
+        log.debug("radio: unsuccessful attempts on fetching radio title (icy): " + error)
     return url
 
 

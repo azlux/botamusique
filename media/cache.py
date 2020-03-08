@@ -80,7 +80,7 @@ class MusicCache(dict):
         self.log.debug("library: music save into database: %s" % self[id].format_debug_string())
         self.db.insert_music(self[id].to_dict())
 
-    def delete(self, id):
+    def free_and_delete(self, id):
         item = self.get_item_by_id(None, id)
         if item:
             self.log.debug("library: DELETE item from the database: %s" % item.format_debug_string())

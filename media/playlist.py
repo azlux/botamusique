@@ -3,6 +3,7 @@ import random
 import threading
 import logging
 import random
+import time
 
 import variables as var
 from media.file import FileItem
@@ -325,6 +326,7 @@ class BasePlaylist(list):
 
     def start_async_validating(self):
         if not self.validating_thread_lock.locked():
+            time.sleep(0.1) # Just avoid validation finishes too fast and delete songs while something is reading it.
             th = threading.Thread(target=self._check_valid, name="Validating")
             th.daemon = True
             th.start()
@@ -337,7 +339,7 @@ class BasePlaylist(list):
             self.log.debug("playlist: validating %s" % item.format_debug_string())
             if not item.validate() or item.is_failed():
                 self.log.debug("playlist: validating failed.")
-                var.cache.delete(item.id)
+                var.cache.free_and_delete(item.id)
                 self.remove_by_id(item.id)
 
         self.log.debug("playlist: validating finished.")

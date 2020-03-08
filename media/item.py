@@ -110,6 +110,6 @@ class BaseItem:
             self.bot.send_msg(msg)
 
     def to_dict(self):
-        return {"type" : "base", "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}
+        return {"type" : self.type, "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}
 
 

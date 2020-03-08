@@ -224,7 +224,7 @@ class URLItem(BaseItem):
     def format_song_string(self, user):
         if self.ready in ['validated', 'yes']:
             return constants.strings("url_item",
-                                        title=self.title,
+                                        title=self.title if self.title else "??",
                                         url=self.url,
                                         user=user)
         return self.url

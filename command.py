@@ -61,6 +61,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('find_tagged'), cmd_find_tagged)
     bot.register_command(constants.commands('search'), cmd_search_library)
     bot.register_command(constants.commands('add_from_shortlist'), cmd_shortlist)
+    bot.register_command(constants.commands('delete_from_library'), cmd_delete_from_library)
     bot.register_command(constants.commands('drop_database'), cmd_drop_database, True)
     bot.register_command(constants.commands('rescan'), cmd_refresh_cache, True)
 
@@ -305,7 +306,7 @@ def cmd_play_url(bot, user, text, command, parameter):
         var.playlist.append(music_wrapper)
 
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_short_string()), text)
+        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
         if len(var.playlist) == 2:
             # If I am the second item on the playlist. (I am the next one!)
             bot.async_download_next()
@@ -357,6 +358,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
 
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
         else:
             bot.send_msg(constants.strings('bad_url'))
 
@@ -710,7 +712,7 @@ def cmd_list_file(bot, user, text, command, parameter):
     global log
 
     files = var.cache.files
-    msgs = [ "<br> <b>Files available:</b>" if not parameter else "<br> <b>Matched files:</b>" ]
+    msgs = [ constants.strings("multiple_file_found") ]
     try:
         count = 0
         for index, file in enumerate(files):
@@ -933,26 +935,29 @@ def cmd_search_library(bot, user, text, command, parameter):
             keywords.append(kw)
 
     music_dicts = var.music_db.query_music_by_keywords(keywords)
-    items = dicts_to_items(bot, music_dicts)
-    song_shortlist = music_dicts
+    if music_dicts:
+        items = dicts_to_items(bot, music_dicts)
+        song_shortlist = music_dicts
 
-    for item in items:
-        count += 1
-        if len(item.tags) > 0:
-            msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> (<i>{}</i>)</li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
+        for item in items:
+            count += 1
+            if len(item.tags) > 0:
+                msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> (<i>{}</i>)</li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
+            else:
+                msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> </li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
+
+        if count != 0:
+            msgs.append("</ul>")
+            msgs.append(constants.strings("shortlist_instruction"))
+            send_multi_lines(bot, msgs, text, "")
         else:
-            msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> </li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
-
-    if count != 0:
-        msgs.append("</ul>")
-        msgs.append(constants.strings("shortlist_instruction"))
-        send_multi_lines(bot, msgs, text, "")
+            bot.send_msg(constants.strings("no_file"), text)
     else:
         bot.send_msg(constants.strings("no_file"), text)
 
 
 def cmd_shortlist(bot, user, text, command, parameter):
-    global song_shortlist
+    global song_shortlist, log
     indexes = []
     try:
         indexes = [ int(i) for i in parameter.split(" ") ]
@@ -969,16 +974,14 @@ def cmd_shortlist(bot, user, text, command, parameter):
                 music_wrapper = get_item_wrapper_from_scrap(bot, **kwargs)
                 var.playlist.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-                msgs.append("<li><b>{}</b></li>".format(music_wrapper.item().title))
-                song_shortlist = []
+                msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type, music_wrapper.item().title))
             else:
                 bot.send_msg(constants.strings('bad_parameter', command=command), text)
                 return
 
-            msgs.append("</ul>")
-            send_multi_lines(bot, msgs, text, "")
-            song_shortlist = []
-            return
+        msgs.append("</ul>")
+        send_multi_lines(bot, msgs, text, "")
+        return
     elif len(indexes) == 1:
         index = indexes[0]
         if 1 <= index <= len(song_shortlist):
@@ -988,11 +991,57 @@ def cmd_shortlist(bot, user, text, command, parameter):
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
-            song_shortlist = []
             return
 
     bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
+
+def cmd_delete_from_library(bot, user, text, command, parameter):
+    global song_shortlist, log
+    indexes = []
+    try:
+        indexes = [ int(i) for i in parameter.split(" ") ]
+    except ValueError:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
+        return
+
+    if len(indexes) > 1:
+        msgs = [constants.strings('multiple_file_added') + "<ul>"]
+        count = 0
+        for index in indexes:
+            if 1 <= index <= len(song_shortlist):
+                music_dict = song_shortlist[index - 1]
+                if 'id' in music_dict:
+                    music_wrapper = get_item_wrapper_by_id(bot, music_dict['id'], user)
+                    log.info("cmd: remove from library: " + music_wrapper.format_debug_string())
+                    msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type ,music_wrapper.item().title))
+                    var.playlist.remove_by_id(music_dict['id'])
+                    var.cache.free_and_delete(music_dict['id'])
+                    count += 1
+            else:
+                bot.send_msg(constants.strings('bad_parameter', command=command), text)
+                return
+
+        if count == 0:
+            bot.send_msg(constants.strings('bad_parameter', command=command), text)
+            return
+
+        msgs.append("</ul>")
+        send_multi_lines(bot, msgs, text, "")
+        return
+    elif len(indexes) == 1:
+        index = indexes[0]
+        if 1 <= index <= len(song_shortlist):
+            music_dict = song_shortlist[index - 1]
+            if 'id' in music_dict:
+                music_wrapper = get_item_wrapper_by_id(bot, music_dict['id'], user)
+                bot.send_msg(constants.strings('file_deleted', item=music_wrapper.format_song_string()), text)
+                log.info("cmd: remove from library: " + music_wrapper.format_debug_string())
+                var.playlist.remove_by_id(music_dict['id'])
+                var.cache.free_and_delete(music_dict['id'])
+                return
+
+    bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
 def cmd_drop_database(bot, user, text, command, parameter):
     global log
