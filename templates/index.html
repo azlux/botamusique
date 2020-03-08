@@ -2,8 +2,8 @@
 <ul class="list-group">
     {% if dir and dir.get_subdirs().items() %}
     {% for subdirname, subdirobj in dir.get_subdirs().items() %}
-    {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
-    {%- set subdirid = subdirpath.replace("/","-") %}
+    {% set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
+    {% set subdirid = subdirpath.replace("/","-") %}
     <li class="directory list-group-item list-group-item-primary">
         <div class="btn-group" role="group">
             <div class="btn-group" role="group">
@@ -45,12 +45,12 @@
         </div>
     </li>
     <div class="collapse multi-collapse" id="multiCollapse-{{ subdirid }}">
-        {{- dirlisting(subdirobj, subdirpath) -}}
+        {{ dirlisting(subdirobj, subdirpath) -}}
     </div>
     {% endfor %}
     {% endif %}
-    {%- set files = dir.get_files() %}
-    {%- if files %}
+    {% set files = dir.get_files() %}
+    {% if files %}
     {% for file in files %}
     {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
     <li class="file list-group-item">
@@ -80,9 +80,13 @@
             <div class="btn-space"><i class="fa fa-music" aria-hidden="true"></i></div>
             {{ filepath }}
         </div>
+            {% if tags_lookup[filepath] %}
             {% for tag in tags_lookup[filepath] %}
                 <span class="badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
             {% endfor %}
+            {% else %}
+                Error: {{ filepath }}
+            {% endif %}
 
         <div class="btn-group" style="float: right;">
             <form action="./download" method="get" class="file file_download">
@@ -96,7 +100,7 @@
         </div>
     </li>
     {% endfor %}
-    {%- endif %}
+    {% endif %}
 </ul>
 {%- endmacro %}
 

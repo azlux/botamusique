@@ -133,11 +133,11 @@ def recur_dir(dirobj):
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    tags_color_lookup = build_tags_color_lookup()
-    path_tags_lookup = build_path_tags_lookup()
-
     while var.library.dir_lock.locked():
         time.sleep(0.1)
+
+    tags_color_lookup = build_tags_color_lookup()
+    path_tags_lookup = build_path_tags_lookup()
 
     return render_template('index.html',
                            all_files=var.library.files,
