@@ -496,7 +496,7 @@ class MumbleBot:
     def pause(self):
         # Kill the ffmpeg thread
         if self.thread:
-            self.pause_at_id = var.playlist.current_item()
+            self.pause_at_id = var.playlist.current_item().id
             self.thread.kill()
             self.thread = None
         self.is_pause = True
