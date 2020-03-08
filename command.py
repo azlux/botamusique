@@ -31,6 +31,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('play_url'), cmd_play_url)
     bot.register_command(constants.commands('play_playlist'), cmd_play_playlist)
     bot.register_command(constants.commands('play_radio'), cmd_play_radio)
+    bot.register_command(constants.commands('play_tag'), cmd_play_tags)
     bot.register_command(constants.commands('rb_query'), cmd_rb_query)
     bot.register_command(constants.commands('rb_play'), cmd_rb_play)
     bot.register_command(constants.commands('yt_search'), cmd_yt_search)
@@ -54,6 +55,9 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('random'), cmd_random)
     bot.register_command(constants.commands('repeat'), cmd_repeat)
     bot.register_command(constants.commands('mode'), cmd_mode)
+    bot.register_command(constants.commands('add_tag'), cmd_add_tag)
+    bot.register_command(constants.commands('remove_tag'), cmd_remove_tag)
+    bot.register_command(constants.commands('find_tagged'), cmd_find_tagged)
     bot.register_command(constants.commands('drop_database'), cmd_drop_database, True)
     bot.register_command(constants.commands('recache'), cmd_refresh_cache, True)
 
@@ -719,12 +723,15 @@ def cmd_queue(bot, user, text, command, parameter):
         msgs = [ constants.strings('queue_contents')]
         for i, music in enumerate(var.playlist):
             newline = ''
+            tags = ''
+            if len(music.item().tags) > 0:
+                tags = "<sup>{}</sup>".format(", ".join(music.item().tags))
             if i == var.playlist.current_index:
-                newline = "<b style='color:orange'>{} ({}) {} </b>".format(i + 1, music.display_type(),
-                                                           music.format_short_string())
+                newline = "<b style='color:orange'>{} ({}) {} </b> {}".format(i + 1, music.display_type(),
+                                                           music.format_short_string(), tags)
             else:
-                newline = '<b>{}</b> ({}) {}'.format(i + 1, music.display_type(),
-                                                           music.format_short_string())
+                newline = '<b>{}</b> ({}) {} {}'.format(i + 1, music.display_type(),
+                                                           music.format_short_string(), tags)
 
             msgs.append(newline)
 
@@ -781,7 +788,7 @@ def cmd_play_tags(bot, user, text, command, parameter):
 
     tags = parameter.split(",")
     tags = list(map(lambda t: t.strip(), tags))
-    music_wrappers = get_item_wrappers_by_tags(bot, tags)
+    music_wrappers = get_item_wrappers_by_tags(bot, tags, user)
     for music_wrapper in music_wrappers:
         count += 1
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -796,14 +803,93 @@ def cmd_play_tags(bot, user, text, command, parameter):
         bot.send_msg(constants.strings("no_file"), text)
 
 
-def cmd_tag(bot, user, text, command, parameter):
-    pass
+def cmd_add_tag(bot, user, text, command, parameter):
+    global log
 
-def cmd_untag(bot, user, text, command, parameter):
-    pass
+    params = parameter.split()
+    if len(params) == 2:
+        index = params[0]
+        tags = list(map(lambda t: t.strip(), params[1].split(",")))
 
-def cmd_list_tagged(bot, user, text, command, parameter):
-    pass
+        if index.isdigit() and 1 <= int(index) <= len(var.playlist):
+            var.playlist[int(index) - 1].add_tags(tags)
+            log.info("cmd: add tags %s to song %s" % (", ".join(tags),
+                                                      var.playlist[int(index) - 1].format_debug_string()))
+            bot.send_msg(constants.strings("added_tags",
+                                           tags=", ".join(tags),
+                                           song=var.playlist[int(index) - 1].format_short_string()), text)
+        elif index == "*":
+            for item in var.playlist:
+                item.add_tags(tags)
+                log.info("cmd: add tags %s to song %s" % (", ".join(tags),
+                                                          item.format_debug_string()))
+            bot.send_msg(constants.strings("added_tags_to_all", tags=", ".join(tags)), text)
+        else:
+            bot.send_msg(constants.strings('bad_parameter', command=command), text)
+
+
+def cmd_remove_tag(bot, user, text, command, parameter):
+    global log
+
+    params = parameter.split()
+    if len(params) == 2 and params[1]:
+        index = params[0]
+
+        if index.isdigit() and 1 <= int(index) <= len(var.playlist):
+            if params[1] != "*":
+                tags = list(map(lambda t: t.strip(), params[1].split(",")))
+                var.playlist[int(index) - 1].remove_tags(tags)
+                log.info("cmd: remove tags %s from song %s" % (", ".join(tags),
+                                                          var.playlist[int(index) - 1].format_debug_string()))
+                bot.send_msg(constants.strings("removed_tags",
+                                               tags=", ".join(tags),
+                                               song=var.playlist[int(index) - 1].format_short_string()), text)
+                return
+            else:
+                var.playlist[int(index) - 1].clear_tags()
+                log.info("cmd: clear tags from song %s" % (var.playlist[int(index) - 1].format_debug_string()))
+                bot.send_msg(constants.strings("cleared_tags",
+                                               song=var.playlist[int(index) - 1].format_short_string()), text)
+                return
+
+        elif index == "*":
+            if params[1] != "*":
+                tags = list(map(lambda t: t.strip(), params[1].split(",")))
+                for item in var.playlist:
+                    item.remove_tags(tags)
+                    log.info("cmd: remove tags %s from song %s" % (", ".join(tags),
+                                                              item.format_debug_string()))
+                bot.send_msg(constants.strings("removed_tags_from_all", tags=", ".join(tags)), text)
+                return
+            else:
+                for item in var.playlist:
+                    item.clear_tags()
+                    log.info("cmd: clear tags from song %s" % (item.format_debug_string()))
+                bot.send_msg(constants.strings("cleared_tags_from_all"), text)
+                return
+
+    bot.send_msg(constants.strings('bad_parameter', command=command), text)
+
+def cmd_find_tagged(bot, user, text, command, parameter):
+    if not parameter:
+        bot.send_msg(constants.strings('bad_parameter', command=command))
+        return
+
+    msgs = [constants.strings('multiple_file_found') + "<ul>"]
+    count = 0
+
+    tags = parameter.split(",")
+    tags = list(map(lambda t: t.strip(), tags))
+    music_wrappers = get_item_wrappers_by_tags(bot, tags, user)
+    for music_wrapper in music_wrappers:
+        count += 1
+        msgs.append("<li><b>{}</b> (<i>{}</i>)</li>".format(music_wrapper.item().title, ", ".join(music_wrapper.item().tags)))
+
+    if count != 0:
+        msgs.append("</ul>")
+        send_multi_lines(bot, msgs, text, "")
+    else:
+        bot.send_msg(constants.strings("no_file"), text)
 
 def cmd_drop_database(bot, user, text, command, parameter):
     global log

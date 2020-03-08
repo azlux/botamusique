@@ -55,14 +55,20 @@ class PlaylistItemWrapper:
     def uri(self):
         return self.item().uri()
 
-    def add_tag(self, tag):
-        self.item().add_tag(tag)
+    def add_tags(self, tags):
+        self.item().add_tags(tags)
         if self.item().version > self.version:
             self.version = self.item().version
             self.lib.save(self.id)
 
-    def remove_tag(self, tag):
-        self.item().remove_tag(tag)
+    def remove_tags(self, tags):
+        self.item().remove_tags(tags)
+        if self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+
+    def clear_tags(self):
+        self.item().clear_tags()
         if self.item().version > self.version:
             self.version = self.item().version
             self.lib.save(self.id)

@@ -44,6 +44,7 @@ class BaseItem:
         else:
             self.id = from_dict['id']
             self.ready = from_dict['ready']
+            self.tags = from_dict['tags']
 
     def is_ready(self):
         return True if self.ready == "yes" else False
@@ -60,14 +61,21 @@ class BaseItem:
     def prepare(self):
         return True
 
-    def add_tag(self, tag):
-        if tag not in self.tags:
-            self.tags.append(tag)
-            self.version += 1
+    def add_tags(self, tags):
+        for tag in tags:
+            if tag not in self.tags:
+                self.tags.append(tag)
+                self.version += 1
 
-    def remove_tag(self, tag):
-        if tag not in self.tags:
-            self.tags.remove(tag)
+    def remove_tags(self, tags):
+        for tag in tags:
+            if tag in self.tags:
+                self.tags.remove(tag)
+                self.version += 1
+
+    def clear_tags(self):
+        if len(self.tags) > 0:
+            self.tags = []
             self.version += 1
 
     def format_song_string(self, user):

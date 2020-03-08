@@ -51,11 +51,12 @@ class MusicLibrary(dict):
     def get_items_by_tags(self, bot, tags):
         music_dicts = self.db.query_music_by_tags(tags)
         items = []
-        for music_dict in music_dicts:
-            id = music_dicts['id']
-            type = music_dict['type']
-            self[id] = item_loaders[type](bot, music_dict)
-            items.append(self[id])
+        if music_dicts:
+            for music_dict in music_dicts:
+                id = music_dict['id']
+                type = music_dict['type']
+                self[id] = item_loaders[type](bot, music_dict)
+                items.append(self[id])
 
         return items
 
