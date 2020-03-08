@@ -70,12 +70,15 @@ class URLItem(BaseItem):
     def validate(self):
         self.validating_lock.acquire()
         if self.ready in ['yes', 'validated']:
+            self.validating_lock.release()
             return True
 
         if self.ready == 'failed':
+            self.validating_lock.release()
             return False
 
         if os.path.exists(self.path):
+            self.validating_lock.release()
             self.ready = "yes"
             return True
 
@@ -219,10 +222,12 @@ class URLItem(BaseItem):
         )
 
     def format_song_string(self, user):
-        return constants.strings("url_item",
-                                    title=self.title,
-                                    url=self.url,
-                                    user=user)
+        if self.ready in ['validated', 'yes']:
+            return constants.strings("url_item",
+                                        title=self.title,
+                                        url=self.url,
+                                        user=user)
+        return self.url
 
     def format_current_playing(self, user):
         display = constants.strings("now_playing", item=self.format_song_string(user))

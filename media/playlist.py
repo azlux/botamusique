@@ -45,7 +45,7 @@ class PlaylistItemWrapper:
 
     def async_prepare(self):
         th = threading.Thread(
-            target=self.item().prepare, name="Prepare-" + self.id[:7])
+            target=self.prepare, name="Prepare-" + self.id[:7])
         self.log.info(
             "%s: start preparing item in thread: " % self.item().type + self.format_debug_string())
         th.daemon = True
@@ -222,7 +222,14 @@ class BasePlaylist(list):
         if self.current_index > index:
             self.current_index -= 1
 
-        var.library.free(removed.id)
+        # reference counter
+        counter = 0
+        for wrapper in self:
+            if wrapper.id == removed.id:
+                counter += 1
+
+        if counter == 0:
+            var.library.free(removed.id)
         return removed
 
     def remove_by_id(self, id):
@@ -272,6 +279,7 @@ class BasePlaylist(list):
 
     def save(self):
         var.db.remove_section("playlist_item")
+        assert self.current_index is not None
         var.db.set("playlist", "current_index", self.current_index)
 
         for index, music in enumerate(self):
@@ -331,8 +339,10 @@ class OneshotPlaylist(BasePlaylist):
 
     def from_list(self, _list, current_index):
         if len(_list) > 0:
-            for i in range(current_index):
-                _list.pop()
+            if current_index > -1:
+                for i in range(current_index):
+                    _list.pop(0)
+                return super().from_list(_list, 0)
             return super().from_list(_list, -1)
         return self
 
@@ -450,6 +460,7 @@ class AutoPlaylist(BasePlaylist):
 
     def next(self):
         if len(self) == 0:
+            self.refresh()
             return False
 
         self.version += 1
