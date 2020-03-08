@@ -154,7 +154,7 @@ class FileItem(BaseItem):
     def format_song_string(self, user):
         return constants.strings("file_item",
                                     title=self.title,
-                                    artist=self.artist,
+                                    artist=self.artist if self.artist else '??',
                                     user=user
                                     )
 

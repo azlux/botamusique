@@ -231,6 +231,40 @@ class MusicDatabase:
         else:
             return None
 
+    def query_music_by_keywords(self, keywords):
+        condition = []
+        filler = []
+
+        for keyword in keywords:
+            condition.append('title LIKE ?')
+            filler.append("%{:s}%".format(keyword))
+
+
+        condition_str = " AND ".join(condition)
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
+                                 "WHERE %s" % condition_str, filler).fetchall()
+        conn.close()
+
+        if len(results) > 0:
+            music_dicts = []
+            for result in results:
+                music_dict = json.loads(result[3])
+                music_dict['type'] = result[1]
+                music_dict['title'] = result[2]
+                music_dict['id'] = result[0]
+                music_dict['tags'] = result[4].strip(",").split(",")
+                if not music_dict['tags'][0]:
+                    music_dict['tags'] = []
+
+                music_dicts.append(music_dict)
+
+            return music_dicts
+        else:
+            return None
+
     def query_music_by_tags(self, tags):
         condition = []
         filler = []

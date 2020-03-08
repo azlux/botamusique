@@ -119,7 +119,7 @@ def build_tags_color_lookup():
 
 def build_path_tags_lookup():
     path_lookup = {}
-    items = var.library.file_id_lookup.items()
+    items = var.cache.file_id_lookup.items()
     for path, id in items:
         path_lookup[path] = var.music_db.query_tags_by_id(id)
 
@@ -133,17 +133,17 @@ def recur_dir(dirobj):
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    while var.library.dir_lock.locked():
+    while var.cache.dir_lock.locked():
         time.sleep(0.1)
 
     tags_color_lookup = build_tags_color_lookup()
     path_tags_lookup = build_path_tags_lookup()
 
     return render_template('index.html',
-                           all_files=var.library.files,
+                           all_files=var.cache.files,
                            tags_lookup=path_tags_lookup,
                            tags_color_lookup=tags_color_lookup,
-                           music_library=var.library.dir,
+                           music_library=var.cache.dir,
                            os=os,
                            playlist=var.playlist,
                            user=var.user,
@@ -198,7 +198,7 @@ def post():
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.music_folder + request.form['add_file_bottom']
             if os.path.isfile(path):
-                music_wrapper = get_item_wrapper_by_id(var.bot, var.library.file_id_lookup[request.form['add_file_bottom']], user)
+                music_wrapper = get_item_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_bottom']], user)
 
                 var.playlist.append(music_wrapper)
                 log.info('web: add to playlist(bottom): ' + music_wrapper.format_debug_string())
@@ -206,7 +206,7 @@ def post():
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.music_folder + request.form['add_file_next']
             if os.path.isfile(path):
-                music_wrapper = get_item_wrapper_by_id(var.bot, var.library.file_id_lookup[request.form['add_file_next']], user)
+                music_wrapper = get_item_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_next']], user)
                 var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
                 log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
 
@@ -220,7 +220,7 @@ def post():
                 folder += '/'
 
             if os.path.isdir(var.music_folder + folder):
-                dir = var.library.dir
+                dir = var.cache.dir
                 if 'add_folder_recursively' in request.form:
                     files = dir.get_files_recursively(folder)
                 else:
@@ -228,7 +228,7 @@ def post():
 
                 music_wrappers = list(map(
                     lambda file:
-                    get_item_wrapper_by_id(var.bot, var.library.file_id_lookup[folder + file], user),
+                    get_item_wrapper_by_id(var.bot, var.cache.file_id_lookup[folder + file], user),
                 files))
 
                 var.playlist.extend(music_wrappers)
@@ -328,7 +328,7 @@ def post():
                 var.db.set('playlist', 'playback_mode', "autoplay")
                 log.info("web: playback mode changed to autoplay.")
             if action == "rescan":
-                var.library.build_dir_cache(var.bot)
+                var.cache.build_dir_cache(var.bot)
                 log.info("web: Local file cache refreshed.")
             elif action == "stop":
                 var.bot.stop()
@@ -413,7 +413,7 @@ def download():
         log.info('web: Download of file %s requested from %s:' % (requested_file, request.remote_addr))
         if '../' not in requested_file:
             folder_path = var.music_folder
-            files = var.library.files
+            files = var.cache.files
 
             if requested_file in files:
                 filepath = os.path.join(folder_path, requested_file)

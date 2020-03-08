@@ -10,7 +10,7 @@ from media.url import URLItem
 from media.url_from_playlist import PlaylistURLItem
 from media.radio import RadioItem
 from database import MusicDatabase
-from media.library import MusicLibrary
+from media.cache import MusicCache
 
 class PlaylistItemWrapper:
     def __init__(self, lib, id, type, user):
@@ -95,24 +95,25 @@ class PlaylistItemWrapper:
         return self.item().display_type()
 
 
+# Remember!!! Using these three get wrapper functions will automatically add items into the cache!
 def get_item_wrapper(bot, **kwargs):
-    item = var.library.get_item(bot, **kwargs)
+    item = var.cache.get_item(bot, **kwargs)
     if 'user' not in kwargs:
         raise KeyError("Which user added this song?")
-    return PlaylistItemWrapper(var.library, item.id, kwargs['type'], kwargs['user'])
+    return PlaylistItemWrapper(var.cache, item.id, kwargs['type'], kwargs['user'])
 
 def get_item_wrapper_by_id(bot, id, user):
-    item = var.library.get_item_by_id(bot, id)
+    item = var.cache.get_item_by_id(bot, id)
     if item:
-        return PlaylistItemWrapper(var.library, item.id, item.type, user)
+        return PlaylistItemWrapper(var.cache, item.id, item.type, user)
     else:
         return None
 
 def get_item_wrappers_by_tags(bot, tags, user):
-    items = var.library.get_items_by_tags(bot, tags)
+    items = var.cache.get_items_by_tags(bot, tags)
     ret = []
     for item in items:
-        ret.append(PlaylistItemWrapper(var.library, item.id, item.type, user))
+        ret.append(PlaylistItemWrapper(var.cache, item.id, item.type, user))
     return ret
 
 def get_playlist(mode, _list=None, index=None):
@@ -235,7 +236,7 @@ class BasePlaylist(list):
                 counter += 1
 
         if counter == 0:
-            var.library.free(removed.id)
+            var.cache.free(removed.id)
         return removed
 
     def remove_by_id(self, id):
@@ -280,7 +281,7 @@ class BasePlaylist(list):
     def clear(self):
         self.version += 1
         self.current_index = -1
-        var.library.free_all()
+        var.cache.free_all()
         super().clear()
 
     def save(self):
@@ -330,7 +331,7 @@ class BasePlaylist(list):
             self.log.debug("playlist: validating %s" % item.format_debug_string())
             if not item.validate() or item.is_failed():
                 self.log.debug("playlist: validating failed.")
-                var.library.delete(item.id)
+                var.cache.delete(item.id)
                 self.remove_by_id(item.id)
 
         self.log.debug("playlist: validating finished.")

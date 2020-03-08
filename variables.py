@@ -1,6 +1,6 @@
 bot = None
 playlist = None
-library = None
+cache = None
 
 user = ""
 is_proxified = False

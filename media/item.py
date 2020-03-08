@@ -28,6 +28,18 @@ item_builders['base'] = example_builder
 item_loaders['base'] = example_loader
 item_id_generators['base'] = example_id_generator
 
+def dicts_to_items(bot, music_dicts):
+    items = []
+    for music_dict in music_dicts:
+        type = music_dict['type']
+        items.append(item_loaders[type](bot, music_dict))
+    return items
+
+def dict_to_item(bot, music_dict):
+    type = music_dict['type']
+    return item_loaders[type](bot, music_dict)
+
+
 class BaseItem:
     def __init__(self, bot, from_dict=None):
         self.bot = bot

@@ -3,13 +3,13 @@ from database import MusicDatabase
 import json
 import threading
 
-from media.item import item_builders, item_loaders, item_id_generators
+from media.item import item_builders, item_loaders, item_id_generators, dict_to_item, dicts_to_items
 from database import MusicDatabase
 import variables as var
 import util
 
 
-class MusicLibrary(dict):
+class MusicCache(dict):
     def __init__(self, db: MusicDatabase):
         super().__init__()
         self.db = db
@@ -36,7 +36,11 @@ class MusicLibrary(dict):
     def get_item(self, bot, **kwargs):
         # kwargs should provide type and id, and parameters to build the item if not existed in the library.
         # if cached
-        id = item_id_generators[kwargs['type']](**kwargs)
+        if 'id' in kwargs:
+            id = kwargs['id']
+        else:
+            id = item_id_generators[kwargs['type']](**kwargs)
+
         if id in self:
             return self[id]
 
@@ -57,8 +61,7 @@ class MusicLibrary(dict):
         if music_dicts:
             for music_dict in music_dicts:
                 id = music_dict['id']
-                type = music_dict['type']
-                self[id] = item_loaders[type](bot, music_dict)
+                self[id] = dict_to_item(bot, music_dict)
                 items.append(self[id])
 
         return items
@@ -67,8 +70,7 @@ class MusicLibrary(dict):
         music_dicts = self.db.query_music(id=id)
         if music_dicts:
             music_dict = music_dicts[0]
-            type = music_dict['type']
-            self[id] = item_loaders[type](bot, music_dict)
+            self[id] = dict_to_item(bot, music_dict)
             return self[id]
         else:
             return None

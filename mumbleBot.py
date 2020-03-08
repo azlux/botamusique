@@ -30,7 +30,7 @@ import media.file
 import media.radio
 import media.system
 from media.playlist import BasePlaylist
-from media.library import MusicLibrary
+from media.cache import MusicCache
 
 
 class MumbleBot:
@@ -347,7 +347,7 @@ class MumbleBot:
                 break
             else:
                 var.playlist.remove_by_id(next.id)
-                var.library.delete(next.id)
+                var.cache.delete(next.id)
 
 
     # =======================
@@ -407,7 +407,7 @@ class MumbleBot:
                                 self.send_msg(constants.strings('download_in_progress', item=current.format_short_string()))
                         else:
                             var.playlist.remove_by_id(current.id)
-                            var.library.delete(current.id)
+                            var.cache.delete(current.id)
                     else:
                         self._loop_status = 'Empty queue'
                 else:
@@ -639,7 +639,7 @@ if __name__ == '__main__':
     else:
         var.music_db = MusicDatabase(":memory:")
 
-    var.library = MusicLibrary(var.music_db)
+    var.cache = MusicCache(var.music_db)
 
     # load playback mode
     playback_mode = None
@@ -658,9 +658,9 @@ if __name__ == '__main__':
 
     if var.config.get("bot", "refresh_cache_on_startup", fallback=True)\
             or not var.db.has_option("dir_cache", "files"):
-        var.library.build_dir_cache(var.bot)
+        var.cache.build_dir_cache(var.bot)
     else:
-        var.library.load_dir_cache(var.bot)
+        var.cache.load_dir_cache(var.bot)
 
     # load playlist
     if var.config.getboolean('bot', 'save_playlist', fallback=True):
