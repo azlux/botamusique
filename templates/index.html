@@ -1,5 +1,6 @@
 {% macro dirlisting(dir, path='') -%}
 <ul class="list-group">
+    {% if dir and dir.get_subdirs().items() %}
     {% for subdirname, subdirobj in dir.get_subdirs().items() %}
     {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
     {%- set subdirid = subdirpath.replace("/","-") %}
@@ -47,6 +48,7 @@
         {{- dirlisting(subdirobj, subdirpath) -}}
     </div>
     {% endfor %}
+    {% endif %}
     {%- set files = dir.get_files() %}
     {%- if files %}
     {% for file in files %}

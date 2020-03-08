@@ -41,7 +41,7 @@ def solve_filepath(path):
 
 def get_recursive_file_list_sorted(path):
     filelist = []
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, topdown=True, onerror=None, followlinks=True):
         relroot = root.replace(path, '', 1)
         if relroot != '' and relroot in var.config.get('bot', 'ignored_folders'):
             continue
@@ -55,9 +55,12 @@ def get_recursive_file_list_sorted(path):
             if not os.access(fullpath, os.R_OK):
                 continue
 
-            mime = magic.from_file(fullpath, mime=True)
-            if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
-                filelist.append(relroot + file)
+            try:
+                mime = magic.from_file(fullpath, mime=True)
+                if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
+                    filelist.append(relroot + file)
+            except:
+                pass
 
     filelist.sort()
     return filelist

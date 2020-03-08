@@ -1,6 +1,7 @@
 import logging
 from database import MusicDatabase
 import json
+import threading
 
 from media.item import item_builders, item_loaders, item_id_generators
 from database import MusicDatabase
@@ -15,6 +16,7 @@ class MusicLibrary(dict):
         self.log = logging.getLogger("bot")
         self.dir = None
         self.files = []
+        self.dir_lock = threading.Lock()
 
     def get_item_by_id(self, bot, id): # Why all these functions need a bot? Because it need the bot to send message!
         if id in self:
@@ -27,6 +29,7 @@ class MusicLibrary(dict):
             self.log.debug("library: music found in database: %s" % item.format_debug_string())
             return item
         else:
+            print(id)
             raise KeyError("Unable to fetch item from the database! Please try to refresh the cache by !recache.")
 
 
@@ -101,6 +104,7 @@ class MusicLibrary(dict):
         self.clear()
 
     def build_dir_cache(self, bot):
+        self.dir_lock.acquire()
         self.log.info("library: rebuild directory cache")
         self.files = []
         self.file_id_lookup = {}
@@ -114,11 +118,13 @@ class MusicLibrary(dict):
                 self.file_id_lookup[file] = item.id
 
         self.save_dir_cache()
+        self.dir_lock.release()
 
     def save_dir_cache(self):
         var.db.set("dir_cache", "files", json.dumps(self.file_id_lookup))
 
     def load_dir_cache(self, bot):
+        self.dir_lock.acquire()
         self.log.info("library: load directory cache from database")
         loaded = json.loads(var.db.get("dir_cache", "files"))
         self.files = loaded.keys()
@@ -126,4 +132,5 @@ class MusicLibrary(dict):
         self.dir = util.Dir(var.music_folder)
         for file, id in loaded.items():
             self.dir.add_file(file)
+        self.dir_lock.release()
 

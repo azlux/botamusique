@@ -119,16 +119,26 @@ def build_tags_color_lookup():
 
 def build_path_tags_lookup():
     path_lookup = {}
-    for path, id in var.library.file_id_lookup.items():
+    items = var.library.file_id_lookup.items()
+    for path, id in items:
         path_lookup[path] = var.music_db.query_tags_by_id(id)
 
     return path_lookup
+
+def recur_dir(dirobj):
+    for name, dir in dirobj.get_subdirs().items():
+        print(dirobj.fullpath + "/" + name)
+        recur_dir(dir)
 
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
     tags_color_lookup = build_tags_color_lookup()
     path_tags_lookup = build_path_tags_lookup()
+
+    while var.library.dir_lock.locked():
+        time.sleep(0.1)
+
     return render_template('index.html',
                            all_files=var.library.files,
                            tags_lookup=path_tags_lookup,
@@ -137,7 +147,7 @@ def index():
                            os=os,
                            playlist=var.playlist,
                            user=var.user,
-                           paused=var.bot.is_pause
+                           paused=var.bot.is_pause,
                            )
 
 @web.route("/playlist", methods=['GET'])
