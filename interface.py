@@ -10,7 +10,7 @@ import shutil
 from werkzeug.utils import secure_filename
 import errno
 import media
-from media.playlist import get_item_wrapper, get_item_wrapper_by_id
+from media.playlist import get_item_wrapper, get_item_wrapper_by_id, get_item_wrappers_by_tags
 import logging
 import time
 
@@ -90,20 +90,49 @@ def requires_auth(f):
         return f(*args, **kwargs)
     return decorated
 
-def build_tags_lookup():
-    lookup = {}
-    for path, id in var.library.file_id_lookup.items():
-        lookup[path] = var.music_db.query_tags_by_id(id)
+def tag_color(tag):
+    num = hash(tag) % 8
+    if num == 0:
+        return "primary"
+    elif num == 1:
+        return "secondary"
+    elif num == 2:
+        return "success"
+    elif num == 3:
+        return "danger"
+    elif num == 4:
+        return "warning"
+    elif num == 5:
+        return "info"
+    elif num == 6:
+        return "light"
+    elif num == 7:
+        return "dark"
 
-    return lookup
+def build_tags_color_lookup():
+    color_lookup = {}
+    for tag in var.music_db.query_all_tags():
+        color_lookup[tag] = tag_color(tag)
+
+
+    return color_lookup
+
+def build_path_tags_lookup():
+    path_lookup = {}
+    for path, id in var.library.file_id_lookup.items():
+        path_lookup[path] = var.music_db.query_tags_by_id(id)
+
+    return path_lookup
 
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    tags_lookup = build_tags_lookup()
+    tags_color_lookup = build_tags_color_lookup()
+    path_tags_lookup = build_path_tags_lookup()
     return render_template('index.html',
                            all_files=var.library.files,
-                           tags_lookup=tags_lookup,
+                           tags_lookup=path_tags_lookup,
+                           tags_color_lookup=tags_color_lookup,
                            music_library=var.library.dir,
                            os=os,
                            playlist=var.playlist,
@@ -121,11 +150,13 @@ def playlist():
                                )]
                         })
 
+    tags_color_lookup = build_tags_color_lookup()
     items = []
 
     for index, item_wrapper in enumerate(var.playlist):
          items.append(render_template('playlist.html',
                                      index=index,
+                                     tags_color_lookup=tags_color_lookup,
                                      m=item_wrapper.item(),
                                      playlist=var.playlist
                                      )
@@ -257,6 +288,12 @@ def post():
                 log.info("web: delete folder " + path)
                 shutil.rmtree(path)
                 time.sleep(0.1)
+
+        elif 'add_tag' in request.form:
+            music_wrappers = get_item_wrappers_by_tags(var.bot, [request.form['add_tag']], user)
+            for music_wrapper in music_wrappers:
+                log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+            var.playlist.extend(music_wrappers)
 
         elif 'action' in request.form:
             action = request.form['action']

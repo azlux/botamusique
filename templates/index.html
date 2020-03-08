@@ -79,7 +79,7 @@
             {{ filepath }}
         </div>
             {% for tag in tags_lookup[filepath] %}
-                <span class="badge badge-warning">{{ tag }}</span>
+                <span class="badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
             {% endfor %}
 
         <div class="btn-group" style="float: right;">
@@ -119,13 +119,9 @@
         <div class="bs-docs-section">
             <div class="row">
             <div class="col">
-                <div id="playlist" class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fa fa-list" aria-hidden="true"></i> Play List</h2>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="btn-group" style="margin-bottom: 5px;">
+                <div id="playlist" class="col-lg-12">
+                    <div>
+                        <div class="btn-group" style="margin-bottom: 10px;">
                             <button type="button" id="play-btn" class="btn btn-info btn-space"
                                     onclick="request('post', {action : 'resume'})" disabled>
                                 <i class="fas fa-play" aria-hidden="true"></i>
@@ -208,9 +204,30 @@
         <div class="bs-docs-section">
             <div class="row">
             <div class="col">
+                <div class="page-header">
+                    <h1 id="forms">Music Library</h1>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Tags</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for tag in tags_color_lookup.keys() %}
+                            <span class="tag-click badge badge-{{ tags_color_lookup[tag] }}"
+                                  onclick="request('post', {add_tag : '{{ tag }}'})">
+                                {{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div class="bs-docs-section">
+            <div class="row">
+                <div class="col">
                 <div id="browser" class="card">
                     <div class="card-header">
-                        <h2 class="card-title"><i class="fa fa-list" aria-hidden="true"></i> Music Library</h2>
+                        <h4 class="card-title">Files</h4>
                     </div>
 
                     <div class="card-body">

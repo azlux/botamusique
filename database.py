@@ -185,6 +185,18 @@ class MusicDatabase:
         conn.close()
         return list(map(lambda i: i[0], results))
 
+    def query_all_tags(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT tags FROM music").fetchall()
+        tags = []
+        for result in results:
+            for tag in result[0].strip(",").split(","):
+                if tag and tag not in tags:
+                    tags.append(tag)
+        conn.close()
+        return tags
+
     def query_music(self, **kwargs):
         condition = []
         filler = []
@@ -242,8 +254,11 @@ class MusicDatabase:
                 music_dict = json.loads(result[3])
                 music_dict['type'] = result[1]
                 music_dict['title'] = result[2]
-                music_dict['tags'] = result[4].strip(",").split(",")
                 music_dict['id'] = result[0]
+                music_dict['tags'] = result[4].strip(",").split(",")
+                if not music_dict['tags'][0]:
+                    music_dict['tags'] = []
+
                 music_dicts.append(music_dict)
 
             return music_dicts
@@ -260,7 +275,7 @@ class MusicDatabase:
         if len(results) > 0:
             tags = results[0][0].strip(",").split(",")
 
-            return tags
+            return tags if tags[0] else []
         else:
             return None
 
