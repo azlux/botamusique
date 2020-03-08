@@ -353,7 +353,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
             parameter = parameter.split()[0]
         url = util.get_url_from_input(parameter)
         if url:
-            music_wrapper = get_item_wrapper_from_scrap(bot, type='radio', url=url)
+            music_wrapper = get_item_wrapper_from_scrap(bot, type='radio', url=url, user=user)
 
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -667,7 +667,7 @@ def cmd_last(bot, user, text, command, parameter):
 
     if len(var.playlist) > 0:
         bot.interrupt()
-        var.playlist.point_to(len(var.playlist) - 1)
+        var.playlist.point_to(len(var.playlist) - 1 - 1)
     else:
         bot.send_msg(constants.strings('queue_empty'), text)
 
@@ -775,7 +775,7 @@ def cmd_repeat(bot, user, text, command, parameter):
             var.playlist.current_index + 1,
             music
         )
-        log.info("bot: add to playlist: " + music.format_debug_string)
+        log.info("bot: add to playlist: " + music.format_debug_string())
 
     bot.send_msg(constants.strings("repeat", song=music.format_song_string(), n=str(repeat)), text)
 

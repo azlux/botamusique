@@ -22,12 +22,15 @@ def get_radio_server_description(url):
     url_shoutcast = base_url + '/stats?json=1'
     title_server = None
     try:
-        r = requests.get(url_shoutcast, timeout=5)
+        r = requests.get(url_shoutcast, timeout=10)
         data = r.json()
         title_server = data['servertitle']
         return title_server
         # logging.info("TITLE FOUND SHOUTCAST: " + title_server)
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.Timeout) as e:
         error_traceback = traceback.format_exc()
         error = error_traceback.rstrip().split("\n")[-1]
         log.debug("radio: unsuccessful attempts on fetching radio description (shoutcast): " + error)
@@ -35,7 +38,7 @@ def get_radio_server_description(url):
         return False # ?
 
     try:
-        r = requests.get(url_icecast, timeout=5)
+        r = requests.get(url_icecast, timeout=10)
         data = r.json()
         source = data['icestats']['source']
         if type(source) is list:
@@ -45,7 +48,10 @@ def get_radio_server_description(url):
             title_server += ' - ' + source['server_description']
         # logging.info("TITLE FOUND ICECAST: " + title_server)
         return title_server
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.Timeout) as e:
         error_traceback = traceback.format_exc()
         error = error_traceback.rstrip().split("\n")[-1]
         log.debug("radio: unsuccessful attempts on fetching radio description (icecast): " + error)
@@ -58,7 +64,7 @@ def get_radio_title(url):
 
     log.debug("radio: fetching radio server description")
     try:
-        r = requests.get(url, headers={'Icy-MetaData': '1'}, stream=True, timeout=5)
+        r = requests.get(url, headers={'Icy-MetaData': '1'}, stream=True, timeout=10)
         icy_metaint_header = int(r.headers['icy-metaint'])
         r.raw.read(icy_metaint_header)
 
@@ -71,8 +77,13 @@ def get_radio_title(url):
             title = m.group(1)
             if title:
                 return title.decode()
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError) as e:
-        pass
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.HTTPError,
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.Timeout) as e:
+        error_traceback = traceback.format_exc()
+        error = error_traceback.rstrip().split("\n")[-1]
+        log.debug("radio: unsuccessful attempts on fetching radio title (icy): " + e)
     return url
 
 
@@ -124,6 +135,8 @@ class RadioItem(BaseItem):
         dict = super().to_dict()
         dict['url'] = self.url
         dict['title'] = self.title
+
+        return dict
 
     def format_debug_string(self):
         return "[radio] {name} ({url})".format(

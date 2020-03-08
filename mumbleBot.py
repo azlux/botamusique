@@ -215,7 +215,7 @@ class MumbleBot:
 
             # use the first word as a command, the others one as  parameters
             if len(message) > 0:
-                command = message[0]
+                command = message[0].lower()
                 parameter = ''
                 if len(message) > 1:
                     parameter = message[1].rstrip()
