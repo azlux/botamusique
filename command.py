@@ -894,18 +894,24 @@ def cmd_find_tagged(bot, user, text, command, parameter):
 def cmd_drop_database(bot, user, text, command, parameter):
     global log
 
-    var.db.drop_table()
-    var.db = SettingsDatabase(var.dbfile)
-    var.music_db.drop_table()
-    var.music_db = MusicDatabase(var.dbfile)
-    log.info("command: database dropped.")
-    bot.send_msg(constants.strings('database_dropped'), text)
+    if bot.is_admin(user):
+        var.db.drop_table()
+        var.db = SettingsDatabase(var.dbfile)
+        var.music_db.drop_table()
+        var.music_db = MusicDatabase(var.dbfile)
+        log.info("command: database dropped.")
+        bot.send_msg(constants.strings('database_dropped'), text)
+    else:
+        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
 
 def cmd_refresh_cache(bot, user, text, command, parameter):
     global log
-    var.library.build_dir_cache(bot)
-    log.info("command: Local file cache refreshed.")
-    bot.send_msg(constants.strings('cache_refreshed'), text)
+    if bot.is_admin(user):
+        var.library.build_dir_cache(bot)
+        log.info("command: Local file cache refreshed.")
+        bot.send_msg(constants.strings('cache_refreshed'), text)
+    else:
+        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
 
 # Just for debug use
 def cmd_real_time_rms(bot, user, text, command, parameter):
