@@ -115,6 +115,8 @@ class MusicLibrary(dict):
             if item.validate():
                 self.dir.add_file(file)
                 self.files.append(file)
+                self.log.debug("library: music save into database: %s" % item.format_debug_string())
+                self.db.insert_music(item.to_dict())
                 self.file_id_lookup[file] = item.id
 
         self.save_dir_cache()
