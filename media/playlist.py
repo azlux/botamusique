@@ -6,6 +6,7 @@ import random
 
 import variables as var
 from media.file import FileItem
+from media.item import dict_to_item
 from media.url import URLItem
 from media.url_from_playlist import PlaylistURLItem
 from media.radio import RadioItem
@@ -96,11 +97,16 @@ class PlaylistItemWrapper:
 
 
 # Remember!!! Using these three get wrapper functions will automatically add items into the cache!
-def get_item_wrapper(bot, **kwargs):
+def get_item_wrapper_from_scrap(bot, **kwargs):
     item = var.cache.get_item(bot, **kwargs)
     if 'user' not in kwargs:
         raise KeyError("Which user added this song?")
     return PlaylistItemWrapper(var.cache, item.id, kwargs['type'], kwargs['user'])
+
+def get_item_wrapper_from_dict(bot, dict_from_db, user):
+    item = dict_to_item(bot, dict_from_db)
+    var.cache[dict_from_db['id']] = item
+    return PlaylistItemWrapper(var.cache, item.id, item.type, user)
 
 def get_item_wrapper_by_id(bot, id, user):
     item = var.cache.get_item_by_id(bot, id)
@@ -441,16 +447,14 @@ class RandomPlaylist(BasePlaylist):
             return self[0]
 
 
-class AutoPlaylist(BasePlaylist):
+class AutoPlaylist(OneshotPlaylist):
     def __init__(self):
         super().__init__()
         self.mode = "autoplay"
 
     def refresh(self):
-        _list = []
-        ids = var.music_db.query_all_ids()
-        for _ in range(20):
-            _list.append(get_item_wrapper_by_id(var.bot, ids[random.randint(0, len(ids)-1)], 'AutoPlay'))
+        dicts = var.music_db.query_random_music(var.config.getint("bot", "autoplay_length", fallback=5))
+        _list = [get_item_wrapper_from_dict(var.bot, _dict, "AutoPlay") for _dict in dicts]
         self.from_list(_list, -1)
 
     # def from_list(self, _list, current_index):
@@ -465,14 +469,5 @@ class AutoPlaylist(BasePlaylist):
     def next(self):
         if len(self) == 0:
             self.refresh()
-            return False
+        return super().next()
 
-        self.version += 1
-
-        if self.current_index < len(self) - 1:
-            self.current_index += 1
-            return self[self.current_index]
-        else:
-            self.refresh()
-            self.current_index = 0
-            return self[0]

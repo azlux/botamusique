@@ -11,7 +11,7 @@ import variables as var
 from librb import radiobrowser
 from database import SettingsDatabase, MusicDatabase
 from media.item import item_builders, item_loaders, item_id_generators, dict_to_item, dicts_to_items
-from media.playlist import get_item_wrapper, get_item_wrapper_by_id, get_item_wrappers_by_tags
+from media.playlist import get_item_wrapper_from_scrap, get_item_wrapper_by_id, get_item_wrappers_by_tags
 from media.file import FileItem
 from media.url_from_playlist import PlaylistURLItem, get_playlist_info
 from media.url import URLItem
@@ -197,7 +197,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
         #     return
 
         if parameter in var.cache.files:
-            music_wrapper = get_item_wrapper(bot, type='file', path=parameter, user=user)
+            music_wrapper = get_item_wrapper_from_scrap(bot, type='file', path=parameter, user=user)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
@@ -301,7 +301,7 @@ def cmd_play_url(bot, user, text, command, parameter):
 
     url = util.get_url_from_input(parameter)
     if url:
-        music_wrapper = get_item_wrapper(bot, type='url', url=url, user=user)
+        music_wrapper = get_item_wrapper_from_scrap(bot, type='url', url=url, user=user)
         var.playlist.append(music_wrapper)
 
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -328,7 +328,7 @@ def cmd_play_playlist(bot, user, text, command, parameter):
     items = get_playlist_info(url=url, start_index=offset, user=user)
     if len(items) > 0:
         items = var.playlist.extend(list(map(
-            lambda item: get_item_wrapper(bot, **item), items)))
+            lambda item: get_item_wrapper_from_scrap(bot, **item), items)))
         for music in items:
             log.info("cmd: add to playlist: " + music.format_debug_string())
     else:
@@ -353,7 +353,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
             parameter = parameter.split()[0]
         url = util.get_url_from_input(parameter)
         if url:
-            music_wrapper = get_item_wrapper(bot, type='radio', url=url)
+            music_wrapper = get_item_wrapper_from_scrap(bot, type='radio', url=url)
 
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -452,7 +452,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
         url = radiobrowser.geturl_byid(parameter)
         if url != "-1":
             log.info('cmd: Found url: ' + url)
-            music_wrapper = get_item_wrapper(bot, type='radio', url=url, name=stationname, user=user)
+            music_wrapper = get_item_wrapper_from_scrap(bot, type='radio', url=url, name=stationname, user=user)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.async_download_next()
@@ -966,7 +966,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
             if 1 <= index <= len(song_shortlist):
                 kwargs = song_shortlist[index - 1]
                 kwargs['user'] = user
-                music_wrapper = get_item_wrapper(bot, **kwargs)
+                music_wrapper = get_item_wrapper_from_scrap(bot, **kwargs)
                 var.playlist.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                 msgs.append("<li><b>{}</b></li>".format(music_wrapper.item().title))
@@ -984,7 +984,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
         if 1 <= index <= len(song_shortlist):
             kwargs = song_shortlist[index - 1]
             kwargs['user'] = user
-            music_wrapper = get_item_wrapper(bot, **kwargs)
+            music_wrapper = get_item_wrapper_from_scrap(bot, **kwargs)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)

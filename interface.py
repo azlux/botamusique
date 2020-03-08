@@ -10,7 +10,7 @@ import shutil
 from werkzeug.utils import secure_filename
 import errno
 import media
-from media.playlist import get_item_wrapper, get_item_wrapper_by_id, get_item_wrappers_by_tags
+from media.playlist import get_item_wrapper_from_scrap, get_item_wrapper_by_id, get_item_wrappers_by_tags
 import logging
 import time
 
@@ -238,7 +238,7 @@ def post():
 
 
         elif 'add_url' in request.form:
-            music_wrapper = get_item_wrapper(var.bot, type='url', url=request.form['add_url'], user=user)
+            music_wrapper = get_item_wrapper_from_scrap(var.bot, type='url', url=request.form['add_url'], user=user)
             var.playlist.append(music_wrapper)
 
             log.info("web: add to playlist: " + music_wrapper.format_debug_string())
@@ -248,7 +248,7 @@ def post():
 
         elif 'add_radio' in request.form:
             url = request.form['add_radio']
-            music_wrapper = get_item_wrapper(var.bot, type='radio', url=url, user=user)
+            music_wrapper = get_item_wrapper_from_scrap(var.bot, type='radio', url=url, user=user)
             var.playlist.append(music_wrapper)
 
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
