@@ -410,25 +410,25 @@
                 }
             }
             if(mode === "one-shot"){
-                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
-                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
             }else if(mode === "repeat"){
-                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
             }else if(mode === "random"){
-                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false); // This is a feature.
-                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false); // This is a feature.
+                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
             }else if(mode === "autoplay"){
-                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
+                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
             }
 
         }
