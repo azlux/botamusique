@@ -347,7 +347,7 @@ class MumbleBot:
                 break
             else:
                 var.playlist.remove_by_id(next.id)
-                var.library.delete(next.item())
+                var.library.delete(next.id)
 
 
     # =======================
@@ -407,7 +407,7 @@ class MumbleBot:
                                 self.send_msg(constants.strings('download_in_progress', item=current.format_short_string()))
                         else:
                             var.playlist.remove_by_id(current.id)
-                            var.library.delete(current.item())
+                            var.library.delete(current.id)
                     else:
                         self._loop_status = 'Empty queue'
                 else:

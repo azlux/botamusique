@@ -68,15 +68,18 @@ class URLItem(BaseItem):
         return True
 
     def validate(self):
+        self.validating_lock.acquire()
         if self.ready in ['yes', 'validated']:
             return True
+
+        if self.ready == 'failed':
+            return False
 
         if os.path.exists(self.path):
             self.ready = "yes"
             return True
 
         # avoid multiple process validating in the meantime
-        self.validating_lock.acquire()
         info = self._get_info_from_url()
         self.validating_lock.release()
 
@@ -232,7 +235,7 @@ class URLItem(BaseItem):
         return display
 
     def format_short_string(self):
-        return self.title if self.title else self.url
+        return self.title if self.title.strip() else self.url
 
     def display_type(self):
         return constants.strings("url")

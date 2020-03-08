@@ -86,7 +86,8 @@ class BaseItem:
         return ""
 
     def send_client_message(self, msg):
-        self.bot.send_msg(msg)
+        if self.bot:
+            self.bot.send_msg(msg)
 
     def to_dict(self):
         return {"type" : "base", "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}

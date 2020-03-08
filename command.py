@@ -287,7 +287,7 @@ def cmd_play_url(bot, user, text, command, parameter):
     var.playlist.append(music_wrapper)
 
     log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-    bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+    bot.send_msg(constants.strings('file_added', item=music_wrapper.format_short_string()), text)
     if len(var.playlist) == 2:
         # If I am the second item on the playlist. (I am the next one!)
         bot.async_download_next()

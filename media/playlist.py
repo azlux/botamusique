@@ -235,8 +235,6 @@ class BasePlaylist(list):
         for index in to_be_removed:
             self.remove(index)
 
-        var.library.free(id)
-
     def current_item(self):
         if len(self) == 0:
             return False
@@ -318,8 +316,8 @@ class BasePlaylist(list):
             self.log.debug("playlist: validating %s" % item.format_debug_string())
             if not item.validate() or item.is_failed():
                 self.log.debug("playlist: validating failed.")
+                var.library.delete(item.id)
                 self.remove_by_id(item.id)
-                var.library.delete(item.item())
 
         self.log.debug("playlist: validating finished.")
         self.validating_thread_lock.release()
@@ -332,9 +330,11 @@ class OneshotPlaylist(BasePlaylist):
         self.current_index = -1
 
     def from_list(self, _list, current_index):
-        for i in range(current_index):
-            _list.pop()
-        return super().from_list(_list, -1)
+        if len(_list) > 0:
+            for i in range(current_index):
+                _list.pop()
+            return super().from_list(_list, -1)
+        return self
 
     def next(self):
         if len(self) == 0:
