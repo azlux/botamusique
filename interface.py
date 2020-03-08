@@ -238,7 +238,7 @@ def post():
 
 
         elif 'add_url' in request.form:
-            music_wrapper = get_item_wrapper(var.bot, type='url', url=request.form['url'], user=user)
+            music_wrapper = get_item_wrapper(var.bot, type='url', url=request.form['add_url'], user=user)
             var.playlist.append(music_wrapper)
 
             log.info("web: add to playlist: " + music_wrapper.format_debug_string())
