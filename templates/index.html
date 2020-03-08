@@ -84,8 +84,6 @@
             {% for tag in tags_lookup[filepath] %}
                 <span class="badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
             {% endfor %}
-            {% else %}
-                Error: {{ filepath }}
             {% endif %}
 
         <div class="btn-group" style="float: right;">
