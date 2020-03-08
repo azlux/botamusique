@@ -59,7 +59,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('remove_tag'), cmd_remove_tag)
     bot.register_command(constants.commands('find_tagged'), cmd_find_tagged)
     bot.register_command(constants.commands('drop_database'), cmd_drop_database, True)
-    bot.register_command(constants.commands('recache'), cmd_refresh_cache, True)
+    bot.register_command(constants.commands('rescan'), cmd_refresh_cache, True)
 
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
@@ -904,7 +904,7 @@ def cmd_drop_database(bot, user, text, command, parameter):
 def cmd_refresh_cache(bot, user, text, command, parameter):
     global log
     var.library.build_dir_cache(bot)
-    log.info("command: cache refreshed.")
+    log.info("command: Local file cache refreshed.")
     bot.send_msg(constants.strings('cache_refreshed'), text)
 
 # Just for debug use

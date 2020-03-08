@@ -74,7 +74,13 @@
             </div>
 
         </div>
-        <div class="btn-group lead"><div class="btn-space"><i class="fa fa-music" aria-hidden="true"></i></div> {{ filepath }}</div>
+        <div class="btn-group lead">
+            <div class="btn-space"><i class="fa fa-music" aria-hidden="true"></i></div>
+            {{ filepath }}
+        </div>
+            {% for tag in tags_lookup[filepath] %}
+                <span class="badge badge-warning">{{ tag }}</span>
+            {% endfor %}
 
         <div class="btn-group" style="float: right;">
             <form action="./download" method="get" class="file file_download">
@@ -175,7 +181,7 @@
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
-                                    <th scope="col">Title</th>
+                                    <th scope="col" class="playlist-title-td">Title</th>
                                     <th scope="col">Url/Path</th>
                                     <th scope="col">Action</th>
                                 </tr>
@@ -209,6 +215,10 @@
 
                     <div class="card-body">
                         <div class="btn-group" style="margin-bottom: 5px;" role="group">
+                            <button type="submit" class="btn btn-secondary btn-space"
+                            onclick="request('/post', {action : 'rescan'}); location.reload()">
+                                <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
+                            </button>
                             <form action="./download" method="get" class="directory form1">
                                 <input type="text" value="./" name="directory" hidden>
                                 <button type="submit" class="btn btn-secondary btn-space"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>

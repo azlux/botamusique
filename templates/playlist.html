@@ -24,7 +24,7 @@
                 <b>{{ m.url|truncate(45) }}</b>
             {% endif %}
             <span class="badge badge-secondary">{{ m.display_type() }}</span>
-            <br>
+            <br />
             {% if m.type == 'file' %}
                 {% if m.artist %}
                     {{ m.artist }}
@@ -36,6 +36,10 @@
             {% else %}
                 Unknown Artist
             {% endif %}
+            <br />
+            {% for tag in m.tags %}
+                <span class="badge badge-warning">{{ tag }}</span>
+            {% endfor %}
         </div>
     </td>
     <td>

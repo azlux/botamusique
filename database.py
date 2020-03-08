@@ -219,7 +219,6 @@ class MusicDatabase:
         else:
             return None
 
-
     def query_music_by_tags(self, tags):
         condition = []
         filler = []
@@ -248,6 +247,20 @@ class MusicDatabase:
                 music_dicts.append(music_dict)
 
             return music_dicts
+        else:
+            return None
+
+    def query_tags_by_id(self, id):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT tags FROM music "
+                                 "WHERE id=?", (id, )).fetchall()
+        conn.close()
+
+        if len(results) > 0:
+            tags = results[0][0].strip(",").split(",")
+
+            return tags
         else:
             return None
 

@@ -1,4 +1,5 @@
 .bs-docs-section{margin-top:4em}
 .btn-space{margin-right:5px}
-.playlist-title{display:inline-block}
-.playlist-artwork{display:inline-block; margin-left:5px;}
+.playlist-title-td{width:60%}
+.playlist-title{float:left; }
+.playlist-artwork{float:left; margin-left:10px;}

@@ -90,12 +90,20 @@ def requires_auth(f):
         return f(*args, **kwargs)
     return decorated
 
+def build_tags_lookup():
+    lookup = {}
+    for path, id in var.library.file_id_lookup.items():
+        lookup[path] = var.music_db.query_tags_by_id(id)
+
+    return lookup
 
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
+    tags_lookup = build_tags_lookup()
     return render_template('index.html',
                            all_files=var.library.files,
+                           tags_lookup=tags_lookup,
                            music_library=var.library.dir,
                            os=os,
                            playlist=var.playlist,
@@ -272,6 +280,9 @@ def post():
                 var.playlist = media.playlist.get_playlist("autoplay", var.playlist)
                 var.db.set('playlist', 'playback_mode', "autoplay")
                 log.info("web: playback mode changed to autoplay.")
+            if action == "rescan":
+                var.library.build_dir_cache(var.bot)
+                log.info("web: Local file cache refreshed.")
             elif action == "stop":
                 var.bot.stop()
             elif action == "pause":
