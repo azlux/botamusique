@@ -29,8 +29,9 @@ class MusicCache(dict):
             self.log.debug("library: music found in database: %s" % item.format_debug_string())
             return item
         else:
-            print(id)
-            raise KeyError("Unable to fetch item from the database! Please try to refresh the cache by !recache.")
+            return None
+            #print(id)
+            #raise KeyError("Unable to fetch item from the database! Please try to refresh the cache by !recache.")
 
 
     def get_item(self, bot, **kwargs):
@@ -80,8 +81,8 @@ class MusicCache(dict):
         self.db.insert_music(self[id].to_dict())
 
     def delete(self, id):
-        try:
-            item = self.get_item_by_id(None, id)
+        item = self.get_item_by_id(None, id)
+        if item:
             self.log.debug("library: DELETE item from the database: %s" % item.format_debug_string())
 
             if item.type == 'file' and item.path in self.file_id_lookup:
@@ -93,8 +94,6 @@ class MusicCache(dict):
             if item.id in self:
                 del self[item.id]
             self.db.delete_music(id=item.id)
-        except KeyError:
-            return
 
     def free(self, id):
         if id in self:
@@ -113,13 +112,15 @@ class MusicCache(dict):
         files = util.get_recursive_file_list_sorted(var.music_folder)
         self.dir = util.Dir(var.music_folder)
         for file in files:
-            item = self.get_item(bot, type='file', path=file)
-            if item.validate():
-                self.dir.add_file(file)
-                self.files.append(file)
+            item = self.fetch(bot, item_id_generators['file'](path=file))
+            if not item:
+                item = item_builders['file'](bot, path=file)
                 self.log.debug("library: music save into database: %s" % item.format_debug_string())
                 self.db.insert_music(item.to_dict())
-                self.file_id_lookup[file] = item.id
+
+            self.dir.add_file(file)
+            self.files.append(file)
+            self.file_id_lookup[file] = item.id
 
         self.save_dir_cache()
         self.dir_lock.release()

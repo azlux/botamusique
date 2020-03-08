@@ -354,9 +354,6 @@ class OneshotPlaylist(BasePlaylist):
         return self
 
     def next(self):
-        if len(self) == 0:
-            return False
-
         self.version += 1
 
         if len(self) > 0:
@@ -366,10 +363,10 @@ class OneshotPlaylist(BasePlaylist):
                     return False
             else:
                 self.current_index = 0
-            return self[0]
 
+            return self[0]
         else:
-            self.clear()
+            self.current_index = -1
             return False
 
     def next_index(self):
