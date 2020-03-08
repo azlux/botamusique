@@ -300,14 +300,18 @@ def cmd_play_url(bot, user, text, command, parameter):
     global log
 
     url = util.get_url_from_input(parameter)
-    music_wrapper = get_item_wrapper(bot, type='url', url=url, user=user)
-    var.playlist.append(music_wrapper)
+    if url:
+        music_wrapper = get_item_wrapper(bot, type='url', url=url, user=user)
+        var.playlist.append(music_wrapper)
 
-    log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-    bot.send_msg(constants.strings('file_added', item=music_wrapper.format_short_string()), text)
-    if len(var.playlist) == 2:
-        # If I am the second item on the playlist. (I am the next one!)
-        bot.async_download_next()
+        log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_short_string()), text)
+        if len(var.playlist) == 2:
+            # If I am the second item on the playlist. (I am the next one!)
+            bot.async_download_next()
+    else:
+        bot.send_msg(constants.strings('bad_parameter', command=command))
+
 
 
 def cmd_play_playlist(bot, user, text, command, parameter):
