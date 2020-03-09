@@ -828,10 +828,19 @@ def cmd_add_tag(bot, user, text, command, parameter):
     global log
 
     params = parameter.split()
+    index = ""
+    tags = []
     if len(params) == 2:
         index = params[0]
         tags = list(map(lambda t: t.strip(), params[1].split(",")))
+    elif len(params) == 1:
+        index = str(var.playlist.current_index + 1)
+        tags = list(map(lambda t: t.strip(), params[0].split(",")))
+    else:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
+        return
 
+    if tags[0]:
         if index.isdigit() and 1 <= int(index) <= len(var.playlist):
             var.playlist[int(index) - 1].add_tags(tags)
             log.info("cmd: add tags %s to song %s" % (", ".join(tags),
@@ -839,26 +848,39 @@ def cmd_add_tag(bot, user, text, command, parameter):
             bot.send_msg(constants.strings("added_tags",
                                            tags=", ".join(tags),
                                            song=var.playlist[int(index) - 1].format_short_string()), text)
+            return
+
         elif index == "*":
             for item in var.playlist:
                 item.add_tags(tags)
                 log.info("cmd: add tags %s to song %s" % (", ".join(tags),
                                                           item.format_debug_string()))
             bot.send_msg(constants.strings("added_tags_to_all", tags=", ".join(tags)), text)
-        else:
-            bot.send_msg(constants.strings('bad_parameter', command=command), text)
+            return
+
+    bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
 
 def cmd_remove_tag(bot, user, text, command, parameter):
     global log
 
     params = parameter.split()
-    if len(params) == 2 and params[1]:
-        index = params[0]
 
+    index = ""
+    tags = []
+    if len(params) == 2:
+        index = params[0]
+        tags = list(map(lambda t: t.strip(), params[1].split(",")))
+    elif len(params) == 1:
+        index = str(var.playlist.current_index + 1)
+        tags = list(map(lambda t: t.strip(), params[0].split(",")))
+    else:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
+        return
+
+    if tags[0]:
         if index.isdigit() and 1 <= int(index) <= len(var.playlist):
-            if params[1] != "*":
-                tags = list(map(lambda t: t.strip(), params[1].split(",")))
+            if tags[0] != "*":
                 var.playlist[int(index) - 1].remove_tags(tags)
                 log.info("cmd: remove tags %s from song %s" % (", ".join(tags),
                                                           var.playlist[int(index) - 1].format_debug_string()))
@@ -874,8 +896,7 @@ def cmd_remove_tag(bot, user, text, command, parameter):
                 return
 
         elif index == "*":
-            if params[1] != "*":
-                tags = list(map(lambda t: t.strip(), params[1].split(",")))
+            if tags[0] != "*":
                 for item in var.playlist:
                     item.remove_tags(tags)
                     log.info("cmd: remove tags %s from song %s" % (", ".join(tags),
