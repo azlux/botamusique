@@ -1,5 +1,6 @@
 import variables as var
 
+
 def strings(option, *argv, **kwargs):
     string = ""
     try:
@@ -21,6 +22,7 @@ def strings(option, *argv, **kwargs):
                 "Please restore you configuration file back to default if necessary.")
     else:
         return string
+
 
 def commands(command):
     string = ""

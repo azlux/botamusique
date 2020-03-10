@@ -19,7 +19,7 @@ from PIL import Image
 from io import BytesIO
 from sys import platform
 import traceback
-import urllib.parse, urllib.request, urllib.error
+import urllib.request
 import base64
 import media
 import media.radio
@@ -64,6 +64,7 @@ def get_recursive_file_list_sorted(path):
 
     filelist.sort()
     return filelist
+
 
 # - zips all files of the given zippath (must be a directory)
 # - returns the absolute path of the created zip file
@@ -309,13 +310,14 @@ def get_url_from_input(string):
     else:
         return False
 
+
 def youtube_search(query):
     global log
 
     try:
         r = requests.get("https://www.youtube.com/results", params={'search_query': query}, timeout=5)
         results = re.findall("watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
-                             "(?:user|channel).*?>(.*?)<", r.text) # (id, title, uploader)
+                             "(?:user|channel).*?>(.*?)<", r.text)  # (id, title, uploader)
 
         if len(results) > 0:
             return results

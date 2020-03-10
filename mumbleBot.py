@@ -74,8 +74,8 @@ class MumbleBot:
         self.song_start_at = -1
         self.last_ffmpeg_err = ""
         self.read_pcm_size = 0
-        #self.download_threads = []
-        self.wait_for_downloading = False # flag for the loop are waiting for download to complete in the other thread
+        # self.download_threads = []
+        self.wait_for_downloading = False  # flag for the loop are waiting for download to complete in the other thread
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -151,7 +151,7 @@ class MumbleBot:
             self.ducking_volume = var.db.getfloat("bot", "ducking_volume", fallback=self.ducking_volume)
             self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
             self.ducking_threshold = var.db.getfloat("bot", "ducking_threshold", fallback=self.ducking_threshold)
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, \
+            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
                                                self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
@@ -173,7 +173,7 @@ class MumbleBot:
         self.nb_exit += 1
 
         if var.config.getboolean('bot', 'save_playlist', fallback=True) \
-                    and var.config.get("bot", "save_music_library", fallback=True):
+                and var.config.get("bot", "save_music_library", fallback=True):
             self.log.info("bot: save playlist into database")
             var.playlist.save()
 
@@ -191,9 +191,9 @@ class MumbleBot:
         for command in cmds:
             command = command.strip()
             if command:
-                self.cmd_handle[command] = { 'handle': handle,
-                                             'partial_match': not no_partial_match,
-                                             'access_outside_channel': access_outside_channel}
+                self.cmd_handle[command] = {'handle': handle,
+                                            'partial_match': not no_partial_match,
+                                            'access_outside_channel': access_outside_channel}
                 self.log.debug("bot: command added: " + command)
 
     def set_comment(self):
@@ -247,7 +247,6 @@ class MumbleBot:
                             constants.strings('url_ban'))
                         return
 
-
             command_exc = ""
             try:
                 if command in self.cmd_handle:
@@ -278,7 +277,7 @@ class MumbleBot:
                                 and not self.is_admin(user) \
                                 and not var.config.getboolean('bot', 'allow_other_channel_message') \
                                 and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself[
-                            'channel_id']:
+                                'channel_id']:
                             self.mumble.users[text.actor].send_text_message(
                                 constants.strings('not_in_my_channel'))
                             return
@@ -319,7 +318,7 @@ class MumbleBot:
     def launch_music(self):
         if var.playlist.is_empty():
             return
-        assert self.wait_for_downloading == False
+        assert self.wait_for_downloading is False
 
         music_wrapper = var.playlist.current_item()
         uri = music_wrapper.uri()
@@ -341,7 +340,7 @@ class MumbleBot:
         # The ffmpeg process is a thread
         # prepare pipe for catching stderr of ffmpeg
         pipe_rd, pipe_wd = os.pipe()
-        util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
+        util.pipe_no_wait(pipe_rd)  # Let the pipe work in non-blocking mode
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.is_pause = False
@@ -366,7 +365,6 @@ class MumbleBot:
             else:
                 var.playlist.remove_by_id(next.id)
                 var.cache.free_and_delete(next.id)
-
 
     # =======================
     #          Loop
@@ -490,14 +488,14 @@ class MumbleBot:
             if rms < self.ducking_threshold:
                 print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(rms/200), end='\r')
             else:
-                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(self.ducking_threshold/200) \
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(self.ducking_threshold/200)
                       + '+'*int((rms - self.ducking_threshold)/200), end='\r')
 
         if rms > self.ducking_threshold:
             if self.on_ducking is False:
                 self.log.debug("bot: ducking triggered")
                 self.on_ducking = True
-            self.ducking_release = time.time() + 1 # ducking release after 1s
+            self.ducking_release = time.time() + 1  # ducking release after 1s
 
     # =======================
     #      Play Control
@@ -558,7 +556,6 @@ class MumbleBot:
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-ss', "%f" % self.playhead, '-i',
                    uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
 
-
         if var.config.getboolean('bot', 'announce_current_music'):
             self.send_msg(var.playlist.current_item().format_current_playing())
 
@@ -566,12 +563,11 @@ class MumbleBot:
         # The ffmpeg process is a thread
         # prepare pipe for catching stderr of ffmpeg
         pipe_rd, pipe_wd = os.pipe()
-        util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
+        util.pipe_no_wait(pipe_rd)  # Let the pipe work in non-blocking mode
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.last_volume_cycle_time = time.time()
         self.pause_at_id = ""
-
 
     # TODO: this is a temporary workaround for issue #44 of pymumble.
     def _clear_pymumble_soundqueue(self):
@@ -580,7 +576,6 @@ class MumbleBot:
             user.sound.queue.clear()
             user.sound.lock.release()
         self.log.debug("bot: pymumble soundqueue cleared.")
-
 
 
 def start_web_interface(addr, port):
@@ -592,7 +587,7 @@ def start_web_interface(addr, port):
     logfile = util.solve_filepath(var.config.get('webinterface', 'web_logfile'))
     handler = None
     if logfile:
-        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240) # Rotate after 10KB
+        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
     else:
         handler = logging.StreamHandler()
 
@@ -657,7 +652,7 @@ if __name__ == '__main__':
     logfile = util.solve_filepath(var.config.get('bot', 'logfile'))
     handler = None
     if logfile:
-        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240) # Rotate after 10KB
+        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
     else:
         handler = logging.StreamHandler()
 

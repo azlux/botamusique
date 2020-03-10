@@ -11,6 +11,7 @@ import constants
 
 log = logging.getLogger("bot")
 
+
 def get_radio_server_description(url):
     global log
 
@@ -92,11 +93,14 @@ def radio_item_builder(bot, **kwargs):
     else:
         return RadioItem(bot, kwargs['url'], '')
 
+
 def radio_item_loader(bot, _dict):
     return RadioItem(bot, "", "", _dict)
 
+
 def radio_item_id_generator(**kwargs):
     return hashlib.md5(kwargs['url'].encode()).hexdigest()
+
 
 item_builders['radio'] = radio_item_builder
 item_loaders['radio'] = radio_item_loader
@@ -109,7 +113,7 @@ class RadioItem(BaseItem):
             super().__init__(bot)
             self.url = url
             if not name:
-                self.title = get_radio_server_description(self.url) # The title of the radio station
+                self.title = get_radio_server_description(self.url)  # The title of the radio station
             else:
                 self.title = name
             self.id = hashlib.md5(url.encode()).hexdigest()
@@ -121,7 +125,7 @@ class RadioItem(BaseItem):
         self.type = "radio"
 
     def validate(self):
-        self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
+        self.version += 1  # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         return True
 
     def is_ready(self):
@@ -146,8 +150,8 @@ class RadioItem(BaseItem):
     def format_song_string(self, user):
         return constants.strings("radio_item",
                                  url=self.url,
-                                 title=get_radio_title(self.url), # the title of current song
-                                 name=self.title, # the title of radio station
+                                 title=get_radio_title(self.url),  # the title of current song
+                                 name=self.title,  # the title of radio station
                                  user=user
                                  )
 

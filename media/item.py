@@ -15,18 +15,23 @@ item_builders = {}
 item_loaders = {}
 item_id_generators = {}
 
+
 def example_builder(bot, **kwargs):
     return BaseItem(bot)
+
 
 def example_loader(bot, _dict):
     return BaseItem(bot, from_dict=_dict)
 
+
 def example_id_generator(**kwargs):
     return ""
+
 
 item_builders['base'] = example_builder
 item_loaders['base'] = example_loader
 item_id_generators['base'] = example_id_generator
+
 
 def dicts_to_items(bot, music_dicts):
     items = []
@@ -34,6 +39,7 @@ def dicts_to_items(bot, music_dicts):
         type = music_dict['type']
         items.append(item_loaders[type](bot, music_dict))
     return items
+
 
 def dict_to_item(bot, music_dict):
     type = music_dict['type']
@@ -48,11 +54,11 @@ class BaseItem:
         self.title = ""
         self.path = ""
         self.tags = []
-        self.version = 0 # if version increase, wrapper will re-save this item
+        self.version = 0  # if version increase, wrapper will re-save this item
 
         if from_dict is None:
             self.id = ""
-            self.ready = "pending" # pending - is_valid() -> validated - prepare() -> yes, failed
+            self.ready = "pending"  # pending - is_valid() -> validated - prepare() -> yes, failed
         else:
             self.id = from_dict['id']
             self.ready = from_dict['ready']
@@ -110,6 +116,6 @@ class BaseItem:
             self.bot.send_msg(msg)
 
     def to_dict(self):
-        return {"type" : self.type, "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}
+        return {"type": self.type, "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}
 
 

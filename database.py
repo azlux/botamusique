@@ -2,11 +2,14 @@ import sqlite3
 import json
 import datetime
 
+
 class DatabaseError(Exception):
     pass
 
+
 class SettingsDatabase:
     version = 1
+
     def __init__(self, db_path):
         self.db_path = db_path
 
@@ -57,9 +60,9 @@ class SettingsDatabase:
                        "value TEXT, "
                        "UNIQUE(section, option))")
         cursor.execute("INSERT INTO botamusique (section, option, value) "
-                       "VALUES (?, ?, ?)" , ("bot", "db_version", "1"))
+                       "VALUES (?, ?, ?)", ("bot", "db_version", "1"))
         cursor.execute("INSERT INTO botamusique (section, option, value) "
-                       "VALUES (?, ?, ?)" , ("bot", "music_db_version", "0"))
+                       "VALUES (?, ?, ?)", ("bot", "music_db_version", "0"))
         conn.commit()
         conn.close()
 
@@ -90,7 +93,7 @@ class SettingsDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("INSERT OR REPLACE INTO botamusique (section, option, value) "
-                       "VALUES (?, ?, ?)" , (section, option, value))
+                       "VALUES (?, ?, ?)", (section, option, value))
         conn.commit()
         conn.close()
 
@@ -214,7 +217,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
-                                "WHERE %s" % condition_str, filler).fetchall()
+                                 "WHERE %s" % condition_str, filler).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
@@ -226,7 +229,6 @@ class MusicDatabase:
         for keyword in keywords:
             condition.append('LOWER(title) LIKE ?')
             filler.append("%{:s}%".format(keyword.lower()))
-
 
         condition_str = " AND ".join(condition)
 
@@ -245,7 +247,6 @@ class MusicDatabase:
         for tag in tags:
             condition.append('LOWER(tags) LIKE ?')
             filler.append("%{:s},%".format(tag.lower()))
-
 
         condition_str = " AND ".join(condition)
 
@@ -284,7 +285,6 @@ class MusicDatabase:
 
         return self._result_to_dict(results)
 
-
     def _result_to_dict(self, results):
         if len(results) > 0:
             music_dicts = []
@@ -320,10 +320,9 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("DELETE FROM music "
-                                 "WHERE %s" % condition_str, filler)
+                       "WHERE %s" % condition_str, filler)
         conn.commit()
         conn.close()
-
 
     def drop_table(self):
         conn = sqlite3.connect(self.db_path)

@@ -162,12 +162,12 @@ class BasePlaylist(list):
 
     def randomize(self):
         # current_index will lose track after shuffling, thus we take current music out before shuffling
-        #current = self.current_item()
-        #del self[self.current_index]
+        # current = self.current_item()
+        # del self[self.current_index]
 
         random.shuffle(self)
 
-        #self.insert(0, current)
+        # self.insert(0, current)
         self.current_index = -1
         self.version += 1
 
@@ -183,7 +183,7 @@ class BasePlaylist(list):
         var.db.set("playlist", "current_index", self.current_index)
 
         for index, music in enumerate(self):
-            var.db.set("playlist_item", str(index), json.dumps({'id': music.id, 'user': music.user }))
+            var.db.set("playlist_item", str(index), json.dumps({'id': music.id, 'user': music.user}))
 
     def load(self):
         current_index = var.db.getint("playlist", "current_index", fallback=-1)
@@ -212,7 +212,7 @@ class BasePlaylist(list):
 
     def start_async_validating(self):
         if not self.validating_thread_lock.locked():
-            time.sleep(0.1) # Just avoid validation finishes too fast and delete songs while something is reading it.
+            time.sleep(0.1)  # Just avoid validation finishes too fast and delete songs while something is reading it.
             th = threading.Thread(target=self._check_valid, name="Validating")
             th.daemon = True
             th.start()
