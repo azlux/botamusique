@@ -608,7 +608,6 @@ class MumbleBot:
         delta = time.time() - self.last_volume_cycle_time
 
         if self.on_ducking and self.ducking_release < time.time():
-            self._clear_pymumble_soundqueue()
             self.on_ducking = False
             self._max_rms = 0
 
@@ -622,6 +621,7 @@ class MumbleBot:
 
     def ducking_sound_received(self, user, sound):
         rms = audioop.rms(sound.pcm, 2)
+        self._clear_pymumble_soundqueue()
         self._max_rms = max(rms, self._max_rms)
         if self._display_rms:
             if rms < self.ducking_threshold:
