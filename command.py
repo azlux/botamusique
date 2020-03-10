@@ -20,7 +20,7 @@ from media.radio import RadioItem
 log = logging.getLogger("bot")
 
 def register_all_commands(bot):
-    bot.register_command(constants.commands('joinme'), cmd_joinme)
+    bot.register_command(constants.commands('joinme'), cmd_joinme, no_partial_match=False, access_outside_channel=True)
     bot.register_command(constants.commands('user_ban'), cmd_user_ban)
     bot.register_command(constants.commands('user_unban'), cmd_user_unban)
     bot.register_command(constants.commands('url_ban'), cmd_url_ban)
@@ -37,7 +37,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('rb_play'), cmd_rb_play)
     bot.register_command(constants.commands('yt_search'), cmd_yt_search)
     bot.register_command(constants.commands('yt_play'), cmd_yt_play)
-    bot.register_command(constants.commands('help'), cmd_help)
+    bot.register_command(constants.commands('help'), cmd_help, no_partial_match=False, access_outside_channel=True)
     bot.register_command(constants.commands('stop'), cmd_stop)
     bot.register_command(constants.commands('clear'), cmd_clear)
     bot.register_command(constants.commands('kill'), cmd_kill)
@@ -62,8 +62,8 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('search'), cmd_search_library)
     bot.register_command(constants.commands('add_from_shortlist'), cmd_shortlist)
     bot.register_command(constants.commands('delete_from_library'), cmd_delete_from_library)
-    bot.register_command(constants.commands('drop_database'), cmd_drop_database, True)
-    bot.register_command(constants.commands('rescan'), cmd_refresh_cache, True)
+    bot.register_command(constants.commands('drop_database'), cmd_drop_database, no_partial_match=True)
+    bot.register_command(constants.commands('rescan'), cmd_refresh_cache, no_partial_match=True)
 
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)

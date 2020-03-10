@@ -184,12 +184,14 @@ class MumbleBot:
         else:
             self.log.debug("update: no new version found.")
 
-    def register_command(self, cmd, handle, no_partial_match=False):
+    def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False):
         cmds = cmd.split(",")
         for command in cmds:
             command = command.strip()
             if command:
-                self.cmd_handle[command] = { 'handle': handle, 'partial_match': not no_partial_match}
+                self.cmd_handle[command] = { 'handle': handle,
+                                             'partial_match': not no_partial_match,
+                                             'access_outside_channel': access_outside_channel}
                 self.log.debug("bot: command added: " + command)
 
     def set_comment(self):
@@ -225,12 +227,6 @@ class MumbleBot:
             self.log.info('bot: received command ' + command + ' - ' + parameter + ' by ' + user)
 
             # Anti stupid guy function
-            if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') \
-                    and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
-                self.mumble.users[text.actor].send_text_message(
-                    constants.strings('not_in_my_channel'))
-                return
-
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
                 self.mumble.users[text.actor].send_text_message(
                     constants.strings('pm_not_allowed'))
@@ -254,6 +250,15 @@ class MumbleBot:
             try:
                 if command in self.cmd_handle:
                     command_exc = command
+
+                    if not self.cmd_handle[command]['access_outside_channel'] \
+                            and not self.is_admin(user) \
+                            and not var.config.getboolean('bot', 'allow_other_channel_message') \
+                            and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
+                        self.mumble.users[text.actor].send_text_message(
+                            constants.strings('not_in_my_channel'))
+                        return
+
                     self.cmd_handle[command]['handle'](self, user, text, command, parameter)
                 else:
                     # try partial match
@@ -266,6 +271,16 @@ class MumbleBot:
                     if len(matches) == 1:
                         self.log.info("bot: {:s} matches {:s}".format(command, matches[0]))
                         command_exc = matches[0]
+
+                        if not self.cmd_handle[command]['access_outside_channel'] \
+                                and not self.is_admin(user) \
+                                and not var.config.getboolean('bot', 'allow_other_channel_message') \
+                                and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself[
+                            'channel_id']:
+                            self.mumble.users[text.actor].send_text_message(
+                                constants.strings('not_in_my_channel'))
+                            return
+
                         self.cmd_handle[command_exc]['handle'](self, user, text, command_exc, parameter)
                     elif len(matches) > 1:
                         self.mumble.users[text.actor].send_text_message(
