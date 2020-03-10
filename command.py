@@ -1,6 +1,5 @@
 # coding=utf-8
 import logging
-import os.path
 import pymumble.pymumble_py3 as pymumble
 import re
 
@@ -10,12 +9,9 @@ import util
 import variables as var
 from librb import radiobrowser
 from database import SettingsDatabase, MusicDatabase
-from media.item import item_builders, item_loaders, item_id_generators, dict_to_item, dicts_to_items
+from media.item import item_id_generators, dict_to_item, dicts_to_items
 from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags
-from media.file import FileItem
-from media.url_from_playlist import PlaylistURLItem, get_playlist_info
-from media.url import URLItem
-from media.radio import RadioItem
+from media.url_from_playlist import get_playlist_info
 
 log = logging.getLogger("bot")
 
@@ -281,7 +277,6 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
 def cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cache=False):
     global log
 
-    music_folder = var.music_folder
     if parameter:
         files = var.cache.files
         msgs = [constants.strings('multiple_file_added') + "<ul>"]
@@ -701,12 +696,10 @@ def cmd_remove(bot, user, text, command, parameter):
     global log
 
     # Allow to remove specific music into the queue with a number
-    if parameter and parameter.isdigit() and int(parameter) > 0 \
-            and int(parameter) <= len(var.playlist):
+    if parameter and parameter.isdigit() and 0 < int(parameter) <= len(var.playlist):
 
         index = int(parameter) - 1
 
-        removed = None
         if index == var.playlist.current_index:
             removed = var.playlist.remove(index)
 
@@ -766,7 +759,6 @@ def cmd_queue(bot, user, text, command, parameter):
     else:
         msgs = [constants.strings('queue_contents')]
         for i, music in enumerate(var.playlist):
-            newline = ''
             tags = ''
             if len(music.item().tags) > 0:
                 tags = "<sup>{}</sup>".format(", ".join(music.item().tags))
@@ -854,8 +846,6 @@ def cmd_add_tag(bot, user, text, command, parameter):
     global log
 
     params = parameter.split()
-    index = ""
-    tags = []
     if len(params) == 2:
         index = params[0]
         tags = list(map(lambda t: t.strip(), params[1].split(",")))
@@ -892,8 +882,6 @@ def cmd_remove_tag(bot, user, text, command, parameter):
 
     params = parameter.split()
 
-    index = ""
-    tags = []
     if len(params) == 2:
         index = params[0]
         tags = list(map(lambda t: t.strip(), params[1].split(",")))
@@ -1007,7 +995,6 @@ def cmd_search_library(bot, user, text, command, parameter):
 
 def cmd_shortlist(bot, user, text, command, parameter):
     global song_shortlist, log
-    indexes = []
     try:
         indexes = [int(i) for i in parameter.split(" ")]
     except ValueError:
@@ -1047,7 +1034,6 @@ def cmd_shortlist(bot, user, text, command, parameter):
 
 def cmd_delete_from_library(bot, user, text, command, parameter):
     global song_shortlist, log
-    indexes = []
     try:
         indexes = [int(i) for i in parameter.split(" ")]
     except ValueError:

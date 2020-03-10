@@ -1,8 +1,6 @@
 import youtube_dl
 import constants
-import media
 import variables as var
-import hashlib
 from media.item import item_builders, item_loaders, item_id_generators
 from media.url import URLItem, url_item_id_generator
 

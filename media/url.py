@@ -149,8 +149,6 @@ class URLItem(BaseItem):
         self.ready = "preparing"
 
         self.log.info("bot: downloading url (%s) %s " % (self.title, self.url))
-        ydl_opts = ""
-
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': save_path,
@@ -170,7 +168,7 @@ class URLItem(BaseItem):
             for i in range(attempts):
                 self.log.info("bot: download attempts %d / %d" % (i+1, attempts))
                 try:
-                    info = ydl.extract_info(self.url)
+                    ydl.extract_info(self.url)
                     download_succeed = True
                     break
                 except:

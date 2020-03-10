@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 from io import BytesIO
@@ -6,9 +5,7 @@ import base64
 import hashlib
 import mutagen
 from PIL import Image
-import json
 
-import util
 import variables as var
 from media.item import BaseItem, item_builders, item_loaders, item_id_generators
 import constants
@@ -83,7 +80,7 @@ class FileItem(BaseItem):
         return True
 
     def _get_info_from_tag(self):
-        match = re.search("(.+)\.(.+)", self.uri())
+        match = re.search(r"(.+)\.(.+)", self.uri())
         assert match is not None
 
         file_no_ext = match[1]

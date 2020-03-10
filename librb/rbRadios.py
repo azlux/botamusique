@@ -1,8 +1,5 @@
 import requests
 
-from xml.etree import ElementTree
-from urllib.parse import urljoin
-
 from librb.rbConstants import endpoints, BASE_URL
 
 

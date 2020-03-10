@@ -16,12 +16,11 @@ def get_radio_server_description(url):
     global log
 
     log.debug("radio: fetching radio server description")
-    p = re.compile('(https?\:\/\/[^\/]*)', re.IGNORECASE)
+    p = re.compile('(https?://[^/]*)', re.IGNORECASE)
     res = re.search(p, url)
     base_url = res.group(1)
     url_icecast = base_url + '/status-json.xsl'
     url_shoutcast = base_url + '/stats?json=1'
-    title_server = None
     try:
         r = requests.get(url_shoutcast, timeout=10)
         data = r.json()
@@ -31,7 +30,7 @@ def get_radio_server_description(url):
     except (requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
-            requests.exceptions.Timeout) as e:
+            requests.exceptions.Timeout):
         error_traceback = traceback.format_exc()
         error = error_traceback.rstrip().split("\n")[-1]
         log.debug("radio: unsuccessful attempts on fetching radio description (shoutcast): " + error)
@@ -52,7 +51,7 @@ def get_radio_server_description(url):
     except (requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
-            requests.exceptions.Timeout) as e:
+            requests.exceptions.Timeout):
         error_traceback = traceback.format_exc()
         error = error_traceback.rstrip().split("\n")[-1]
         log.debug("radio: unsuccessful attempts on fetching radio description (icecast): " + error)
@@ -82,7 +81,7 @@ def get_radio_title(url):
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
             requests.exceptions.Timeout,
-            KeyError) as e:
+            KeyError):
         log.debug("radio: unsuccessful attempts on fetching radio title (icy)")
     return url
 
@@ -163,6 +162,3 @@ class RadioItem(BaseItem):
 
     def display_type(self):
         return constants.strings("radio")
-
-
-

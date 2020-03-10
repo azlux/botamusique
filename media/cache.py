@@ -1,11 +1,10 @@
 import logging
 import os
 
-from database import MusicDatabase
 import json
 import threading
 
-from media.item import item_builders, item_loaders, item_id_generators, dict_to_item, dicts_to_items
+from media.item import item_builders, item_id_generators, dict_to_item
 from database import MusicDatabase
 import variables as var
 import util
@@ -18,6 +17,7 @@ class MusicCache(dict):
         self.log = logging.getLogger("bot")
         self.dir = None
         self.files = []
+        self.file_id_lookup = {}
         self.dir_lock = threading.Lock()
 
     def get_item_by_id(self, bot, id):  # Why all these functions need a bot? Because it need the bot to send message!
@@ -111,7 +111,6 @@ class MusicCache(dict):
         self.dir_lock.acquire()
         self.log.info("library: rebuild directory cache")
         self.files = []
-        self.file_id_lookup = {}
         files = util.get_recursive_file_list_sorted(var.music_folder)
         self.dir = util.Dir(var.music_folder)
         for file in files:

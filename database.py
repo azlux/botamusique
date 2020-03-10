@@ -15,7 +15,6 @@ class SettingsDatabase:
 
         # connect
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
 
         self.db_version_check_and_create()
 

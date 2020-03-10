@@ -1,15 +1,4 @@
 import logging
-import threading
-import os
-import re
-from io import BytesIO
-import base64
-import hashlib
-import mutagen
-from PIL import Image
-
-import util
-import variables as var
 
 item_builders = {}
 item_loaders = {}
@@ -117,5 +106,3 @@ class BaseItem:
 
     def to_dict(self):
         return {"type": self.type, "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}
-
-

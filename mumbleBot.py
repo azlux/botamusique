@@ -14,8 +14,6 @@ import os
 import os.path
 import pymumble.pymumble_py3 as pymumble
 import variables as var
-import hashlib
-import youtube_dl
 import logging
 import logging.handlers
 import traceback
@@ -25,9 +23,6 @@ import util
 import command
 import constants
 from database import SettingsDatabase, MusicDatabase
-import media.url
-import media.file
-import media.radio
 import media.system
 from media.playlist import BasePlaylist
 from media.cache import MusicCache
@@ -585,7 +580,6 @@ def start_web_interface(addr, port):
     # setup logger
     werkzeug_logger = logging.getLogger('werkzeug')
     logfile = util.solve_filepath(var.config.get('webinterface', 'web_logfile'))
-    handler = None
     if logfile:
         handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
     else:

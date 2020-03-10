@@ -359,4 +359,3 @@ class AutoPlaylist(OneshotPlaylist):
         if len(self) == 0:
             self.refresh()
         return super().next()
-
