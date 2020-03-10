@@ -621,7 +621,6 @@ class MumbleBot:
 
     def ducking_sound_received(self, user, sound):
         rms = audioop.rms(sound.pcm, 2)
-        self._clear_pymumble_soundqueue()
         self._max_rms = max(rms, self._max_rms)
         if self._display_rms:
             if rms < self.ducking_threshold:
@@ -713,16 +712,6 @@ class MumbleBot:
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.last_volume_cycle_time = time.time()
-
-
-    # TODO: this is a temporary workaround for issue #44 of pymumble.
-    def _clear_pymumble_soundqueue(self):
-        for id, user in self.mumble.users.items():
-            user.sound.lock.acquire()
-            user.sound.queue.clear()
-            user.sound.lock.release()
-        self.log.debug("bot: pymumble soundqueue cleared.")
-
 
 
 def start_web_interface(addr, port):
