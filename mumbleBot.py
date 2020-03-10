@@ -72,6 +72,8 @@ class MumbleBot:
         self.pause_at_id = ""
         self.playhead = -1
         self.song_start_at = -1
+        self.last_ffmpeg_err = ""
+        self.read_pcm_size = 0
         #self.download_threads = []
         self.wait_for_downloading = False # flag for the loop are waiting for download to complete in the other thread
 
@@ -343,6 +345,7 @@ class MumbleBot:
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.is_pause = False
+        self.read_pcm_size = 0
         self.song_start_at = -1
         self.playhead = 0
         self.last_volume_cycle_time = time.time()
@@ -388,11 +391,12 @@ class MumbleBot:
                 self.playhead = time.time() - self.song_start_at
 
                 raw_music = self.thread.stdout.read(480)
+                self.read_pcm_size += 480
 
                 try:
-                    stderr_msg = self.thread_stderr.readline()
-                    if stderr_msg:
-                        self.log.debug("ffmpeg: " + stderr_msg.strip("\n"))
+                    self.last_ffmpeg_err = self.thread_stderr.readline()
+                    if self.last_ffmpeg_err:
+                        self.log.debug("ffmpeg: " + self.last_ffmpeg_err.strip("\n"))
                 except:
                     pass
 
@@ -407,7 +411,19 @@ class MumbleBot:
                 time.sleep(0.1)
 
             if not self.is_pause and (self.thread is None or not raw_music):
-                # ffmpeg thread has gone. indicate that last song has finished. move to the next song.
+                # ffmpeg thread has gone. indicate that last song has finished, or something is wrong.
+                if self.read_pcm_size < 481 and len(var.playlist) > 0 and var.playlist.current_index != -1:
+                    current = var.playlist.current_item()
+                    self.log.error("bot: cannot play music %s", current.format_debug_string())
+                    if self.last_ffmpeg_err:
+                        self.log.error("bot: with ffmpeg error: %s", self.last_ffmpeg_err)
+                        self.last_ffmpeg_err = ""
+
+                self.send_msg(constants.strings('unable', item=current.format_short_string()))
+                var.playlist.remove_by_id(current.id)
+                var.cache.free_and_delete(current.id)
+
+                # move to the next song.
                 if not self.wait_for_downloading:
                     if var.playlist.next():
                         current = var.playlist.current_item()
