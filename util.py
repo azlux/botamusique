@@ -190,8 +190,8 @@ def pipe_no_wait(pipefd):
         import msvcrt
         import os
 
-        from ctypes import windll, byref, wintypes, GetLastError, WinError
-        from ctypes.wintypes import HANDLE, DWORD, POINTER, BOOL
+        from ctypes import windll, byref, wintypes, WinError, POINTER
+        from ctypes.wintypes import HANDLE, DWORD, BOOL
 
         LPDWORD = POINTER(DWORD)
         PIPE_NOWAIT = wintypes.DWORD(0x00000001)
