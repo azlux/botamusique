@@ -412,16 +412,16 @@ class MumbleBot:
 
             if not self.is_pause and (self.thread is None or not raw_music):
                 # ffmpeg thread has gone. indicate that last song has finished, or something is wrong.
-                if self.read_pcm_size < 481 and len(var.playlist) > 0 and var.playlist.current_index != -1:
+                if self.read_pcm_size < 481 and len(var.playlist) > 0 and var.playlist.current_index != -1 \
+                        and self.last_ffmpeg_err:
                     current = var.playlist.current_item()
                     self.log.error("bot: cannot play music %s", current.format_debug_string())
-                    if self.last_ffmpeg_err:
-                        self.log.error("bot: with ffmpeg error: %s", self.last_ffmpeg_err)
-                        self.last_ffmpeg_err = ""
+                    self.log.error("bot: with ffmpeg error: %s", self.last_ffmpeg_err)
+                    self.last_ffmpeg_err = ""
 
-                self.send_msg(constants.strings('unable', item=current.format_short_string()))
-                var.playlist.remove_by_id(current.id)
-                var.cache.free_and_delete(current.id)
+                    self.send_msg(constants.strings('unable_play', item=current.format_short_string()))
+                    var.playlist.remove_by_id(current.id)
+                    var.cache.free_and_delete(current.id)
 
                 # move to the next song.
                 if not self.wait_for_downloading:
