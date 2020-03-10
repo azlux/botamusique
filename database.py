@@ -257,19 +257,23 @@ class MusicDatabase:
 
         return self._result_to_dict(results)
 
-    def query_tags_by_id(self, id):
+    def query_tags_by_ids(self, ids):
+        condition_str = " OR ".join(['id=?'] * len(ids))
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT tags FROM music "
-                                 "WHERE id=?", (id, )).fetchall()
+        results = cursor.execute("SELECT id, tags FROM music "
+                                 "WHERE %s" % condition_str, ids).fetchall()
         conn.close()
 
+        lookup = {}
         if len(results) > 0:
-            tags = results[0][0].strip(",").split(",")
+            for result in results:
+                id = result[0]
+                tags = result[1].strip(",").split(",")
+                lookup[id] = tags if tags[0] else []
 
-            return tags if tags[0] else []
-        else:
-            return None
+        return lookup
 
     def query_random_music(self, count):
         conn = sqlite3.connect(self.db_path)
@@ -297,7 +301,7 @@ class MusicDatabase:
 
             return music_dicts
         else:
-            return None
+            return []
 
     def delete_music(self, **kwargs):
         condition = []

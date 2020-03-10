@@ -456,8 +456,9 @@ class AutoPlaylist(OneshotPlaylist):
 
     def refresh(self):
         dicts = var.music_db.query_random_music(var.config.getint("bot", "autoplay_length", fallback=5))
-        _list = [get_item_wrapper_from_dict(var.bot, _dict, "AutoPlay") for _dict in dicts]
-        self.from_list(_list, -1)
+        if dicts:
+            _list = [get_item_wrapper_from_dict(var.bot, _dict, "AutoPlay") for _dict in dicts]
+            self.from_list(_list, -1)
 
     # def from_list(self, _list, current_index):
     #     self.version += 1

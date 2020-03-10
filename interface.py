@@ -118,12 +118,13 @@ def build_tags_color_lookup():
     return color_lookup
 
 def build_path_tags_lookup():
-    path_lookup = {}
-    items = var.cache.file_id_lookup.items()
-    for path, id in items:
-        path_lookup[path] = var.music_db.query_tags_by_id(id)
+    id_tags_lookup = var.music_db.query_tags_by_ids(list(var.cache.file_id_lookup.values()))
 
-    return path_lookup
+    path_tags_lookup = {}
+    for path, id in var.cache.file_id_lookup.items():
+        path_tags_lookup[path] = id_tags_lookup[id]
+
+    return path_tags_lookup
 
 def recur_dir(dirobj):
     for name, dir in dirobj.get_subdirs().items():
