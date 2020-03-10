@@ -1,4 +1,6 @@
 import logging
+import os
+
 from database import MusicDatabase
 import json
 import threading
@@ -90,6 +92,8 @@ class MusicCache(dict):
                     del self.file_id_lookup[item.path]
                 self.files.remove(item.path)
                 self.save_dir_cache()
+            elif item.type == 'url':
+                os.remove(item.path)
 
             if item.id in self:
                 del self[item.id]
@@ -139,3 +143,115 @@ class MusicCache(dict):
             self.dir.add_file(file)
         self.dir_lock.release()
 
+
+class CachedItemWrapper:
+    def __init__(self, lib, id, type, user):
+        self.lib = lib
+        self.id = id
+        self.user = user
+        self.type = type
+        self.log = logging.getLogger("bot")
+        self.version = 0
+
+    def item(self):
+        return self.lib[self.id]
+
+    def to_dict(self):
+        dict = self.item().to_dict()
+        dict['user'] = self.user
+        return dict
+
+    def validate(self):
+        ret = self.item().validate()
+        if ret and self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+        return ret
+
+    def prepare(self):
+        ret = self.item().prepare()
+        if ret and self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+        return ret
+
+    def async_prepare(self):
+        th = threading.Thread(
+            target=self.prepare, name="Prepare-" + self.id[:7])
+        self.log.info(
+            "%s: start preparing item in thread: " % self.item().type + self.format_debug_string())
+        th.daemon = True
+        th.start()
+        return th
+
+    def uri(self):
+        return self.item().uri()
+
+    def add_tags(self, tags):
+        self.item().add_tags(tags)
+        if self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+
+    def remove_tags(self, tags):
+        self.item().remove_tags(tags)
+        if self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+
+    def clear_tags(self):
+        self.item().clear_tags()
+        if self.item().version > self.version:
+            self.version = self.item().version
+            self.lib.save(self.id)
+
+    def is_ready(self):
+        return self.item().is_ready()
+
+    def is_failed(self):
+        return self.item().is_failed()
+
+    def format_current_playing(self):
+        return self.item().format_current_playing(self.user)
+
+    def format_song_string(self):
+        return self.item().format_song_string(self.user)
+
+    def format_short_string(self):
+        return self.item().format_short_string()
+
+    def format_debug_string(self):
+        return self.item().format_debug_string()
+
+    def display_type(self):
+        return self.item().display_type()
+
+
+# Remember!!! Get wrapper functions will automatically add items into the cache!
+def get_cached_wrapper_from_scrap(bot, **kwargs):
+    item = var.cache.get_item(bot, **kwargs)
+    if 'user' not in kwargs:
+        raise KeyError("Which user added this song?")
+    return CachedItemWrapper(var.cache, item.id, kwargs['type'], kwargs['user'])
+
+
+def get_cached_wrapper_from_dict(bot, dict_from_db, user):
+    item = dict_to_item(bot, dict_from_db)
+    var.cache[dict_from_db['id']] = item
+    return CachedItemWrapper(var.cache, item.id, item.type, user)
+
+
+def get_cached_wrapper_by_id(bot, id, user):
+    item = var.cache.get_item_by_id(bot, id)
+    if item:
+        return CachedItemWrapper(var.cache, item.id, item.type, user)
+    else:
+        return None
+
+
+def get_cached_wrappers_by_tags(bot, tags, user):
+    items = var.cache.get_items_by_tags(bot, tags)
+    ret = []
+    for item in items:
+        ret.append(CachedItemWrapper(var.cache, item.id, item.type, user))
+    return ret

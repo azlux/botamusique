@@ -11,7 +11,7 @@ import variables as var
 from librb import radiobrowser
 from database import SettingsDatabase, MusicDatabase
 from media.item import item_builders, item_loaders, item_id_generators, dict_to_item, dicts_to_items
-from media.playlist import get_item_wrapper_from_scrap, get_item_wrapper_by_id, get_item_wrappers_by_tags
+from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags
 from media.file import FileItem
 from media.url_from_playlist import PlaylistURLItem, get_playlist_info
 from media.url import URLItem
@@ -21,10 +21,11 @@ log = logging.getLogger("bot")
 
 def register_all_commands(bot):
     bot.register_command(constants.commands('joinme'), cmd_joinme, no_partial_match=False, access_outside_channel=True)
-    bot.register_command(constants.commands('user_ban'), cmd_user_ban)
-    bot.register_command(constants.commands('user_unban'), cmd_user_unban)
-    bot.register_command(constants.commands('url_ban'), cmd_url_ban)
-    bot.register_command(constants.commands('url_unban'), cmd_url_unban)
+    bot.register_command(constants.commands('user_ban'), cmd_user_ban, no_partial_match=True)
+    bot.register_command(constants.commands('user_unban'), cmd_user_unban, no_partial_match=True)
+    bot.register_command(constants.commands('url_ban_list'), cmd_url_ban_list, no_partial_match=True)
+    bot.register_command(constants.commands('url_ban'), cmd_url_ban, no_partial_match=True)
+    bot.register_command(constants.commands('url_unban'), cmd_url_unban, no_partial_match=True)
     bot.register_command(constants.commands('play'), cmd_play)
     bot.register_command(constants.commands('pause'), cmd_pause)
     bot.register_command(constants.commands('play_file'), cmd_play_file)
@@ -41,7 +42,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('stop'), cmd_stop)
     bot.register_command(constants.commands('clear'), cmd_clear)
     bot.register_command(constants.commands('kill'), cmd_kill)
-    bot.register_command(constants.commands('update'), cmd_update)
+    bot.register_command(constants.commands('update'), cmd_update, no_partial_match=True)
     bot.register_command(constants.commands('stop_and_getout'), cmd_stop_and_getout)
     bot.register_command(constants.commands('volume'), cmd_volume)
     bot.register_command(constants.commands('ducking'), cmd_ducking)
@@ -129,12 +130,28 @@ def cmd_url_ban(bot, user, text, command, parameter):
     if bot.is_admin(user):
         if parameter:
             bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(parameter)))
+
+            id = item_id_generators['url'](url=parameter)
+            var.cache.free_and_delete(id)
+            var.playlist.remove_by_id(id)
         else:
-            bot.mumble.users[text.actor].send_text_message(util.get_url_ban())
+            if var.playlist.current_item().type == 'url':
+                item = var.playlist.current_item().item()
+                bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(item.url)))
+                var.cache.free_and_delete(item.id)
+                var.playlist.remove_by_id(item.id)
+            else:
+                bot.send_msg(constants.strings('bad_parameter', command=command))
     else:
         bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
     return
 
+def cmd_url_ban_list(bot, user, text, command, parameter):
+    if bot.is_admin(user):
+        bot.mumble.users[text.actor].send_text_message(util.get_url_ban())
+    else:
+        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
+    return
 
 def cmd_url_unban(bot, user, text, command, parameter):
     global log
@@ -183,10 +200,10 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
     if parameter.isdigit():
         files = var.cache.files
         if int(parameter) < len(files):
-            music_wrapper = get_item_wrapper_by_id(bot, var.cache.file_id_lookup[files[int(parameter)]], user)
+            music_wrapper = get_cached_wrapper_by_id(bot, var.cache.file_id_lookup[files[int(parameter)]], user)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
             return
 
     # if parameter is {path}
@@ -198,10 +215,10 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
         #     return
 
         if parameter in var.cache.files:
-            music_wrapper = get_item_wrapper_from_scrap(bot, type='file', path=parameter, user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(bot, type='file', path=parameter, user=user)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
             return
 
         # if parameter is {folder}
@@ -212,13 +229,13 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
 
             for file in files:
                 count += 1
-                music_wrapper = get_item_wrapper_by_id(bot, var.cache.file_id_lookup[file], user)
+                music_wrapper = get_cached_wrapper_by_id(bot, var.cache.file_id_lookup[file], user)
                 var.playlist.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                 msgs.append("{} ({})".format(music_wrapper.item().title, music_wrapper.item().path))
 
             if count != 0:
-                send_multi_lines(bot, msgs, text)
+                send_multi_lines(bot, msgs, None)
                 return
 
         else:
@@ -227,10 +244,10 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
             matches = [ file for file in files if parameter.lower() in file.lower()]
             if len(matches) == 1:
                 file = matches[0]
-                music_wrapper = get_item_wrapper_by_id(bot, var.cache.file_id_lookup[file], user)
+                music_wrapper = get_cached_wrapper_by_id(bot, var.cache.file_id_lookup[file], user)
                 var.playlist.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-                bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+                bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
                 return
             elif len(matches) > 1:
                 msgs = [ constants.strings('multiple_matches') ]
@@ -268,7 +285,7 @@ def cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cach
                 match = re.search(parameter, file)
                 if match and match[0]:
                     count += 1
-                    music_wrapper = get_item_wrapper_by_id(bot, var.cache.file_id_lookup[file], user)
+                    music_wrapper = get_cached_wrapper_by_id(bot, var.cache.file_id_lookup[file], user)
                     music_wrappers.append(music_wrapper)
                     log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                     msgs.append("<li><b>{}</b> ({})</li>".format(music_wrapper.item().title,
@@ -282,7 +299,7 @@ def cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cach
             if count != 0:
                 msgs.append("</ul>")
                 var.playlist.extend(music_wrappers)
-                send_multi_lines(bot, msgs, text, "")
+                send_multi_lines(bot, msgs, None, "")
             else:
                 if do_not_refresh_cache:
                     bot.send_msg(constants.strings("no_file"), text)
@@ -302,11 +319,11 @@ def cmd_play_url(bot, user, text, command, parameter):
 
     url = util.get_url_from_input(parameter)
     if url:
-        music_wrapper = get_item_wrapper_from_scrap(bot, type='url', url=url, user=user)
+        music_wrapper = get_cached_wrapper_from_scrap(bot, type='url', url=url, user=user)
         var.playlist.append(music_wrapper)
 
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
         if len(var.playlist) == 2:
             # If I am the second item on the playlist. (I am the next one!)
             bot.async_download_next()
@@ -329,7 +346,7 @@ def cmd_play_playlist(bot, user, text, command, parameter):
     items = get_playlist_info(url=url, start_index=offset, user=user)
     if len(items) > 0:
         items = var.playlist.extend(list(map(
-            lambda item: get_item_wrapper_from_scrap(bot, **item), items)))
+            lambda item: get_cached_wrapper_from_scrap(bot, **item), items)))
         for music in items:
             log.info("cmd: add to playlist: " + music.format_debug_string())
     else:
@@ -354,11 +371,11 @@ def cmd_play_radio(bot, user, text, command, parameter):
             parameter = parameter.split()[0]
         url = util.get_url_from_input(parameter)
         if url:
-            music_wrapper = get_item_wrapper_from_scrap(bot, type='radio', url=url, user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(bot, type='radio', url=url, user=user)
 
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
         else:
             bot.send_msg(constants.strings('bad_url'))
 
@@ -454,7 +471,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
         url = radiobrowser.geturl_byid(parameter)
         if url != "-1":
             log.info('cmd: Found url: ' + url)
-            music_wrapper = get_item_wrapper_from_scrap(bot, type='radio', url=url, name=stationname, user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(bot, type='radio', url=url, name=stationname, user=user)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.async_download_next()
@@ -527,7 +544,6 @@ def cmd_yt_play(bot, user, text, command, parameter):
 
 def cmd_help(bot, user, text, command, parameter):
     global log
-
     bot.send_msg(constants.strings('help'), text)
     if bot.is_admin(user):
         bot.send_msg(constants.strings('admin_help'), text)
@@ -586,7 +602,7 @@ def cmd_volume(bot, user, text, command, parameter):
     if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.volume_set = float(float(parameter) / 100)
         bot.send_msg(constants.strings('change_volume',
-            volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']), text)
+            volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']))
         var.db.set('bot', 'volume', str(bot.volume_set))
         log.info('cmd: volume set to %d' % (bot.volume_set * 100))
     else:
@@ -647,12 +663,10 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
 def cmd_current_music(bot, user, text, command, parameter):
     global log
 
-    reply = ""
     if len(var.playlist) > 0:
-        bot.send_msg(var.playlist.current_item().format_current_playing())
+        bot.send_msg(var.playlist.current_item().format_current_playing(), text)
     else:
-        reply = constants.strings('not_playing')
-    bot.send_msg(reply, text)
+        bot.send_msg(constants.strings('not_playing'), text)
 
 
 def cmd_skip(bot, user, text, command, parameter):
@@ -705,7 +719,7 @@ def cmd_remove(bot, user, text, command, parameter):
 
         log.info("cmd: delete from playlist: " + removed.format_debug_string())
     else:
-        bot.send_msg(constants.strings('bad_parameter', command=command))
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
 
 def cmd_list_file(bot, user, text, command, parameter):
@@ -801,7 +815,7 @@ def cmd_mode(bot, user, text, command, parameter):
 
 def cmd_play_tags(bot, user, text, command, parameter):
     if not parameter:
-        bot.send_msg(constants.strings('bad_parameter', command=command))
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
         return
 
     msgs = [constants.strings('multiple_file_added') + "<ul>"]
@@ -809,7 +823,7 @@ def cmd_play_tags(bot, user, text, command, parameter):
 
     tags = parameter.split(",")
     tags = list(map(lambda t: t.strip(), tags))
-    music_wrappers = get_item_wrappers_by_tags(bot, tags, user)
+    music_wrappers = get_cached_wrappers_by_tags(bot, tags, user)
     for music_wrapper in music_wrappers:
         count += 1
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -819,7 +833,7 @@ def cmd_play_tags(bot, user, text, command, parameter):
     if count != 0:
         msgs.append("</ul>")
         var.playlist.extend(music_wrappers)
-        send_multi_lines(bot, msgs, text, "")
+        send_multi_lines(bot, msgs, None, "")
     else:
         bot.send_msg(constants.strings("no_file"), text)
 
@@ -916,7 +930,7 @@ def cmd_find_tagged(bot, user, text, command, parameter):
     global song_shortlist
 
     if not parameter:
-        bot.send_msg(constants.strings('bad_parameter', command=command))
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
         return
 
     msgs = [constants.strings('multiple_file_found') + "<ul>"]
@@ -943,7 +957,7 @@ def cmd_find_tagged(bot, user, text, command, parameter):
 def cmd_search_library(bot, user, text, command, parameter):
     global song_shortlist
     if not parameter:
-        bot.send_msg(constants.strings('bad_parameter', command=command))
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
         return
 
     msgs = [constants.strings('multiple_file_found') + "<ul>"]
@@ -992,7 +1006,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
             if 1 <= index <= len(song_shortlist):
                 kwargs = song_shortlist[index - 1]
                 kwargs['user'] = user
-                music_wrapper = get_item_wrapper_from_scrap(bot, **kwargs)
+                music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
                 var.playlist.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                 msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type, music_wrapper.item().title))
@@ -1001,17 +1015,17 @@ def cmd_shortlist(bot, user, text, command, parameter):
                 return
 
         msgs.append("</ul>")
-        send_multi_lines(bot, msgs, text, "")
+        send_multi_lines(bot, msgs, None, "")
         return
     elif len(indexes) == 1:
         index = indexes[0]
         if 1 <= index <= len(song_shortlist):
             kwargs = song_shortlist[index - 1]
             kwargs['user'] = user
-            music_wrapper = get_item_wrapper_from_scrap(bot, **kwargs)
+            music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
             return
 
     bot.send_msg(constants.strings('bad_parameter', command=command), text)
@@ -1033,7 +1047,7 @@ def cmd_delete_from_library(bot, user, text, command, parameter):
             if 1 <= index <= len(song_shortlist):
                 music_dict = song_shortlist[index - 1]
                 if 'id' in music_dict:
-                    music_wrapper = get_item_wrapper_by_id(bot, music_dict['id'], user)
+                    music_wrapper = get_cached_wrapper_by_id(bot, music_dict['id'], user)
                     log.info("cmd: remove from library: " + music_wrapper.format_debug_string())
                     msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type ,music_wrapper.item().title))
                     var.playlist.remove_by_id(music_dict['id'])
@@ -1048,14 +1062,14 @@ def cmd_delete_from_library(bot, user, text, command, parameter):
             return
 
         msgs.append("</ul>")
-        send_multi_lines(bot, msgs, text, "")
+        send_multi_lines(bot, msgs, None, "")
         return
     elif len(indexes) == 1:
         index = indexes[0]
         if 1 <= index <= len(song_shortlist):
             music_dict = song_shortlist[index - 1]
             if 'id' in music_dict:
-                music_wrapper = get_item_wrapper_by_id(bot, music_dict['id'], user)
+                music_wrapper = get_cached_wrapper_by_id(bot, music_dict['id'], user)
                 bot.send_msg(constants.strings('file_deleted', item=music_wrapper.format_song_string()), text)
                 log.info("cmd: remove from library: " + music_wrapper.format_debug_string())
                 var.playlist.remove_by_id(music_dict['id'])

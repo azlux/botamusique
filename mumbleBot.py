@@ -272,7 +272,7 @@ class MumbleBot:
                         self.log.info("bot: {:s} matches {:s}".format(command, matches[0]))
                         command_exc = matches[0]
 
-                        if not self.cmd_handle[command]['access_outside_channel'] \
+                        if not self.cmd_handle[command_exc]['access_outside_channel'] \
                                 and not self.is_admin(user) \
                                 and not var.config.getboolean('bot', 'allow_other_channel_message') \
                                 and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself[
@@ -297,7 +297,7 @@ class MumbleBot:
     def send_msg(self, msg, text=None):
         msg = msg.encode('utf-8', 'ignore').decode('utf-8')
         # text if the object message, contain information if direct message or channel message
-        if not text or not text.session:
+        if not text:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
             own_channel.send_text_message(msg)
         else:

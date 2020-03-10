@@ -153,7 +153,7 @@ def user_unban(user):
 
 
 def get_url_ban():
-    res = "List of ban hash"
+    res = "List of ban:"
     for i in var.db.items("url_ban"):
         res += "<br/>" + i[0]
     return res

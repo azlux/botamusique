@@ -1,127 +1,12 @@
 import json
-import random
 import threading
 import logging
 import random
 import time
 
 import variables as var
-from media.file import FileItem
-from media.item import dict_to_item
-from media.url import URLItem
-from media.url_from_playlist import PlaylistURLItem
-from media.radio import RadioItem
-from database import MusicDatabase
-from media.cache import MusicCache
+from media.cache import CachedItemWrapper, get_cached_wrapper_from_dict, get_cached_wrapper_by_id
 
-class PlaylistItemWrapper:
-    def __init__(self, lib, id, type, user):
-        self.lib = lib
-        self.id = id
-        self.user = user
-        self.type = type
-        self.log = logging.getLogger("bot")
-        self.version = 0
-
-    def item(self):
-        return self.lib[self.id]
-
-    def to_dict(self):
-        dict = self.item().to_dict()
-        dict['user'] = self.user
-        return dict
-
-    def validate(self):
-        ret = self.item().validate()
-        if ret and self.item().version > self.version:
-            self.version = self.item().version
-            self.lib.save(self.id)
-        return ret
-
-    def prepare(self):
-        ret = self.item().prepare()
-        if ret and self.item().version > self.version:
-            self.version = self.item().version
-            self.lib.save(self.id)
-        return ret
-
-    def async_prepare(self):
-        th = threading.Thread(
-            target=self.prepare, name="Prepare-" + self.id[:7])
-        self.log.info(
-            "%s: start preparing item in thread: " % self.item().type + self.format_debug_string())
-        th.daemon = True
-        th.start()
-        return th
-
-    def uri(self):
-        return self.item().uri()
-
-    def add_tags(self, tags):
-        self.item().add_tags(tags)
-        if self.item().version > self.version:
-            self.version = self.item().version
-            self.lib.save(self.id)
-
-    def remove_tags(self, tags):
-        self.item().remove_tags(tags)
-        if self.item().version > self.version:
-            self.version = self.item().version
-            self.lib.save(self.id)
-
-    def clear_tags(self):
-        self.item().clear_tags()
-        if self.item().version > self.version:
-            self.version = self.item().version
-            self.lib.save(self.id)
-
-    def is_ready(self):
-        return self.item().is_ready()
-
-    def is_failed(self):
-        return self.item().is_failed()
-
-    def format_current_playing(self):
-        return self.item().format_current_playing(self.user)
-
-    def format_song_string(self):
-        return self.item().format_song_string(self.user)
-
-    def format_short_string(self):
-        return self.item().format_short_string()
-
-    def format_debug_string(self):
-        return self.item().format_debug_string()
-
-    def display_type(self):
-        return self.item().display_type()
-
-
-# Remember!!! Using these three get wrapper functions will automatically add items into the cache!
-def get_item_wrapper_from_scrap(bot, **kwargs):
-    item = var.cache.get_item(bot, **kwargs)
-    if 'user' not in kwargs:
-        raise KeyError("Which user added this song?")
-    return PlaylistItemWrapper(var.cache, item.id, kwargs['type'], kwargs['user'])
-
-def get_item_wrapper_from_dict(bot, dict_from_db, user):
-    item = dict_to_item(bot, dict_from_db)
-    var.cache[dict_from_db['id']] = item
-    return PlaylistItemWrapper(var.cache, item.id, item.type, user)
-
-def get_item_wrapper_by_id(bot, id, user):
-    item = var.cache.get_item_by_id(bot, id)
-    if item:
-        return PlaylistItemWrapper(var.cache, item.id, item.type, user)
-    else:
-        return None
-
-def get_item_wrappers_by_tags(bot, tags, user):
-    items = var.cache.get_items_by_tags(bot, tags)
-    ret = []
-    for item in items:
-        ret.append(PlaylistItemWrapper(var.cache, item.id, item.type, user))
-    return ret
 
 def get_playlist(mode, _list=None, index=None):
     if _list and index is None:
@@ -147,6 +32,7 @@ def get_playlist(mode, _list=None, index=None):
             return AutoPlaylist().from_list(_list, index)
     raise
 
+
 class BasePlaylist(list):
     def __init__(self):
         super().__init__()
@@ -168,7 +54,7 @@ class BasePlaylist(list):
 
         return self
 
-    def append(self, item: PlaylistItemWrapper):
+    def append(self, item: CachedItemWrapper):
         self.version += 1
         super().append(item)
         self.pending_items.append(item)
@@ -310,7 +196,7 @@ class BasePlaylist(list):
             items.sort(key=lambda v: int(v[0]))
             for item in items:
                 item = json.loads(item[1])
-                music_wrapper = get_item_wrapper_by_id(var.bot, item['id'], item['user'])
+                music_wrapper = get_cached_wrapper_by_id(var.bot, item['id'], item['user'])
                 if music_wrapper:
                     music_wrappers.append(music_wrapper)
             self.from_list(music_wrappers, current_index)
@@ -457,7 +343,7 @@ class AutoPlaylist(OneshotPlaylist):
     def refresh(self):
         dicts = var.music_db.query_random_music(var.config.getint("bot", "autoplay_length", fallback=5))
         if dicts:
-            _list = [get_item_wrapper_from_dict(var.bot, _dict, "AutoPlay") for _dict in dicts]
+            _list = [get_cached_wrapper_from_dict(var.bot, _dict, "AutoPlay") for _dict in dicts]
             self.from_list(_list, -1)
 
     # def from_list(self, _list, current_index):

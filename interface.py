@@ -10,7 +10,7 @@ import shutil
 from werkzeug.utils import secure_filename
 import errno
 import media
-from media.playlist import get_item_wrapper_from_scrap, get_item_wrapper_by_id, get_item_wrappers_by_tags
+from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags
 import logging
 import time
 
@@ -199,7 +199,7 @@ def post():
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.music_folder + request.form['add_file_bottom']
             if os.path.isfile(path):
-                music_wrapper = get_item_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_bottom']], user)
+                music_wrapper = get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_bottom']], user)
 
                 var.playlist.append(music_wrapper)
                 log.info('web: add to playlist(bottom): ' + music_wrapper.format_debug_string())
@@ -207,7 +207,7 @@ def post():
         elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
             path = var.music_folder + request.form['add_file_next']
             if os.path.isfile(path):
-                music_wrapper = get_item_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_next']], user)
+                music_wrapper = get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_next']], user)
                 var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
                 log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
 
@@ -229,7 +229,7 @@ def post():
 
                 music_wrappers = list(map(
                     lambda file:
-                    get_item_wrapper_by_id(var.bot, var.cache.file_id_lookup[folder + file], user),
+                    get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[folder + file], user),
                 files))
 
                 var.playlist.extend(music_wrappers)
@@ -239,7 +239,7 @@ def post():
 
 
         elif 'add_url' in request.form:
-            music_wrapper = get_item_wrapper_from_scrap(var.bot, type='url', url=request.form['add_url'], user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(var.bot, type='url', url=request.form['add_url'], user=user)
             var.playlist.append(music_wrapper)
 
             log.info("web: add to playlist: " + music_wrapper.format_debug_string())
@@ -249,7 +249,7 @@ def post():
 
         elif 'add_radio' in request.form:
             url = request.form['add_radio']
-            music_wrapper = get_item_wrapper_from_scrap(var.bot, type='radio', url=url, user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(var.bot, type='radio', url=url, user=user)
             var.playlist.append(music_wrapper)
 
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -301,7 +301,7 @@ def post():
                 time.sleep(0.1)
 
         elif 'add_tag' in request.form:
-            music_wrappers = get_item_wrappers_by_tags(var.bot, [request.form['add_tag']], user)
+            music_wrappers = get_cached_wrappers_by_tags(var.bot, [request.form['add_tag']], user)
             for music_wrapper in music_wrappers:
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             var.playlist.extend(music_wrappers)
