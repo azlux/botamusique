@@ -118,11 +118,13 @@ def build_tags_color_lookup():
     return color_lookup
 
 def build_path_tags_lookup():
-    id_tags_lookup = var.music_db.query_tags_by_ids(list(var.cache.file_id_lookup.values()))
-
     path_tags_lookup = {}
-    for path, id in var.cache.file_id_lookup.items():
-        path_tags_lookup[path] = id_tags_lookup[id]
+    ids = list(var.cache.file_id_lookup.values())
+    if len(ids) > 0:
+        id_tags_lookup = var.music_db.query_tags_by_ids(ids)
+
+        for path, id in var.cache.file_id_lookup.items():
+            path_tags_lookup[path] = id_tags_lookup[id]
 
     return path_tags_lookup
 
