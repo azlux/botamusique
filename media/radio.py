@@ -35,7 +35,7 @@ def get_radio_server_description(url):
         error = error_traceback.rstrip().split("\n")[-1]
         log.debug("radio: unsuccessful attempts on fetching radio description (shoutcast): " + error)
     except ValueError:
-        return False # ?
+        return url
 
     try:
         r = requests.get(url_icecast, timeout=10)
