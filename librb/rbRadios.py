@@ -1,8 +1,5 @@
 import requests
 
-from xml.etree import ElementTree
-from urllib.parse import urljoin
-
 from librb.rbConstants import endpoints, BASE_URL
 
 
@@ -180,4 +177,3 @@ class RadioBrowser:
         kwargs["params"] = params
         endpoint = self.builder.produce_endpoint(endpoint="station_search")
         return request(endpoint, **kwargs)
-        

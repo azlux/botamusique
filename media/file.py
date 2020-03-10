@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 from io import BytesIO
@@ -6,9 +5,7 @@ import base64
 import hashlib
 import mutagen
 from PIL import Image
-import json
 
-import util
 import variables as var
 from media.item import BaseItem, item_builders, item_loaders, item_id_generators
 import constants
@@ -24,14 +21,18 @@ type : file
     user
 '''
 
+
 def file_item_builder(bot, **kwargs):
     return FileItem(bot, kwargs['path'])
+
 
 def file_item_loader(bot, _dict):
     return FileItem(bot, "", _dict)
 
+
 def file_item_id_generator(**kwargs):
     return hashlib.md5(kwargs['path'].encode()).hexdigest()
+
 
 item_builders['file'] = file_item_builder
 item_loaders['file'] = file_item_loader
@@ -74,12 +75,12 @@ class FileItem(BaseItem):
             self.send_client_message(constants.strings('file_missed', file=self.path))
             return False
 
-        #self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
+        # self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         self.ready = "yes"
         return True
 
     def _get_info_from_tag(self):
-        match = re.search("(.+)\.(.+)", self.uri())
+        match = re.search(r"(.+)\.(.+)", self.uri())
         assert match is not None
 
         file_no_ext = match[1]
@@ -153,17 +154,17 @@ class FileItem(BaseItem):
 
     def format_song_string(self, user):
         return constants.strings("file_item",
-                                    title=self.title,
-                                    artist=self.artist if self.artist else '??',
-                                    user=user
-                                    )
+                                 title=self.title,
+                                 artist=self.artist if self.artist else '??',
+                                 user=user
+                                 )
 
     def format_current_playing(self, user):
         display = constants.strings("now_playing", item=self.format_song_string(user))
         if self.thumbnail:
             thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                              self.thumbnail + '"/>'
-            display += "<br />" +  thumbnail_html
+            display += "<br />" + thumbnail_html
 
         return display
 

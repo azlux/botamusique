@@ -6,23 +6,16 @@ import magic
 import os
 import sys
 import variables as var
-import constants
 import zipfile
 import requests
-import mutagen
 import re
 import subprocess as sp
 import logging
 import youtube_dl
 from importlib import reload
-from PIL import Image
-from io import BytesIO
 from sys import platform
 import traceback
-import urllib.parse, urllib.request, urllib.error
-import base64
-import media
-import media.radio
+import urllib.request
 from packaging import version
 
 log = logging.getLogger("bot")
@@ -64,6 +57,7 @@ def get_recursive_file_list_sorted(path):
 
     filelist.sort()
     return filelist
+
 
 # - zips all files of the given zippath (must be a directory)
 # - returns the absolute path of the created zip file
@@ -172,7 +166,7 @@ def url_unban(url):
 
 
 def pipe_no_wait(pipefd):
-    ''' Used to fetch the STDERR of ffmpeg. pipefd is the file descriptor returned from os.pipe()'''
+    """ Used to fetch the STDERR of ffmpeg. pipefd is the file descriptor returned from os.pipe()"""
     if platform == "linux" or platform == "linux2" or platform == "darwin":
         import fcntl
         import os
@@ -309,18 +303,19 @@ def get_url_from_input(string):
     else:
         return False
 
+
 def youtube_search(query):
     global log
 
     try:
         r = requests.get("https://www.youtube.com/results", params={'search_query': query}, timeout=5)
-        results = re.findall("watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
-                             "(?:user|channel).*?>(.*?)<", r.text) # (id, title, uploader)
+        results = re.findall(r"watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
+                             "(?:user|channel).*?>(.*?)<", r.text)  # (id, title, uploader)
 
         if len(results) > 0:
             return results
 
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
+    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout):
         error_traceback = traceback.format_exc().split("During")[0]
         log.error("util: youtube query failed with error:\n %s" % error_traceback)
         return False

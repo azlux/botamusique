@@ -16,7 +16,7 @@ import time
 
 
 class ReverseProxied(object):
-    '''Wrap the application in this middleware and configure the
+    """Wrap the application in this middleware and configure the
     front-end server to add these headers, to let you quietly bind
     this to a URL other than / and to an HTTP scheme that is
     different than what is used locally.
@@ -31,7 +31,7 @@ class ReverseProxied(object):
         }
 
     :param app: the WSGI application
-    '''
+    """
 
     def __init__(self, app):
         self.app = app
@@ -57,6 +57,7 @@ web = Flask(__name__)
 log = logging.getLogger("bot")
 user = 'Remote Control'
 
+
 def init_proxy():
     global web
     if var.is_proxified:
@@ -64,19 +65,21 @@ def init_proxy():
 
 # https://stackoverflow.com/questions/29725217/password-protect-one-webpage-in-flask-app
 
+
 def check_auth(username, password):
     """This function is called to check if a username /
     password combination is valid.
     """
     return username == var.config.get("webinterface", "user") and password == var.config.get("webinterface", "password")
 
+
 def authenticate():
     """Sends a 401 response that enables basic auth"""
     global log
-    return Response(
-    'Could not verify your access level for that URL.\n'
-    'You have to login with proper credentials', 401,
-    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+    return Response('Could not verify your access level for that URL.\n'
+                    'You have to login with proper credentials', 401,
+                    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
 
 def requires_auth(f):
     @wraps(f)
@@ -89,6 +92,7 @@ def requires_auth(f):
             return authenticate()
         return f(*args, **kwargs)
     return decorated
+
 
 def tag_color(tag):
     num = hash(tag) % 8
@@ -109,13 +113,14 @@ def tag_color(tag):
     elif num == 7:
         return "dark"
 
+
 def build_tags_color_lookup():
     color_lookup = {}
     for tag in var.music_db.query_all_tags():
         color_lookup[tag] = tag_color(tag)
 
-
     return color_lookup
+
 
 def build_path_tags_lookup():
     path_tags_lookup = {}
@@ -128,10 +133,12 @@ def build_path_tags_lookup():
 
     return path_tags_lookup
 
+
 def recur_dir(dirobj):
     for name, dir in dirobj.get_subdirs().items():
         print(dirobj.fullpath + "/" + name)
         recur_dir(dir)
+
 
 @web.route("/", methods=['GET'])
 @requires_auth
@@ -153,21 +160,22 @@ def index():
                            paused=var.bot.is_pause,
                            )
 
+
 @web.route("/playlist", methods=['GET'])
 @requires_auth
 def playlist():
     if len(var.playlist) == 0:
         return jsonify({'items': [render_template('playlist.html',
-                               m=False,
-                               index=-1
-                               )]
+                                                  m=False,
+                                                  index=-1
+                                                  )]
                         })
 
     tags_color_lookup = build_tags_color_lookup()
     items = []
 
     for index, item_wrapper in enumerate(var.playlist):
-         items.append(render_template('playlist.html',
+        items.append(render_template('playlist.html',
                                      index=index,
                                      tags_color_lookup=tags_color_lookup,
                                      m=item_wrapper.item(),
@@ -175,7 +183,8 @@ def playlist():
                                      )
                      )
 
-    return jsonify({ 'items': items })
+    return jsonify({'items': items})
+
 
 def status():
     if len(var.playlist) > 0:
@@ -197,7 +206,7 @@ def post():
 
     if request.method == 'POST':
         if request.form:
-            log.debug("web: Post request from %s: %s" % ( request.remote_addr, str(request.form)))
+            log.debug("web: Post request from %s: %s" % (request.remote_addr, str(request.form)))
         if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
             path = var.music_folder + request.form['add_file_bottom']
             if os.path.isfile(path):
@@ -231,14 +240,12 @@ def post():
 
                 music_wrappers = list(map(
                     lambda file:
-                    get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[folder + file], user),
-                files))
+                    get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[folder + file], user), files))
 
                 var.playlist.extend(music_wrappers)
 
                 for music_wrapper in music_wrappers:
                     log.info('web: add to playlist: ' + music_wrapper.format_debug_string())
-
 
         elif 'add_url' in request.form:
             music_wrapper = get_cached_wrapper_from_scrap(var.bot, type='url', url=request.form['add_url'], user=user)
@@ -278,7 +285,6 @@ def post():
                             var.bot.interrupt()
                 else:
                     var.playlist.remove(index)
-
 
         elif 'play_music' in request.form:
             music_wrapper = var.playlist[int(request.form['play_music'])]
@@ -358,6 +364,7 @@ def post():
 
     return status()
 
+
 @web.route('/upload', methods=["POST"])
 def upload():
     global log
@@ -366,7 +373,7 @@ def upload():
     if not files:
         return redirect("./", code=406)
 
-    #filename = secure_filename(file.filename).strip()
+    # filename = secure_filename(file.filename).strip()
     for file in files:
         filename = file.filename
         if filename == '':
@@ -385,7 +392,7 @@ def upload():
 
         if "audio" in file.mimetype:
             storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
-            print('storagepath:',storagepath)
+            print('storagepath:', storagepath)
             if not storagepath.startswith(os.path.abspath(var.music_folder)):
                 return redirect("./", code=406)
 

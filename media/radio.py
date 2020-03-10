@@ -11,16 +11,16 @@ import constants
 
 log = logging.getLogger("bot")
 
+
 def get_radio_server_description(url):
     global log
 
     log.debug("radio: fetching radio server description")
-    p = re.compile('(https?\:\/\/[^\/]*)', re.IGNORECASE)
+    p = re.compile('(https?://[^/]*)', re.IGNORECASE)
     res = re.search(p, url)
     base_url = res.group(1)
     url_icecast = base_url + '/status-json.xsl'
     url_shoutcast = base_url + '/stats?json=1'
-    title_server = None
     try:
         r = requests.get(url_shoutcast, timeout=10)
         data = r.json()
@@ -30,7 +30,7 @@ def get_radio_server_description(url):
     except (requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
-            requests.exceptions.Timeout) as e:
+            requests.exceptions.Timeout):
         error_traceback = traceback.format_exc()
         error = error_traceback.rstrip().split("\n")[-1]
         log.debug("radio: unsuccessful attempts on fetching radio description (shoutcast): " + error)
@@ -51,7 +51,7 @@ def get_radio_server_description(url):
     except (requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
-            requests.exceptions.Timeout) as e:
+            requests.exceptions.Timeout):
         error_traceback = traceback.format_exc()
         error = error_traceback.rstrip().split("\n")[-1]
         log.debug("radio: unsuccessful attempts on fetching radio description (icecast): " + error)
@@ -81,7 +81,7 @@ def get_radio_title(url):
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
             requests.exceptions.Timeout,
-            KeyError) as e:
+            KeyError):
         log.debug("radio: unsuccessful attempts on fetching radio title (icy)")
     return url
 
@@ -92,11 +92,14 @@ def radio_item_builder(bot, **kwargs):
     else:
         return RadioItem(bot, kwargs['url'], '')
 
+
 def radio_item_loader(bot, _dict):
     return RadioItem(bot, "", "", _dict)
 
+
 def radio_item_id_generator(**kwargs):
     return hashlib.md5(kwargs['url'].encode()).hexdigest()
+
 
 item_builders['radio'] = radio_item_builder
 item_loaders['radio'] = radio_item_loader
@@ -109,7 +112,7 @@ class RadioItem(BaseItem):
             super().__init__(bot)
             self.url = url
             if not name:
-                self.title = get_radio_server_description(self.url) # The title of the radio station
+                self.title = get_radio_server_description(self.url)  # The title of the radio station
             else:
                 self.title = name
             self.id = hashlib.md5(url.encode()).hexdigest()
@@ -121,7 +124,7 @@ class RadioItem(BaseItem):
         self.type = "radio"
 
     def validate(self):
-        self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
+        self.version += 1  # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         return True
 
     def is_ready(self):
@@ -146,8 +149,8 @@ class RadioItem(BaseItem):
     def format_song_string(self, user):
         return constants.strings("radio_item",
                                  url=self.url,
-                                 title=get_radio_title(self.url), # the title of current song
-                                 name=self.title, # the title of radio station
+                                 title=get_radio_title(self.url),  # the title of current song
+                                 name=self.title,  # the title of radio station
                                  user=user
                                  )
 
@@ -159,6 +162,3 @@ class RadioItem(BaseItem):
 
     def display_type(self):
         return constants.strings("radio")
-
-
-

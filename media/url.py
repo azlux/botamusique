@@ -17,14 +17,18 @@ import media.system
 
 log = logging.getLogger("bot")
 
+
 def url_item_builder(bot, **kwargs):
     return URLItem(bot, kwargs['url'])
+
 
 def url_item_loader(bot, _dict):
     return URLItem(bot, "", _dict)
 
+
 def url_item_id_generator(**kwargs):
     return hashlib.md5(kwargs['url'].encode()).hexdigest()
+
 
 item_builders['url'] = url_item_builder
 item_loaders['url'] = url_item_loader
@@ -97,7 +101,7 @@ class URLItem(BaseItem):
             return False
         else:
             self.ready = "validated"
-            self.version += 1 # notify wrapper to save me
+            self.version += 1  # notify wrapper to save me
             return True
 
     # Run in a other thread
@@ -145,8 +149,6 @@ class URLItem(BaseItem):
         self.ready = "preparing"
 
         self.log.info("bot: downloading url (%s) %s " % (self.title, self.url))
-        ydl_opts = ""
-
         ydl_opts = {
             'format': 'bestaudio/best',
             'outtmpl': save_path,
@@ -166,7 +168,7 @@ class URLItem(BaseItem):
             for i in range(attempts):
                 self.log.info("bot: download attempts %d / %d" % (i+1, attempts))
                 try:
-                    info = ydl.extract_info(self.url)
+                    ydl.extract_info(self.url)
                     download_succeed = True
                     break
                 except:
@@ -181,7 +183,7 @@ class URLItem(BaseItem):
                     "bot: finished downloading url (%s) %s, saved to %s." % (self.title, self.url, self.path))
                 self.downloading = False
                 self._read_thumbnail_from_file(base_path + ".jpg")
-                self.version += 1 # notify wrapper to save me
+                self.version += 1  # notify wrapper to save me
                 return True
             else:
                 for f in glob.glob(base_path + "*"):
@@ -214,7 +216,6 @@ class URLItem(BaseItem):
 
         return dict
 
-
     def format_debug_string(self):
         return "[url] {title} ({url})".format(
             title=self.title,
@@ -224,9 +225,9 @@ class URLItem(BaseItem):
     def format_song_string(self, user):
         if self.ready in ['validated', 'yes']:
             return constants.strings("url_item",
-                                        title=self.title if self.title else "??",
-                                        url=self.url,
-                                        user=user)
+                                     title=self.title if self.title else "??",
+                                     url=self.url,
+                                     user=user)
         return self.url
 
     def format_current_playing(self, user):
@@ -235,7 +236,7 @@ class URLItem(BaseItem):
         if self.thumbnail:
             thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                              self.thumbnail + '"/>'
-            display += "<br />" +  thumbnail_html
+            display += "<br />" + thumbnail_html
 
         return display
 

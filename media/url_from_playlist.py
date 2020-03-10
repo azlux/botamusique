@@ -1,10 +1,9 @@
 import youtube_dl
 import constants
-import media
 import variables as var
-import hashlib
 from media.item import item_builders, item_loaders, item_id_generators
 from media.url import URLItem, url_item_id_generator
+
 
 def get_playlist_info(url, start_index=0, user=""):
     items = []
@@ -63,6 +62,7 @@ def playlist_url_item_builder(bot, **kwargs):
 def playlist_url_item_loader(bot, _dict):
     return PlaylistURLItem(bot, "", "", "", "", _dict)
 
+
 item_builders['url_from_playlist'] = playlist_url_item_builder
 item_loaders['url_from_playlist'] = playlist_url_item_loader
 item_id_generators['url_from_playlist'] = url_item_id_generator
@@ -98,11 +98,11 @@ class PlaylistURLItem(URLItem):
 
     def format_song_string(self, user):
         return constants.strings("url_from_playlist_item",
-                                    title=self.title,
-                                    url=self.url,
-                                    playlist_url=self.playlist_url,
-                                    playlist=self.playlist_title,
-                                    user=user)
+                                 title=self.title,
+                                 url=self.url,
+                                 playlist_url=self.playlist_url,
+                                 playlist=self.playlist_title,
+                                 user=user)
 
     def format_current_playing(self, user):
         display = constants.strings("now_playing", item=self.format_song_string(user))
@@ -110,7 +110,7 @@ class PlaylistURLItem(URLItem):
         if self.thumbnail:
             thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                              self.thumbnail + '"/>'
-            display += "<br />" +  thumbnail_html
+            display += "<br />" + thumbnail_html
 
         return display
 

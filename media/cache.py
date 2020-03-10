@@ -1,11 +1,10 @@
 import logging
 import os
 
-from database import MusicDatabase
 import json
 import threading
 
-from media.item import item_builders, item_loaders, item_id_generators, dict_to_item, dicts_to_items
+from media.item import item_builders, item_id_generators, dict_to_item
 from database import MusicDatabase
 import variables as var
 import util
@@ -18,9 +17,10 @@ class MusicCache(dict):
         self.log = logging.getLogger("bot")
         self.dir = None
         self.files = []
+        self.file_id_lookup = {}
         self.dir_lock = threading.Lock()
 
-    def get_item_by_id(self, bot, id): # Why all these functions need a bot? Because it need the bot to send message!
+    def get_item_by_id(self, bot, id):  # Why all these functions need a bot? Because it need the bot to send message!
         if id in self:
             return self[id]
 
@@ -32,9 +32,8 @@ class MusicCache(dict):
             return item
         else:
             return None
-            #print(id)
-            #raise KeyError("Unable to fetch item from the database! Please try to refresh the cache by !recache.")
-
+            # print(id)
+            # raise KeyError("Unable to fetch item from the database! Please try to refresh the cache by !recache.")
 
     def get_item(self, bot, **kwargs):
         # kwargs should provide type and id, and parameters to build the item if not existed in the library.
@@ -55,7 +54,7 @@ class MusicCache(dict):
             return item
 
         # if not in the database, build one
-        self[id] = item_builders[kwargs['type']](bot, **kwargs) # newly built item will not be saved immediately
+        self[id] = item_builders[kwargs['type']](bot, **kwargs)  # newly built item will not be saved immediately
         return self[id]
 
     def get_items_by_tags(self, bot, tags):
@@ -112,7 +111,6 @@ class MusicCache(dict):
         self.dir_lock.acquire()
         self.log.info("library: rebuild directory cache")
         self.files = []
-        self.file_id_lookup = {}
         files = util.get_recursive_file_list_sorted(var.music_folder)
         self.dir = util.Dir(var.music_folder)
         for file in files:
