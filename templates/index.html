@@ -311,7 +311,7 @@
                         <div class="input-group">
                             <input class="form-control btn-space" type="text" id="add_url_input" placeholder="URL...">
                             <button type="submit" class="btn btn-primary"
-                            onclick="request('/post', {add_url :  $('#add_url_input')[0].value })">Add URL</button>
+                            onclick="var $i = $('#add_url_input')[0]; request('/post', {add_url :  $i.value }); $i.value = ''; ">Add URL</button>
                         </div>
                     </div>
                 </div>
@@ -326,7 +326,7 @@
                         <div class="input-group">
                             <input class="form-control btn-space" type="text" id="add_radio_input" placeholder="Radio Address...">
                             <button type="submit" class="btn btn-primary"
-                            onclick="request('/post', {add_radio : $('#add_radio_input')[0].value })">Add Radio</button>
+                            onclick="var $i = $('#add_radio_input')[0]; request('/post', {add_radio : $i.value }); $i.value = '';">Add Radio</button>
                         </div>
                     </div>
                 </div>
