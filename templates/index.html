@@ -107,7 +107,7 @@
 <head>
     <meta charset="UTF-8">
     <title>botamusique web interface</title>
-    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link id="pagestyle" rel="stylesheet" href="static/css/bootstrap.min.css">
     <link rel="stylesheet" href="static/css/custom.css">
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
@@ -335,6 +335,8 @@
         </div>
     </div>
 
+    <div class="floating-button" onclick="switchTheme()"> <i class="fas fa-lightbulb" aria-hidden="true"></i> </div>
+
     <script src="static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
     <script src="static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="static/js/fontawesome.all.js" crossorigin="anonymous"></script>
@@ -431,6 +433,25 @@
                 $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
             }
 
+        }
+
+        var theme = "light";
+
+        function switchTheme(){
+            if(theme === "light"){
+                setPageTheme("dark");
+                theme = "dark";
+            }else{
+                setPageTheme("light");
+                theme = "light";
+            }
+        }
+
+        function setPageTheme(theme) {
+            if(theme === "light")
+                document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.min.css");
+            else if(theme === "dark")
+                document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
         }
 
         // Check the version of playlist to see if update is needed.

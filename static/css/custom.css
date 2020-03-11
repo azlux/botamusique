@@ -5,3 +5,24 @@
 .playlist-title{float:left; }
 .playlist-artwork{float:left; margin-left:10px;}
 .tag-click{cursor:pointer;}
+.floating-button {
+   width: 50px;
+   height: 50px;
+   background-color: #aaaaaa40;
+   border-radius: 50%;
+   box-shadow: 0 6px 10px 0 #66666647;
+   transition: all 0.1s ease-in-out;
+   font-size: 25px;
+   color: #9896967a;
+   text-align: center;
+   line-height: 52px;
+   position: fixed;
+   right: 50px;
+   bottom: 40px;
+}
+
+.floating-button:hover {
+    background-color: hsl(0, 0%, 43%);
+    color: white;
+}
+
