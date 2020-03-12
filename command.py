@@ -595,6 +595,9 @@ def cmd_stop_and_getout(bot, user, text, command, parameter):
     global log
 
     bot.stop()
+    if var.playlist.mode == "one-shot":
+        var.playlist.clear()
+
     if bot.channel:
         bot.mumble.channels.find_by_name(bot.channel).move_in()
 
