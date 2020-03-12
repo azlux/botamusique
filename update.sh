@@ -13,7 +13,6 @@ case "$1" in
         git pull --all
         git submodule update
         ;;
-
     *)
         ;;
 esac
