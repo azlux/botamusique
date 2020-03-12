@@ -302,7 +302,7 @@ def get_url_from_input(string):
         else:
             return False
 
-    match = re.search("(http|https)://(.*)?/(.*)", string, flags=re.IGNORECASE)
+    match = re.search("(http|https)://(\S*)?/(\S*)", string, flags=re.IGNORECASE)
     if match:
         url = match[1].lower() + "://" + match[2].lower() + "/" + match[3]
         return url
