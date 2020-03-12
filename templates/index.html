@@ -435,15 +435,21 @@
 
         }
 
-        var theme = "light";
+        function themeInit(){
+            var theme = localStorage.getItem("theme");
+            if(theme !== null){
+                setPageTheme(theme);
+            }
+        }
 
         function switchTheme(){
-            if(theme === "light"){
+            var theme = localStorage.getItem("theme");
+            if(theme === "light" || theme === null){
                 setPageTheme("dark");
-                theme = "dark";
+                localStorage.setItem("theme", "dark");
             }else{
                 setPageTheme("light");
-                theme = "light";
+                localStorage.setItem("theme", "light");
             }
         }
 
@@ -471,6 +477,7 @@
             });
         } , 3000);
 
+        themeInit();
         $(document).ready(updatePlaylist);
 
     </script>
