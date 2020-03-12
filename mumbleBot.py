@@ -236,7 +236,7 @@ class MumbleBot:
                     return
 
             if not self.is_admin(user) and parameter:
-                input_url = util.get_url_from_input(parameter.lower())
+                input_url = util.get_url_from_input(parameter)
                 if input_url:
                     for i in var.db.items("url_ban"):
                         if input_url == i[0]:

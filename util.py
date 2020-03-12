@@ -295,12 +295,17 @@ class Dir(object):
 
 def get_url_from_input(string):
     string = string.strip()
-    if string.startswith('http'):
-        return string
-    p = re.compile('href="(.+?)"', re.IGNORECASE)
-    res = re.search(p, string)
-    if res:
-        return res.group(1)
+    if not (string.startswith("http") or string.startswith("HTTP")):
+        res = re.search('href="(.+?)"', string, flags=re.IGNORECASE)
+        if res:
+            string = res.group(1)
+        else:
+            return False
+
+    match = re.search("(http|https)://(.*)?/(.*)", string, flags=re.IGNORECASE)
+    if match:
+        url = match[1].lower() + "://" + match[2].lower() + "/" + match[3]
+        return url
     else:
         return False
 
