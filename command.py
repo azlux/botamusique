@@ -701,7 +701,12 @@ def cmd_remove(bot, user, text, command, parameter):
         index = int(parameter) - 1
 
         if index == var.playlist.current_index:
-            removed = var.playlist.remove(index)
+            removed = var.playlist[index]
+            bot.send_msg(constants.strings('removing_item',
+                                           item=removed.format_short_string()), text)
+            log.info("cmd: delete from playlist: " + removed.format_debug_string())
+
+            var.playlist.remove(index)
 
             if index < len(var.playlist):
                 if not bot.is_pause:
@@ -714,12 +719,8 @@ def cmd_remove(bot, user, text, command, parameter):
                 if not bot.is_pause:
                     bot.interrupt()
         else:
-            removed = var.playlist.remove(index)
+            var.playlist.remove(index)
 
-        bot.send_msg(constants.strings('removing_item',
-                                       item=removed.format_short_string()), text)
-
-        log.info("cmd: delete from playlist: " + removed.format_debug_string())
     else:
         bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
