@@ -29,7 +29,7 @@ from media.cache import MusicCache
 
 
 class MumbleBot:
-    version = '5.2'
+    version = '5.3'
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
