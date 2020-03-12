@@ -388,7 +388,7 @@ def upload():
         log.info('web: Uploading file from %s:' % request.remote_addr)
         log.info('web: - filename: ' + filename)
         log.info('web: - targetdir: ' + targetdir)
-        log.info('web:  - mimetype: ' + file.mimetype)
+        log.info('web: - mimetype: ' + file.mimetype)
 
         if "audio" in file.mimetype:
             storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
@@ -405,11 +405,14 @@ def upload():
             filepath = os.path.join(storagepath, filename)
             log.info(' - filepath: ' + filepath)
             if os.path.exists(filepath):
-                return redirect("./", code=406)
+                continue
 
             file.save(filepath)
         else:
-            return redirect("./", code=409)
+            continue
+
+    var.cache.build_dir_cache(var.bot)
+    log.info("web: Local file cache refreshed.")
 
     return redirect("./", code=302)
 
