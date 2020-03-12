@@ -294,6 +294,7 @@ class Dir(object):
 # Parse the html from the message to get the URL
 
 def get_url_from_input(string):
+    string = string.strip()
     if string.startswith('http'):
         return string
     p = re.compile('href="(.+?)"', re.IGNORECASE)

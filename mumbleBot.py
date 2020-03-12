@@ -235,12 +235,14 @@ class MumbleBot:
                         constants.strings('user_ban'))
                     return
 
-            if parameter:
-                for i in var.db.items("url_ban"):
-                    if util.get_url_from_input(parameter.lower()) == i[0]:
-                        self.mumble.users[text.actor].send_text_message(
-                            constants.strings('url_ban'))
-                        return
+            if not self.is_admin(user) and parameter:
+                input_url = util.get_url_from_input(parameter.lower())
+                if input_url:
+                    for i in var.db.items("url_ban"):
+                        if input_url == i[0]:
+                            self.mumble.users[text.actor].send_text_message(
+                                constants.strings('url_ban'))
+                            return
 
             command_exc = ""
             try:
