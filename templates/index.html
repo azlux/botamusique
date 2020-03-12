@@ -1,8 +1,9 @@
 {% macro dirlisting(dir, path='') -%}
 <ul class="list-group">
+    {% if dir and dir.get_subdirs().items() %}
     {% for subdirname, subdirobj in dir.get_subdirs().items() %}
-    {%- set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
-    {%- set subdirid = subdirpath.replace("/","-") %}
+    {% set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
+    {% set subdirid = subdirpath.replace("/","-") %}
     <li class="directory list-group-item list-group-item-primary">
         <div class="btn-group" role="group">
             <div class="btn-group" role="group">
@@ -44,11 +45,12 @@
         </div>
     </li>
     <div class="collapse multi-collapse" id="multiCollapse-{{ subdirid }}">
-        {{- dirlisting(subdirobj, subdirpath) -}}
+        {{ dirlisting(subdirobj, subdirpath) -}}
     </div>
     {% endfor %}
-    {%- set files = dir.get_files() %}
-    {%- if files %}
+    {% endif %}
+    {% set files = dir.get_files() %}
+    {% if files %}
     {% for file in files %}
     {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
     <li class="file list-group-item">
@@ -74,7 +76,15 @@
             </div>
 
         </div>
-        <div class="btn-group lead"><div class="btn-space"><i class="fa fa-music" aria-hidden="true"></i></div> {{ filepath }}</div>
+        <div class="btn-group lead">
+            <div class="btn-space"><i class="fa fa-music" aria-hidden="true"></i></div>
+            {{ filepath }}
+        </div>
+            {% if tags_lookup[filepath] %}
+            {% for tag in tags_lookup[filepath] %}
+                <span class="badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+            {% endfor %}
+            {% endif %}
 
         <div class="btn-group" style="float: right;">
             <form action="./download" method="get" class="file file_download">
@@ -88,7 +98,7 @@
         </div>
     </li>
     {% endfor %}
-    {%- endif %}
+    {% endif %}
 </ul>
 {%- endmacro %}
 
@@ -97,7 +107,7 @@
 <head>
     <meta charset="UTF-8">
     <title>botamusique web interface</title>
-    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link id="pagestyle" rel="stylesheet" href="static/css/bootstrap.min.css">
     <link rel="stylesheet" href="static/css/custom.css">
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
@@ -113,13 +123,9 @@
         <div class="bs-docs-section">
             <div class="row">
             <div class="col">
-                <div id="playlist" class="card">
-                    <div class="card-header">
-                        <h2 class="card-title"><i class="fa fa-list" aria-hidden="true"></i> Play List</h2>
-                    </div>
-
-                    <div class="card-body">
-                        <div class="btn-group" style="margin-bottom: 5px;">
+                <div id="playlist" class="col-lg-12">
+                    <div>
+                        <div class="btn-group" style="margin-bottom: 10px;">
                             <button type="button" id="play-btn" class="btn btn-info btn-space"
                                     onclick="request('post', {action : 'resume'})" disabled>
                                 <i class="fas fa-play" aria-hidden="true"></i>
@@ -138,21 +144,27 @@
 
                         <div class="btn-group" style="float: right;">
                             <button type="button" id="oneshot-btn" class="btn btn-primary btn-space"
-                                    title="One-shot Playlist"
-                                    onclick="request('post', {action : 'one-shot'})">
+                                    title="One-shot Mode"
+                                    onclick="request('post', {action : 'one-shot'})" disabled>
                                 <i class="fas fa-tasks" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" id="random-btn" class="btn btn-primary btn-space"
-                                    title="Randomize Playlist"
-                                    onclick="request('post', {action : 'randomize'})">
+                                    title="Random Mode"
+                                    onclick="request('post', {action : 'randomize'})" disabled>
                                 <i class="fas fa-random" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" id="repeat-btn" class="btn btn-primary btn-space"
-                                    title="Repeat Playlist"
-                                    onclick="request('post', {action : 'repeat'})">
+                                    title="Repeat Mode"
+                                    onclick="request('post', {action : 'repeat'})" disabled>
                                 <i class="fas fa-redo" aria-hidden="true"></i>
+                            </button>
+
+                            <button type="button" id="autoplay-btn" class="btn btn-primary btn-space"
+                                    title="Autoplay Mode"
+                                    onclick="request('post', {action : 'autoplay'})" disabled>
+                                <i class="fas fa-robot" aria-hidden="true"></i>
                             </button>
 
                             <button type="button" class="btn btn-warning btn-space"
@@ -169,7 +181,7 @@
                             <thead>
                                 <tr>
                                     <th scope="col">#</th>
-                                    <th scope="col">Title</th>
+                                    <th scope="col" class="playlist-title-td">Title</th>
                                     <th scope="col">Url/Path</th>
                                     <th scope="col">Action</th>
                                 </tr>
@@ -196,13 +208,38 @@
         <div class="bs-docs-section">
             <div class="row">
             <div class="col">
+                <div class="page-header">
+                    <h1 id="forms">Music Library</h1>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Tags</h4>
+                    </div>
+                    <div class="card-body">
+                        {% for tag in tags_color_lookup.keys() %}
+                            <span class="tag-click badge badge-{{ tags_color_lookup[tag] }}"
+                                  onclick="request('post', {add_tag : '{{ tag }}'})">
+                                {{ tag }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div class="bs-docs-section">
+            <div class="row">
+                <div class="col">
                 <div id="browser" class="card">
                     <div class="card-header">
-                        <h2 class="card-title"><i class="fa fa-list" aria-hidden="true"></i> Music Library</h2>
+                        <h4 class="card-title">Files</h4>
                     </div>
 
                     <div class="card-body">
                         <div class="btn-group" style="margin-bottom: 5px;" role="group">
+                            <button type="submit" class="btn btn-secondary btn-space"
+                            onclick="request('/post', {action : 'rescan'}); location.reload()">
+                                <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
+                            </button>
                             <form action="./download" method="get" class="directory form1">
                                 <input type="text" value="./" name="directory" hidden>
                                 <button type="submit" class="btn btn-secondary btn-space"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>
@@ -274,7 +311,7 @@
                         <div class="input-group">
                             <input class="form-control btn-space" type="text" id="add_url_input" placeholder="URL...">
                             <button type="submit" class="btn btn-primary"
-                            onclick="request('/post', {add_url :  $('#add_url_input')[0].value })">Add URL</button>
+                            onclick="var $i = $('#add_url_input')[0]; request('/post', {add_url :  $i.value }); $i.value = ''; ">Add URL</button>
                         </div>
                     </div>
                 </div>
@@ -289,7 +326,7 @@
                         <div class="input-group">
                             <input class="form-control btn-space" type="text" id="add_radio_input" placeholder="Radio Address...">
                             <button type="submit" class="btn btn-primary"
-                            onclick="request('/post', {add_radio : $('#add_radio_input')[0].value })">Add Radio</button>
+                            onclick="var $i = $('#add_radio_input')[0]; request('/post', {add_radio : $i.value }); $i.value = '';">Add Radio</button>
                         </div>
                     </div>
                 </div>
@@ -297,6 +334,8 @@
         </div>
         </div>
     </div>
+
+    <div class="floating-button" onclick="switchTheme()"> <i class="fas fa-lightbulb" aria-hidden="true"></i> </div>
 
     <script src="static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
     <script src="static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
@@ -373,19 +412,52 @@
                 }
             }
             if(mode === "one-shot"){
-                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
-                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary");
+                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
             }else if(mode === "repeat"){
-                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", true);
-                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary");
+                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
             }else if(mode === "random"){
-                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary");
-                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
-                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false);
+                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false); // This is a feature.
+                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+            }else if(mode === "autoplay"){
+                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
+                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
             }
 
+        }
+
+        function themeInit(){
+            var theme = localStorage.getItem("theme");
+            if(theme !== null){
+                setPageTheme(theme);
+            }
+        }
+
+        function switchTheme(){
+            var theme = localStorage.getItem("theme");
+            if(theme === "light" || theme === null){
+                setPageTheme("dark");
+                localStorage.setItem("theme", "dark");
+            }else{
+                setPageTheme("light");
+                localStorage.setItem("theme", "light");
+            }
+        }
+
+        function setPageTheme(theme) {
+            if(theme === "light")
+                document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.min.css");
+            else if(theme === "dark")
+                document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
         }
 
         // Check the version of playlist to see if update is needed.
@@ -405,6 +477,7 @@
             });
         } , 3000);
 
+        themeInit();
         $(document).ready(updatePlaylist);
 
     </script>

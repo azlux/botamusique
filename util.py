@@ -6,23 +6,16 @@ import magic
 import os
 import sys
 import variables as var
-import constants
 import zipfile
 import requests
-import mutagen
 import re
 import subprocess as sp
 import logging
 import youtube_dl
 from importlib import reload
-from PIL import Image
-from io import BytesIO
 from sys import platform
 import traceback
-import urllib.parse, urllib.request, urllib.error
-import base64
-import media
-import media.radio
+import urllib.request
 from packaging import version
 
 log = logging.getLogger("bot")
@@ -41,7 +34,7 @@ def solve_filepath(path):
 
 def get_recursive_file_list_sorted(path):
     filelist = []
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, topdown=True, onerror=None, followlinks=True):
         relroot = root.replace(path, '', 1)
         if relroot != '' and relroot in var.config.get('bot', 'ignored_folders'):
             continue
@@ -55,186 +48,15 @@ def get_recursive_file_list_sorted(path):
             if not os.access(fullpath, os.R_OK):
                 continue
 
-            mime = magic.from_file(fullpath, mime=True)
-            if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
-                filelist.append(relroot + file)
+            try:
+                mime = magic.from_file(fullpath, mime=True)
+                if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
+                    filelist.append(relroot + file)
+            except:
+                pass
 
     filelist.sort()
     return filelist
-
-
-def get_music_path(music):
-    uri = ''
-    if music["type"] == "url":
-        uri = music['path']
-    elif music["type"] == "file":
-        uri = var.music_folder + music["path"]
-    elif music["type"] == "radio":
-        uri = music['url']
-
-    return uri
-
-def attach_item_id(item):
-    if item['type'] == 'url':
-        item['id'] = hashlib.md5(item['url'].encode()).hexdigest()
-    elif item['type'] == 'file':
-        item['id'] = hashlib.md5(item['path'].encode()).hexdigest()
-    elif item['type'] == 'radio':
-        item['id'] = hashlib.md5(item['url'].encode()).hexdigest()
-    return item
-
-def attach_music_tag_info(music):
-    music = attach_item_id(music)
-
-    if "path" in music:
-        uri = get_music_path(music)
-
-        if os.path.isfile(uri):
-            match = re.search("(.+)\.(.+)", uri)
-            if match is None:
-                return music
-
-            file_no_ext = match[1]
-            ext = match[2]
-
-            try:
-                im = None
-                path_thumbnail = file_no_ext + ".jpg"
-                if os.path.isfile(path_thumbnail):
-                    im = Image.open(path_thumbnail)
-
-                if ext == "mp3":
-                    # title: TIT2
-                    # artist: TPE1, TPE2
-                    # album: TALB
-                    # cover artwork: APIC:
-                    tags = mutagen.File(uri)
-                    if 'TIT2' in tags:
-                        music['title'] = tags['TIT2'].text[0]
-                    if 'TPE1' in tags:  # artist
-                        music['artist'] = tags['TPE1'].text[0]
-
-                    if im is None:
-                        if "APIC:" in tags:
-                            im = Image.open(BytesIO(tags["APIC:"].data))
-
-                elif ext == "m4a" or ext == "m4b" or ext == "mp4" or ext == "m4p":
-                    # title: ©nam (\xa9nam)
-                    # artist: ©ART
-                    # album: ©alb
-                    # cover artwork: covr
-                    tags = mutagen.File(uri)
-                    if '©nam' in tags:
-                        music['title'] = tags['©nam'][0]
-                    if '©ART' in tags:  # artist
-                        music['artist'] = tags['©ART'][0]
-
-                        if im is None:
-                            if "covr" in tags:
-                                im = Image.open(BytesIO(tags["covr"][0]))
-
-                if im:
-                    im.thumbnail((100, 100), Image.ANTIALIAS)
-                    buffer = BytesIO()
-                    im = im.convert('RGB')
-                    im.save(buffer, format="JPEG")
-                    music['thumbnail'] = base64.b64encode(buffer.getvalue()).decode('utf-8')
-            except:
-                pass
-    else:
-        uri = music['url']
-
-    # if nothing found
-    if 'title' not in music:
-        match = re.search("([^\.]+)\.?.*", os.path.basename(uri))
-        music['title'] = match[1]
-
-    return music
-
-
-def format_song_string(music):
-    display = ''
-    source = music["type"]
-    title = music["title"] if "title" in music else "Unknown title"
-    artist = music["artist"] if "artist" in music else "Unknown artist"
-
-    if source == "radio":
-        display = constants.strings("now_playing_radio",
-            url=music["url"],
-            title=media.radio.get_radio_title(music["url"]),
-            name=music["name"],
-            user=music["user"]
-        )
-    elif source == "url" and 'from_playlist' in music:
-        display = constants.strings("now_playing_from_playlist",
-                                    title=title,
-                                    url=music['url'],
-                                    playlist_url=music["playlist_url"],
-                                    playlist=music["playlist_title"],
-                                    user=music["user"]
-        )
-    elif source == "url":
-        display = constants.strings("now_playing_url",
-                                    title=title,
-                                    url=music["url"],
-                                    user=music["user"]
-        )
-    elif source == "file":
-        display = constants.strings("now_playing_file",
-                                    title=title,
-                                    artist=artist,
-                                    user=music["user"]
-        )
-
-    return display
-
-
-def format_debug_song_string(music):
-    display = ''
-    source = music["type"]
-    title = music["title"] if "title" in music else "??"
-    artist = music["artist"] if "artist" in music else "??"
-
-    if source == "radio":
-        display = "[radio] {name} ({url}) by {user}".format(
-            name=music["name"],
-            url=music["url"],
-            user=music["user"]
-        )
-    elif source == "url" and 'from_playlist' in music:
-        display = "[url] {title} ({url}) from playlist {playlist} by {user}".format(
-            title=title,
-            url=music["url"],
-            playlist=music["playlist_title"],
-            user=music["user"]
-        )
-    elif source == "url":
-        display = "[url] {title} ({url}) by {user}".format(
-            title=title,
-            url=music["url"],
-            user=music["user"]
-        )
-    elif source == "file":
-        display = "[file] {artist} - {title} ({path}) by {user}".format(
-            title=title,
-            artist=artist,
-            path=music["path"],
-            user=music["user"]
-        )
-
-    return display
-
-
-def format_current_playing():
-    music = var.playlist.current_item()
-    display = format_song_string(music)
-
-    if 'thumbnail' in music:
-        thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
-                         music['thumbnail'] + '"/>'
-        return display + "<br />" + thumbnail_html
-
-    return display
 
 
 # - zips all files of the given zippath (must be a directory)
@@ -325,7 +147,7 @@ def user_unban(user):
 
 
 def get_url_ban():
-    res = "List of ban hash"
+    res = "List of ban:"
     for i in var.db.items("url_ban"):
         res += "<br/>" + i[0]
     return res
@@ -344,7 +166,7 @@ def url_unban(url):
 
 
 def pipe_no_wait(pipefd):
-    ''' Used to fetch the STDERR of ffmpeg. pipefd is the file descriptor returned from os.pipe()'''
+    """ Used to fetch the STDERR of ffmpeg. pipefd is the file descriptor returned from os.pipe()"""
     if platform == "linux" or platform == "linux2" or platform == "darwin":
         import fcntl
         import os
@@ -362,8 +184,8 @@ def pipe_no_wait(pipefd):
         import msvcrt
         import os
 
-        from ctypes import windll, byref, wintypes, GetLastError, WinError
-        from ctypes.wintypes import HANDLE, DWORD, POINTER, BOOL
+        from ctypes import windll, byref, wintypes, WinError, POINTER
+        from ctypes.wintypes import HANDLE, DWORD, BOOL
 
         LPDWORD = POINTER(DWORD)
         PIPE_NOWAIT = wintypes.DWORD(0x00000001)
@@ -472,27 +294,34 @@ class Dir(object):
 # Parse the html from the message to get the URL
 
 def get_url_from_input(string):
-    if string.startswith('http'):
-        return string
-    p = re.compile('href="(.+?)"', re.IGNORECASE)
-    res = re.search(p, string)
-    if res:
-        return res.group(1)
+    string = string.strip()
+    if not (string.startswith("http") or string.startswith("HTTP")):
+        res = re.search('href="(.+?)"', string, flags=re.IGNORECASE)
+        if res:
+            string = res.group(1)
+        else:
+            return False
+
+    match = re.search("(http|https)://(\S*)?/(\S*)", string, flags=re.IGNORECASE)
+    if match:
+        url = match[1].lower() + "://" + match[2].lower() + "/" + match[3]
+        return url
     else:
         return False
+
 
 def youtube_search(query):
     global log
 
     try:
         r = requests.get("https://www.youtube.com/results", params={'search_query': query}, timeout=5)
-        results = re.findall("watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
-                             "(?:user|channel).*?>(.*?)<", r.text) # (id, title, uploader)
+        results = re.findall(r"watch\?v=(.*?)\".*?title=\"(.*?)\".*?"
+                             "(?:user|channel).*?>(.*?)<", r.text)  # (id, title, uploader)
 
         if len(results) > 0:
             return results
 
-    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
+    except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout):
         error_traceback = traceback.format_exc().split("During")[0]
         log.error("util: youtube query failed with error:\n %s" % error_traceback)
         return False

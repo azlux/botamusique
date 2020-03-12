@@ -11,32 +11,42 @@
     <th scope="row">{{ index + 1 }}</th>
     <td>
         <div class="playlist-title">
-            {% if 'thumbnail' in m %}
-                <img width="80" src="data:image/PNG;base64,{{ m['thumbnail'] }}"/>
+            {% if m.type != 'radio' and m.thumbnail %}
+                <img width="80" src="data:image/PNG;base64,{{ m.thumbnail }}"/>
                 {% else %}
                 <img width="80" src="static/image/unknown-album.png"/>
             {% endif %}
         </div>
         <div class="playlist-artwork">
-            {% if 'title' in m and m['title'].strip() %}
-                <b>{{ m['title']|truncate(45) }}</b>
-            {% elif 'url' in m %}
-                <b>{{ m['url']|truncate(45) }}</b>
+            {% if m.title.strip() %}
+                <b>{{ m.title|truncate(45) }}</b>
+            {% elif m.url %}
+                <b>{{ m.url|truncate(45) }}</b>
             {% endif %}
-            <span class="badge badge-secondary">{{ m['type'].capitalize() }}</span>
-            <br>
-            {% if 'artist' in m %}
-                {{ m['artist'] }}
+            <span class="badge badge-secondary">{{ m.display_type() }}</span>
+            <br />
+            {% if m.type == 'file' %}
+                {% if m.artist %}
+                    {{ m.artist }}
+                {% else %}
+                    ??
+                {% endif %}
+            {% elif m.type == 'url_from_playlist' %}
+                <a href="{{ m.playlist_url }}"><i>{{ m.playlist_title|truncate(50) }}</i></a>
             {% else %}
                 Unknown Artist
             {% endif %}
+            <br />
+            {% for tag in m.tags %}
+                <span class="badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+            {% endfor %}
         </div>
     </td>
     <td>
-        {% if 'url' in m %}
-            <small><a href="{{ m['url'] }}"><i>{{ m['url']|truncate(50) }}</i></a></small>
-        {% elif 'path' in m %}
-        <small>{{ m['path']|truncate(50) }}</small>
+        {% if m.type == 'url' or m.type == 'radio' or m.type == 'url_from_playlist' %}
+            <small><a href="{{ m.url }}"><i>{{ m.url|truncate(50) }}</i></a></small>
+        {% elif m.type == 'file' %}
+        <small>{{ m.path|truncate(50) }}</small>
         {% endif %}
     </td>
     <td>

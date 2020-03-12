@@ -5,7 +5,6 @@ import threading
 import time
 import sys
 import math
-import re
 import signal
 import configparser
 import audioop
@@ -15,8 +14,6 @@ import os
 import os.path
 import pymumble.pymumble_py3 as pymumble
 import variables as var
-import hashlib
-import youtube_dl
 import logging
 import logging.handlers
 import traceback
@@ -25,14 +22,10 @@ from packaging import version
 import util
 import command
 import constants
-from database import Database
-import media.url
-import media.file
-import media.playlist
-import media.radio
+from database import SettingsDatabase, MusicDatabase
 import media.system
-from librb import radiobrowser
-from playlist import PlayList
+from media.playlist import BasePlaylist
+from media.cache import MusicCache
 
 
 class MumbleBot:
@@ -71,10 +64,13 @@ class MumbleBot:
         self.thread = None
         self.thread_stderr = None
         self.is_pause = False
+        self.pause_at_id = ""
         self.playhead = -1
         self.song_start_at = -1
-        #self.download_threads = []
-        self.wait_for_downloading = False # flag for the loop are waiting for download to complete in the other thread
+        self.last_ffmpeg_err = ""
+        self.read_pcm_size = 0
+        # self.download_threads = []
+        self.wait_for_downloading = False  # flag for the loop are waiting for download to complete in the other thread
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -150,7 +146,7 @@ class MumbleBot:
             self.ducking_volume = var.db.getfloat("bot", "ducking_volume", fallback=self.ducking_volume)
             self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
             self.ducking_threshold = var.db.getfloat("bot", "ducking_threshold", fallback=self.ducking_threshold)
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, \
+            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
                                                self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
@@ -171,6 +167,11 @@ class MumbleBot:
             sys.exit(0)
         self.nb_exit += 1
 
+        if var.config.getboolean('bot', 'save_playlist', fallback=True) \
+                and var.config.get("bot", "save_music_library", fallback=True):
+            self.log.info("bot: save playlist into database")
+            var.playlist.save()
+
     def check_update(self):
         self.log.debug("update: checking for updates...")
         new_version = util.new_release_version()
@@ -180,12 +181,14 @@ class MumbleBot:
         else:
             self.log.debug("update: no new version found.")
 
-    def register_command(self, cmd, handle):
+    def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False):
         cmds = cmd.split(",")
         for command in cmds:
             command = command.strip()
             if command:
-                self.cmd_handle[command] = handle
+                self.cmd_handle[command] = {'handle': handle,
+                                            'partial_match': not no_partial_match,
+                                            'access_outside_channel': access_outside_channel}
                 self.log.debug("bot: command added: " + command)
 
     def set_comment(self):
@@ -211,7 +214,7 @@ class MumbleBot:
 
             # use the first word as a command, the others one as  parameters
             if len(message) > 0:
-                command = message[0]
+                command = message[0].lower()
                 parameter = ''
                 if len(message) > 1:
                     parameter = message[1].rstrip()
@@ -221,11 +224,6 @@ class MumbleBot:
             self.log.info('bot: received command ' + command + ' - ' + parameter + ' by ' + user)
 
             # Anti stupid guy function
-            if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_other_channel_message') and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
-                self.mumble.users[text.actor].send_text_message(
-                    constants.strings('not_in_my_channel'))
-                return
-
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
                 self.mumble.users[text.actor].send_text_message(
                     constants.strings('pm_not_allowed'))
@@ -237,31 +235,51 @@ class MumbleBot:
                         constants.strings('user_ban'))
                     return
 
-            if parameter:
-                for i in var.db.items("url_ban"):
-                    if util.get_url_from_input(parameter.lower()) == i[0]:
-                        self.mumble.users[text.actor].send_text_message(
-                            constants.strings('url_ban'))
-                        return
-
+            if not self.is_admin(user) and parameter:
+                input_url = util.get_url_from_input(parameter)
+                if input_url:
+                    for i in var.db.items("url_ban"):
+                        if input_url == i[0]:
+                            self.mumble.users[text.actor].send_text_message(
+                                constants.strings('url_ban'))
+                            return
 
             command_exc = ""
             try:
                 if command in self.cmd_handle:
                     command_exc = command
-                    self.cmd_handle[command](self, user, text, command, parameter)
+
+                    if not self.cmd_handle[command]['access_outside_channel'] \
+                            and not self.is_admin(user) \
+                            and not var.config.getboolean('bot', 'allow_other_channel_message') \
+                            and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
+                        self.mumble.users[text.actor].send_text_message(
+                            constants.strings('not_in_my_channel'))
+                        return
+
+                    self.cmd_handle[command]['handle'](self, user, text, command, parameter)
                 else:
                     # try partial match
                     cmds = self.cmd_handle.keys()
                     matches = []
                     for cmd in cmds:
-                        if cmd.startswith(command):
+                        if cmd.startswith(command) and self.cmd_handle[cmd]['partial_match']:
                             matches.append(cmd)
 
                     if len(matches) == 1:
                         self.log.info("bot: {:s} matches {:s}".format(command, matches[0]))
                         command_exc = matches[0]
-                        self.cmd_handle[command_exc](self, user, text, command_exc, parameter)
+
+                        if not self.cmd_handle[command_exc]['access_outside_channel'] \
+                                and not self.is_admin(user) \
+                                and not var.config.getboolean('bot', 'allow_other_channel_message') \
+                                and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself[
+                                'channel_id']:
+                            self.mumble.users[text.actor].send_text_message(
+                                constants.strings('not_in_my_channel'))
+                            return
+
+                        self.cmd_handle[command_exc]['handle'](self, user, text, command_exc, parameter)
                     elif len(matches) > 1:
                         self.mumble.users[text.actor].send_text_message(
                             constants.strings('which_command', commands="<br>".join(matches)))
@@ -277,7 +295,7 @@ class MumbleBot:
     def send_msg(self, msg, text=None):
         msg = msg.encode('utf-8', 'ignore').decode('utf-8')
         # text if the object message, contain information if direct message or channel message
-        if not text or not text.session:
+        if not text:
             own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
             own_channel.send_text_message(msg)
         else:
@@ -294,56 +312,18 @@ class MumbleBot:
     #   Launch and Download
     # =======================
 
-    def launch_music(self, index=-1):
-        uri = ""
-        music = None
+    def launch_music(self):
         if var.playlist.is_empty():
             return
+        assert self.wait_for_downloading is False
 
-        if index == -1:
-            music = var.playlist.current_item()
-        else:
-            music = var.playlist.jump(index)
+        music_wrapper = var.playlist.current_item()
+        uri = music_wrapper.uri()
 
-        self.wait_for_downloading = False
-
-        self.log.info("bot: play music " + util.format_debug_song_string(music))
-        if music["type"] == "url":
-            # Delete older music is the tmp folder is too big
-            media.system.clear_tmp_folder(var.tmp_folder, var.config.getint('bot', 'tmp_folder_max_size'))
-
-            if music['ready'] == 'downloading':
-                self.wait_for_downloading = True
-                self.log.info("bot: current music isn't ready, other thread is downloading.")
-                return
-
-            # Check if the music is ready to be played
-            if music["ready"] != "yes" or not os.path.exists(music['path']):
-                self.wait_for_downloading = True
-                self.log.info("bot: current music isn't ready, start downloading.")
-                self.async_download(index)
-                return
-
-            if music['ready'] == 'failed':
-                self.log.info("bot: removing music from the playlist: %s" % util.format_debug_song_string(music))
-                var.playlist.remove(index)
-                return
-            uri = music['path']
-
-        elif music["type"] == "file":
-            if not self.check_item_path_or_remove():
-                return
-            uri = var.music_folder + var.playlist.current_item()["path"]
-
-        elif music["type"] == "radio":
-            uri = music["url"]
-            if 'name' not in music:
-                self.log.info("bot: fetching radio server description")
-                title = media.radio.get_radio_server_description(uri)
-                music["name"] = title
+        self.log.info("bot: play music " + music_wrapper.format_debug_string())
 
         if var.config.getboolean('bot', 'announce_current_music'):
-            self.send_msg(util.format_current_playing())
+            self.send_msg(music_wrapper.format_current_playing())
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
@@ -357,180 +337,31 @@ class MumbleBot:
         # The ffmpeg process is a thread
         # prepare pipe for catching stderr of ffmpeg
         pipe_rd, pipe_wd = os.pipe()
-        util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
+        util.pipe_no_wait(pipe_rd)  # Let the pipe work in non-blocking mode
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.is_pause = False
+        self.read_pcm_size = 0
         self.song_start_at = -1
         self.playhead = 0
         self.last_volume_cycle_time = time.time()
-
-    def validate_music(self, music):
-        url = music['url']
-
-        url_hash = hashlib.md5(url.encode()).hexdigest()
-
-        path = var.tmp_folder + url_hash + ".%(ext)s"
-        mp3 = path.replace(".%(ext)s", ".mp3")
-        music['path'] = mp3
-
-        # Download only if music is not existed
-        if os.path.isfile(mp3):
-            self.log.info("bot: file existed for url %s " % music['url'])
-            music['ready'] = 'yes'
-            return music
-
-        music = media.url.get_url_info(music)
-
-        self.log.info("bot: verifying the duration of url %s " % music['url'])
-
-        if music:
-            if music['duration'] > var.config.getint('bot', 'max_track_duration'):
-                # Check the length, useful in case of playlist, it wasn't checked before)
-                self.log.info(
-                    "the music " + music["url"] + " has a duration of " + str(music['duration']) + "s -- too long")
-                self.send_msg(constants.strings('too_long'))
-                return False
-            else:
-                music['ready'] = "no"
-
-            return music
-        else:
-            self.log.error("bot: error while fetching info from the URL")
-            self.send_msg(constants.strings('unable_download'))
-            return False
-
-    def download_music(self, index=-1):
-        if index == -1:
-            index = var.playlist.current_index
-        music = var.playlist[index]
-
-        if music['type'] != 'url':
-            # then no need to download
-            return music
-
-        self.download_in_progress = True
-
-        url = music['url']
-
-        url_hash = hashlib.md5(url.encode()).hexdigest()
-
-        path = var.tmp_folder + url_hash + ".%(ext)s"
-        mp3 = path.replace(".%(ext)s", ".mp3")
-        music['path'] = mp3
-
-        # Download only if music is not existed
-        if not os.path.isfile(mp3):
-            # download the music
-            music['ready'] = "downloading"
-            var.playlist.update(music, music['id'])
-
-            self.log.info("bot: downloading url (%s) %s " % (music['title'], url))
-            ydl_opts = ""
-
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'outtmpl': path,
-                'noplaylist': True,
-                'writethumbnail': True,
-                'updatetime': False,
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192'},
-                    {'key': 'FFmpegMetadata'}]
-            }
-            self.send_msg(constants.strings('download_in_progress', item=music['title']))
-
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                attempts = var.config.getint('bot', 'download_attempts', fallback=2)
-                download_succeed = False
-                for i in range(attempts):
-                    self.log.info("bot: download attempts %d / %d" % (i+1, attempts))
-                    try:
-                        ydl.extract_info(url)
-                        download_succeed = True
-                        break
-                    except:
-                        error_traceback = traceback.format_exc().split("During")[0]
-                        error = error_traceback.rstrip().split("\n")[-1]
-                        self.log.error("bot: download failed with error:\n %s" % error)
-
-                if download_succeed:
-                    music['ready'] = "yes"
-                    self.log.info(
-                        "bot: finished downloading url (%s) %s, saved to %s." % (music['title'], url, music['path']))
-                else:
-                    for f in [mp3, path.replace(".%(ext)s", ".jpg"), path.replace(".%(ext)s", ".m4a")]:
-                        if os.path.exists(f):
-                            os.remove(f)
-                    self.send_msg(constants.strings('unable_download'))
-                    music['ready'] = "failed"
-        else:
-            self.log.info("bot: music file existed, skip downloading " + mp3)
-            music['ready'] = "yes"
-
-        music = util.attach_music_tag_info(music)
-
-        var.playlist.update(music, music['id'])
-        self.download_in_progress = False
-        return music
 
     def async_download_next(self):
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         self.log.debug("bot: Async download next asked ")
-        if var.playlist.next_item() and var.playlist.next_item()['type'] == 'url':
+        while var.playlist.next_item() and var.playlist.next_item().type in ['url', 'url_from_playlist']:
             # usually, all validation will be done when adding to the list.
             # however, for performance consideration, youtube playlist won't be validate when added.
             # the validation has to be done here.
-            while var.playlist.next_item() and var.playlist.next_item()['ready'] == "validation":
-                music = self.validate_music(var.playlist.next_item())
-                if music:
-                    var.playlist.update(music, music['id'])
-                    break
-                else:
-                    var.playlist.remove(var.playlist.next_index())
-
-            if var.playlist.next_item() and var.playlist.next_item()['ready'] == "no":
-                self.async_download(var.playlist.next_index())
-
-    def async_download(self, index):
-        th = threading.Thread(
-            target=self.download_music, name="DownloadThread-" + var.playlist[index]['id'][:5], args=(index,))
-        self.log.info(
-            "bot: start downloading item in thread: " + util.format_debug_song_string(var.playlist[index]))
-        th.daemon = True
-        th.start()
-        #self.download_threads.append(th)
-        return th
-
-    def check_item_path_or_remove(self, index = -1):
-        if index == -1:
-            index = var.playlist.current_index
-        music = var.playlist[index]
-
-        if music['type'] == 'radio':
-            return True
-
-        if not 'path' in music:
-            return False
-        else:
-            if music["type"] == "url":
-                uri = music['path']
-                if not os.path.exists(uri):
-                    music['ready'] = 'validation'
-                    return False
-
-            elif music["type"] == "file":
-                uri = var.music_folder + music["path"]
-                if not os.path.exists(uri):
-                    self.log.info("bot: music file missed. removing music from the playlist: %s" % util.format_debug_song_string(music))
-                    self.send_msg(constants.strings('file_missed', file=music["path"]))
-                    var.playlist.remove(index)
-                    return False
-
-        return True
+            next = var.playlist.next_item()
+            if next.validate():
+                if not next.is_ready():
+                    var.playlist.async_prepare(var.playlist.next_index())
+                break
+            else:
+                var.playlist.remove_by_id(next.id)
+                var.cache.free_and_delete(next.id)
 
     # =======================
     #          Loop
@@ -555,11 +386,12 @@ class MumbleBot:
                 self.playhead = time.time() - self.song_start_at
 
                 raw_music = self.thread.stdout.read(480)
+                self.read_pcm_size += 480
 
                 try:
-                    stderr_msg = self.thread_stderr.readline()
-                    if stderr_msg:
-                        self.log.debug("ffmpeg: " + stderr_msg.strip("\n"))
+                    self.last_ffmpeg_err = self.thread_stderr.readline()
+                    if self.last_ffmpeg_err:
+                        self.log.debug("ffmpeg: " + self.last_ffmpeg_err.strip("\n"))
                 except:
                     pass
 
@@ -574,20 +406,46 @@ class MumbleBot:
                 time.sleep(0.1)
 
             if not self.is_pause and (self.thread is None or not raw_music):
-                # ffmpeg thread has gone. indicate that last song has finished. move to the next song.
+                # ffmpeg thread has gone. indicate that last song has finished, or something is wrong.
+                if self.read_pcm_size < 481 and len(var.playlist) > 0 and var.playlist.current_index != -1 \
+                        and self.last_ffmpeg_err:
+                    current = var.playlist.current_item()
+                    self.log.error("bot: cannot play music %s", current.format_debug_string())
+                    self.log.error("bot: with ffmpeg error: %s", self.last_ffmpeg_err)
+                    self.last_ffmpeg_err = ""
+
+                    self.send_msg(constants.strings('unable_play', item=current.format_short_string()))
+                    var.playlist.remove_by_id(current.id)
+                    var.cache.free_and_delete(current.id)
+
+                # move to the next song.
                 if not self.wait_for_downloading:
                     if var.playlist.next():
-                    # if downloading in the other thread
-                        self.launch_music()
-                        self.async_download_next()
+                        current = var.playlist.current_item()
+                        if current.validate():
+                            if current.is_ready():
+                                self.launch_music()
+                                self.async_download_next()
+                            else:
+                                self.log.info("bot: current music isn't ready, start downloading.")
+                                self.wait_for_downloading = True
+                                var.playlist.async_prepare(var.playlist.current_index)
+                                self.send_msg(constants.strings('download_in_progress', item=current.format_short_string()))
+                        else:
+                            var.playlist.remove_by_id(current.id)
+                            var.cache.free_and_delete(current.id)
                     else:
                         self._loop_status = 'Empty queue'
                 else:
-                    if var.playlist.current_item():
-                        if var.playlist.current_item()["ready"] != "downloading":
+                    current = var.playlist.current_item()
+                    if current:
+                        if current.is_ready():
                             self.wait_for_downloading = False
+                            var.playlist.version += 1
                             self.launch_music()
                             self.async_download_next()
+                        elif current.is_failed():
+                            var.playlist.remove_by_id(current.id)
                         else:
                             self._loop_status = 'Wait for downloading'
                     else:
@@ -600,7 +458,8 @@ class MumbleBot:
 
         if self.exit:
             self._loop_status = "exited"
-            if var.config.getboolean('bot', 'save_playlist', fallback=True):
+            if var.config.getboolean('bot', 'save_playlist', fallback=True) \
+                    and var.config.get("bot", "save_music_library", fallback=True):
                 self.log.info("bot: save playlist into database")
                 var.playlist.save()
 
@@ -626,14 +485,14 @@ class MumbleBot:
             if rms < self.ducking_threshold:
                 print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(rms/200), end='\r')
             else:
-                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(self.ducking_threshold/200) \
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(self.ducking_threshold/200)
                       + '+'*int((rms - self.ducking_threshold)/200), end='\r')
 
         if rms > self.ducking_threshold:
             if self.on_ducking is False:
                 self.log.debug("bot: ducking triggered")
                 self.on_ducking = True
-            self.ducking_release = time.time() + 1 # ducking release after 1s
+            self.ducking_release = time.time() + 1  # ducking release after 1s
 
     # =======================
     #      Play Control
@@ -648,23 +507,22 @@ class MumbleBot:
         self.log.info("bot: music stopped. playlist trashed.")
 
     def stop(self):
-        # stop and move to the next item in the playlist
+        self.interrupt()
         self.is_pause = True
-        self.interrupt_playing()
-        self.playhead = 0
-        var.playlist.next()
         self.log.info("bot: music stopped.")
 
-    def interrupt_playing(self):
+    def interrupt(self):
         # Kill the ffmpeg thread
         if self.thread:
             self.thread.kill()
             self.thread = None
         self.song_start_at = -1
+        self.playhead = 0
 
     def pause(self):
         # Kill the ffmpeg thread
         if self.thread:
+            self.pause_at_id = var.playlist.current_item().id
             self.thread.kill()
             self.thread = None
         self.is_pause = True
@@ -677,10 +535,10 @@ class MumbleBot:
         if var.playlist.current_index == -1:
             var.playlist.next()
 
-        music = var.playlist.current_item()
+        music_wrapper = var.playlist.current_item()
 
-        if music['type'] == 'radio' or self.playhead == 0 or not self.check_item_path_or_remove():
-            self.launch_music()
+        if not music_wrapper or not music_wrapper.id == self.pause_at_id or not music_wrapper.is_ready():
+            self.playhead = 0
             return
 
         if var.config.getboolean('debug', 'ffmpeg'):
@@ -690,28 +548,23 @@ class MumbleBot:
 
         self.log.info("bot: resume music at %.2f seconds" % self.playhead)
 
-        uri = ""
-        if music["type"] == "url":
-            uri = music['path']
-
-        elif music["type"] == "file":
-            uri = var.music_folder + var.playlist.current_item()["path"]
+        uri = music_wrapper.uri()
 
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-ss', "%f" % self.playhead, '-i',
                    uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
 
-
         if var.config.getboolean('bot', 'announce_current_music'):
-            self.send_msg(util.format_current_playing())
+            self.send_msg(var.playlist.current_item().format_current_playing())
 
         self.log.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
         # prepare pipe for catching stderr of ffmpeg
         pipe_rd, pipe_wd = os.pipe()
-        util.pipe_no_wait(pipe_rd) # Let the pipe work in non-blocking mode
+        util.pipe_no_wait(pipe_rd)  # Let the pipe work in non-blocking mode
         self.thread_stderr = os.fdopen(pipe_rd)
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.last_volume_cycle_time = time.time()
+        self.pause_at_id = ""
 
 
 def start_web_interface(addr, port):
@@ -721,9 +574,8 @@ def start_web_interface(addr, port):
     # setup logger
     werkzeug_logger = logging.getLogger('werkzeug')
     logfile = util.solve_filepath(var.config.get('webinterface', 'web_logfile'))
-    handler = None
     if logfile:
-        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240) # Rotate after 10KB
+        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
     else:
         handler = logging.StreamHandler()
 
@@ -778,7 +630,7 @@ if __name__ == '__main__':
         sys.exit()
 
     var.config = config
-    var.db = Database(var.dbfile)
+    var.db = SettingsDatabase(var.dbfile)
 
     # Setup logger
     bot_logger = logging.getLogger("bot")
@@ -788,7 +640,7 @@ if __name__ == '__main__':
     logfile = util.solve_filepath(var.config.get('bot', 'logfile'))
     handler = None
     if logfile:
-        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240) # Rotate after 10KB
+        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
     else:
         handler = logging.StreamHandler()
 
@@ -796,14 +648,12 @@ if __name__ == '__main__':
     bot_logger.addHandler(handler)
     var.bot_logger = bot_logger
 
-    var.playlist = PlayList() # playlist should be initialized after the database
-    var.botamusique = MumbleBot(args)
-    command.register_all_commands(var.botamusique)
+    if var.config.get("bot", "save_music_library", fallback=True):
+        var.music_db = MusicDatabase(var.dbfile)
+    else:
+        var.music_db = MusicDatabase(":memory:")
 
-    # load playlist
-    if var.config.getboolean('bot', 'save_playlist', fallback=True):
-        var.bot_logger.info("bot: load playlist from previous session")
-        var.playlist.load()
+    var.cache = MusicCache(var.music_db)
 
     # load playback mode
     playback_mode = None
@@ -812,8 +662,24 @@ if __name__ == '__main__':
     else:
         playback_mode = var.config.get('bot', 'playback_mode', fallback="one-shot")
 
-    if playback_mode in ["one-shot", "repeat", "random"]:
-        var.playlist.set_mode(playback_mode)
+    if playback_mode in ["one-shot", "repeat", "random", "autoplay"]:
+        var.playlist = media.playlist.get_playlist(playback_mode)
+    else:
+        raise KeyError("Unknown playback mode '%s'" % playback_mode)
+
+    var.bot = MumbleBot(args)
+    command.register_all_commands(var.bot)
+
+    if var.config.get("bot", "refresh_cache_on_startup", fallback=True)\
+            or not var.db.has_option("dir_cache", "files"):
+        var.cache.build_dir_cache(var.bot)
+    else:
+        var.cache.load_dir_cache(var.bot)
+
+    # load playlist
+    if var.config.getboolean('bot', 'save_playlist', fallback=True):
+        var.bot_logger.info("bot: load playlist from previous session")
+        var.playlist.load()
 
     # Start the main loop.
-    var.botamusique.loop()
+    var.bot.loop()
