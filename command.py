@@ -134,7 +134,7 @@ def cmd_url_ban(bot, user, text, command, parameter):
             var.cache.free_and_delete(id)
             var.playlist.remove_by_id(id)
         else:
-            if var.playlist.current_item().type == 'url':
+            if var.playlist.current_item() and var.playlist.current_item().type == 'url':
                 item = var.playlist.current_item().item()
                 bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(item.url)))
                 var.cache.free_and_delete(item.id)

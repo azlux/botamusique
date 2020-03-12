@@ -177,15 +177,6 @@ class CachedItemWrapper:
             self.lib.save(self.id)
         return ret
 
-    def async_prepare(self):
-        th = threading.Thread(
-            target=self.prepare, name="Prepare-" + self.id[:7])
-        self.log.info(
-            "%s: start preparing item in thread: " % self.item().type + self.format_debug_string())
-        th.daemon = True
-        th.start()
-        return th
-
     def uri(self):
         return self.item().uri()
 

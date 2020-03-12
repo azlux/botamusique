@@ -58,7 +58,7 @@ class BasePlaylist(list):
         self.version += 1
         super().append(item)
         self.pending_items.append(item)
-        self.start_async_validating()
+        self.async_validate()
 
         return item
 
@@ -74,7 +74,7 @@ class BasePlaylist(list):
             self.current_index += 1
 
         self.pending_items.append(item)
-        self.start_async_validating()
+        self.async_validate()
 
         return item
 
@@ -82,7 +82,7 @@ class BasePlaylist(list):
         self.version += 1
         super().extend(items)
         self.pending_items.extend(items)
-        self.start_async_validating()
+        self.async_validate()
         return items
 
     def next(self):
@@ -210,7 +210,7 @@ class BasePlaylist(list):
                 print("%d %s" % (index, item_wrapper.format_debug_string()))
         print("=====     End     =====")
 
-    def start_async_validating(self):
+    def async_validate(self):
         if not self.validating_thread_lock.locked():
             time.sleep(0.1)  # Just avoid validation finishes too fast and delete songs while something is reading it.
             th = threading.Thread(target=self._check_valid, name="Validating")
@@ -223,13 +223,33 @@ class BasePlaylist(list):
         while len(self.pending_items) > 0:
             item = self.pending_items.pop()
             self.log.debug("playlist: validating %s" % item.format_debug_string())
+            ver = item.version
             if not item.validate() or item.is_failed():
                 self.log.debug("playlist: validating failed.")
                 var.cache.free_and_delete(item.id)
                 self.remove_by_id(item.id)
+                continue
+            if item.version > ver:
+                self.version += 1
 
         self.log.debug("playlist: validating finished.")
         self.validating_thread_lock.release()
+
+    def async_prepare(self, index):
+        th = threading.Thread(
+            target=self._prepare, name="Prepare-" + self[index].id[:7], args=(index,))
+        self.log.info(
+            "%s: start preparing item in thread: " % self[index].item().type + self[index].format_debug_string())
+        th.daemon = True
+        th.start()
+        return th
+
+    def _prepare(self, index):
+        item = self[index]
+        ver = item.version
+        item.prepare()
+        if item.version > ver:
+            self.version += 1
 
 
 class OneshotPlaylist(BasePlaylist):

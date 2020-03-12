@@ -355,7 +355,7 @@ class MumbleBot:
             next = var.playlist.next_item()
             if next.validate():
                 if not next.is_ready():
-                    next.async_prepare()
+                    var.playlist.async_prepare(var.playlist.next_index())
                 break
             else:
                 var.playlist.remove_by_id(next.id)
@@ -427,7 +427,7 @@ class MumbleBot:
                             else:
                                 self.log.info("bot: current music isn't ready, start downloading.")
                                 self.wait_for_downloading = True
-                                current.async_prepare()
+                                var.playlist.async_prepare(var.playlist.current_index)
                                 self.send_msg(constants.strings('download_in_progress', item=current.format_short_string()))
                         else:
                             var.playlist.remove_by_id(current.id)
@@ -439,6 +439,7 @@ class MumbleBot:
                     if current:
                         if current.is_ready():
                             self.wait_for_downloading = False
+                            var.playlist.version += 1
                             self.launch_music()
                             self.async_download_next()
                         elif current.is_failed():
