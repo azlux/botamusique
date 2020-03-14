@@ -292,7 +292,10 @@ def post():
 
             if len(var.playlist) >= int(request.form['play_music']):
                 var.playlist.point_to(int(request.form['play_music']) - 1)
-                var.bot.interrupt()
+                if not var.bot.is_pause:
+                    var.bot.interrupt()
+                else:
+                    var.bot.is_pause = False
                 time.sleep(0.1)
 
         elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:

@@ -176,7 +176,10 @@ def cmd_play(bot, user, text, command, parameter):
                 # the one you want
                 var.playlist.point_to(int(parameter) - 1 - 1)
 
-                bot.interrupt()
+                if not bot.is_pause:
+                    bot.interrupt()
+                else:
+                    bot.is_pause = False
             else:
                 bot.send_msg(constants.strings('invalid_index', index=parameter), text)
 
