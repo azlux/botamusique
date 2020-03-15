@@ -258,12 +258,19 @@ class MusicDatabase:
         return self._result_to_dict(results)
 
     def query_tags_by_ids(self, ids):
-        condition_str = " OR ".join(['id=?'] * len(ids))
-
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT id, tags FROM music "
-                                 "WHERE %s" % condition_str, ids).fetchall()
+        results = []
+
+        for i in range(int(len(ids)/990) + 1):
+            condition_str = " OR ".join(['id=?'] * min(990, len(ids) - i*990))
+
+            _results = cursor.execute("SELECT id, tags FROM music "
+                                      "WHERE %s" % condition_str,
+                                      ids[i*990: i*990 + min(990, len(ids) - i*990)]).fetchall()
+            if _results:
+                results.extend(_results)
+
         conn.close()
 
         lookup = {}
