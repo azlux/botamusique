@@ -77,7 +77,8 @@ def send_multi_lines(bot, lines, text, linebreak="<br />"):
     for newline in lines:
         msg += br
         br = linebreak
-        if (len(msg) + len(newline)) > (bot.mumble.get_max_message_length() - 4) != 0:  # 4 == len("<br>")
+        if bot.mumble.get_max_message_length()\
+                    and (len(msg) + len(newline)) > (bot.mumble.get_max_message_length() - 4):  # 4 == len("<br>")
             bot.send_msg(msg, text)
             msg = ""
         msg += newline
