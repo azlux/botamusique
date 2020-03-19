@@ -731,9 +731,28 @@
 
                 page_ul.empty();
                 page_li.removeClass('active').empty();
-                for (i = 1; i <= total_pages; i++) {
-                    var page_li_copy = page_li.clone();
-                    var page_no_copy = page_no.clone();
+
+                i = 1;
+                var page_li_copy;
+                var page_no_copy;
+
+                if(total_pages > 25){
+                    i = active_page - 11;
+                    page_li_copy = page_li.clone();
+                    page_no_copy = page_no.clone();
+                    page_no_copy.html("&laquo;");
+
+                    page_no_copy.click(function (e) {
+                        updateResults(1);
+                    });
+
+                    page_no_copy.appendTo(page_li_copy);
+                    page_li_copy.appendTo(page_ul);
+                }
+
+                for (; i <= total_pages && i <= active_page + 11; i++) {
+                    page_li_copy = page_li.clone();
+                    page_no_copy = page_no.clone();
                     page_no_copy.html(i.toString());
                     if (active_page === i) {
                         page_li_copy.addClass("active");
@@ -746,6 +765,20 @@
                     page_no_copy.appendTo(page_li_copy);
                     page_li_copy.appendTo(page_ul);
                 }
+
+                if(total_pages > 25){
+                    page_li_copy = page_li.clone();
+                    page_no_copy = page_no.clone();
+                    page_no_copy.html("&raquo;");
+
+                    page_no_copy.click(function (e) {
+                        updateResults(total_pages);
+                    });
+
+                    page_no_copy.appendTo(page_li_copy);
+                    page_li_copy.appendTo(page_ul);
+                }
+
                 lib_group.animate({opacity: 1}, 200);
             });
         }
