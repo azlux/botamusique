@@ -9,7 +9,7 @@ import media.file
 import media.url
 import media.url_from_playlist
 import media.radio
-from database import MusicDatabase
+from database import MusicDatabase, Condition
 import variables as var
 import util
 
@@ -21,7 +21,7 @@ class MusicCache(dict):
         self.log = logging.getLogger("bot")
         self.dir = None
         self.files = []
-        self.file_id_lookup = {}
+        self.file_id_lookup = {} # TODO: Now I see this is silly. Gonna add a column "path" in the database.
         self.dir_lock = threading.Lock()
 
     def get_item_by_id(self, bot, id):  # Why all these functions need a bot? Because it need the bot to send message!
@@ -73,7 +73,7 @@ class MusicCache(dict):
         return items
 
     def fetch(self, bot, id):
-        music_dicts = self.db.query_music(id=id)
+        music_dicts = self.db.query_music(Condition().and_equal("id", id))
         if music_dicts:
             music_dict = music_dicts[0]
             self[id] = dict_to_item(bot, music_dict)
@@ -101,7 +101,7 @@ class MusicCache(dict):
 
             if item.id in self:
                 del self[item.id]
-            self.db.delete_music(id=item.id)
+            self.db.delete_music(Condition().and_equal("id", item.id))
 
     def free(self, id):
         if id in self:
@@ -222,6 +222,11 @@ class CachedItemWrapper:
 
 
 # Remember!!! Get wrapper functions will automatically add items into the cache!
+def get_cached_wrapper(item, user):
+    var.cache[item.id] = item
+    return CachedItemWrapper(var.cache, item.id, item.type, user)
+
+
 def get_cached_wrapper_from_scrap(bot, **kwargs):
     item = var.cache.get_item(bot, **kwargs)
     if 'user' not in kwargs:
@@ -231,8 +236,7 @@ def get_cached_wrapper_from_scrap(bot, **kwargs):
 
 def get_cached_wrapper_from_dict(bot, dict_from_db, user):
     item = dict_to_item(bot, dict_from_db)
-    var.cache[dict_from_db['id']] = item
-    return CachedItemWrapper(var.cache, item.id, item.type, user)
+    return get_cached_wrapper(item, user)
 
 
 def get_cached_wrapper_by_id(bot, id, user):

@@ -59,35 +59,33 @@ def get_recursive_file_list_sorted(path):
     return filelist
 
 
-# - zips all files of the given zippath (must be a directory)
+# - zips files
 # - returns the absolute path of the created zip file
 # - zip file will be in the applications tmp folder (according to configuration)
 # - format of the filename itself = prefix_hash.zip
 #       - prefix can be controlled by the caller
 #       - hash is a sha1 of the string representation of the directories' contents (which are
 #           zipped)
-def zipdir(zippath, zipname_prefix=None):
+def zipdir(files, zipname_prefix=None):
     zipname = var.tmp_folder
     if zipname_prefix and '../' not in zipname_prefix:
         zipname += zipname_prefix.strip().replace('/', '_') + '_'
 
-    files = get_recursive_file_list_sorted(zippath)
-    hash = hashlib.sha1((str(files).encode())).hexdigest()
-    zipname += hash + '.zip'
+    _hash = hashlib.sha1(str(files).encode()).hexdigest()
+    zipname += _hash + '.zip'
 
     if os.path.exists(zipname):
         return zipname
 
     zipf = zipfile.ZipFile(zipname, 'w', zipfile.ZIP_DEFLATED)
 
-    for file in files:
-        file_to_add = os.path.join(zippath, file)
+    for file_to_add in files:
         if not os.access(file_to_add, os.R_OK):
             continue
-        if file in var.config.get('bot', 'ignored_files'):
+        if file_to_add in var.config.get('bot', 'ignored_files'):
             continue
 
-        add_file_as = os.path.relpath(os.path.join(zippath, file), os.path.join(zippath, '..'))
+        add_file_as = os.path.basename(file_to_add)
         zipf.write(file_to_add, add_file_as)
 
     zipf.close()

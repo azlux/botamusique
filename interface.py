@@ -4,13 +4,17 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort
 import variables as var
 import util
+import math
 import os
 import os.path
 import shutil
 from werkzeug.utils import secure_filename
 import errno
 import media
-from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags
+from media.item import dicts_to_items
+from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags, \
+    get_cached_wrapper
+from database import MusicDatabase, Condition
 import logging
 import time
 
@@ -126,7 +130,8 @@ def build_path_tags_lookup():
     path_tags_lookup = {}
     ids = list(var.cache.file_id_lookup.values())
     if len(ids) > 0:
-        id_tags_lookup = var.music_db.query_tags_by_ids(ids)
+        condition = Condition().and_equal("type", "file")
+        id_tags_lookup = var.music_db.query_tags(condition)
 
         for path, id in var.cache.file_id_lookup.items():
             path_tags_lookup[path] = id_tags_lookup[id]
@@ -207,45 +212,32 @@ def post():
     if request.method == 'POST':
         if request.form:
             log.debug("web: Post request from %s: %s" % (request.remote_addr, str(request.form)))
-        if 'add_file_bottom' in request.form and ".." not in request.form['add_file_bottom']:
-            path = var.music_folder + request.form['add_file_bottom']
-            if os.path.isfile(path):
-                music_wrapper = get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_bottom']], user)
 
-                var.playlist.append(music_wrapper)
-                log.info('web: add to playlist(bottom): ' + music_wrapper.format_debug_string())
-
-        elif 'add_file_next' in request.form and ".." not in request.form['add_file_next']:
-            path = var.music_folder + request.form['add_file_next']
-            if os.path.isfile(path):
-                music_wrapper = get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[request.form['add_file_next']], user)
+        if 'add_item_at_once' in request.form:
+            music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['add_item_at_once'], user)
+            if music_wrapper:
                 var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
                 log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
+                var.bot.interrupt()
+            else:
+                abort(404)
 
-        elif ('add_folder' in request.form and ".." not in request.form['add_folder']) or ('add_folder_recursively' in request.form and ".." not in request.form['add_folder_recursively']):
-            try:
-                folder = request.form['add_folder']
-            except:
-                folder = request.form['add_folder_recursively']
+        if 'add_item_bottom' in request.form:
+            music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['add_item_bottom'], user)
 
-            if not folder.endswith('/'):
-                folder += '/'
+            if music_wrapper:
+                var.playlist.append(music_wrapper)
+                log.info('web: add to playlist(bottom): ' + music_wrapper.format_debug_string())
+            else:
+                abort(404)
 
-            if os.path.isdir(var.music_folder + folder):
-                dir = var.cache.dir
-                if 'add_folder_recursively' in request.form:
-                    files = dir.get_files_recursively(folder)
-                else:
-                    files = dir.get_files(folder)
-
-                music_wrappers = list(map(
-                    lambda file:
-                    get_cached_wrapper_by_id(var.bot, var.cache.file_id_lookup[folder + file], user), files))
-
-                var.playlist.extend(music_wrappers)
-
-                for music_wrapper in music_wrappers:
-                    log.info('web: add to playlist: ' + music_wrapper.format_debug_string())
+        elif 'add_item_next' in request.form:
+            music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['add_item_next'], user)
+            if music_wrapper:
+                var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
+                log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
+            else:
+                abort(404)
 
         elif 'add_url' in request.form:
             music_wrapper = get_cached_wrapper_from_scrap(var.bot, type='url', url=request.form['add_url'], user=user)
@@ -367,6 +359,102 @@ def post():
 
     return status()
 
+def build_library_query_condition(form):
+    try:
+        condition = Condition()
+
+        if form['type'] == 'file':
+            folder = form['dir']
+            if not folder.endswith('/') and folder:
+                folder += '/'
+            sub_cond = Condition()
+            for file in var.cache.files:
+                if file.startswith(folder):
+                    sub_cond.or_equal("id", var.cache.file_id_lookup[file])
+            condition.and_sub_condition(sub_cond)
+        elif form['type'] == 'url':
+            condition.and_equal("type", "url")
+        elif form['type'] == 'radio':
+            condition.and_equal("type", "radio")
+
+        tags = form['tags'].split(",")
+        for tag in tags:
+            condition.and_like("tags", f"%{tag},%", case_sensitive=False)
+
+        _keywords = form['keywords'].split(" ")
+        keywords = []
+        for kw in _keywords:
+            if kw:
+                keywords.append(kw)
+
+        for keyword in keywords:
+            condition.and_like("title", f"%{keyword}%", case_sensitive=False)
+
+        return condition
+    except KeyError:
+        abort(400)
+
+@web.route("/library", methods=['POST'])
+@requires_auth
+def library():
+    global log
+    ITEM_PER_PAGE = 10
+
+    if request.form:
+        log.debug("web: Post request from %s: %s" % (request.remote_addr, str(request.form)))
+
+        condition = build_library_query_condition(request.form)
+
+        total_count = var.music_db.query_music_count(condition)
+        page_count =  math.ceil(total_count / ITEM_PER_PAGE)
+
+        current_page = int(request.form['page']) if 'page' in request.form else 1
+        if current_page <= page_count:
+            condition.offset((current_page - 1) * ITEM_PER_PAGE)
+        else:
+            abort(404)
+
+        condition.limit(ITEM_PER_PAGE)
+        items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+
+        if 'action' in request.form and request.form['action'] == 'add':
+            for item in items:
+                music_wrapper = get_cached_wrapper(item, user)
+                var.playlist.append(music_wrapper)
+
+                log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+
+            return redirect("./", code=302)
+        else:
+            results = []
+            for item in items:
+                result = {}
+                result['id'] = item.id
+                result['title'] = item.title
+                result['type'] = item.display_type()
+                result['tags'] = [(tag, tag_color(tag)) for tag in item.tags]
+                if item.thumbnail:
+                    result['thumb'] = f"data:image/PNG;base64,{item.thumbnail}"
+                else:
+                    result['thumb'] = "static/image/unknown-album.png"
+
+                if item.type == 'file':
+                    result['path'] = item.path
+                    result['artist'] = item.artist
+                else:
+                    result['path'] = item.url
+                    result['artist'] = "??"
+
+                results.append(result)
+
+            return jsonify({
+                'items': results,
+                'total_pages': page_count,
+                'active_page': current_page
+            })
+    else:
+        abort(400)
+
 
 @web.route('/upload', methods=["POST"])
 def upload():
@@ -374,19 +462,19 @@ def upload():
 
     files = request.files.getlist("file[]")
     if not files:
-        return redirect("./", code=406)
+        return redirect("./", code=400)
 
     # filename = secure_filename(file.filename).strip()
     for file in files:
         filename = file.filename
         if filename == '':
-            return redirect("./", code=406)
+            return redirect("./", code=400)
 
         targetdir = request.form['targetdir'].strip()
         if targetdir == '':
             targetdir = 'uploads/'
         elif '../' in targetdir:
-            return redirect("./", code=406)
+            return redirect("./", code=400)
 
         log.info('web: Uploading file from %s:' % request.remote_addr)
         log.info('web: - filename: ' + filename)
@@ -397,7 +485,7 @@ def upload():
             storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
             print('storagepath:', storagepath)
             if not storagepath.startswith(os.path.abspath(var.music_folder)):
-                return redirect("./", code=406)
+                return redirect("./", code=400)
 
             try:
                 os.makedirs(storagepath)
@@ -424,37 +512,34 @@ def upload():
 def download():
     global log
 
-    if 'file' in request.args:
-        requested_file = request.args['file']
+    print('id' in request.args)
+    if 'id' in request.args and request.args['id']:
+        item = dicts_to_items(var.bot,
+                               var.music_db.query_music(
+                                   Condition().and_equal('id', request.args['id'])))[0]
+
+        requested_file = item.uri()
         log.info('web: Download of file %s requested from %s:' % (requested_file, request.remote_addr))
-        if '../' not in requested_file:
-            folder_path = var.music_folder
-            files = var.cache.files
 
-            if requested_file in files:
-                filepath = os.path.join(folder_path, requested_file)
-                try:
-                    return send_file(filepath, as_attachment=True)
-                except Exception as e:
-                    log.exception(e)
-                    abort(404)
-    elif 'directory' in request.args:
-        requested_dir = request.args['directory']
-        folder_path = var.music_folder
-        requested_dir_fullpath = os.path.abspath(os.path.join(folder_path, requested_dir)) + '/'
-        if requested_dir_fullpath.startswith(folder_path):
-            if os.path.samefile(requested_dir_fullpath, folder_path):
-                prefix = 'all'
-            else:
-                prefix = secure_filename(os.path.relpath(requested_dir_fullpath, folder_path))
-            zipfile = util.zipdir(requested_dir_fullpath, prefix)
-            try:
-                return send_file(zipfile, as_attachment=True)
-            except Exception as e:
-                log.exception(e)
-                abort(404)
+        try:
+            return send_file(requested_file, as_attachment=True)
+        except Exception as e:
+            log.exception(e)
+            abort(404)
 
-    return redirect("./", code=400)
+    else:
+        condition = build_library_query_condition(request.args)
+        items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+
+        zipfile = util.zipdir([item.uri() for item in items])
+
+        try:
+            return send_file(zipfile, as_attachment=True)
+        except Exception as e:
+            log.exception(e)
+            abort(404)
+
+    return abort(400)
 
 
 if __name__ == '__main__':

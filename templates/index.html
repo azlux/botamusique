@@ -1,107 +1,3 @@
-{% macro dirlisting(dir, path='') -%}
-<ul class="list-group">
-    {% if dir and dir.get_subdirs().items() %}
-    {% for subdirname, subdirobj in dir.get_subdirs().items() %}
-    {% set subdirpath = os.path.relpath(subdirobj.fullpath, music_library.fullpath) %}
-    {% set subdirid = subdirpath.replace("/","-") %}
-    <li class="directory list-group-item list-group-item-primary">
-        <div class="btn-group" role="group">
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-success btn-sm"
-                        onclick="request('/post', {add_folder : '{{ subdirpath }}'})">
-                    <i class="fa fa-plus" aria-hidden="true"></i>
-                </button>
-                <div class="btn-group" role="group">
-                    <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
-                        <a class="dropdown-item"
-                           onclick="request('/post', {add_folder : '{{ subdirpath }}'})">
-                            <i class="fa fa-folder" aria-hidden="true"></i> Entire folder
-                        </a>
-                        <a class="dropdown-item"
-                           onclick="request('/post', {add_folder_recursively : '{{ subdirpath }}'})">
-                            <i class="fa fa-folder" aria-hidden="true"></i> Entire folder and sub-folders
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="btn-group lead"><div class="btn-space"><i class="fa fa-folder" aria-hidden="true"></i></div><a class="lead" data-toggle="collapse"
-                    data-target="#multiCollapse-{{ subdirid }}" aria-expanded="true"
-                    aria-controls="multiCollapse-{{ subdirid }}" href="#"> {{ subdirpath }}/</a>
-        </div>
-
-        <div class="btn-group" style="float: right;">
-            <form action="./download" method="get" class="directory">
-                <input type="text" value="{{ subdirpath }}" name="directory" hidden>
-                <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
-            </form>
-            <button type="submit" class="btn btn-danger btn-sm btn-space"
-                    onclick="request('/post', {delete_folder : '{{ subdirpath }}'}, true)">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-    </li>
-    <div class="collapse multi-collapse" id="multiCollapse-{{ subdirid }}">
-        {{ dirlisting(subdirobj, subdirpath) -}}
-    </div>
-    {% endfor %}
-    {% endif %}
-    {% set files = dir.get_files() %}
-    {% if files %}
-    {% for file in files %}
-    {% set filepath = os.path.relpath(os.path.join(dir.fullpath, file), music_library.fullpath) %}
-    <li class="file list-group-item">
-        <div class="btn-group" role="group">
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-success btn-sm"
-                        onclick="request('/post', {add_file_bottom : '{{ filepath }}'})">
-                    <i class="fa fa-plus" aria-hidden="true"></i>
-                </button>
-                <div class="btn-group" role="group">
-                    <button id="btnGroupDrop2" type="button" class="btn btn-success btn-sm dropdown-toggle btn-space" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop2" style="">
-                        <a class="dropdown-item"
-                           onclick="request('/post', {add_file_bottom : '{{ filepath }}'})">
-                            <i class="fa fa-angle-down" aria-hidden="true"></i> To bottom of play list
-                        </a>
-                        <a class="dropdown-item"
-                           onclick="request('/post', {add_file_next : '{{ filepath }}'})">
-                            <i class="fa fa-angle-right" aria-hidden="true"></i> After current song
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div class="btn-group lead">
-            <div class="btn-space"><i class="fa fa-music" aria-hidden="true"></i></div>
-            {{ filepath }}
-        </div>
-            {% if tags_lookup[filepath] %}
-            {% for tag in tags_lookup[filepath] %}
-                <span class="badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
-            {% endfor %}
-            {% endif %}
-
-        <div class="btn-group" style="float: right;">
-            <form action="./download" method="get" class="file file_download">
-                <input type="text" value="{{ filepath }}" name="file" hidden>
-                <button type="submit" class="btn btn-primary btn-sm btn-space"><i class="fa fa-download" aria-hidden="true"></i></button>
-            </form>
-            <button type="submit" class="btn btn-danger btn-sm btn-space"
-                    onclick="request('/post', {delete_music_file : '{{ filepath }}'}, true)">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </div>
-    </li>
-    {% endfor %}
-    {% endif %}
-</ul>
-{%- endmacro %}
-
 <!DOCTYPE html>
 
 <head>
@@ -186,9 +82,11 @@
                                     <th scope="col">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="playlist-table">
-                                <tr class="table-dark">
-                                <td colspan="4" class="text-muted" style="text-align:center;"> Fetching playlist .... </td>
+                            <tbody id="playlist-table" class="playlist-table">
+                                <tr id="playlist-loading">
+                                    <td colspan="4" style="text-align:center;">
+                                        <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -229,28 +127,133 @@
         <div class="bs-docs-section">
             <div class="row">
                 <div class="col">
-                <div id="browser" class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">Files</h4>
-                    </div>
+                    <div id="browser" class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">Browser</h4>
+                        </div>
 
-                    <div class="card-body">
+                        <div class="card-body">
+                            <div class="alert alert-secondary">
+                                <h4 class="alert-heading">Filters</h4>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div id="filter-type" class="form-group row">
+                                            <label class="col-sm-2 col-form-label">Type</label>
+                                            <div class="btn-group btn-group-toggle" data-toggle="buttons" style="height: 35px; padding-top:5px;">
+                                                <button type="button" id="filter-type-file" class="btn btn-primary btn-sm" onclick="setFilterType('file')">File</button>
+                                                <button type="button" id="filter-type-url" class="btn btn-secondary btn-sm" onclick="setFilterType('url')">URL</button>
+                                                <button type="button" id="filter-type-radio" class="btn btn-secondary btn-sm" onclick="setFilterType('radio')">Radio</button>
+                                            </div>
+                                        </div>
+                                        <div id="filter-path" class="form-group row">
+                                            <label class="col-sm-2 col-form-label" for="filter-dir" style="max-width: none">Directory</label>
+                                            <div class="col-sm-8">
+                                                <select class="form-control form-control-sm" id="filter-dir" style="margin-top:5px;">
+                                                        <option value="">.</option>
+                                                        {% for dir in music_library.get_subdirs_recursively() %}
+                                                        <option value="{{ dir }}">{{ dir }}</option>
+                                                        {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div id="filter-path" class="form-group row">
+                                            <label class="col-sm-2 col-form-label" for="filter-keywords" style="max-width: none">Keywords</label>
+                                            <div class="col-sm-8">
+                                                <input class="form-control form-control-sm" id="filter-keywords" name="keywords"
+                                                       placeholder="Keywords..." style="margin-top:5px;"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div id="filter-type" class="form-group row">
+                                            <label class="col-sm-2 col-form-label">Tags</label>
+                                            <div class="col-sm-10" style="padding-top:5px;">
+                                                {% for tag in tags_color_lookup.keys() %}
+                                                    <span id="filter-tag" class="filter-tag tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                        </div>
+
+                        <div id="library-group" class="list-group library-group">
+                            <div id="library-item-loading" class="list-group-item library-item">
+                                <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                            </div>
+                            <div id="library-item-empty" style="display: none" class="list-group-item library-item">
+                                <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                            </div>
+                            <div id="library-item" style="display: none;" class="list-group-item library-item">
+                                <input hidden type="text" class="library-item-id" value="" />
+                                <div class="library-thumb-col">
+                                    <div class="library-thumb-img">
+                                        <img class="library-item-thumb library-thumb-img" src="static/image/unknown-album.png"/>
+                                    </div>
+                                    <div class="btn-group-vertical library-thumb-grp">
+                                        <div class="library-item-add-next btn btn-secondary library-thumb-btn-up" title="Play Next">
+                                            <i class="fa fa-plus" aria-hidden="true"></i>
+                                            <span class="btn-space"></span>
+                                            <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                                        </div>
+                                        <div class="library-item-add-bottom btn btn-secondary library-thumb-btn-down" title="Add to Playlist">
+                                            <i class="fa fa-plus" aria-hidden="true"></i>
+                                            <span class="btn-space"></span>
+                                            <i class="fas fa-level-down-alt" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="library-info-col col-5" style="padding: 12px 0;">
+                                    <div>
+                                        <span class="library-item-type lead text-muted btn-space">[File]</span>
+                                        <span class="library-item-title lead btn-space">This is my title</span>
+                                        <span class="library-item-artist text-muted"> - Artist</span>
+                                    </div>
+                                </div>
+                                <div class="library-info-col col-4" style="padding: 3px;">
+                                    <span class="library-item-path text-muted path">Path/to/the/file</span>
+                                    <div class="library-item-tags">
+                                        <span class="library-item-notag badge badge-light text-muted font-italic">No tag</span>
+                                        <span class="library-item-tag tag-space badge">Tag</span>
+                                    </div>
+                                </div>
+
+
+                                <div class="btn-group library-action">
+                                    <button class="library-item-play btn btn-info btn-sm btn-space" type="button">
+                                        <i class="fa fa-play" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
+                                        <i class="fa fa-download" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="list-group">
+                            <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
+                                <ul id="library-page-ul" class="pagination pagination">
+                                    <li class="library-page-li page-item active">
+                                        <a class="library-page-no page-link">1</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <div class="btn-group" style="margin-bottom: 5px;" role="group">
                             <button type="submit" class="btn btn-secondary btn-space"
-                            onclick="request('/post', {action : 'rescan'}); location.reload()">
+                                    onclick="request('post', {action : 'rescan'}); updateResults()">
                                 <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
                             </button>
-                            <form action="./download" method="get" class="directory form1">
-                                <input type="text" value="./" name="directory" hidden>
-                                <button type="submit" class="btn btn-secondary btn-space"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>
-                            </form>
-                            <form method="post" class="directory form3">
-                                <input type="text" value="./" name="add_folder_recursively" hidden>
-                                <button type="submit" class="btn btn-secondary btn-space"><i class="fa fa-plus" aria-hidden="true"></i> Add All</button>
-                            </form>
+                            <button type="submit" class="btn btn-secondary btn-space" onclick="downloadAllResults()"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>
+                            <button type="submit" class="btn btn-secondary btn-space" onclick="addAllResults()"><i class="fa fa-plus" aria-hidden="true"></i> Add All</button>
                         </div>
-                        <br />
-                        {{ dirlisting(music_library) }}
                     </div>
                 </div>
             </div>
@@ -283,10 +286,9 @@
                                     <input class="form-control btn-space" list="targetdirs" id="targetdir" name="targetdir"
                                            placeholder="uploads" />
                                     <datalist id="targetdirs">
-                                        <option value="uploads">
-                                            {% for dir in music_library.get_subdirs_recursively() %}
-                                                <option value="{{ dir }}">
-                                            {% endfor %}
+                                        {% for dir in music_library.get_subdirs_recursively() %}
+                                            <option value="{{ dir }}" />
+                                        {% endfor %}
                                     </datalist>
                                 </div>
                                 <button class="btn btn-primary btn-space" type="submit"
@@ -311,7 +313,7 @@
                         <div class="input-group">
                             <input class="form-control btn-space" type="text" id="add_url_input" placeholder="URL...">
                             <button type="submit" class="btn btn-primary"
-                            onclick="var $i = $('#add_url_input')[0]; request('/post', {add_url :  $i.value }); $i.value = ''; ">Add URL</button>
+                            onclick="var $i = $('#add_url_input')[0]; request('post', {add_url :  $i.value }); $i.value = ''; ">Add URL</button>
                         </div>
                     </div>
                 </div>
@@ -326,7 +328,7 @@
                         <div class="input-group">
                             <input class="form-control btn-space" type="text" id="add_radio_input" placeholder="Radio Address...">
                             <button type="submit" class="btn btn-primary"
-                            onclick="var $i = $('#add_radio_input')[0]; request('/post', {add_radio : $i.value }); $i.value = '';">Add Radio</button>
+                            onclick="var $i = $('#add_radio_input')[0]; request('post', {add_radio : $i.value }); $i.value = '';">Add Radio</button>
                         </div>
                     </div>
                 </div>
@@ -336,6 +338,14 @@
     </div>
 
     <div class="floating-button" onclick="switchTheme()"> <i class="fas fa-lightbulb" aria-hidden="true"></i> </div>
+
+    <form id="download-form" action="download" method="GET" target="_blank">
+        <input hidden type="text" name="id" value="">
+        <input hidden type="text" name="type" value="">
+        <input hidden type="text" name="dir" value="">
+        <input hidden type="text" name="tags" value="">
+        <input hidden type="text" name="keywords" value="">
+    </form>
 
     <script src="static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
     <script src="static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
@@ -354,16 +364,17 @@
 
         var playlist_ver = 0;
 
-        function request(url, _data, refresh=false){
+        function request(_url, _data, refresh=false){
+            console.log(_data);
             $.ajax({
                 type: 'POST',
-                url: 'post',
+                url: _url,
                 data : _data,
                 statusCode : {
                     200 : function(data) {
                         if (data.ver !== playlist_ver) {
-                            updatePlaylist();
                             playlist_ver = data.ver;
+                            updatePlaylist();
                         }
                         updateControls(data.empty, data.play, data.mode);
                     }
@@ -374,24 +385,35 @@
             }
         }
 
+        var loading = $("#playlist-loading");
+        var table = $("#playlist-table");
         function displayPlaylist(data){
             // console.info(data);
-            $("#playlist-table tr").remove();
+            table.animate({opacity: 0}, 200, function(){
+                loading.hide();
+                $("#playlist-table .playlist-item").remove();
 
-            var items = data.items;
-            $.each(items, function(index, item){
-                $("#playlist-table").append(item);
+                var items = data.items;
+                $.each(items, function(index, item){
+                    table.append(item);
+                });
+
+                table.animate({opacity: 1}, 200);
             });
-
         }
 
         function updatePlaylist(){
-            $.ajax({
-                type: 'GET',
-                url: 'playlist',
-                statusCode : {
-                    200 : displayPlaylist
-                }
+            table.animate({opacity: 0}, 200, function(){
+                loading.show();
+                $("#playlist-table .playlist-item").css("opacity", 0);
+                $.ajax({
+                    type: 'GET',
+                    url: 'playlist',
+                    statusCode : {
+                        200: displayPlaylist
+                    }
+                });
+                table.animate({opacity: 1}, 200);
             });
         }
 
@@ -468,8 +490,8 @@
                 statusCode : {
                     200 : function(data){
                         if(data.ver !== playlist_ver){
-                            updatePlaylist();
                             playlist_ver = data.ver;
+                            updatePlaylist();
                         }
                         updateControls(data.empty, data.play, data.mode);
                     }
@@ -477,7 +499,260 @@
             });
         } , 3000);
 
+        // ------ Browser ------
+        var filter_type = 'file';
+        var filter_dir = $("#filter-dir");
+        var filter_keywords = $("#filter-keywords");
+        var filter_btn_file = $("#filter-type-file");
+        var filter_btn_url = $("#filter-type-url");
+        var filter_btn_radio = $("#filter-type-radio");
+
+        function setFilterType(type){
+            filter_type = type;
+            filter_btn_file.removeClass("btn-primary").addClass("btn-secondary");
+            filter_btn_url.removeClass("btn-primary").addClass("btn-secondary");
+            filter_btn_radio.removeClass("btn-primary").addClass("btn-secondary");
+            filter_dir.prop("disabled", true);
+
+            if(type === "file"){
+                filter_btn_file.removeClass("btn-secondary").addClass("btn-primary");
+                filter_dir.prop("disabled", false);
+            }else if(type === "url"){
+                filter_btn_url.removeClass("btn-secondary").addClass("btn-primary");
+            }else if(type === "radio"){
+                filter_btn_radio.removeClass("btn-secondary").addClass("btn-primary");
+            }
+            updateResults();
+        }
+
+        // Bind Event
+        var _tag = null;
+        $(".filter-tag").click(function (e) {
+            var tag = $(e.currentTarget);
+            _tag = tag;
+            if (!tag.hasClass('tag-clicked')) {
+                tag.addClass('tag-clicked');
+            } else {
+                tag.removeClass('tag-clicked');
+            }
+            updateResults();
+        });
+
+        filter_dir.change(function(){updateResults()});
+        filter_keywords.change(function(){updateResults()});
+
+        var item_template = $("#library-item");
+
+        function bindLibraryResultEvent() {
+            $(".library-item-play").unbind().click(
+                function (e) {
+                    request('post', {
+                        'add_item_at_once': $(e.currentTarget).parent().parent().find(".library-item-id").val()
+                    });
+                }
+            );
+
+            $(".library-item-trash").unbind().click(
+                function (e) {
+                    request('post', {
+                        'delete_item_from_library': $(e.currentTarget).parent().parent().find(".library-item-id").val()
+                    });
+                }
+            );
+
+            $(".library-item-download").unbind().click(
+                function (e) {
+                    var id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
+                    //window.open('/download?id=' + id);
+                    downloadId(id);
+                }
+            );
+
+            $(".library-item-add-next").unbind().click(
+                function (e) {
+                    var id = $(e.currentTarget).parent().parent().parent().find(".library-item-id").val();
+                    request('post', {
+                        'add_item_next': id
+                    });
+                }
+            );
+
+            $(".library-item-add-bottom").unbind().click(
+                function (e) {
+                    var id = $(e.currentTarget).parent().parent().parent().find(".library-item-id").val();
+                    request('post', {
+                        'add_item_bottom': id
+                    });
+                }
+            );
+        }
+
+        var lib_group = $("#library-group");
+        var id_element = $(".library-item-id");
+        var title_element = $(".library-item-title");
+        var artist_element = $(".library-item-artist");
+        var thumb_element = $(".library-item-thumb");
+        var type_element = $(".library-item-type");
+        var path_element = $(".library-item-path");
+        var notag_element = $(".library-item-notag");
+        var tag_element = $(".library-item-tag");
+
+        function addResultItem(item){
+            id_element.val(item.id);
+            title_element.html(item.title);
+            artist_element.html(item.artist ? ("- " + item.artist) : "");
+            thumb_element.attr("src", item.thumb);
+            type_element.html("[" + item.type + "]");
+            path_element.html(item.path);
+
+            var item_copy = item_template.clone();
+            item_copy.addClass("library-item-active");
+
+            var tags = item_copy.find(".library-item-tags");
+            tags.empty();
+            if(item.tags.length > 0){
+                item.tags.forEach(function (tag_tuple){
+                    tag_copy = tag_element.clone();
+                    tag_copy.html(tag_tuple[0]);
+                    tag_copy.addClass("badge-" + tag_tuple[1]);
+                    tag_copy.appendTo(tags);
+                });
+            }else{
+                tag_copy = notag_element.clone();
+                tag_copy.appendTo(tags);
+            }
+
+            item_copy.appendTo(lib_group);
+            item_copy.slideDown();
+        }
+
+        function getFilters(dest_page=1){
+            var tags = $(".tag-clicked");
+            var tags_list = [];
+            tags.each(function (index, tag){
+                tags_list.push(tag.innerHTML);
+            });
+
+            return {
+                type: filter_type,
+                dir: filter_dir.val(),
+                tags: tags_list.join(","),
+                keywords: filter_keywords.val(),
+                page: dest_page
+            };
+        }
+
+        var lib_loading = $("#library-item-loading");
+        var lib_empty = $("#library-item-empty");
+
+        function updateResults(dest_page=1){
+            data = getFilters(dest_page);
+            data.action = "query";
+
+            lib_group.animate({opacity: 0}, 200, function() {
+                $.ajax({
+                    type: 'POST',
+                    url : 'library',
+                    data: data,
+                    statusCode: {
+                        200: processResults,
+                        404: function(){
+                            lib_loading.hide();
+                            lib_empty.show();
+                        }
+                    }
+                });
+
+                $(".library-item-active").remove();
+                lib_empty.hide();
+                lib_loading.show();
+                lib_group.animate({opacity: 1}, 200);
+            });
+        }
+
+        var download_form = $("#download-form");
+        var download_id = download_form.find("input[name='id']");
+        var download_type = download_form.find("input[name='type']");
+        var download_dir = download_form.find("input[name='dir']");
+        var download_tags = download_form.find("input[name='tags']");
+        var download_keywords = download_form.find("input[name='keywords']");
+
+        function addAllResults(){
+            data = getFilters();
+            data.action = "add";
+
+            console.log(data);
+
+            $.ajax({
+                type: 'POST',
+                url : 'library',
+                data: data,
+                statusCode: {200: processResults}
+            });
+
+            updatePlaylist();
+        }
+
+        function downloadAllResults(){
+            cond = getFilters();
+            download_id.val();
+            download_type.val(cond.type);
+            download_dir.val(cond.dir);
+            download_tags.val(cond.tags);
+            download_keywords.val(cond.keywords);
+            download_form.submit();
+        }
+
+        function downloadId(id){
+            download_id.attr("value" ,id);
+            download_type.attr("value", "");
+            download_dir.attr("value", "");
+            download_tags.attr("value", "");
+            download_keywords.attr("value", "");
+            download_form.submit();
+        }
+
+        var page_ul = $("#library-page-ul");
+        var page_li = $(".library-page-li");
+        var page_no = $(".library-page-no");
+
+        function processResults(data){
+            lib_group.animate({opacity: 0}, 200, function() {
+                lib_loading.hide();
+                total_pages = data.total_pages;
+                active_page = data.active_page;
+                items = data.items;
+                items.forEach(
+                    function (item) {
+                        addResultItem(item);
+                        bindLibraryResultEvent();
+                    }
+                );
+
+                page_ul.empty();
+                page_li.removeClass('active').empty();
+                for (i = 1; i <= total_pages; i++) {
+                    var page_li_copy = page_li.clone();
+                    var page_no_copy = page_no.clone();
+                    page_no_copy.html(i.toString());
+                    if (active_page === i) {
+                        page_li_copy.addClass("active");
+                    } else {
+                        page_no_copy.click(function (e) {
+                            _page_no = $(e.currentTarget).html();
+                            updateResults(_page_no);
+                        });
+                    }
+                    page_no_copy.appendTo(page_li_copy);
+                    page_li_copy.appendTo(page_ul);
+                }
+                lib_group.animate({opacity: 1}, 200);
+            });
+        }
+
+
         themeInit();
+        updateResults();
         $(document).ready(updatePlaylist);
 
     </script>

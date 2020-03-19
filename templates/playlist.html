@@ -1,18 +1,20 @@
 {% if index == -1 %}
-    <tr class="table-dark">
-    <td colspan="4" class="text-muted" style="text-align:center;"> Play list is empty. </td>
+    <tr id="playlist-loading">
+        <td colspan="4" style="text-align:center;">
+            <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+        </td>
     </tr>
 {% else %}
-{% if index == playlist.current_index %}
-<tr class="table-active">
-{% else %}
-<tr>
-{% endif %}
-    <th scope="row">{{ index + 1 }}</th>
-    <td>
-        <div class="playlist-title">
-            {% if m.type != 'radio' and m.thumbnail %}
-                <img width="80" src="data:image/PNG;base64,{{ m.thumbnail }}"/>
+    {% if index == playlist.current_index %}
+        <tr class="playlist-item table-active">
+            {% else %}
+        <tr class="playlist-item">
+    {% endif %}
+<th scope="row">{{ index + 1 }}</th>
+<td>
+    <div class="playlist-title">
+        {% if m.type != 'radio' and m.thumbnail %}
+            <img width="80" src="data:image/PNG;base64,{{ m.thumbnail }}"/>
                 {% else %}
                 <img width="80" src="static/image/unknown-album.png"/>
             {% endif %}

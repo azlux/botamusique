@@ -10,7 +10,8 @@ import variables as var
 from librb import radiobrowser
 from database import SettingsDatabase, MusicDatabase
 from media.item import item_id_generators, dict_to_item, dicts_to_items
-from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags
+from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags, \
+    get_cached_wrapper
 from media.url_from_playlist import get_playlist_info
 
 log = logging.getLogger("bot")
@@ -231,12 +232,16 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
         # if parameter is {folder}
         files = var.cache.dir.get_files(parameter)
         if files:
+            folder = parameter
+            if not folder.endswith('/'):
+                folder += '/'
+
             msgs = [constants.strings('multiple_file_added')]
             count = 0
 
             for file in files:
                 count += 1
-                music_wrapper = get_cached_wrapper_by_id(bot, var.cache.file_id_lookup[file], user)
+                music_wrapper = get_cached_wrapper_by_id(bot, var.cache.file_id_lookup[folder + file], user)
                 var.playlist.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                 msgs.append("{} ({})".format(music_wrapper.item().title, music_wrapper.item().path))
@@ -984,19 +989,25 @@ def cmd_search_library(bot, user, text, command, parameter):
         items = dicts_to_items(bot, music_dicts)
         song_shortlist = music_dicts
 
-        for item in items:
-            count += 1
-            if len(item.tags) > 0:
-                msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> (<i>{}</i>)</li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
-            else:
-                msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> </li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
-
-        if count != 0:
-            msgs.append("</ul>")
-            msgs.append(constants.strings("shortlist_instruction"))
-            send_multi_lines(bot, msgs, text, "")
+        if len(items) == 1:
+            music_wrapper = get_cached_wrapper(items[0], user)
+            var.playlist.append(music_wrapper)
+            log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
         else:
-            bot.send_msg(constants.strings("no_file"), text)
+            for item in items:
+                count += 1
+                if len(item.tags) > 0:
+                    msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> (<i>{}</i>)</li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
+                else:
+                    msgs.append("<li><b>{:d}</b> - [{}] <b>{}</b> </li>".format(count, item.display_type(), item.title, ", ".join(item.tags)))
+
+            if count != 0:
+                msgs.append("</ul>")
+                msgs.append(constants.strings("shortlist_instruction"))
+                send_multi_lines(bot, msgs, text, "")
+            else:
+                bot.send_msg(constants.strings("no_file"), text)
     else:
         bot.send_msg(constants.strings("no_file"), text)
 

@@ -1,10 +1,17 @@
 .bs-docs-section{margin-top:4em}
 .bs-docs-section .page-header h1 { padding: 2rem 0; font-size: 3rem; margin-bottom: 10px }
-.btn-space{margin-right:5px}
+.btn-space{margin-right:5px;}
+.tag-space{margin-right:3px;}
 .playlist-title-td{width:60%}
 .playlist-title{float:left; }
 .playlist-artwork{float:left; margin-left:10px;}
-.tag-click{cursor:pointer;}
+.tag-click{
+   cursor:pointer;
+   transition: 400ms;
+}
+.tag-clicked{
+   transform: scale(1.2);
+}
 .floating-button {
    width: 50px;
    height: 50px;
@@ -20,9 +27,74 @@
    right: 50px;
    bottom: 40px;
 }
-
 .floating-button:hover {
     background-color: hsl(0, 0%, 43%);
     color: white;
+}
+.library-item{
+   display: flex;
+   margin-left: 5px;
+   padding: .5rem .5rem .5rem 0;
+   height: 72px;
+   transition: ease-in-out 200ms;
+}
+.library-thumb-img {
+   width: 70px;
+   height: 70px;
+   border-radius: 5px;
+}
+.library-thumb-col {
+   position: relative;
+   padding-left: 0;
+   overflow: hidden;
+   margin: -0.5rem 1rem -0.5rem 0;
+}
+.library-thumb-grp {
+   position: absolute;
+   top: 0;
+   left: -95px;
+   width: 70px;
+   margin-left: 15px;
+   transition: left 300ms;
+   border-radius: 5px;
+   opacity: 0.6;
+   font-weight: 300;
+}
+.library-thumb-img:hover + .library-thumb-grp {
+   left: -15px;
+}
+.library-thumb-grp:hover {
+   left: -15px;
+}
+.library-thumb-btn-up {
+   position: absolute !important;
+   top: 0;
+   height: 35px;
+   padding-top: 5px;
+}
+.library-thumb-btn-down {
+   position: absolute !important;
+   top: 35px;
+   height: 35px;
+   padding-top: 5px;
+}
+.library-info-col {
+   margin-right: 2rem;
+   padding: 3px 0;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   white-space: nowrap;
+   overflow: hidden;
+}
+.library-info-col .small {
+    font-weight: 300;
+}
+.library-action {
+    margin-left: auto;
+}
+.library-info-col .path{
+   font-style: italic !important;
+   font-weight: 300;
 }
 

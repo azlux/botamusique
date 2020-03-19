@@ -6,6 +6,112 @@ import datetime
 class DatabaseError(Exception):
     pass
 
+class Condition:
+    def __init__(self):
+        self.filler = []
+        self._sql = ""
+        self._limit = 0
+        self._offset = 0
+        self._order_by = ""
+        pass
+
+    def sql(self):
+        sql = self._sql
+        if not self._sql:
+            sql = "TRUE"
+        if self._limit:
+            sql += f" LIMIT {self._limit}"
+        if self._offset:
+            sql += f" OFFSET {self._offset}"
+        if self._order_by:
+            sql += f" ORDEY BY {self._order_by}"
+
+        return sql
+
+    def or_equal(self, column, equals_to, case_sensitive=True):
+        if not case_sensitive:
+            column = f"LOWER({column})"
+            equals_to = equals_to.lower()
+
+        if self._sql:
+            self._sql += f" OR {column}=?"
+        else:
+            self._sql += f"{column}=?"
+
+        self.filler.append(equals_to)
+
+        return self
+
+    def and_equal(self, column, equals_to, case_sensitive=True):
+        if not case_sensitive:
+            column = f"LOWER({column})"
+            equals_to = equals_to.lower()
+
+        if self._sql:
+            self._sql += f" AND {column}=?"
+        else:
+            self._sql += f"{column}=?"
+
+        self.filler.append(equals_to)
+
+        return self
+
+    def or_like(self, column, equals_to, case_sensitive=True):
+        if not case_sensitive:
+            column = f"LOWER({column})"
+            equals_to = equals_to.lower()
+
+        if self._sql:
+            self._sql += f" OR {column} LIKE ?"
+        else:
+            self._sql += f"{column} LIKE ?"
+
+        self.filler.append(equals_to)
+
+        return self
+
+    def and_like(self, column, equals_to, case_sensitive=True):
+        if not case_sensitive:
+            column = f"LOWER({column})"
+            equals_to = equals_to.lower()
+
+        if self._sql:
+            self._sql += f" AND {column} LIKE ?"
+        else:
+            self._sql += f"{column} LIKE ?"
+
+        self.filler.append(equals_to)
+
+        return self
+
+    def or_sub_condition(self, sub_condition):
+        self.filler.extend(sub_condition.filler)
+        if self._sql:
+            self._sql += f"OR ({sub_condition.sql()})"
+        else:
+            self._sql += f"({sub_condition.sql()})"
+
+        return self
+
+    def and_sub_condition(self, sub_condition):
+        self.filler.extend(sub_condition.filler)
+        if self._sql:
+            self._sql += f"AND ({sub_condition.sql()})"
+        else:
+            self._sql += f"({sub_condition.sql()})"
+
+        return self
+
+    def limit(self, limit):
+        self._limit = limit
+
+        return self
+
+    def offset(self, offset):
+        self._offset = offset
+
+        return self
+
 
 class SettingsDatabase:
     version = 1
@@ -199,19 +305,21 @@ class MusicDatabase:
         conn.close()
         return tags
 
-    def query_music(self, **kwargs):
-        condition = []
-        filler = []
+    def query_music_count(self, condition: Condition):
+        filler = condition.filler
+        condition_str = condition.sql()
 
-        for key, value in kwargs.items():
-            if isinstance(value, str):
-                condition.append(key + "=?")
-                filler.append(value)
-            elif isinstance(value, dict):
-                condition.append(key + " " + value[0] + " ?")
-                filler.append(value[1])
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT COUNT(*) FROM music "
+                                 "WHERE %s" % condition_str, filler).fetchall()
+        conn.close()
 
-        condition_str = " AND ".join(condition)
+        return results[0][0]
+
+    def query_music(self, condition: Condition):
+        filler = condition.filler
+        condition_str = condition.sql()
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -222,54 +330,39 @@ class MusicDatabase:
         return self._result_to_dict(results)
 
     def query_music_by_keywords(self, keywords):
-        condition = []
-        filler = []
+        condition = Condition()
 
         for keyword in keywords:
-            condition.append('LOWER(title) LIKE ?')
-            filler.append("%{:s}%".format(keyword.lower()))
-
-        condition_str = " AND ".join(condition)
+            condition.and_like("title", f"%{keyword}%", case_sensitive=False)
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
-                                 "WHERE %s" % condition_str, filler).fetchall()
+                                 "WHERE %s" % condition.sql(), condition.filler).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
 
     def query_music_by_tags(self, tags):
-        condition = []
-        filler = []
+        condition = Condition()
 
         for tag in tags:
-            condition.append('LOWER(tags) LIKE ?')
-            filler.append("%{:s},%".format(tag.lower()))
-
-        condition_str = " AND ".join(condition)
+            condition.and_like("tags", f"%{tag},%", case_sensitive=False)
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
-                                 "WHERE %s" % condition_str, filler).fetchall()
+                                 "WHERE %s" % condition.sql(), condition.filler).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
 
-    def query_tags_by_ids(self, ids):
+    def query_tags(self, condition):
+        # TODO: Can we keep a index of tags?
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = []
-
-        for i in range(int(len(ids)/990) + 1):
-            condition_str = " OR ".join(['id=?'] * min(990, len(ids) - i*990))
-
-            _results = cursor.execute("SELECT id, tags FROM music "
-                                      "WHERE %s" % condition_str,
-                                      ids[i*990: i*990 + min(990, len(ids) - i*990)]).fetchall()
-            if _results:
-                results.extend(_results)
+        results = cursor.execute("SELECT id, tags FROM music "
+                                  "WHERE %s" % condition.sql(), condition.filler).fetchall()
 
         conn.close()
 
@@ -309,24 +402,11 @@ class MusicDatabase:
         else:
             return []
 
-    def delete_music(self, **kwargs):
-        condition = []
-        filler = []
-
-        for key, value in kwargs.items():
-            if isinstance(value, str):
-                condition.append(key + "=?")
-                filler.append(value)
-            else:
-                condition.append(key + " " + value[0] + " ?")
-                filler.append(value[1])
-
-        condition_str = " AND ".join(condition)
-
+    def delete_music(self, condition: Condition):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("DELETE FROM music "
-                       "WHERE %s" % condition_str, filler)
+                       "WHERE %s" % condition.sql(), condition.filler)
         conn.commit()
         conn.close()
 
