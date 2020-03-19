@@ -268,9 +268,9 @@ class OneshotPlaylist(BasePlaylist):
         return self
 
     def next(self):
-        self.version += 1
-
         if len(self) > 0:
+            self.version += 1
+
             if self.current_index != -1:
                 super().__delitem__(self.current_index)
                 if len(self) == 0:

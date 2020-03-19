@@ -73,7 +73,7 @@ class MusicCache(dict):
         return items
 
     def fetch(self, bot, id):
-        music_dicts = self.db.query_music(Condition().and_equal("id", id))
+        music_dicts = self.db.query_music_by_id(id)
         if music_dicts:
             music_dict = music_dicts[0]
             self[id] = dict_to_item(bot, music_dict)

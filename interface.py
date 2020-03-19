@@ -11,7 +11,7 @@ import shutil
 from werkzeug.utils import secure_filename
 import errno
 import media
-from media.item import dicts_to_items
+from media.item import dicts_to_items, dict_to_item
 from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags, \
     get_cached_wrapper
 from database import MusicDatabase, Condition
@@ -172,7 +172,7 @@ def playlist():
     if len(var.playlist) == 0:
         return jsonify({'items': [render_template('playlist.html',
                                                   m=False,
-                                                  index=-1
+                                                  index=None
                                                   )]
                         })
 
@@ -290,18 +290,16 @@ def post():
                     var.bot.is_pause = False
                 time.sleep(0.1)
 
-        elif 'delete_music_file' in request.form and ".." not in request.form['delete_music_file']:
-            path = var.music_folder + request.form['delete_music_file']
-            if os.path.isfile(path):
-                log.info("web: delete file " + path)
-                os.remove(path)
+        elif 'delete_item_from_library' in request.form:
+            _id = request.form['delete_item_from_library']
+            var.playlist.remove_by_id(_id)
+            item = var.cache.get_item_by_id(var.bot, _id)
 
-        elif 'delete_folder' in request.form and ".." not in request.form['delete_folder']:
-            path = var.music_folder + request.form['delete_folder']
-            if os.path.isdir(path):
-                log.info("web: delete folder " + path)
-                shutil.rmtree(path)
-                time.sleep(0.1)
+            if os.path.isfile(item.uri()):
+                log.info("web: delete file " + item.uri())
+                os.remove(item.uri())
+
+            var.cache.free_and_delete(_id)
 
         elif 'add_tag' in request.form:
             music_wrappers = get_cached_wrappers_by_tags(var.bot, [request.form['add_tag']], user)
@@ -372,6 +370,7 @@ def build_library_query_condition(form):
                 if file.startswith(folder):
                     sub_cond.or_equal("id", var.cache.file_id_lookup[file])
             condition.and_sub_condition(sub_cond)
+            condition.and_equal("type", "file")
         elif form['type'] == 'url':
             condition.and_equal("type", "url")
         elif form['type'] == 'radio':
@@ -406,6 +405,9 @@ def library():
         condition = build_library_query_condition(request.form)
 
         total_count = var.music_db.query_music_count(condition)
+        if not total_count:
+            abort(404)
+
         page_count =  math.ceil(total_count / ITEM_PER_PAGE)
 
         current_page = int(request.form['page']) if 'page' in request.form else 1
@@ -423,6 +425,21 @@ def library():
                 var.playlist.append(music_wrapper)
 
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+
+            return redirect("./", code=302)
+        elif 'action' in request.form and request.form['action'] == 'delete':
+            for item in items:
+                var.playlist.remove_by_id(item.id)
+                item = var.cache.get_item_by_id(var.bot, item.id)
+
+                if os.path.isfile(item.uri()):
+                    log.info("web: delete file " + item.uri())
+                    os.remove(item.uri())
+
+                var.cache.free_and_delete(item.id)
+
+            if len(os.listdir(var.music_folder + request.form['dir'])) == 0:
+                os.rmdir(var.music_folder + request.form['dir'])
 
             return redirect("./", code=302)
         else:

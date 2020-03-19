@@ -247,12 +247,13 @@
                         </div>
 
                         <div class="btn-group" style="margin-bottom: 5px;" role="group">
+                            <button type="submit" class="btn btn-secondary btn-space" onclick="addAllResults()"><i class="fa fa-plus" aria-hidden="true"></i> Add All</button>
                             <button type="submit" class="btn btn-secondary btn-space"
                                     onclick="request('post', {action : 'rescan'}); updateResults()">
                                 <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
                             </button>
                             <button type="submit" class="btn btn-secondary btn-space" onclick="downloadAllResults()"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>
-                            <button type="submit" class="btn btn-secondary btn-space" onclick="addAllResults()"><i class="fa fa-plus" aria-hidden="true"></i> Add All</button>
+                            <button type="submit" class="btn btn-secondary btn-space" onclick="deleteAllResults()"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete All</button>
                         </div>
                     </div>
                 </div>
@@ -557,6 +558,7 @@
                     request('post', {
                         'delete_item_from_library': $(e.currentTarget).parent().parent().find(".library-item-id").val()
                     });
+                    updateResults();
                 }
             );
 
@@ -686,11 +688,26 @@
             $.ajax({
                 type: 'POST',
                 url : 'library',
-                data: data,
-                statusCode: {200: processResults}
+                data: data
             });
 
             updatePlaylist();
+        }
+
+        function deleteAllResults(){
+            data = getFilters();
+            data.action = "delete";
+
+            console.log(data);
+
+            $.ajax({
+                type: 'POST',
+                url : 'library',
+                data: data
+            });
+
+            updatePlaylist();
+            updateResults();
         }
 
         function downloadAllResults(){
@@ -736,8 +753,10 @@
                 var page_li_copy;
                 var page_no_copy;
 
-                if(total_pages > 27){
-                    i = (active_page - 13 >= 1) ? active_page - 13 : 1;
+                if(total_pages > 25){
+                    i = (active_page - 12 >= 1) ? active_page - 12 : 1;
+                    _i = total_pages - 24;
+                    i = (i < _i) ? i : _i;
                     page_li_copy = page_li.clone();
                     page_no_copy = page_no.clone();
                     page_no_copy.html("&laquo;");
@@ -750,7 +769,7 @@
                     page_li_copy.appendTo(page_ul);
                 }
 
-                limit = i + 26;
+                limit = i + 24;
                 for (; i <= total_pages && i <= limit; i++) {
                     page_li_copy = page_li.clone();
                     page_no_copy = page_no.clone();
@@ -767,7 +786,7 @@
                     page_li_copy.appendTo(page_ul);
                 }
 
-                if(total_pages > 27){
+                if(limit < total_pages){
                     page_li_copy = page_li.clone();
                     page_no_copy = page_no.clone();
                     page_no_copy.html("&raquo;");

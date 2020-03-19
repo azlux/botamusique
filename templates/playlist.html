@@ -1,7 +1,7 @@
-{% if index == -1 %}
-    <tr id="playlist-loading">
+{% if index == None %}
+    <tr id="playlist-empty" class="playlist-item">
         <td colspan="4" style="text-align:center;">
-            <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+            <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
         </td>
     </tr>
 {% else %}

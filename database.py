@@ -329,19 +329,16 @@ class MusicDatabase:
 
         return self._result_to_dict(results)
 
+    def query_music_by_id(self, _id):
+        return self.query_music(Condition().and_equal("id", _id))
+
     def query_music_by_keywords(self, keywords):
         condition = Condition()
 
         for keyword in keywords:
             condition.and_like("title", f"%{keyword}%", case_sensitive=False)
 
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
-                                 "WHERE %s" % condition.sql(), condition.filler).fetchall()
-        conn.close()
-
-        return self._result_to_dict(results)
+        return self.query_music(condition)
 
     def query_music_by_tags(self, tags):
         condition = Condition()
@@ -349,13 +346,7 @@ class MusicDatabase:
         for tag in tags:
             condition.and_like("tags", f"%{tag},%", case_sensitive=False)
 
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
-                                 "WHERE %s" % condition.sql(), condition.filler).fetchall()
-        conn.close()
-
-        return self._result_to_dict(results)
+        return self.query_music(condition)
 
     def query_tags(self, condition):
         # TODO: Can we keep a index of tags?
