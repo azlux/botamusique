@@ -96,7 +96,8 @@ class MusicCache(dict):
                 self.files.remove(item.path)
                 self.save_dir_cache()
             elif item.type == 'url':
-                os.remove(item.path)
+                if os.path.exists(item.path):
+                    os.remove(item.path)
 
             if item.id in self:
                 del self[item.id]
