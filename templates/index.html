@@ -736,8 +736,8 @@
                 var page_li_copy;
                 var page_no_copy;
 
-                if(total_pages > 25){
-                    i = active_page - 11;
+                if(total_pages > 27){
+                    i = (active_page - 13 >= 1) ? active_page - 13 : 1;
                     page_li_copy = page_li.clone();
                     page_no_copy = page_no.clone();
                     page_no_copy.html("&laquo;");
@@ -750,7 +750,8 @@
                     page_li_copy.appendTo(page_ul);
                 }
 
-                for (; i <= total_pages && i <= active_page + 11; i++) {
+                limit = i + 26;
+                for (; i <= total_pages && i <= limit; i++) {
                     page_li_copy = page_li.clone();
                     page_no_copy = page_no.clone();
                     page_no_copy.html(i.toString());
@@ -766,7 +767,7 @@
                     page_li_copy.appendTo(page_ul);
                 }
 
-                if(total_pages > 25){
+                if(total_pages > 27){
                     page_li_copy = page_li.clone();
                     page_no_copy = page_no.clone();
                     page_no_copy.html("&raquo;");
