@@ -314,7 +314,8 @@ class MusicDatabase:
         del music_dict['title']
         del music_dict['type']
         del music_dict['tags']
-        del music_dict['path']
+        if 'path' in music_dict:
+            del music_dict['path']
         del music_dict['keywords']
 
         cursor.execute("INSERT OR REPLACE INTO music (id, type, title, metadata, tags, path, keywords) VALUES (?, ?, ?, ?, ?, ?, ?)",
