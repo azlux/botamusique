@@ -308,7 +308,7 @@ class MusicDatabase:
         type = music_dict['type']
         path = music_dict['path']
         keywords = music_dict['keywords']
-        tags = ",".join(music_dict['tags']) + ","
+        tags = ",".join(list(dict.fromkeys(music_dict['tags']))) + ","
 
         del music_dict['id']
         del music_dict['title']
@@ -332,14 +332,14 @@ class MusicDatabase:
     def query_all_ids(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT id FROM music").fetchall()
+        results = cursor.execute("SELECT id FROM music WHERE id != 'info'").fetchall()
         conn.close()
         return list(map(lambda i: i[0], results))
 
     def query_all_tags(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT tags FROM music").fetchall()
+        results = cursor.execute("SELECT tags FROM music WHERE id != 'info'").fetchall()
         tags = []
         for result in results:
             for tag in result[0].strip(",").split(","):
@@ -355,7 +355,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT COUNT(*) FROM music "
-                                 "WHERE %s" % condition_str, filler).fetchall()
+                                 "WHERE id != 'info' AND %s" % condition_str, filler).fetchall()
         conn.close()
 
         return results[0][0]
@@ -367,7 +367,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
-                                 "WHERE %s" % condition_str, filler).fetchall()
+                                 "WHERE id != 'info' AND %s" % condition_str, filler).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
@@ -376,7 +376,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
-                                 "WHERE %s" % sql_cond).fetchall()
+                                 "WHERE id != 'info' AND %s" % sql_cond).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
@@ -407,7 +407,8 @@ class MusicDatabase:
     def manage_special_tags(self):
         for tagged_recent in self.query_music_by_tags(['recent added']):
             tagged_recent['tags'].remove('recent added')
-        recent_items = self._query_music_by_plain_sql_cond("id != 'info' AND create_at > date('now', '-1 day')")
+            self.insert_music(tagged_recent)
+        recent_items = self._query_music_by_plain_sql_cond("create_at > date('now', '-1 day')")
         for recent_item in recent_items:
             recent_item['tags'].append('recent added')
             self.insert_music(recent_item)
@@ -417,7 +418,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, tags FROM music "
-                                  "WHERE %s" % condition.sql(), condition.filler).fetchall()
+                                  "WHERE id != 'info' AND %s" % condition.sql(), condition.filler).fetchall()
 
         conn.close()
 
