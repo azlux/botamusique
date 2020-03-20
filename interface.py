@@ -223,7 +223,10 @@ def post():
             if music_wrapper:
                 var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
                 log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
-                var.bot.interrupt()
+                if not var.bot.is_pause:
+                    var.bot.interrupt()
+                else:
+                    var.bot.is_pause = False
             else:
                 abort(404)
 
@@ -475,7 +478,7 @@ def library():
                     result['title'] = item.title
                     result['type'] = item.display_type()
                     result['tags'] = [(tag, tag_color(tag)) for tag in item.tags]
-                    if item.thumbnail:
+                    if item.type != 'radio' and item.thumbnail:
                         result['thumb'] = f"data:image/PNG;base64,{item.thumbnail}"
                     else:
                         result['thumb'] = "static/image/unknown-album.png"
