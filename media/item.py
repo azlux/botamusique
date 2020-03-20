@@ -43,6 +43,7 @@ class BaseItem:
         self.title = ""
         self.path = ""
         self.tags = []
+        self.keywords = ""
         self.version = 0  # if version increase, wrapper will re-save this item
 
         if from_dict is None:
@@ -52,6 +53,9 @@ class BaseItem:
             self.id = from_dict['id']
             self.ready = from_dict['ready']
             self.tags = from_dict['tags']
+            self.title = from_dict['title']
+            self.path = from_dict['path']
+            self.keywords = from_dict['keywords']
 
     def is_ready(self):
         return True if self.ready == "yes" else False
@@ -105,4 +109,10 @@ class BaseItem:
             self.bot.send_msg(msg)
 
     def to_dict(self):
-        return {"type": self.type, "id": self.id, "ready": self.ready, "path": self.path, "tags": self.tags}
+        return {"type": self.type,
+                "id": self.id,
+                "ready": self.ready,
+                "title": self.title,
+                "path": self.path,
+                "tags": self.tags,
+                "keywords": self.keywords}

@@ -112,10 +112,10 @@ class Condition:
 
         return self
 
+SETTING_DB_VERSION = 1
+MUSIC_DB_VERSION = 1
 
 class SettingsDatabase:
-    version = 1
-
     def __init__(self, db_path):
         self.db_path = db_path
 
@@ -127,10 +127,10 @@ class SettingsDatabase:
         conn.commit()
         conn.close()
 
-    def has_table(self):
+    def has_table(self, table):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='botamusique';").fetchall()
+        tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table,)).fetchall()
         conn.close()
         if len(tables) == 0:
             return False
@@ -140,17 +140,16 @@ class SettingsDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        if self.has_table():
+        if self.has_table('botamusique'):
             # check version
-            result = cursor.execute("SELECT value FROM botamusique WHERE section=? AND option=?",
-                                    ("bot", "db_version")).fetchall()
+            ver = self.getint("bot", "db_version", fallback=None)
 
-            if len(result) == 0 or int(result[0][0]) != self.version:
-                old_name = "botamusique_old_%s" % datetime.datetime.now().strftime("%Y%m%d")
-                cursor.execute("ALTER TABLE botamusique RENAME TO %s" % old_name)
+            if ver is None or ver != SETTING_DB_VERSION:
+                # old_name = "botamusique_old_%s" % datetime.datetime.now().strftime("%Y%m%d")
+                # cursor.execute("ALTER TABLE botamusique RENAME TO %s" % old_name)
+                cursor.execute("DROP TABLE botamusique")
                 conn.commit()
                 self.create_table()
-                self.set("bot", "old_db_name", old_name)
         else:
             self.create_table()
 
@@ -165,9 +164,7 @@ class SettingsDatabase:
                        "value TEXT, "
                        "UNIQUE(section, option))")
         cursor.execute("INSERT INTO botamusique (section, option, value) "
-                       "VALUES (?, ?, ?)", ("bot", "db_version", "1"))
-        cursor.execute("INSERT INTO botamusique (section, option, value) "
-                       "VALUES (?, ?, ?)", ("bot", "music_db_version", "0"))
+                       "VALUES (?, ?, ?)", ("bot", "db_version", SETTING_DB_VERSION))
         conn.commit()
         conn.close()
 
@@ -248,19 +245,60 @@ class MusicDatabase:
     def __init__(self, db_path):
         self.db_path = db_path
 
-        # connect
+        self.db_version_check_and_create()
+
+    def has_table(self, table):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table,)).fetchall()
+        conn.close()
+        if len(tables) == 0:
+            return False
+        return True
+
+    def create_table(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        # check if table exists, or create one
-        cursor.execute("CREATE TABLE IF NOT EXISTS music ("
+        cursor.execute("CREATE TABLE music ("
                        "id TEXT PRIMARY KEY, "
                        "type TEXT, "
                        "title TEXT, "
+                       "keywords TEXT, "
                        "metadata TEXT, "
-                       "tags TEXT)")
+                       "tags TEXT, "
+                       "path TEXT, "
+                       "create_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+                       ")")
+        cursor.execute("INSERT INTO music (id, title) "
+                       "VALUES ('info', ?)", (MUSIC_DB_VERSION,))
+
         conn.commit()
         conn.close()
+
+    def db_version_check_and_create(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        if self.has_table('music'):
+            ver = cursor.execute("SELECT title FROM music WHERE id='info'").fetchone()
+            if ver and int(ver[0]) == MUSIC_DB_VERSION:
+                conn.close()
+                return True
+            else:
+                cursor.execute("ALTER TABLE music RENAME TO music_old")
+                conn.commit()
+
+                self.create_table()
+                
+                cursor.execute("INSERT INTO music (id, type, title, metadata, tags)"
+                               "SELECT id, type, title, metadata, tags FROM music_old")
+                cursor.execute("DROP TABLE music_old")
+                conn.commit()
+                conn.close()
+        else:
+            self.create_table()
+
+
 
     def insert_music(self, music_dict):
         conn = sqlite3.connect(self.db_path)
@@ -269,19 +307,25 @@ class MusicDatabase:
         id = music_dict['id']
         title = music_dict['title']
         type = music_dict['type']
+        path = music_dict['path']
+        keywords = music_dict['keywords']
         tags = ",".join(music_dict['tags']) + ","
 
         del music_dict['id']
         del music_dict['title']
         del music_dict['type']
         del music_dict['tags']
+        del music_dict['path']
+        del music_dict['keywords']
 
-        cursor.execute("INSERT OR REPLACE INTO music (id, type, title, metadata, tags) VALUES (?, ?, ?, ?, ?)",
+        cursor.execute("INSERT OR REPLACE INTO music (id, type, title, metadata, tags, path, keywords) VALUES (?, ?, ?, ?, ?, ?, ?)",
                        (id,
                         type,
                         title,
                         json.dumps(music_dict),
-                        tags))
+                        tags,
+                        path,
+                        keywords))
 
         conn.commit()
         conn.close()
@@ -323,7 +367,7 @@ class MusicDatabase:
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
+        results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
                                  "WHERE %s" % condition_str, filler).fetchall()
         conn.close()
 
@@ -373,8 +417,8 @@ class MusicDatabase:
     def query_random_music(self, count):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT id, type, title, metadata, tags FROM music "
-                                 "WHERE id IN (SELECT id FROM music ORDER BY RANDOM() LIMIT ?)", (count,)).fetchall()
+        results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
+                                 "WHERE id != 'info' AND id IN (SELECT id FROM music ORDER BY RANDOM() LIMIT ?)", (count,)).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
@@ -388,6 +432,9 @@ class MusicDatabase:
                 music_dict['title'] = result[2]
                 music_dict['id'] = result[0]
                 music_dict['tags'] = result[4].strip(",").split(",")
+                if result[5]:
+                    music_dict['path'] = result[5]
+                music_dict['keywords'] = result[6]
                 if not music_dict['tags'][0]:
                     music_dict['tags'] = []
 

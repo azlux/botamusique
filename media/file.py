@@ -51,10 +51,9 @@ class FileItem(BaseItem):
             if os.path.exists(self.uri()):
                 self._get_info_from_tag()
                 self.ready = "yes"
+            self.keywords = self.title + " " + self.artist
         else:
             super().__init__(bot, from_dict)
-            self.path = from_dict['path']
-            self.title = from_dict['title']
             self.artist = from_dict['artist']
             self.thumbnail = from_dict['thumbnail']
             if not self.validate():
@@ -74,6 +73,10 @@ class FileItem(BaseItem):
                 "file: music file missed for %s" % self.format_debug_string())
             self.send_client_message(constants.strings('file_missed', file=self.path))
             return False
+
+        if not self.keywords:
+            self.keywords = self.title + " " + self.artist # migrate from previous version
+            self.version += 1
 
         # self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         self.ready = "yes"
