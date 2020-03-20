@@ -246,6 +246,7 @@ class MusicDatabase:
         self.db_path = db_path
 
         self.db_version_check_and_create()
+        self.manage_special_tags()
 
     def has_table(self, table):
         conn = sqlite3.connect(self.db_path)
@@ -297,8 +298,6 @@ class MusicDatabase:
                 conn.close()
         else:
             self.create_table()
-
-
 
     def insert_music(self, music_dict):
         conn = sqlite3.connect(self.db_path)
@@ -373,6 +372,15 @@ class MusicDatabase:
 
         return self._result_to_dict(results)
 
+    def _query_music_by_plain_sql_cond(self, sql_cond):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
+                                 "WHERE %s" % sql_cond).fetchall()
+        conn.close()
+
+        return self._result_to_dict(results)
+
     def query_music_by_id(self, _id):
         results = self.query_music(Condition().and_equal("id", _id))
         if results:
@@ -395,6 +403,14 @@ class MusicDatabase:
             condition.and_like("tags", f"%{tag},%", case_sensitive=False)
 
         return self.query_music(condition)
+
+    def manage_special_tags(self):
+        for tagged_recent in self.query_music_by_tags(['recent added']):
+            tagged_recent.tags.remove('recent added')
+        recent_items = self._query_music_by_plain_sql_cond("id != 'info' AND create_at > date('now', '-1 day')")
+        for recent_item in recent_items:
+            recent_item['tags'].append('recent added')
+            self.insert_music(recent_item)
 
     def query_tags(self, condition):
         # TODO: Can we keep a index of tags?
