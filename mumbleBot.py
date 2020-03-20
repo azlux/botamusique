@@ -646,6 +646,7 @@ if __name__ == '__main__':
 
     handler.setFormatter(formatter)
     bot_logger.addHandler(handler)
+    logging.getLogger("root").addHandler(handler)
     var.bot_logger = bot_logger
 
     if var.config.get("bot", "save_music_library", fallback=True):

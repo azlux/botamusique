@@ -301,6 +301,7 @@ def post():
                 os.remove(item.uri())
 
             var.cache.free_and_delete(_id)
+            time.sleep(0.1)
 
         elif 'add_tag' in request.form:
             music_wrappers = get_cached_wrappers_by_tags(var.bot, [request.form['add_tag']], user)
@@ -425,7 +426,7 @@ def library():
             if current_page <= page_count:
                 condition.offset((current_page - 1) * ITEM_PER_PAGE)
             else:
-                abort(404)
+                current_page = 1
 
             condition.limit(ITEM_PER_PAGE)
             items = dicts_to_items(var.bot, var.music_db.query_music(condition))
@@ -452,6 +453,7 @@ def library():
                 if len(os.listdir(var.music_folder + request.form['dir'])) == 0:
                     os.rmdir(var.music_folder + request.form['dir'])
 
+                time.sleep(0.1)
                 return redirect("./", code=302)
             else:
                 results = []

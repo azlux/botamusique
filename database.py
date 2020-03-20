@@ -26,7 +26,6 @@ class Condition:
         if self._order_by:
             sql += f" ORDEY BY {self._order_by}"
 
-        print(sql)
         return sql
 
     def or_equal(self, column, equals_to, case_sensitive=True):
@@ -331,7 +330,11 @@ class MusicDatabase:
         return self._result_to_dict(results)
 
     def query_music_by_id(self, _id):
-        return self.query_music(Condition().and_equal("id", _id))[0]
+        results = self.query_music(Condition().and_equal("id", _id))
+        if results:
+            return self.query_music(Condition().and_equal("id", _id))[0]
+        else:
+            return None
 
     def query_music_by_keywords(self, keywords):
         condition = Condition()
