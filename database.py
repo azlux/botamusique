@@ -406,7 +406,7 @@ class MusicDatabase:
 
     def manage_special_tags(self):
         for tagged_recent in self.query_music_by_tags(['recent added']):
-            tagged_recent.tags.remove('recent added')
+            tagged_recent['tags'].remove('recent added')
         recent_items = self._query_music_by_plain_sql_cond("id != 'info' AND create_at > date('now', '-1 day')")
         for recent_item in recent_items:
             recent_item['tags'].append('recent added')
