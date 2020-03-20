@@ -58,6 +58,7 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
+web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
 
@@ -361,20 +362,25 @@ def build_library_query_condition(form):
     try:
         condition = Condition()
 
+        types = form['type'].split(",")
+        sub_cond = Condition()
+        for type in types:
+            sub_cond.or_equal("type", type)
+        condition.and_sub_condition(sub_cond)
+
         if form['type'] == 'file':
             folder = form['dir']
             if not folder.endswith('/') and folder:
                 folder += '/'
             sub_cond = Condition()
+            count = 0
             for file in var.cache.files:
                 if file.startswith(folder):
+                    count += 1
                     sub_cond.or_equal("id", var.cache.file_id_lookup[file])
+                    if count > 900:
+                        break
             condition.and_sub_condition(sub_cond)
-            condition.and_equal("type", "file")
-        elif form['type'] == 'url':
-            condition.and_equal("type", "url")
-        elif form['type'] == 'radio':
-            condition.and_equal("type", "radio")
 
         tags = form['tags'].split(",")
         for tag in tags:
@@ -402,73 +408,80 @@ def library():
     if request.form:
         log.debug("web: Post request from %s: %s" % (request.remote_addr, str(request.form)))
 
-        condition = build_library_query_condition(request.form)
+        if request.form['action'] in ['add', 'query', 'delete']:
+            condition = build_library_query_condition(request.form)
 
-        total_count = var.music_db.query_music_count(condition)
-        if not total_count:
-            abort(404)
+            total_count = var.music_db.query_music_count(condition)
+            if not total_count:
+                abort(404)
 
-        page_count =  math.ceil(total_count / ITEM_PER_PAGE)
+            page_count =  math.ceil(total_count / ITEM_PER_PAGE)
 
-        current_page = int(request.form['page']) if 'page' in request.form else 1
-        if current_page <= page_count:
-            condition.offset((current_page - 1) * ITEM_PER_PAGE)
-        else:
-            abort(404)
+            current_page = int(request.form['page']) if 'page' in request.form else 1
+            if current_page <= page_count:
+                condition.offset((current_page - 1) * ITEM_PER_PAGE)
+            else:
+                abort(404)
 
-        condition.limit(ITEM_PER_PAGE)
-        items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+            condition.limit(ITEM_PER_PAGE)
+            items = dicts_to_items(var.bot, var.music_db.query_music(condition))
 
-        if 'action' in request.form and request.form['action'] == 'add':
-            for item in items:
-                music_wrapper = get_cached_wrapper(item, user)
-                var.playlist.append(music_wrapper)
+            if request.form['action'] == 'add':
+                for item in items:
+                    music_wrapper = get_cached_wrapper(item, user)
+                    var.playlist.append(music_wrapper)
 
-                log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+                    log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
 
+                return redirect("./", code=302)
+            elif request.form['action'] == 'delete':
+                for item in items:
+                    var.playlist.remove_by_id(item.id)
+                    item = var.cache.get_item_by_id(var.bot, item.id)
+
+                    if os.path.isfile(item.uri()):
+                        log.info("web: delete file " + item.uri())
+                        os.remove(item.uri())
+
+                    var.cache.free_and_delete(item.id)
+
+                if len(os.listdir(var.music_folder + request.form['dir'])) == 0:
+                    os.rmdir(var.music_folder + request.form['dir'])
+
+                return redirect("./", code=302)
+            else:
+                results = []
+                for item in items:
+                    result = {}
+                    result['id'] = item.id
+                    result['title'] = item.title
+                    result['type'] = item.display_type()
+                    result['tags'] = [(tag, tag_color(tag)) for tag in item.tags]
+                    if item.thumbnail:
+                        result['thumb'] = f"data:image/PNG;base64,{item.thumbnail}"
+                    else:
+                        result['thumb'] = "static/image/unknown-album.png"
+
+                    if item.type == 'file':
+                        result['path'] = item.path
+                        result['artist'] = item.artist
+                    else:
+                        result['path'] = item.url
+                        result['artist'] = "??"
+
+                    results.append(result)
+
+                return jsonify({
+                    'items': results,
+                    'total_pages': page_count,
+                    'active_page': current_page
+                })
+        elif request.form['action'] == 'edit_tags':
+            item = var.music_db.query_music_by_id(request.form['id'])
+            item['tags'] = list(dict.fromkeys(request.form['tags'].split(","))) # remove duplicated items
+            var.music_db.insert_music(item)
             return redirect("./", code=302)
-        elif 'action' in request.form and request.form['action'] == 'delete':
-            for item in items:
-                var.playlist.remove_by_id(item.id)
-                item = var.cache.get_item_by_id(var.bot, item.id)
 
-                if os.path.isfile(item.uri()):
-                    log.info("web: delete file " + item.uri())
-                    os.remove(item.uri())
-
-                var.cache.free_and_delete(item.id)
-
-            if len(os.listdir(var.music_folder + request.form['dir'])) == 0:
-                os.rmdir(var.music_folder + request.form['dir'])
-
-            return redirect("./", code=302)
-        else:
-            results = []
-            for item in items:
-                result = {}
-                result['id'] = item.id
-                result['title'] = item.title
-                result['type'] = item.display_type()
-                result['tags'] = [(tag, tag_color(tag)) for tag in item.tags]
-                if item.thumbnail:
-                    result['thumb'] = f"data:image/PNG;base64,{item.thumbnail}"
-                else:
-                    result['thumb'] = "static/image/unknown-album.png"
-
-                if item.type == 'file':
-                    result['path'] = item.path
-                    result['artist'] = item.artist
-                else:
-                    result['path'] = item.url
-                    result['artist'] = "??"
-
-                results.append(result)
-
-            return jsonify({
-                'items': results,
-                'total_pages': page_count,
-                'active_page': current_page
-            })
     else:
         abort(400)
 

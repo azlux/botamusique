@@ -105,26 +105,12 @@
 
         <div class="bs-docs-section">
             <div class="row">
-            <div class="col">
-                <div class="page-header">
-                    <h1 id="forms">Music Library</h1>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="card-title">Tags</h4>
-                    </div>
-                    <div class="card-body">
-                        {% for tag in tags_color_lookup.keys() %}
-                            <span class="tag-click badge badge-{{ tags_color_lookup[tag] }}"
-                                  onclick="request('post', {add_tag : '{{ tag }}'})">
-                                {{ tag }}</span>
-                        {% endfor %}
+                <div class="col">
+                    <div class="page-header">
+                        <h1 id="forms">Music Library</h1>
                     </div>
                 </div>
             </div>
-            </div>
-        </div>
-        <div class="bs-docs-section">
             <div class="row">
                 <div class="col">
                     <div id="browser" class="card">
@@ -215,6 +201,7 @@
                                 <div class="library-info-col col-4" style="padding: 3px;">
                                     <span class="library-item-path text-muted path">Path/to/the/file</span>
                                     <div class="library-item-tags">
+                                        <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit" style="color: #AAAAAA"></i></a>
                                         <span class="library-item-notag badge badge-light text-muted font-italic">No tag</span>
                                         <span class="library-item-tag tag-space badge">Tag</span>
                                     </div>
@@ -253,7 +240,30 @@
                                 <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
                             </button>
                             <button type="submit" class="btn btn-secondary btn-space" onclick="downloadAllResults()"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>
-                            <button type="submit" class="btn btn-secondary btn-space" onclick="deleteAllResults()"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete All</button>
+                            <button type="button" class="btn btn-danger btn-space"
+                                    data-toggle="modal" data-target="#deleteWarningModal"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete All</button>
+
+                        </div>
+
+                        <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog" aria-labelledby="Warning-Delete-File" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        All files listed here, include files on other pages, will be deleted from your hard-drive.
+                                        Is that what you want?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="deleteAllResults()">Delete All Listed Files</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -347,6 +357,41 @@
         <input hidden type="text" name="tags" value="">
         <input hidden type="text" name="keywords" value="">
     </form>
+
+    <!-- Add tags input -->
+    <div class="modal fade" id="addTagModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTagModalTitle">Edit tags for ?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="addTagModalBody" class="modal-body">
+                    <input hidden type="text" id="addTagModalItemId" name="id" value="">
+                    <div class="modal-tag" style="display: none; width: 100%;">
+                        <span class="modal-tag-text tag-space badge badge-pill badge-dark">Tag</span>
+                        <a class="modal-tag-remove tag-click small"><i class="fas fa-times-circle btn-outline-danger"></i></a>
+                    </div>
+                    <div id="addTagModalTags" style="margin-left: 5px; margin-bottom: 10px;">
+                    </div>
+                    <div class="input-group">
+                        <input class="form-control form-control-sm btn-space" type="text" id="addTagModalInput" placeholder="tag1,tag2,..." >
+                        <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm" onclick="addTagModalAdd()">
+                            <i class="fa fa-plus" aria-hidden="true" ></i>
+                            Add
+                        </button>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button id="addTagModalSubmit" type="button" class="btn btn-success" data-dismiss="modal" onclick="addTagModalSubmit()">Edit!</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
     <script src="static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
@@ -501,7 +546,9 @@
         } , 3000);
 
         // ------ Browser ------
-        var filter_type = 'file';
+        var filter_file = true;
+        var filter_url = false;
+        var filter_radio = false;
         var filter_dir = $("#filter-dir");
         var filter_keywords = $("#filter-keywords");
         var filter_btn_file = $("#filter-type-file");
@@ -509,19 +556,35 @@
         var filter_btn_radio = $("#filter-type-radio");
 
         function setFilterType(type){
-            filter_type = type;
-            filter_btn_file.removeClass("btn-primary").addClass("btn-secondary");
-            filter_btn_url.removeClass("btn-primary").addClass("btn-secondary");
-            filter_btn_radio.removeClass("btn-primary").addClass("btn-secondary");
-            filter_dir.prop("disabled", true);
+            filter_types = [];
 
             if(type === "file"){
-                filter_btn_file.removeClass("btn-secondary").addClass("btn-primary");
-                filter_dir.prop("disabled", false);
+                if(filter_btn_file.hasClass("btn-primary")){
+                    filter_btn_file.removeClass("btn-primary").addClass("btn-secondary");
+                    filter_dir.prop("disabled", true);
+                    filter_file = false;
+                }else{
+                    filter_btn_file.removeClass("btn-secondary").addClass("btn-primary");
+                    filter_dir.prop("disabled", false);
+                    filter_file = true;
+                }
             }else if(type === "url"){
-                filter_btn_url.removeClass("btn-secondary").addClass("btn-primary");
+                if(filter_btn_url.hasClass("btn-primary")) {
+                    filter_btn_url.removeClass("btn-primary").addClass("btn-secondary");
+                    filter_url = false;
+                }else{
+                    filter_btn_url.removeClass("btn-secondary").addClass("btn-primary");
+                    filter_url = true;
+                }
             }else if(type === "radio"){
-                filter_btn_radio.removeClass("btn-secondary").addClass("btn-primary");
+                if(filter_btn_radio.hasClass("btn-primary")) {
+                    filter_btn_radio.removeClass("btn-primary").addClass("btn-secondary");
+                    filter_radio = false;
+                }else{
+                    filter_btn_radio.removeClass("btn-secondary").addClass("btn-primary");
+                    filter_types.push('radio')
+                    filter_radio = true;
+                }
             }
             updateResults();
         }
@@ -558,7 +621,7 @@
                     request('post', {
                         'delete_item_from_library': $(e.currentTarget).parent().parent().find(".library-item-id").val()
                     });
-                    updateResults();
+                    updateResults(active_page);
                 }
             );
 
@@ -596,8 +659,12 @@
         var thumb_element = $(".library-item-thumb");
         var type_element = $(".library-item-type");
         var path_element = $(".library-item-path");
+
+        var tag_edit_element = $(".library-item-edit");
         var notag_element = $(".library-item-notag");
         var tag_element = $(".library-item-tag");
+
+        var add_tag_modal = $("#addTagModal");
 
         function addResultItem(item){
             id_element.val(item.id);
@@ -612,6 +679,14 @@
 
             var tags = item_copy.find(".library-item-tags");
             tags.empty();
+
+            var tag_edit_copy = tag_edit_element.clone();
+            tag_edit_copy.click(function(){
+                addTagModalPrepare(item.id, item.title, item.tags);
+                add_tag_modal.modal('show');
+            });
+            tag_edit_copy.appendTo(tags);
+
             if(item.tags.length > 0){
                 item.tags.forEach(function (tag_tuple){
                     tag_copy = tag_element.clone();
@@ -625,7 +700,7 @@
             }
 
             item_copy.appendTo(lib_group);
-            item_copy.slideDown();
+            item_copy.show();
         }
 
         function getFilters(dest_page=1){
@@ -635,8 +710,13 @@
                 tags_list.push(tag.innerHTML);
             });
 
+            filter_types = [];
+            if(filter_file){ filter_types.push("file"); }
+            if(filter_url){ filter_types.push("url"); }
+            if(filter_radio){ filter_types.push("radio"); }
+
             return {
-                type: filter_type,
+                type: filter_types.join(','),
                 dir: filter_dir.val(),
                 tags: tags_list.join(","),
                 keywords: filter_keywords.val(),
@@ -646,8 +726,10 @@
 
         var lib_loading = $("#library-item-loading");
         var lib_empty = $("#library-item-empty");
+        var active_page = 1;
 
         function updateResults(dest_page=1){
+            active_page = dest_page;
             data = getFilters(dest_page);
             data.action = "query";
 
@@ -755,7 +837,7 @@
 
                 if(total_pages > 25){
                     i = (active_page - 12 >= 1) ? active_page - 12 : 1;
-                    _i = total_pages - 24;
+                    _i = total_pages - 23;
                     i = (i < _i) ? i : _i;
                     page_li_copy = page_li.clone();
                     page_no_copy = page_no.clone();
@@ -801,6 +883,67 @@
 
                 lib_group.animate({opacity: 1}, 200);
             });
+        }
+
+        var add_tag_modal_title = $("#addTagModalTitle");
+        var add_tag_modal_item_id = $("#addTagModalItemId");
+        var add_tag_modal_tags = $("#addTagModalTags");
+        var add_tag_modal_input = $("#addTagModalInput");
+        var modal_tag = $(".modal-tag");
+        var modal_tag_text = $(".modal-tag-text");
+
+        function addTagModalPrepare(_id, _title, _tag_tuples){
+            add_tag_modal_title.html("Edit tags for " + _title);
+            add_tag_modal_item_id.val(_id);
+            add_tag_modal_tags.empty();
+            _tag_tuples.forEach(function(tag_tuple){
+                modal_tag_text.html(tag_tuple[0]);
+                var tag_copy = modal_tag.clone();
+                var modal_tag_remove = tag_copy.find(".modal-tag-remove");
+                modal_tag_remove.click(function(e){
+                    $(e.currentTarget).parent().remove();
+                });
+                tag_copy.show();
+                tag_copy.appendTo(add_tag_modal_tags);
+                modal_tag_text.html("");
+            });
+        }
+
+        function addTagModalAdd(){
+            new_tags = add_tag_modal_input.val().split(",").map(function(str){return str.trim()});
+            new_tags.forEach(function(tag){
+                modal_tag_text.html(tag);
+                var tag_copy = modal_tag.clone();
+                var modal_tag_remove = tag_copy.find(".modal-tag-remove");
+                modal_tag_remove.click(function(e){
+                    $(e.currentTarget).parent().remove();
+                });
+                tag_copy.show();
+                tag_copy.appendTo(add_tag_modal_tags);
+                modal_tag_text.html("");
+            });
+            add_tag_modal_input.val("");
+        }
+
+        function addTagModalSubmit(){
+            var all_tags = $(".modal-tag-text");
+            tags = [];
+            all_tags.each(function(i, element){
+                if(element.innerHTML){
+                    tags.push(element.innerHTML);
+                }
+            });
+
+            $.ajax({
+                    type: 'POST',
+                    url : 'library',
+                    data: {
+                        action: 'edit_tags',
+                        id: add_tag_modal_item_id.val(),
+                        tags: tags.join(",")
+                    }
+                });
+            updateResults(active_page);
         }
 
 
