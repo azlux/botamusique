@@ -306,7 +306,7 @@ class MusicDatabase:
         id = music_dict['id']
         title = music_dict['title']
         type = music_dict['type']
-        path = music_dict['path']
+        path = music_dict['path'] if 'path' in music_dict else ''
         keywords = music_dict['keywords']
         tags = ",".join(list(dict.fromkeys(music_dict['tags']))) + ","
 
