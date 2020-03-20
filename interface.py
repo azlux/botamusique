@@ -561,6 +561,7 @@ def upload():
             continue
 
     var.cache.build_dir_cache(var.bot)
+    var.music_db.manage_special_tags()
     log.info("web: Local file cache refreshed.")
 
     return redirect("./", code=302)

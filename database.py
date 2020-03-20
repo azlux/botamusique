@@ -246,7 +246,7 @@ class MusicDatabase:
         self.db_path = db_path
 
         self.db_version_check_and_create()
-        self.manage_special_tags()
+        self.manage_special_tags() # This is super time comsuming!
 
     def has_table(self, table):
         conn = sqlite3.connect(self.db_path)
@@ -435,7 +435,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
-                                 "WHERE id != 'info' AND id IN (SELECT id FROM music ORDER BY RANDOM() LIMIT ?)", (count,)).fetchall()
+                                 "WHERE id IN (SELECT id FROM music WHERE id != 'info' ORDER BY RANDOM() LIMIT ?)", (count,)).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
