@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+import sqlite3
 from functools import wraps
 from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort
 import variables as var
@@ -385,7 +385,10 @@ def build_library_query_condition(form):
                     sub_cond.or_equal("id", var.cache.file_id_lookup[file])
                     if count > 900:
                         break
-            condition.and_sub_condition(sub_cond)
+            if count > 0:
+                condition.and_sub_condition(sub_cond)
+            else:
+                condition.and_equal()
 
         tags = form['tags'].split(",")
         for tag in tags:
@@ -416,7 +419,12 @@ def library():
         if request.form['action'] in ['add', 'query', 'delete']:
             condition = build_library_query_condition(request.form)
 
-            total_count = var.music_db.query_music_count(condition)
+            total_count = 0
+            try:
+                total_count = var.music_db.query_music_count(condition)
+            except sqlite3.OperationalError:
+                pass
+
             if not total_count:
                 abort(404)
 
