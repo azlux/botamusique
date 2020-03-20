@@ -39,8 +39,11 @@
                 Unknown Artist
             {% endif %}
             <br />
-            {% for tag in m.tags %}
-                <span class="badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+
+            <a class="tag-space tag-click"
+               onclick='addTagModalShow("{{ m.id }}", "{{ m.title }}", {{ tag_tuples | tojson }});'><i class="fas fa-edit" style="color: #AAAAAA"></i></a>
+            {% for tag_tuple in tag_tuples %}
+                <span class="badge badge-{{ tag_tuple[1] }}">{{ tag_tuple[0] }}</span>
             {% endfor %}
         </div>
     </td>

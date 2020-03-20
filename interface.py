@@ -181,9 +181,13 @@ def playlist():
     items = []
 
     for index, item_wrapper in enumerate(var.playlist):
+        tag_tuples = []
+        for tag in item_wrapper.item().tags:
+            tag_tuples.append([tag, tags_color_lookup[tag]])
+
         items.append(render_template('playlist.html',
                                      index=index,
-                                     tags_color_lookup=tags_color_lookup,
+                                     tag_tuples=tag_tuples,
                                      m=item_wrapper.item(),
                                      playlist=var.playlist
                                      )
@@ -491,9 +495,16 @@ def library():
                     'active_page': current_page
                 })
         elif request.form['action'] == 'edit_tags':
-            item = var.music_db.query_music_by_id(request.form['id'])
-            item['tags'] = list(dict.fromkeys(request.form['tags'].split(","))) # remove duplicated items
-            var.music_db.insert_music(item)
+            tags = list(dict.fromkeys(request.form['tags'].split(","))) # remove duplicated items
+            if request.form['id'] in var.cache:
+                music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['id'], user)
+                music_wrapper.clear_tags()
+                music_wrapper.add_tags(tags)
+                var.playlist.version += 1
+            else:
+                item = var.music_db.query_music_by_id(request.form['id'])
+                item['tags'] = tags
+                var.music_db.insert_music(item)
             return redirect("./", code=302)
 
     else:

@@ -598,7 +598,7 @@
                 tag.addClass('tag-clicked');
                 tag.removeClass('tag-unclicked');
             } else {
-                tag.addClass('tag-umclicked');
+                tag.addClass('tag-unclicked');
                 tag.removeClass('tag-clicked');
             }
             updateResults();
@@ -684,8 +684,7 @@
 
             var tag_edit_copy = tag_edit_element.clone();
             tag_edit_copy.click(function(){
-                addTagModalPrepare(item.id, item.title, item.tags);
-                add_tag_modal.modal('show');
+                addTagModalShow(item.id, item.title, item.tags);
             });
             tag_edit_copy.appendTo(tags);
 
@@ -895,7 +894,7 @@
         var modal_tag = $(".modal-tag");
         var modal_tag_text = $(".modal-tag-text");
 
-        function addTagModalPrepare(_id, _title, _tag_tuples){
+        function addTagModalShow(_id, _title, _tag_tuples){
             add_tag_modal_title.html("Edit tags for " + _title);
             add_tag_modal_item_id.val(_id);
             add_tag_modal_tags.empty();
@@ -910,6 +909,7 @@
                 tag_copy.appendTo(add_tag_modal_tags);
                 modal_tag_text.html("");
             });
+            add_tag_modal.modal('show');
         }
 
         function addTagModalAdd(){
