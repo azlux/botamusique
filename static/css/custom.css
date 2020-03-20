@@ -9,8 +9,14 @@
    cursor:pointer;
    transition: 400ms;
 }
+.tag-unclicked{
+   opacity: 0.6;
+}
 .tag-clicked{
+   box-shadow: 2px 4px 10px #777777;
    transform: scale(1.2);
+   opacity: 1;
+   margin: 5px;
 }
 .floating-button {
    width: 50px;

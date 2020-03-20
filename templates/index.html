@@ -156,7 +156,7 @@
                                             <label class="col-sm-2 col-form-label">Tags</label>
                                             <div class="col-sm-10" style="padding-top:5px;">
                                                 {% for tag in tags_color_lookup.keys() %}
-                                                    <span id="filter-tag" class="filter-tag tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+                                                    <span id="filter-tag" class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
                                                 {% endfor %}
                                             </div>
                                         </div>
@@ -582,7 +582,7 @@
                     filter_radio = false;
                 }else{
                     filter_btn_radio.removeClass("btn-secondary").addClass("btn-primary");
-                    filter_types.push('radio')
+                    filter_types.push('radio');
                     filter_radio = true;
                 }
             }
@@ -596,7 +596,9 @@
             _tag = tag;
             if (!tag.hasClass('tag-clicked')) {
                 tag.addClass('tag-clicked');
+                tag.removeClass('tag-unclicked');
             } else {
+                tag.addClass('tag-umclicked');
                 tag.removeClass('tag-clicked');
             }
             updateResults();
