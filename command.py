@@ -565,7 +565,11 @@ def cmd_help(bot, user, text, command, parameter):
 def cmd_stop(bot, user, text, command, parameter):
     global log
 
-    bot.stop()
+    if var.config.getboolean("bot", "clear_when_stop_in_oneshot", fallback=False) \
+            and var.playlist.mode == 'one-shot':
+        cmd_clear(bot, user, text, command, parameter)
+    else:
+        bot.stop()
     bot.send_msg(constants.strings('stopped'), text)
 
 

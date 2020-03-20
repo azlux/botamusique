@@ -334,7 +334,11 @@ def post():
                 var.cache.build_dir_cache(var.bot)
                 log.info("web: Local file cache refreshed.")
             elif action == "stop":
-                var.bot.stop()
+                if var.config.getboolean("bot", "clear_when_stop_in_oneshot", fallback=False) \
+                        and var.playlist.mode == 'one-shot':
+                    var.bot.clear()
+                else:
+                    var.bot.stop()
             elif action == "pause":
                 var.bot.pause()
             elif action == "resume":
