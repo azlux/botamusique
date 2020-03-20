@@ -387,8 +387,6 @@ def build_library_query_condition(form):
                         break
             if count > 0:
                 condition.and_sub_condition(sub_cond)
-            else:
-                condition.and_equal()
 
         tags = form['tags'].split(",")
         for tag in tags:
