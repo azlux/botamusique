@@ -83,6 +83,7 @@ class MusicCache(dict):
     def save(self, id):
         self.log.debug("library: music save into database: %s" % self[id].format_debug_string())
         self.db.insert_music(self[id].to_dict())
+        self.db.manage_special_tags()
 
     def free_and_delete(self, id):
         item = self.get_item_by_id(None, id)

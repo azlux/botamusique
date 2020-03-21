@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import datetime
+import time
 
 
 class DatabaseError(Exception):
@@ -246,7 +247,7 @@ class MusicDatabase:
         self.db_path = db_path
 
         self.db_version_check_and_create()
-        self.manage_special_tags() # This is super time comsuming!
+        self.manage_special_tags()
 
     def has_table(self, table):
         conn = sqlite3.connect(self.db_path)
@@ -299,8 +300,8 @@ class MusicDatabase:
         else:
             self.create_table()
 
-    def insert_music(self, music_dict):
-        conn = sqlite3.connect(self.db_path)
+    def insert_music(self, music_dict, _conn=None):
+        conn = sqlite3.connect(self.db_path) if _conn is None else _conn
         cursor = conn.cursor()
 
         id = music_dict['id']
@@ -308,7 +309,11 @@ class MusicDatabase:
         type = music_dict['type']
         path = music_dict['path'] if 'path' in music_dict else ''
         keywords = music_dict['keywords']
-        tags = ",".join(list(dict.fromkeys(music_dict['tags']))) + ","
+
+        tags_list = list(dict.fromkeys(music_dict['tags']))
+        tags = ''
+        if tags_list:
+            tags = ",".join(tags_list) + ","
 
         del music_dict['id']
         del music_dict['title']
@@ -327,8 +332,9 @@ class MusicDatabase:
                         path,
                         keywords))
 
-        conn.commit()
-        conn.close()
+        if not _conn:
+            conn.commit()
+            conn.close()
 
     def query_all_ids(self):
         conn = sqlite3.connect(self.db_path)
@@ -361,58 +367,61 @@ class MusicDatabase:
 
         return results[0][0]
 
-    def query_music(self, condition: Condition):
+    def query_music(self, condition: Condition, _conn=None):
         filler = condition.filler
         condition_str = condition.sql()
 
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path) if _conn is None else _conn
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
                                  "WHERE id != 'info' AND %s" % condition_str, filler).fetchall()
-        conn.close()
+        if not _conn:
+            conn.close()
 
         return self._result_to_dict(results)
 
-    def _query_music_by_plain_sql_cond(self, sql_cond):
-        conn = sqlite3.connect(self.db_path)
+    def _query_music_by_plain_sql_cond(self, sql_cond, _conn=None):
+        conn = sqlite3.connect(self.db_path) if _conn is None else _conn
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
                                  "WHERE id != 'info' AND %s" % sql_cond).fetchall()
-        conn.close()
+        if not _conn:
+            conn.close()
 
         return self._result_to_dict(results)
 
-    def query_music_by_id(self, _id):
-        results = self.query_music(Condition().and_equal("id", _id))
+    def query_music_by_id(self, _id, _conn=None):
+        results = self.query_music(Condition().and_equal("id", _id), _conn)
         if results:
-            return self.query_music(Condition().and_equal("id", _id))[0]
+            return results[0]
         else:
             return None
 
-    def query_music_by_keywords(self, keywords):
+    def query_music_by_keywords(self, keywords, _conn=None):
         condition = Condition()
 
         for keyword in keywords:
             condition.and_like("title", f"%{keyword}%", case_sensitive=False)
 
-        return self.query_music(condition)
+        return self.query_music(condition, _conn)
 
-    def query_music_by_tags(self, tags):
+    def query_music_by_tags(self, tags, _conn=None):
         condition = Condition()
 
         for tag in tags:
             condition.and_like("tags", f"%{tag},%", case_sensitive=False)
 
-        return self.query_music(condition)
+        return self.query_music(condition, _conn)
 
     def manage_special_tags(self):
-        for tagged_recent in self.query_music_by_tags(['recent added']):
-            tagged_recent['tags'].remove('recent added')
-            self.insert_music(tagged_recent)
-        recent_items = self._query_music_by_plain_sql_cond("create_at > date('now', '-1 day')")
-        for recent_item in recent_items:
-            recent_item['tags'].append('recent added')
-            self.insert_music(recent_item)
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE music SET tags=REPLACE(tags, 'recent added,', '') WHERE tags LIKE 'recent added,' "
+                       "AND create_at <= DATETIME('now', '-1 day') AND id != 'info'")
+        cursor.execute("UPDATE music SET tags=tags||'recent added,' WHERE tags NOT LIKE 'recent added,' "
+                       "AND create_at > DATETIME('now', '-1 day') AND id != 'info'")
+        conn.commit()
+        conn.close()
 
     def query_tags(self, condition):
         # TODO: Can we keep a index of tags?
