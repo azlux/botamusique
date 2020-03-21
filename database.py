@@ -416,9 +416,9 @@ class MusicDatabase:
     def manage_special_tags(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("UPDATE music SET tags=REPLACE(tags, 'recent added,', '') WHERE tags LIKE 'recent added,' "
+        cursor.execute("UPDATE music SET tags=REPLACE(tags, 'recent added,', '') WHERE tags LIKE '%recent added,%' "
                        "AND create_at <= DATETIME('now', '-1 day') AND id != 'info'")
-        cursor.execute("UPDATE music SET tags=tags||'recent added,' WHERE tags NOT LIKE 'recent added,' "
+        cursor.execute("UPDATE music SET tags=tags||'recent added,' WHERE tags NOT LIKE '%recent added,%' "
                        "AND create_at > DATETIME('now', '-1 day') AND id != 'info'")
         conn.commit()
         conn.close()
