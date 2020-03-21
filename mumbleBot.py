@@ -132,7 +132,10 @@ class MumbleBot:
         self.set_comment()
         self.mumble.users.myself.unmute()  # by sure the user is not muted
         if self.channel:
-            self.mumble.channels.find_by_name(self.channel).move_in()
+            if '/' in self.channel:
+                self.mumble.channels.find_by_tree(channel.split('/')).move_in()
+            else:
+                self.mumble.channels.find_by_name(self.channel).move_in()
         self.mumble.set_bandwidth(200000)
 
         self.is_ducking = False
