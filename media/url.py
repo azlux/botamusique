@@ -130,6 +130,8 @@ class URLItem(BaseItem):
                     return True
                 except youtube_dl.utils.DownloadError:
                     pass
+                except KeyError: # info has no 'duration'
+                    break
 
         if not succeed:
             self.ready = 'failed'
