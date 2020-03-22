@@ -136,7 +136,7 @@
                                             <div class="col-sm-8">
                                                 <select class="form-control form-control-sm" id="filter-dir" style="margin-top:5px;" disabled>
                                                         <option value="">.</option>
-                                                        {% for dir in music_library.get_subdirs_recursively() %}
+                                                        {% for dir in dirs %}
                                                         <option value="{{ dir }}">{{ dir }}</option>
                                                         {% endfor %}
                                                 </select>
@@ -298,7 +298,7 @@
                                     <input class="form-control btn-space" list="targetdirs" id="targetdir" name="targetdir"
                                            placeholder="uploads" />
                                     <datalist id="targetdirs">
-                                        {% for dir in music_library.get_subdirs_recursively() %}
+                                        {% for dir in dirs %}
                                             <option value="{{ dir }}" />
                                         {% endfor %}
                                     </datalist>

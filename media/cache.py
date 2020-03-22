@@ -19,9 +19,6 @@ class MusicCache(dict):
         super().__init__()
         self.db = db
         self.log = logging.getLogger("bot")
-        self.dir = None
-        self.files = []
-        self.file_id_lookup = {} # TODO: Now I see this is silly. Gonna add a column "path" in the database.
         self.dir_lock = threading.Lock()
 
     def get_item_by_id(self, bot, id):  # Why all these functions need a bot? Because it need the bot to send message!
@@ -90,12 +87,7 @@ class MusicCache(dict):
         if item:
             self.log.debug("library: DELETE item from the database: %s" % item.format_debug_string())
 
-            if item.type == 'file' and item.path in self.file_id_lookup:
-                if item.path in self.file_id_lookup:
-                    del self.file_id_lookup[item.path]
-                self.files.remove(item.path)
-                self.save_dir_cache()
-            elif item.type == 'url':
+            if item.type == 'url':
                 if os.path.exists(item.path):
                     os.remove(item.path)
 
@@ -115,9 +107,7 @@ class MusicCache(dict):
     def build_dir_cache(self, bot):
         self.dir_lock.acquire()
         self.log.info("library: rebuild directory cache")
-        self.files = []
         files = util.get_recursive_file_list_sorted(var.music_folder)
-        self.dir = util.Dir(var.music_folder)
         for file in files:
             item = self.fetch(bot, item_id_generators['file'](path=file))
             if not item:
@@ -125,25 +115,6 @@ class MusicCache(dict):
                 self.log.debug("library: music save into database: %s" % item.format_debug_string())
                 self.db.insert_music(item.to_dict())
 
-            self.dir.add_file(file)
-            self.files.append(file)
-            self.file_id_lookup[file] = item.id
-
-        self.save_dir_cache()
-        self.dir_lock.release()
-
-    def save_dir_cache(self):
-        var.db.set("dir_cache", "files", json.dumps(self.file_id_lookup))
-
-    def load_dir_cache(self, bot):
-        self.dir_lock.acquire()
-        self.log.info("library: load directory cache from database")
-        loaded = json.loads(var.db.get("dir_cache", "files"))
-        self.files = loaded.keys()
-        self.file_id_lookup = loaded
-        self.dir = util.Dir(var.music_folder)
-        for file, id in loaded.items():
-            self.dir.add_file(file)
         self.dir_lock.release()
 
 
@@ -223,9 +194,18 @@ class CachedItemWrapper:
 
 # Remember!!! Get wrapper functions will automatically add items into the cache!
 def get_cached_wrapper(item, user):
-    var.cache[item.id] = item
-    return CachedItemWrapper(var.cache, item.id, item.type, user)
+    if item:
+        var.cache[item.id] = item
+        return CachedItemWrapper(var.cache, item.id, item.type, user)
+    return None
 
+def get_cached_wrappers(items, user):
+    wrappers = []
+    for item in items:
+        if item:
+            wrappers.append(get_cached_wrapper(item, user))
+
+    return wrappers
 
 def get_cached_wrapper_from_scrap(bot, **kwargs):
     item = var.cache.get_item(bot, **kwargs)
@@ -233,19 +213,24 @@ def get_cached_wrapper_from_scrap(bot, **kwargs):
         raise KeyError("Which user added this song?")
     return CachedItemWrapper(var.cache, item.id, kwargs['type'], kwargs['user'])
 
-
 def get_cached_wrapper_from_dict(bot, dict_from_db, user):
-    item = dict_to_item(bot, dict_from_db)
-    return get_cached_wrapper(item, user)
+    if dict_from_db:
+        item = dict_to_item(bot, dict_from_db)
+        return get_cached_wrapper(item, user)
+    return None
 
+def get_cached_wrappers_from_dicts(bot, dicts_from_db, user):
+    items = []
+    for dict_from_db in dicts_from_db:
+        if dict_from_db:
+            items.append(get_cached_wrapper_from_dict(bot, dict_from_db, user))
+
+    return items
 
 def get_cached_wrapper_by_id(bot, id, user):
     item = var.cache.get_item_by_id(bot, id)
     if item:
         return CachedItemWrapper(var.cache, item.id, item.type, user)
-    else:
-        return None
-
 
 def get_cached_wrappers_by_tags(bot, tags, user):
     items = var.cache.get_items_by_tags(bot, tags)

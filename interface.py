@@ -126,24 +126,20 @@ def build_tags_color_lookup():
 
     return color_lookup
 
+def get_all_dirs():
+    dirs = []
+    paths = var.music_db.query_all_paths()
+    for path in paths:
+        pos = 0
+        while True:
+            pos = path.find("/", pos+1)
+            if pos == -1:
+                break
+            folder = path[:pos]
+            if folder not in dirs:
+                dirs.append(folder)
 
-def build_path_tags_lookup():
-    path_tags_lookup = {}
-    ids = list(var.cache.file_id_lookup.values())
-    if len(ids) > 0:
-        condition = Condition().and_equal("type", "file")
-        id_tags_lookup = var.music_db.query_tags(condition)
-
-        for path, id in var.cache.file_id_lookup.items():
-            path_tags_lookup[path] = id_tags_lookup[id]
-
-    return path_tags_lookup
-
-
-def recur_dir(dirobj):
-    for name, dir in dirobj.get_subdirs().items():
-        print(dirobj.fullpath + "/" + name)
-        recur_dir(dir)
+    return dirs
 
 
 @web.route("/", methods=['GET'])
@@ -153,17 +149,10 @@ def index():
         time.sleep(0.1)
 
     tags_color_lookup = build_tags_color_lookup()
-    path_tags_lookup = build_path_tags_lookup()
 
     return render_template('index.html',
-                           all_files=var.cache.files,
-                           tags_lookup=path_tags_lookup,
+                           dirs=get_all_dirs(),
                            tags_color_lookup=tags_color_lookup,
-                           music_library=var.cache.dir,
-                           os=os,
-                           playlist=var.playlist,
-                           user=var.user,
-                           paused=var.bot.is_pause,
                            )
 
 
@@ -177,7 +166,7 @@ def playlist():
                                                   )]
                         })
 
-    tags_color_lookup = build_tags_color_lookup()
+    tags_color_lookup = build_tags_color_lookup() # TODO: cached this?
     items = []
 
     for index, item_wrapper in enumerate(var.playlist):
@@ -384,18 +373,7 @@ def build_library_query_condition(form):
             folder = form['dir']
             if not folder.endswith('/') and folder:
                 folder += '/'
-            sub_cond = Condition()
-            count = 0
-            for file in var.cache.files:
-                if file.startswith(folder):
-                    count += 1
-                    sub_cond.or_equal("id", var.cache.file_id_lookup[file])
-                    if count > 900:
-                        break
-            if count > 0:
-                condition.and_sub_condition(sub_cond)
-            else:
-                condition.and_equal("id", None)
+            condition.and_like('path', folder + '%')
 
         tags = form['tags'].split(",")
         for tag in tags:

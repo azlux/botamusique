@@ -1,3 +1,4 @@
+import re
 import sqlite3
 import json
 import datetime
@@ -14,22 +15,31 @@ class Condition:
         self._limit = 0
         self._offset = 0
         self._order_by = ""
+        self.has_regex = False
         pass
 
-    def sql(self):
+    def sql(self, conn: sqlite3.Connection = None):
         sql = self._sql
         if not self._sql:
             sql = "TRUE"
+        if self._order_by:
+            sql += f" ORDER BY {self._order_by}"
         if self._limit:
             sql += f" LIMIT {self._limit}"
         if self._offset:
             sql += f" OFFSET {self._offset}"
-        if self._order_by:
-            sql += f" ORDEY BY {self._order_by}"
+        if self.has_regex and conn:
+            conn.create_function("REGEXP", 2, self._regexp)
 
         print(sql)
-        print(self.filler)
         return sql
+
+    @staticmethod
+    def _regexp(expr, item):
+        if not item:
+            return False
+        reg = re.compile(expr)
+        return reg.search(item) is not None
 
     def or_equal(self, column, equals_to, case_sensitive=True):
         if not case_sensitive:
@@ -87,39 +97,75 @@ class Condition:
 
         return self
 
+    def and_regexp(self, column, regex):
+        self.has_regex = True
+
+        if self._sql:
+            self._sql += f" AND {column} REGEXP ?"
+        else:
+            self._sql += f"{column} REGEXP ?"
+
+        self.filler.append(regex)
+
+        return self
+
+    def or_regexp(self, column, regex):
+        self.has_regex = True
+
+        if self._sql:
+            self._sql += f" OR {column} REGEXP ?"
+        else:
+            self._sql += f"{column} REGEXP ?"
+
+        self.filler.append(regex)
+
+        return self
+
     def or_sub_condition(self, sub_condition):
+        if sub_condition.has_regex:
+            self.has_regex = True
+
         self.filler.extend(sub_condition.filler)
         if self._sql:
-            self._sql += f"OR ({sub_condition.sql()})"
+            self._sql += f" OR ({sub_condition.sql(None)})"
         else:
-            self._sql += f"({sub_condition.sql()})"
+            self._sql += f"({sub_condition.sql(None)})"
 
         return self
 
     def or_not_sub_condition(self, sub_condition):
+        if sub_condition.has_regex:
+            self.has_regex = True
+
         self.filler.extend(sub_condition.filler)
         if self._sql:
-            self._sql += f"OR NOT ({sub_condition.sql()})"
+            self._sql += f" OR NOT ({sub_condition.sql(None)})"
         else:
-            self._sql += f"NOT ({sub_condition.sql()})"
+            self._sql += f"NOT ({sub_condition.sql(None)})"
 
         return self
 
     def and_sub_condition(self, sub_condition):
+        if sub_condition.has_regex:
+            self.has_regex = True
+
         self.filler.extend(sub_condition.filler)
         if self._sql:
-            self._sql += f"AND ({sub_condition.sql()})"
+            self._sql += f" AND ({sub_condition.sql(None)})"
         else:
-            self._sql += f"({sub_condition.sql()})"
+            self._sql += f"({sub_condition.sql(None)})"
 
         return self
 
     def and_not_sub_condition(self, sub_condition):
+        if sub_condition.has_regex:
+            self.has_regex = True
+
         self.filler.extend(sub_condition.filler)
         if self._sql:
-            self._sql += f"AND NOT({sub_condition.sql()})"
+            self._sql += f" AND NOT({sub_condition.sql(None)})"
         else:
-            self._sql += f"NOT ({sub_condition.sql()})"
+            self._sql += f"NOT ({sub_condition.sql(None)})"
 
         return self
 
@@ -130,6 +176,11 @@ class Condition:
 
     def offset(self, offset):
         self._offset = offset
+
+        return self
+
+    def order_by(self, order_by):
+        self._order_by = order_by
 
         return self
 
@@ -369,12 +420,20 @@ class MusicDatabase:
             conn.commit()
             conn.close()
 
-    def query_all_ids(self):
+    def query_music_ids(self, condition: Condition):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT id FROM music WHERE id != 'info'").fetchall()
+        results = cursor.execute("SELECT id FROM music WHERE id != 'info' AND %s" %
+                                 condition.sql(conn), condition.filler).fetchall()
         conn.close()
         return list(map(lambda i: i[0], results))
+
+    def query_all_paths(self):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        results = cursor.execute("SELECT path FROM music WHERE id != 'info'").fetchall()
+        conn.close()
+        return [ result[0] for result in results ]
 
     def query_all_tags(self):
         conn = sqlite3.connect(self.db_path)
@@ -390,9 +449,9 @@ class MusicDatabase:
 
     def query_music_count(self, condition: Condition):
         filler = condition.filler
-        condition_str = condition.sql()
 
         conn = sqlite3.connect(self.db_path)
+        condition_str = condition.sql(conn)
         cursor = conn.cursor()
         results = cursor.execute("SELECT COUNT(*) FROM music "
                                  "WHERE id != 'info' AND %s" % condition_str, filler).fetchall()
@@ -402,9 +461,9 @@ class MusicDatabase:
 
     def query_music(self, condition: Condition, _conn=None):
         filler = condition.filler
-        condition_str = condition.sql()
 
         conn = sqlite3.connect(self.db_path) if _conn is None else _conn
+        condition_str = condition.sql(conn)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
                                  "WHERE id != 'info' AND %s" % condition_str, filler).fetchall()
@@ -461,7 +520,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, tags FROM music "
-                                  "WHERE id != 'info' AND %s" % condition.sql(), condition.filler).fetchall()
+                                  "WHERE id != 'info' AND %s" % condition.sql(conn), condition.filler).fetchall()
 
         conn.close()
 
@@ -484,7 +543,7 @@ class MusicDatabase:
 
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
                                  "WHERE id IN (SELECT id FROM music WHERE %s ORDER BY RANDOM() LIMIT ?) ORDER BY RANDOM()"
-                                 % condition.sql(), condition.filler + [count]).fetchall()
+                                 % condition.sql(conn), condition.filler + [count]).fetchall()
         conn.close()
 
         return self._result_to_dict(results)
@@ -514,7 +573,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute("DELETE FROM music "
-                       "WHERE %s" % condition.sql(), condition.filler)
+                       "WHERE %s" % condition.sql(conn), condition.filler)
         conn.commit()
         conn.close()
 

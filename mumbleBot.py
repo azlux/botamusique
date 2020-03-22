@@ -680,8 +680,6 @@ if __name__ == '__main__':
     if var.config.get("bot", "refresh_cache_on_startup", fallback=True)\
             or not var.db.has_option("dir_cache", "files"):
         var.cache.build_dir_cache(var.bot)
-    else:
-        var.cache.load_dir_cache(var.bot)
 
     # load playlist
     if var.config.getboolean('bot', 'save_playlist', fallback=True):
