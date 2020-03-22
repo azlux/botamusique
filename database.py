@@ -21,7 +21,7 @@ class Condition:
     def sql(self, conn: sqlite3.Connection = None):
         sql = self._sql
         if not self._sql:
-            sql = "TRUE"
+            sql = "1"
         if self._order_by:
             sql += f" ORDER BY {self._order_by}"
             if self._desc:
@@ -396,7 +396,7 @@ class MusicDatabase:
             del music_dict['path']
         del music_dict['keywords']
 
-        existed = cursor.execute("SELECT TRUE FROM music WHERE id=?", (id,)).fetchall()
+        existed = cursor.execute("SELECT 1 FROM music WHERE id=?", (id,)).fetchall()
         if len(existed) == 0:
             cursor.execute(
                 "INSERT INTO music (id, type, title, metadata, tags, path, keywords) VALUES (?, ?, ?, ?, ?, ?, ?)",
