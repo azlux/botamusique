@@ -131,11 +131,7 @@ class MumbleBot:
         self.mumble.is_ready()  # wait for the connection
         self.set_comment()
         self.mumble.users.myself.unmute()  # by sure the user is not muted
-        if self.channel:
-            if '/' in self.channel:
-                self.mumble.channels.find_by_tree(channel.split('/')).move_in()
-            else:
-                self.mumble.channels.find_by_name(self.channel).move_in()
+        self.join_channel()
         self.mumble.set_bandwidth(200000)
 
         self.is_ducking = False
@@ -196,6 +192,13 @@ class MumbleBot:
 
     def set_comment(self):
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
+
+    def join_channel(self):
+        if self.channel:
+            if '/' in self.channel:
+                self.mumble.channels.find_by_tree(self.channel.split('/')).move_in()
+            else:
+                self.mumble.channels.find_by_name(self.channel).move_in()
 
     # =======================
     #         Message
