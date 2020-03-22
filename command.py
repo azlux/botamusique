@@ -97,6 +97,7 @@ song_shortlist = []
 def cmd_joinme(bot, user, text, command, parameter):
     global log
 
+    print(bot.mumble.users[text.actor]['channel_id'])
     bot.mumble.users.myself.move_in(
         bot.mumble.users[text.actor]['channel_id'], token=parameter)
 

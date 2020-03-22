@@ -134,7 +134,7 @@
                                         <div id="filter-path" class="form-group row">
                                             <label class="col-sm-2 col-form-label" for="filter-dir" style="max-width: none">Directory</label>
                                             <div class="col-sm-8">
-                                                <select class="form-control form-control-sm" id="filter-dir" style="margin-top:5px;">
+                                                <select class="form-control form-control-sm" id="filter-dir" style="margin-top:5px;" disabled>
                                                         <option value="">.</option>
                                                         {% for dir in music_library.get_subdirs_recursively() %}
                                                         <option value="{{ dir }}">{{ dir }}</option>

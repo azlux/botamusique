@@ -27,6 +27,8 @@ class Condition:
         if self._order_by:
             sql += f" ORDEY BY {self._order_by}"
 
+        print(sql)
+        print(self.filler)
         return sql
 
     def or_equal(self, column, equals_to, case_sensitive=True):
@@ -94,12 +96,30 @@ class Condition:
 
         return self
 
+    def or_not_sub_condition(self, sub_condition):
+        self.filler.extend(sub_condition.filler)
+        if self._sql:
+            self._sql += f"OR NOT ({sub_condition.sql()})"
+        else:
+            self._sql += f"NOT ({sub_condition.sql()})"
+
+        return self
+
     def and_sub_condition(self, sub_condition):
         self.filler.extend(sub_condition.filler)
         if self._sql:
             self._sql += f"AND ({sub_condition.sql()})"
         else:
             self._sql += f"({sub_condition.sql()})"
+
+        return self
+
+    def and_not_sub_condition(self, sub_condition):
+        self.filler.extend(sub_condition.filler)
+        if self._sql:
+            self._sql += f"AND NOT({sub_condition.sql()})"
+        else:
+            self._sql += f"NOT ({sub_condition.sql()})"
 
         return self
 
@@ -323,14 +343,27 @@ class MusicDatabase:
             del music_dict['path']
         del music_dict['keywords']
 
-        cursor.execute("INSERT OR REPLACE INTO music (id, type, title, metadata, tags, path, keywords) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                       (id,
-                        type,
-                        title,
-                        json.dumps(music_dict),
-                        tags,
-                        path,
-                        keywords))
+        existed = cursor.execute("SELECT TRUE FROM music WHERE id=?", (id,)).fetchall()
+        if len(existed) == 0:
+            cursor.execute(
+                "INSERT INTO music (id, type, title, metadata, tags, path, keywords) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (id,
+                 type,
+                 title,
+                 json.dumps(music_dict),
+                 tags,
+                 path,
+                 keywords))
+        else:
+            cursor.execute("UPDATE music SET type=:type, title=:title, metadata=:metadata, tags=:tags, "
+                           "path=:path, keywords=:keywords WHERE id=:id",
+                           {'id': id,
+                            'type': type,
+                            'title': title,
+                            'metadata': json.dumps(music_dict),
+                            'tags': tags,
+                            'path': path,
+                            'keywords': keywords})
 
         if not _conn:
             conn.commit()
@@ -423,7 +456,7 @@ class MusicDatabase:
         conn.commit()
         conn.close()
 
-    def query_tags(self, condition):
+    def query_tags(self, condition: Condition):
         # TODO: Can we keep a index of tags?
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -441,11 +474,17 @@ class MusicDatabase:
 
         return lookup
 
-    def query_random_music(self, count):
+    def query_random_music(self, count, condition: Condition = None):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
+        results = []
+
+        if condition is None:
+            condition = Condition().and_not_sub_condition(Condition().and_equal('id', 'info'))
+
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
-                                 "WHERE id IN (SELECT id FROM music WHERE id != 'info' ORDER BY RANDOM() LIMIT ?)", (count,)).fetchall()
+                                 "WHERE id IN (SELECT id FROM music WHERE %s ORDER BY RANDOM() LIMIT ?) ORDER BY RANDOM()"
+                                 % condition.sql(), condition.filler + [count]).fetchall()
         conn.close()
 
         return self._result_to_dict(results)

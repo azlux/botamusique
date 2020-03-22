@@ -6,6 +6,7 @@ import time
 
 import variables as var
 from media.cache import CachedItemWrapper, get_cached_wrapper_from_dict, get_cached_wrapper_by_id
+from database import Condition
 
 
 def get_playlist(mode, _list=None, index=None):
@@ -361,7 +362,10 @@ class AutoPlaylist(OneshotPlaylist):
         self.mode = "autoplay"
 
     def refresh(self):
-        dicts = var.music_db.query_random_music(var.config.getint("bot", "autoplay_length", fallback=5))
+        dicts = var.music_db.query_random_music(var.config.getint("bot", "autoplay_length", fallback=5),
+                                                Condition().and_not_sub_condition(
+                                                    Condition().and_like('tags', "%don't autoplay,%")))
+
         if dicts:
             _list = [get_cached_wrapper_from_dict(var.bot, _dict, "AutoPlay") for _dict in dicts]
             self.from_list(_list, -1)

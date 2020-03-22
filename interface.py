@@ -399,7 +399,8 @@ def build_library_query_condition(form):
 
         tags = form['tags'].split(",")
         for tag in tags:
-            condition.and_like("tags", f"%{tag},%", case_sensitive=False)
+            if tag:
+                condition.and_like("tags", f"%{tag},%", case_sensitive=False)
 
         _keywords = form['keywords'].split(" ")
         keywords = []

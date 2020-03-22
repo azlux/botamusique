@@ -1,14 +1,22 @@
-bot = None
-playlist = None
-cache = None
+from typing import Type, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import mumbleBot
+    import media.playlist
+    import media.cache
+    import database
+
+bot: 'mumbleBot.MumbleBot' = None
+playlist: Type['media.playlist.BasePlaylist']  = None
+cache: 'media.cache.MusicCache' = None
 
 user = ""
 is_proxified = False
 
 dbfile = None
 db = None
-music_db = None
-config = None
+music_db: 'database.MusicDatabase' = None
+config: 'database.SettingsDatabase' = None
 
 bot_logger = None
 
