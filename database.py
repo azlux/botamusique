@@ -498,7 +498,7 @@ class MusicDatabase:
                 music_dict['title'] = result[2]
                 music_dict['id'] = result[0]
                 music_dict['tags'] = result[4].strip(",").split(",")
-                if result[5]:
+                if 'path' not in music_dict or result[5]:
                     music_dict['path'] = result[5]
                 music_dict['keywords'] = result[6]
                 if not music_dict['tags'][0]:
