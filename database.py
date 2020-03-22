@@ -24,6 +24,8 @@ class Condition:
             sql = "TRUE"
         if self._order_by:
             sql += f" ORDER BY {self._order_by}"
+            if self._desc:
+                sql += " DESC"
         if self._limit:
             sql += f" LIMIT {self._limit}"
         if self._offset:
@@ -31,7 +33,6 @@ class Condition:
         if self.has_regex and conn:
             conn.create_function("REGEXP", 2, self._regexp)
 
-        print(sql)
         return sql
 
     @staticmethod
@@ -179,8 +180,9 @@ class Condition:
 
         return self
 
-    def order_by(self, order_by):
+    def order_by(self, order_by, desc=False):
         self._order_by = order_by
+        self._desc = desc
 
         return self
 

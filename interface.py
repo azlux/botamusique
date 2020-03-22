@@ -389,6 +389,8 @@ def build_library_query_condition(form):
         for keyword in keywords:
             condition.and_like("title", f"%{keyword}%", case_sensitive=False)
 
+        condition.order_by('create_at', desc=True)
+
         return condition
     except KeyError:
         abort(400)
