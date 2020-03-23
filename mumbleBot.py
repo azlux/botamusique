@@ -149,10 +149,10 @@ class MumbleBot:
                                                self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
-        if var.config.get("bot", "when_nobody_in_channel") in ['pause', 'stop', 'nothing']:
-            self.log.warn('Config "when_nobody_in_channel" is not on of "pause", "stop" or "nothing", falling back to "nothing".')
+        if var.config.get("bot", "when_nobody_in_channel") not in ['pause', 'pause_resume', 'stop', 'nothing']:
+            self.log.warn('Config "when_nobody_in_channel" is not on of "pause", "pause_resume", "stop" or "nothing", falling back to "nothing".')
 
-        if var.config.get("bot", "when_nobody_in_channel", fallback='nothing') in ['pause', 'stop']:
+        if var.config.get("bot", "when_nobody_in_channel", fallback='nothing') in ['pause', 'pause_resume', 'stop']:
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, self.users_changed)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, self.users_changed)
         
@@ -327,16 +327,22 @@ class MumbleBot:
 
     def users_changed(self, user, message):
         own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
-        if len(own_channel.get_users()) > 1: 
-            return
-        
-        # if the bot is the only user left in the channel
-        self.log.info('bot: Other users in the channel left. Stopping music now.')
-        
-        if var.config.get("bot", "when_nobody_in_channel") == "pause":
-            self.pause()
-        else:
-            self.clear()
+        # only check if there is one more user currently in the channel
+        # else when the music is paused and somebody joins, music would start playing again
+        if len(own_channel.get_users()) == 2:
+            if var.config.get("bot", "when_nobody_in_channel") == "pause_resume":
+                self.resume()
+            elif var.config.get("bot", "when_nobody_in_channel") == "pause":
+                self.send_msg('Music was paused after everyone left. !play to resume');
+            
+        elif len(own_channel.get_users()) == 1: 
+            # if the bot is the only user left in the channel
+            self.log.info('bot: Other users in the channel left. Stopping music now.')
+
+            if var.config.get("bot", "when_nobody_in_channel") == "stop":
+                self.clear()
+            else:
+                self.pause()
 
     # =======================
     #   Launch and Download
