@@ -58,7 +58,7 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
-web.config['TEMPLATES_AUTO_RELOAD'] = True
+#web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
 
@@ -416,18 +416,8 @@ def library():
             if not total_count:
                 abort(404)
 
-            page_count =  math.ceil(total_count / ITEM_PER_PAGE)
-
-            current_page = int(request.form['page']) if 'page' in request.form else 1
-            if current_page <= page_count:
-                condition.offset((current_page - 1) * ITEM_PER_PAGE)
-            else:
-                current_page = 1
-
-            condition.limit(ITEM_PER_PAGE)
-            items = dicts_to_items(var.bot, var.music_db.query_music(condition))
-
             if request.form['action'] == 'add':
+                items = dicts_to_items(var.bot, var.music_db.query_music(condition))
                 for item in items:
                     music_wrapper = get_cached_wrapper(item, user)
                     var.playlist.append(music_wrapper)
@@ -436,6 +426,7 @@ def library():
 
                 return redirect("./", code=302)
             elif request.form['action'] == 'delete':
+                items = dicts_to_items(var.bot, var.music_db.query_music(condition))
                 for item in items:
                     var.playlist.remove_by_id(item.id)
                     item = var.cache.get_item_by_id(var.bot, item.id)
@@ -452,6 +443,17 @@ def library():
                 time.sleep(0.1)
                 return redirect("./", code=302)
             else:
+                page_count = math.ceil(total_count / ITEM_PER_PAGE)
+
+                current_page = int(request.form['page']) if 'page' in request.form else 1
+                if current_page <= page_count:
+                    condition.offset((current_page - 1) * ITEM_PER_PAGE)
+                else:
+                    current_page = 1
+
+                condition.limit(ITEM_PER_PAGE)
+                items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+
                 results = []
                 for item in items:
                     result = {}
