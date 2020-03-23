@@ -387,7 +387,7 @@ def build_library_query_condition(form):
                 keywords.append(kw)
 
         for keyword in keywords:
-            condition.and_like("title", f"%{keyword}%", case_sensitive=False)
+            condition.and_like("keywords", f"%{keyword}%", case_sensitive=False)
 
         condition.order_by('create_at', desc=True)
 
