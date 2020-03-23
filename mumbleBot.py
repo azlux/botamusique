@@ -149,10 +149,13 @@ class MumbleBot:
                                                self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
-        if not var.db.has_option("bot", "auto_stop") and var.config.getboolean("bot", "auto_stop", fallback=False)\
-                or var.config.getboolean("bot", "auto_stop"):
+        if var.config.get("bot", "when_nobody_in_channel") in ['pause', 'stop', 'nothing']:
+            self.log.warn('Config "when_nobody_in_channel" is not on of "pause", "stop" or "nothing", falling back to "nothing".')
+
+        if var.config.get("bot", "when_nobody_in_channel", fallback='nothing') in ['pause', 'stop']:
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, self.users_changed)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, self.users_changed)
+        
         # Debug use
         self._loop_status = 'Idle'
         self._display_rms = False
@@ -324,9 +327,15 @@ class MumbleBot:
 
     def users_changed(self, user, message):
         own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
+        if len(own_channel.get_users()) > 1: 
+            return
+        
         # if the bot is the only user left in the channel
-        if len(own_channel.get_users()) == 1: 
-            self.log.info('Other users in the channel left. Stopping music now.')
+        self.log.info('bot: Other users in the channel left. Stopping music now.')
+        
+        if var.config.get("bot", "when_nobody_in_channel") == "pause":
+            self.pause()
+        else:
             self.clear()
 
     # =======================
