@@ -677,8 +677,7 @@ if __name__ == '__main__':
     var.bot = MumbleBot(args)
     command.register_all_commands(var.bot)
 
-    if var.config.get("bot", "refresh_cache_on_startup", fallback=True)\
-            or not var.db.has_option("dir_cache", "files"):
+    if var.config.get("bot", "refresh_cache_on_startup", fallback=True):
         var.cache.build_dir_cache(var.bot)
 
     # load playlist
