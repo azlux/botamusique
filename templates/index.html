@@ -743,7 +743,7 @@
                     data: data,
                     statusCode: {
                         200: processResults,
-                        404: function(){
+                        204: function(){
                             lib_loading.hide();
                             lib_empty.show();
                             page_ul.empty();

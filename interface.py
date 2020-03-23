@@ -414,7 +414,7 @@ def library():
                 pass
 
             if not total_count:
-                abort(404)
+                abort(204)
 
             if request.form['action'] == 'add':
                 items = dicts_to_items(var.bot, var.music_db.query_music(condition))
