@@ -333,8 +333,8 @@ class MumbleBot:
             if var.config.get("bot", "when_nobody_in_channel") == "pause_resume":
                 self.resume()
             elif var.config.get("bot", "when_nobody_in_channel") == "pause":
-                self.send_msg('Music was paused after everyone left. !play to resume');
-            
+                self.send_msg(constants.strings("auto_paused"))
+
         elif len(own_channel.get_users()) == 1: 
             # if the bot is the only user left in the channel
             self.log.info('bot: Other users in the channel left. Stopping music now.')
