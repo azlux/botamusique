@@ -708,7 +708,7 @@ def cmd_remove(bot, user, text, command, parameter):
         if index == var.playlist.current_index:
             removed = var.playlist[index]
             bot.send_msg(constants.strings('removing_item',
-                                           item=removed.format_short_string()), text)
+                                           item=removed.format_title()), text)
             log.info("cmd: delete from playlist: " + removed.format_debug_string())
 
             var.playlist.remove(index)
@@ -781,10 +781,10 @@ def cmd_queue(bot, user, text, command, parameter):
                 tags = "<sup>{}</sup>".format(", ".join(music.item().tags))
             if i == var.playlist.current_index:
                 newline = "<b style='color:orange'>{} ({}) {} </b> {}".format(i + 1, music.display_type(),
-                                                                              music.format_short_string(), tags)
+                                                                              music.format_title(), tags)
             else:
                 newline = '<b>{}</b> ({}) {} {}'.format(i + 1, music.display_type(),
-                                                        music.format_short_string(), tags)
+                                                        music.format_title(), tags)
 
             msgs.append(newline)
 
@@ -883,7 +883,7 @@ def cmd_add_tag(bot, user, text, command, parameter):
                                                       var.playlist[int(index) - 1].format_debug_string()))
             bot.send_msg(constants.strings("added_tags",
                                            tags=", ".join(tags),
-                                           song=var.playlist[int(index) - 1].format_short_string()), text)
+                                           song=var.playlist[int(index) - 1].format_title()), text)
             return
 
         elif index == "*":
@@ -922,13 +922,13 @@ def cmd_remove_tag(bot, user, text, command, parameter):
                                                                var.playlist[int(index) - 1].format_debug_string()))
                 bot.send_msg(constants.strings("removed_tags",
                                                tags=", ".join(tags),
-                                               song=var.playlist[int(index) - 1].format_short_string()), text)
+                                               song=var.playlist[int(index) - 1].format_title()), text)
                 return
             else:
                 var.playlist[int(index) - 1].clear_tags()
                 log.info("cmd: clear tags from song %s" % (var.playlist[int(index) - 1].format_debug_string()))
                 bot.send_msg(constants.strings("cleared_tags",
-                                               song=var.playlist[int(index) - 1].format_short_string()), text)
+                                               song=var.playlist[int(index) - 1].format_title()), text)
                 return
 
         elif index == "*":

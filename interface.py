@@ -7,11 +7,14 @@ import util
 import math
 import os
 import os.path
-import shutil
-from werkzeug.utils import secure_filename
 import errno
+from typing import Type
 import media
-from media.item import dicts_to_items, dict_to_item
+from media.item import dicts_to_items, dict_to_item, BaseItem
+from media.file import FileItem
+from media.url import URLItem
+from media.url_from_playlist import PlaylistURLItem
+from media.radio import RadioItem
 from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags, \
     get_cached_wrapper
 from database import MusicDatabase, Condition
@@ -58,7 +61,7 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
-#web.config['TEMPLATES_AUTO_RELOAD'] = True
+web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
 
@@ -160,11 +163,7 @@ def index():
 @requires_auth
 def playlist():
     if len(var.playlist) == 0:
-        return jsonify({'items': [render_template('playlist.html',
-                                                  m=False,
-                                                  index=None
-                                                  )]
-                        })
+        return ('', 204)
 
     tags_color_lookup = build_tags_color_lookup() # TODO: cached this?
     items = []
@@ -174,27 +173,55 @@ def playlist():
         for tag in item_wrapper.item().tags:
             tag_tuples.append([tag, tags_color_lookup[tag]])
 
-        items.append(render_template('playlist.html',
-                                     index=index,
-                                     tag_tuples=tag_tuples,
-                                     m=item_wrapper.item(),
-                                     playlist=var.playlist
-                                     )
-                     )
+        item: Type[BaseItem] = item_wrapper.item()
 
-    return jsonify({'items': items})
+        title = item.format_title()
+        artist = "??"
+        path = ""
+        if isinstance(item, FileItem):
+            path = item.path
+            if item.artist:
+                artist = item.artist
+        elif isinstance(item, URLItem):
+            path = f" <a href=\"{ item.url }\"><i>{ item.url }</i></a>"
+        elif isinstance(item, PlaylistURLItem):
+            path = f" <a href=\"{ item.url }\"><i>{ item.url }</i></a>"
+            artist = f" <a href=\"{ item.playlist_url }\"><i>{ item.playlist_title }</i></a>"
+        elif isinstance(item, RadioItem):
+            path = f" <a href=\"{ item.url }\"><i>{ item.url }</i></a>"
+
+        thumb = ""
+        if item.type != 'radio' and item.thumbnail:
+            thumb = f"data:image/PNG;base64,{item.thumbnail}"
+        else:
+            thumb = "static/image/unknown-album.png"
+
+        items.append({
+            'index': index,
+            'id': item.id,
+            'type': item.display_type(),
+            'path': path,
+            'title': title,
+            'artist': artist,
+            'thumbnail': thumb,
+            'tags': tag_tuples,
+        })
+
+    return jsonify({'items': items, 'current_index': var.playlist.current_index})
 
 
 def status():
     if len(var.playlist) > 0:
         return jsonify({'ver': var.playlist.version,
+                        'current_index': var.playlist.current_index,
                         'empty': False,
                         'play': not var.bot.is_pause,
                         'mode': var.playlist.mode})
     else:
         return jsonify({'ver': var.playlist.version,
+                        'current_index': var.playlist.current_index,
                         'empty': True,
-                        'play': False,
+                        'play': not var.bot.is_pause,
                         'mode': var.playlist.mode})
 
 

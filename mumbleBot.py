@@ -450,7 +450,7 @@ class MumbleBot:
                     self.log.error("bot: with ffmpeg error: %s", self.last_ffmpeg_err)
                     self.last_ffmpeg_err = ""
 
-                    self.send_msg(constants.strings('unable_play', item=current.format_short_string()))
+                    self.send_msg(constants.strings('unable_play', item=current.format_title()))
                     var.playlist.remove_by_id(current.id)
                     var.cache.free_and_delete(current.id)
 
@@ -466,7 +466,7 @@ class MumbleBot:
                                 self.log.info("bot: current music isn't ready, start downloading.")
                                 self.wait_for_downloading = True
                                 var.playlist.async_prepare(var.playlist.current_index)
-                                self.send_msg(constants.strings('download_in_progress', item=current.format_short_string()))
+                                self.send_msg(constants.strings('download_in_progress', item=current.format_title()))
                         else:
                             var.playlist.remove_by_id(current.id)
                             var.cache.free_and_delete(current.id)

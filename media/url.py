@@ -242,7 +242,7 @@ class URLItem(BaseItem):
 
         return display
 
-    def format_short_string(self):
+    def format_title(self):
         return self.title if self.title.strip() else self.url
 
     def display_type(self):

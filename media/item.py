@@ -95,7 +95,7 @@ class BaseItem:
     def format_current_playing(self, user):
         return self.id
 
-    def format_short_string(self):
+    def format_title(self):
         return self.title
 
     def format_debug_string(self):

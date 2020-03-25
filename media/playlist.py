@@ -90,8 +90,6 @@ class BasePlaylist(list):
         if len(self) == 0:
             return False
 
-        self.version += 1
-
         if self.current_index < len(self) - 1:
             self.current_index += 1
             return self[self.current_index]
@@ -99,7 +97,6 @@ class BasePlaylist(list):
             return False
 
     def point_to(self, index):
-        self.version += 1
         if -1 <= index < len(self):
             self.current_index = index
 
@@ -134,11 +131,13 @@ class BasePlaylist(list):
         return removed
 
     def remove_by_id(self, id):
-        self.version += 1
         to_be_removed = []
         for index, wrapper in enumerate(self):
             if wrapper.id == id:
                 to_be_removed.append(index)
+
+        if to_be_removed:
+            self.version += 1
 
         for index in to_be_removed:
             self.remove(index)
@@ -312,8 +311,6 @@ class RepeatPlaylist(BasePlaylist):
         if len(self) == 0:
             return False
 
-        self.version += 1
-
         if self.current_index < len(self) - 1:
             self.current_index += 1
             return self[self.current_index]
@@ -345,12 +342,11 @@ class RandomPlaylist(BasePlaylist):
         if len(self) == 0:
             return False
 
-        self.version += 1
-
         if self.current_index < len(self) - 1:
             self.current_index += 1
             return self[self.current_index]
         else:
+            self.version += 1
             self.randomize()
             self.current_index = 0
             return self[0]

@@ -89,6 +89,44 @@
                                         <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
                                     </td>
                                 </tr>
+                                <tr id="playlist-empty" style="display: none;">
+                                    <td colspan="4" style="text-align:center;">
+                                        <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                                    </td>
+                                </tr>
+                                <tr class="playlist-item-template" style="display: none;">
+                                    <input hidden type="text" class="playlist-item-id" value="" />
+                                    <th scope="row" class="playlist-item-index"></th>
+                                    <td>
+                                        <div class="playlist-title">
+                                            <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png"/>
+                                        </div>
+                                        <div class="playlist-artwork">
+                                            <b class="playlist-item-title"></b>
+                                            <span class="playlist-item-type badge badge-secondary"></span>
+                                            <br />
+                                            <span class="playlist-item-artist"></span>
+                                            <br />
+
+                                            <div class="playlist-item-tags">
+                                                <a class="playlist-item-edit tag-space tag-click"><i class="fas fa-edit" style="color: #AAAAAA"></i></a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <small class="playlist-item-path"></small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="playlist-item-play btn btn-info btn-sm btn-space">
+                                                <i class="fa fa-play" aria-hidden="true"></i>
+                                            </button>
+                                            <button type="button" class="playlist-item-trash btn btn-danger btn-sm btn-space">
+                                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
 
@@ -410,7 +448,34 @@
             $(event.target).closest('form').submit();
         });
 
+
+        // ----------------------
+        // ------ Playlist ------
+        // ----------------------
+
+
+        var pl_item_template = $(".playlist-item-template");
+        var pl_id_element = $(".playlist-item-id");
+        var pl_index_element = $(".playlist-item-index");
+        var pl_title_element = $(".playlist-item-title");
+        var pl_artist_element = $(".playlist-item-artist");
+        var pl_thumb_element = $(".playlist-item-thumbnail");
+        var pl_type_element = $(".playlist-item-type");
+        var pl_path_element = $(".playlist-item-path");
+
+        var pl_tag_edit_element = $(".playlist-item-edit");
+
+        var notag_element = $(".library-item-notag"); // these elements are shared with library
+        var tag_element = $(".library-item-tag");
+
+        var add_tag_modal = $("#addTagModal");
+
+        var playlist_loading = $("#playlist-loading");
+        var playlist_table = $("#playlist-table");
+        var playlist_empty = $("#playlist-empty");
+
         var playlist_ver = 0;
+        var playlist_current_index = 0;
 
         function request(_url, _data, refresh=false){
             console.log(_data);
@@ -433,36 +498,122 @@
             }
         }
 
-        var loading = $("#playlist-loading");
-        var table = $("#playlist-table");
-        function displayPlaylist(data){
-            // console.info(data);
-            table.animate({opacity: 0}, 200, function(){
-                loading.hide();
-                $("#playlist-table .playlist-item").remove();
+        function addPlaylistItem(item){
+            pl_id_element.val(item.id);
+            pl_index_element.html(item.index + 1);
+            pl_title_element.html(item.title);
+            pl_artist_element.html(item.artist);
+            pl_thumb_element.attr("src", item.thumbnail);
+            pl_type_element.html(item.type);
+            pl_path_element.html(item.path);
 
-                var items = data.items;
-                $.each(items, function(index, item){
-                    table.append(item);
+            var item_copy = pl_item_template.clone();
+            item_copy.attr("id", "playlist-item-" + item.index);
+            item_copy.addClass("playlist-item");
+
+            var tags = item_copy.find(".playlist-item-tags");
+            tags.empty();
+
+            var tag_edit_copy = pl_tag_edit_element.clone();
+            tag_edit_copy.click(function(){
+                addTagModalShow(item.id, item.title, item.tags);
+            });
+            tag_edit_copy.appendTo(tags);
+
+            if(item.tags.length > 0){
+                item.tags.forEach(function (tag_tuple){
+                    tag_copy = tag_element.clone();
+                    tag_copy.html(tag_tuple[0]);
+                    tag_copy.addClass("badge-" + tag_tuple[1]);
+                    tag_copy.appendTo(tags);
                 });
+            }else{
+                tag_copy = notag_element.clone();
+                tag_copy.appendTo(tags);
+            }
 
-                table.animate({opacity: 1}, 200);
+            item_copy.appendTo(playlist_table);
+            item_copy.show();
+        }
+
+        function displayPlaylist(data){
+            playlist_table.animate({opacity: 0}, 200, function(){
+                playlist_loading.hide();
+                $(".playlist-item").remove();
+                var items = data.items;
+                items.forEach(
+                    function (item) {
+                        addPlaylistItem(item);
+                        bindPlaylistEvent();
+                    }
+                );
+
+                displayActiveItem(data.current_index);
+                playlist_table.animate({opacity: 1}, 200);
             });
         }
 
+        function displayActiveItem(current_index){
+            $(".playlist-item").removeClass("table-active");
+            $("#playlist-item-"+current_index).addClass("table-active");
+        }
+
         function updatePlaylist(){
-            table.animate({opacity: 0}, 200, function(){
-                loading.show();
+            playlist_table.animate({opacity: 0}, 200, function(){
+                playlist_empty.hide();
+                playlist_loading.show();
                 $("#playlist-table .playlist-item").css("opacity", 0);
                 $.ajax({
                     type: 'GET',
                     url: 'playlist',
                     statusCode : {
-                        200: displayPlaylist
+                        200: displayPlaylist,
+                        204: function(){
+                            playlist_loading.hide();
+                            playlist_empty.show();
+                            $(".playlist-item").remove();
+                        }
                     }
                 });
-                table.animate({opacity: 1}, 200);
+                playlist_table.animate({opacity: 1}, 200);
             });
+        }
+
+        function checkForPlaylistUpdate(){
+            $.ajax({
+                type: 'POST',
+                url : 'post',
+                statusCode : {
+                    200 : function(data){
+                        if(data.ver !== playlist_ver){
+                            playlist_ver = data.ver;
+                            updatePlaylist();
+                        }
+                        if(data.current_index !== playlist_current_index){
+                            playlist_current_index = data.current_index;
+                            displayActiveItem(data.current_index);
+                        }
+                        updateControls(data.empty, data.play, data.mode);
+                    }
+                }
+            });
+        }
+
+        function bindPlaylistEvent() {
+            $(".playlist-item-play").unbind().click(
+                function (e) {
+                    request('post', {
+                        'play_music': ($(e.currentTarget).parent().parent().parent().find(".playlist-item-index").html() - 1)
+                    });
+                }
+            );
+            $(".playlist-item-trash").unbind().click(
+                function (e) {
+                    request('post', {
+                        'delete_music': ($(e.currentTarget).parent().parent().parent().find(".playlist-item-index").html() - 1)
+                    });
+                }
+            );
         }
 
         function updateControls(empty, play, mode){
@@ -531,23 +682,11 @@
         }
 
         // Check the version of playlist to see if update is needed.
-        setInterval(function(){
-            $.ajax({
-                type: 'POST',
-                url : 'post',
-                statusCode : {
-                    200 : function(data){
-                        if(data.ver !== playlist_ver){
-                            playlist_ver = data.ver;
-                            updatePlaylist();
-                        }
-                        updateControls(data.empty, data.play, data.mode);
-                    }
-                }
-            });
-        } , 3000);
+        setInterval(checkForPlaylistUpdate , 3000);
 
+        // ---------------------
         // ------ Browser ------
+        // ---------------------
         var filter_file = false;
         var filter_url = false;
         var filter_radio = false;
@@ -665,10 +804,10 @@
         var path_element = $(".library-item-path");
 
         var tag_edit_element = $(".library-item-edit");
-        var notag_element = $(".library-item-notag");
-        var tag_element = $(".library-item-tag");
+        //var notag_element = $(".library-item-notag");
+        //var tag_element = $(".library-item-tag");
 
-        var add_tag_modal = $("#addTagModal");
+        //var add_tag_modal = $("#addTagModal");
 
         function addResultItem(item){
             id_element.val(item.id);

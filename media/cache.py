@@ -183,7 +183,7 @@ class CachedItemWrapper:
         return self.item().format_song_string(self.user)
 
     def format_short_string(self):
-        return self.item().format_short_string()
+        return self.item().format_title()
 
     def format_debug_string(self):
         return self.item().format_debug_string()

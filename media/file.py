@@ -151,7 +151,7 @@ class FileItem(BaseItem):
 
     def format_debug_string(self):
         return "[file] {descrip} ({path})".format(
-            descrip=self.format_short_string(),
+            descrip=self.format_title(),
             path=self.path
         )
 
@@ -171,7 +171,7 @@ class FileItem(BaseItem):
 
         return display
 
-    def format_short_string(self):
+    def format_title(self):
         title = self.title if self.title else self.path
         if self.artist:
             return self.artist + " - " + title

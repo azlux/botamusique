@@ -4,7 +4,13 @@
 .tag-space{margin-right:3px;}
 .playlist-title-td{width:60%}
 .playlist-title{float:left; }
-.playlist-artwork{float:left; margin-left:10px;}
+.playlist-item {transition: all 0.2s ease-in-out;}
+.playlist-artwork{
+   float:left;
+   margin-left:10px;
+   white-space: nowrap;
+   overflow: hidden;
+}
 .tag-click{
    cursor:pointer;
    transition: 400ms;
