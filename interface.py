@@ -165,10 +165,23 @@ def playlist():
     if len(var.playlist) == 0:
         return ('', 204)
 
+    DEFAULT_DISPLAY_COUNT = 11
+    _from = 0
+    _to = 10
+
+    if 'range_from' in request.args and 'range_to' in request.args:
+        _from = int(request.args['range_from'])
+        _to = int(request.args['range_to'])
+    else:
+        if var.playlist.current_index - int(DEFAULT_DISPLAY_COUNT/2) > 0:
+            _from = var.playlist.current_index - int(DEFAULT_DISPLAY_COUNT/2)
+            _to = _from - 1 + DEFAULT_DISPLAY_COUNT
+
+
     tags_color_lookup = build_tags_color_lookup() # TODO: cached this?
     items = []
 
-    for index, item_wrapper in enumerate(var.playlist):
+    for index, item_wrapper in enumerate(var.playlist[_from: _to + 1]):
         tag_tuples = []
         for tag in item_wrapper.item().tags:
             tag_tuples.append([tag, tags_color_lookup[tag]])
@@ -197,7 +210,7 @@ def playlist():
             thumb = "static/image/unknown-album.png"
 
         items.append({
-            'index': index,
+            'index': _from + index,
             'id': item.id,
             'type': item.display_type(),
             'path': path,
@@ -207,7 +220,12 @@ def playlist():
             'tags': tag_tuples,
         })
 
-    return jsonify({'items': items, 'current_index': var.playlist.current_index})
+    return jsonify({
+        'items': items,
+        'current_index': var.playlist.current_index,
+        'length': len(var.playlist),
+        'start_from': _from
+    })
 
 
 def status():
@@ -581,7 +599,6 @@ def upload():
 def download():
     global log
 
-    print('id' in request.args)
     if 'id' in request.args and request.args['id']:
         item = dicts_to_items(var.bot,
                                var.music_db.query_music(

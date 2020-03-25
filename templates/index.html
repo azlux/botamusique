@@ -94,6 +94,11 @@
                                         <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
                                     </td>
                                 </tr>
+                                <tr id="playlist-expand" class="table-dark" style="display: none;">
+                                    <td colspan="4" style="text-align:center;">
+                                        <a class="text-muted" href="javascript:">See items <span class="playlist-expand-item-range"></span> on the playlist.</a>
+                                    </td>
+                                </tr>
                                 <tr class="playlist-item-template" style="display: none;">
                                     <input hidden type="text" class="playlist-item-id" value="" />
                                     <th scope="row" class="playlist-item-index"></th>
@@ -473,9 +478,13 @@
         var playlist_loading = $("#playlist-loading");
         var playlist_table = $("#playlist-table");
         var playlist_empty = $("#playlist-empty");
+        var playlist_expand = $("#playlist-expand");
 
         var playlist_ver = 0;
         var playlist_current_index = 0;
+
+        var playlist_range_from = 0;
+        var playlist_range_to = 0;
 
         function request(_url, _data, refresh=false){
             console.log(_data);
@@ -541,14 +550,37 @@
                 playlist_loading.hide();
                 $(".playlist-item").remove();
                 var items = data.items;
+                var length = data.length;
+                var start_from = data.start_from;
+                playlist_range_from = start_from;
+                playlist_range_to = start_from + length - 1;
+
+                if(items.length < length && start_from > 0) {
+                    _from = start_from - 5;
+                    _from = _from > 0 ? _from : 0;
+                    _to = start_from - 1;
+                    if(_to > 0) {
+                        insertExpandPrompt(_from, start_from + length - 1, _from, _to);
+                    }
+                }
+
                 items.forEach(
                     function (item) {
                         addPlaylistItem(item);
-                        bindPlaylistEvent();
                     }
                 );
 
+                if(items.length < length && start_from + items.length < length) {
+                    _from = start_from + items.length;
+                    _to = start_from + items.length - 1 + 10;
+                    _to = _to < length - 1 ? _to : length - 1;
+                    if(start_from + items.length < _to) {
+                        insertExpandPrompt(start_from, _to, _from, _to);
+                    }
+                }
+
                 displayActiveItem(data.current_index);
+                bindPlaylistEvent();
                 playlist_table.animate({opacity: 1}, 200);
             });
         }
@@ -558,14 +590,40 @@
             $("#playlist-item-"+current_index).addClass("table-active");
         }
 
+        function insertExpandPrompt(real_from, real_to ,display_from, display_to){
+            var expand_copy = playlist_expand.clone();
+            if(display_from !== display_to){
+                expand_copy.find(".playlist-expand-item-range").html((display_from+1) + "~" + (display_to+1));
+            }else{
+                expand_copy.find(".playlist-expand-item-range").html(display_from);
+            }
+
+            expand_copy.addClass('playlist-item');
+            expand_copy.appendTo(playlist_table);
+            expand_copy.click(function(){
+                updatePlaylist();
+                playlist_range_from = real_from;
+                playlist_range_to = real_to;
+            });
+            expand_copy.show();
+        }
+
         function updatePlaylist(){
             playlist_table.animate({opacity: 0}, 200, function(){
                 playlist_empty.hide();
                 playlist_loading.show();
                 $("#playlist-table .playlist-item").css("opacity", 0);
+                data = {};
+                if(!(playlist_range_from === 0 && playlist_range_to === 0)) {
+                    data = {
+                        range_from: playlist_range_from,
+                        range_to: playlist_range_to
+                    };
+                }
                 $.ajax({
                     type: 'GET',
                     url: 'playlist',
+                    data: data,
                     statusCode : {
                         200: displayPlaylist,
                         204: function(){
@@ -587,11 +645,19 @@
                     200 : function(data){
                         if(data.ver !== playlist_ver){
                             playlist_ver = data.ver;
+                            playlist_range_from = 0;
+                            playlist_range_to = 0;
                             updatePlaylist();
                         }
                         if(data.current_index !== playlist_current_index){
-                            playlist_current_index = data.current_index;
-                            displayActiveItem(data.current_index);
+                            if(data.current_index > playlist_range_to || data.current_index < playlist_range_from){
+                                playlist_range_from = 0;
+                                playlist_range_to = 0;
+                                updatePlaylist();
+                            }else{
+                                playlist_current_index = data.current_index;
+                                displayActiveItem(data.current_index);
+                            }
                         }
                         updateControls(data.empty, data.play, data.mode);
                     }
