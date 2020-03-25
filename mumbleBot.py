@@ -70,7 +70,7 @@ class MumbleBot:
         self.last_ffmpeg_err = ""
         self.read_pcm_size = 0
         # self.download_threads = []
-        self.wait_for_downloading = False  # flag for the loop are waiting for download to complete in the other thread
+        self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
 
         if var.config.getboolean("webinterface", "enabled"):
             wi_addr = var.config.get("webinterface", "listening_addr")
@@ -351,7 +351,7 @@ class MumbleBot:
     def launch_music(self):
         if var.playlist.is_empty():
             return
-        assert self.wait_for_downloading is False
+        assert self.wait_for_ready is False
 
         music_wrapper = var.playlist.current_item()
         uri = music_wrapper.uri()
@@ -455,37 +455,33 @@ class MumbleBot:
                     var.cache.free_and_delete(current.id)
 
                 # move to the next song.
-                if not self.wait_for_downloading:
+                if not self.wait_for_ready: # if wait_for_ready flag is not true, move to the next song.
                     if var.playlist.next():
                         current = var.playlist.current_item()
                         if current.validate():
-                            if current.is_ready():
-                                self.launch_music()
-                                self.async_download_next()
-                            else:
+                            if not current.is_ready():
                                 self.log.info("bot: current music isn't ready, start downloading.")
-                                self.wait_for_downloading = True
                                 var.playlist.async_prepare(var.playlist.current_index)
                                 self.send_msg(constants.strings('download_in_progress', item=current.format_title()))
+                            self.wait_for_ready = True
                         else:
                             var.playlist.remove_by_id(current.id)
                             var.cache.free_and_delete(current.id)
                     else:
                         self._loop_status = 'Empty queue'
-                else:
+                else: # if wait_for_ready flag is true, means the pointer is already pointing to target song. start playing
                     current = var.playlist.current_item()
                     if current:
                         if current.is_ready():
-                            self.wait_for_downloading = False
-                            var.playlist.version += 1
+                            self.wait_for_ready = False
                             self.launch_music()
                             self.async_download_next()
                         elif current.is_failed():
                             var.playlist.remove_by_id(current.id)
                         else:
-                            self._loop_status = 'Wait for downloading'
+                            self._loop_status = 'Wait for the next item to be ready'
                     else:
-                        self.wait_for_downloading = False
+                        self.wait_for_ready = False
 
         while self.mumble.sound_output.get_buffer_size() > 0:
             # Empty the buffer before exit
@@ -540,11 +536,14 @@ class MumbleBot:
             self.thread.kill()
             self.thread = None
         var.playlist.clear()
+        self.wait_for_ready = False
         self.log.info("bot: music stopped. playlist trashed.")
 
     def stop(self):
         self.interrupt()
         self.is_pause = True
+        var.playlist.next()
+        self.wait_for_ready = True
         self.log.info("bot: music stopped.")
 
     def interrupt(self):

@@ -681,7 +681,11 @@ def cmd_current_music(bot, user, text, command, parameter):
 def cmd_skip(bot, user, text, command, parameter):
     global log
 
-    bot.interrupt()
+    if not bot.is_pause:
+        bot.interrupt()
+    else:
+        var.playlist.next()
+        bot.wait_for_ready = True
 
     if len(var.playlist) == 0:
         bot.send_msg(constants.strings('queue_empty'), text)
