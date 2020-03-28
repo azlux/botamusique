@@ -89,6 +89,23 @@ def send_multi_lines(bot, lines, text, linebreak="<br />"):
     bot.send_msg(msg, text)
 
 
+def send_multi_lines_in_channel(bot, lines, linebreak="<br />"):
+    global log
+
+    msg = ""
+    br = ""
+    for newline in lines:
+        msg += br
+        br = linebreak
+        if bot.mumble.get_max_message_length() \
+                and (len(msg) + len(newline)) > (bot.mumble.get_max_message_length() - 4):  # 4 == len("<br>")
+            bot.send_channel_msg(msg)
+            msg = ""
+        msg += newline
+
+    bot.send_channel_msg(msg)
+
+
 # ---------------- Variables -----------------
 
 ITEMS_PER_PAGE = 50
@@ -146,7 +163,7 @@ def cmd_url_ban(bot, user, text, command, parameter):
                 var.cache.free_and_delete(item.id)
                 var.playlist.remove_by_id(item.id)
             else:
-                bot.send_msg(constants.strings('bad_parameter', command=command))
+                bot.send_msg(constants.strings('bad_parameter', command=command), text)
     else:
         bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
     return
@@ -202,7 +219,7 @@ def cmd_pause(bot, user, text, command, parameter):
     global log
 
     bot.pause()
-    bot.send_msg(constants.strings('paused'))
+    bot.send_channel_msg(constants.strings('paused'))
 
 
 def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=False):
@@ -243,7 +260,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
 
         var.playlist.extend(music_wrappers)
 
-        send_multi_lines(bot, msgs, None)
+        send_multi_lines_in_channel(bot, msgs)
         return
 
     # try to do a partial match
@@ -301,7 +318,7 @@ def cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cach
             if count != 0:
                 msgs.append("</ul>")
                 var.playlist.extend(music_wrappers)
-                send_multi_lines(bot, msgs, None, "")
+                send_multi_lines_in_channel(bot, msgs, "")
             else:
                 if do_not_refresh_cache:
                     bot.send_msg(constants.strings("no_file"), text)
@@ -330,7 +347,7 @@ def cmd_play_url(bot, user, text, command, parameter):
             # If I am the second item on the playlist. (I am the next one!)
             bot.async_download_next()
     else:
-        bot.send_msg(constants.strings('bad_parameter', command=command))
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
 
 def cmd_play_playlist(bot, user, text, command, parameter):
@@ -378,7 +395,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
         else:
-            bot.send_msg(constants.strings('bad_url'))
+            bot.send_msg(constants.strings('bad_url'), text)
 
 
 def cmd_rb_query(bot, user, text, command, parameter):
@@ -502,7 +519,7 @@ def cmd_yt_search(bot, user, text, command, parameter):
                 msg = _yt_format_result(yt_last_result, yt_last_page * item_per_page, item_per_page)
                 bot.send_msg(constants.strings('yt_result', result_table=msg), text)
             else:
-                bot.send_msg(constants.strings('yt_no_more'))
+                bot.send_msg(constants.strings('yt_no_more'), text)
 
         # if query
         else:
@@ -515,7 +532,7 @@ def cmd_yt_search(bot, user, text, command, parameter):
                 msg = _yt_format_result(results, 0, item_per_page)
                 bot.send_msg(constants.strings('yt_result', result_table=msg), text)
             else:
-                bot.send_msg(constants.strings('yt_query_error'))
+                bot.send_msg(constants.strings('yt_query_error'), text)
     else:
         bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
@@ -541,7 +558,7 @@ def cmd_yt_play(bot, user, text, command, parameter):
             url = "https://www.youtube.com/watch?v=" + yt_last_result[0][0]
             cmd_play_url(bot, user, text, command, url)
         else:
-            bot.send_msg(constants.strings('yt_query_error'))
+            bot.send_msg(constants.strings('yt_query_error'), text)
     else:
         bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
@@ -612,7 +629,7 @@ def cmd_volume(bot, user, text, command, parameter):
     if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.volume_set = float(float(parameter) / 100)
         bot.send_msg(constants.strings('change_volume',
-                     volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']))
+                     volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']), text)
         var.db.set('bot', 'volume', str(bot.volume_set))
         log.info('cmd: volume set to %d' % (bot.volume_set * 100))
     else:
@@ -818,7 +835,7 @@ def cmd_repeat(bot, user, text, command, parameter):
         )
         log.info("bot: add to playlist: " + music.format_debug_string())
 
-    bot.send_msg(constants.strings("repeat", song=music.format_song_string(), n=str(repeat)), text)
+    bot.send_channel_msg(constants.strings("repeat", song=music.format_song_string(), n=str(repeat)))
 
 
 def cmd_mode(bot, user, text, command, parameter):
@@ -859,7 +876,7 @@ def cmd_play_tags(bot, user, text, command, parameter):
     if count != 0:
         msgs.append("</ul>")
         var.playlist.extend(music_wrappers)
-        send_multi_lines(bot, msgs, None, "")
+        send_multi_lines_in_channel(bot, msgs, "")
     else:
         bot.send_msg(constants.strings("no_file"), text)
 
@@ -1011,7 +1028,7 @@ def cmd_search_library(bot, user, text, command, parameter):
             music_wrapper = get_cached_wrapper(items[0], user)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
+            bot.send_channel_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
         else:
             for item in items:
                 count += 1
@@ -1049,7 +1066,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
         var.playlist.extend(music_wrappers)
 
         msgs.append("</ul>")
-        send_multi_lines(bot, msgs, None, "")
+        send_multi_lines_in_channel(bot, msgs, "")
         return
 
     try:
@@ -1077,7 +1094,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
         var.playlist.extend(music_wrappers)
 
         msgs.append("</ul>")
-        send_multi_lines(bot, msgs, None, "")
+        send_multi_lines_in_channel(bot, msgs, "")
         return
     elif len(indexes) == 1:
         index = indexes[0]
@@ -1087,7 +1104,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
             music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
+            bot.send_channel_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
             return
 
     bot.send_msg(constants.strings('bad_parameter', command=command), text)
@@ -1123,7 +1140,7 @@ def cmd_delete_from_library(bot, user, text, command, parameter):
             return
 
         msgs.append("</ul>")
-        send_multi_lines(bot, msgs, None, "")
+        send_multi_lines_in_channel(bot, msgs, "")
         return
     elif len(indexes) == 1:
         index = indexes[0]

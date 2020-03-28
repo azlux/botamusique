@@ -496,7 +496,7 @@
                     200 : function(data) {
                         if (data.ver !== playlist_ver) {
                             playlist_ver = data.ver;
-                            updatePlaylist();
+                            checkForPlaylistUpdate();
                         }
                         updateControls(data.empty, data.play, data.mode);
                     }
@@ -601,9 +601,9 @@
             expand_copy.addClass('playlist-item');
             expand_copy.appendTo(playlist_table);
             expand_copy.click(function(){
-                updatePlaylist();
                 playlist_range_from = real_from;
                 playlist_range_to = real_to;
+                checkForPlaylistUpdate();
             });
             expand_copy.show();
         }
@@ -983,7 +983,7 @@
                 data: data
             });
 
-            updatePlaylist();
+            checkForPlaylistUpdate();
         }
 
         function deleteAllResults(){
@@ -998,7 +998,7 @@
                 data: data
             });
 
-            updatePlaylist();
+            checkForPlaylistUpdate();
             updateResults();
         }
 

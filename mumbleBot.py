@@ -183,7 +183,7 @@ class MumbleBot:
         new_version = util.new_release_version()
         if version.parse(new_version) > version.parse(self.version):
             self.log.info("update: new version %s found, current installed version %s." % (new_version, self.version))
-            self.send_msg(constants.strings('new_version_found'))
+            self.send_channel_msg(constants.strings('new_version_found'))
         else:
             self.log.debug("update: no new version found.")
 
@@ -305,14 +305,16 @@ class MumbleBot:
                 self.log.error("bot: command %s failed with error: %s\n" % (command_exc, error_traceback))
                 self.send_msg(constants.strings('error_executing_command', command=command_exc, error=error), text)
 
-    def send_msg(self, msg, text=None):
+    def send_msg(self, msg, text):
         msg = msg.encode('utf-8', 'ignore').decode('utf-8')
         # text if the object message, contain information if direct message or channel message
-        if not text:
-            own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
-            own_channel.send_text_message(msg)
-        else:
-            self.mumble.users[text.actor].send_text_message(msg)
+        self.mumble.users[text.actor].send_text_message(msg)
+
+
+    def send_channel_msg(self, msg):
+        msg = msg.encode('utf-8', 'ignore').decode('utf-8')
+        own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
+        own_channel.send_text_message(msg)
 
     def is_admin(self, user):
         list_admin = var.config.get('bot', 'admin').rstrip().split(';')
@@ -333,7 +335,7 @@ class MumbleBot:
             if var.config.get("bot", "when_nobody_in_channel") == "pause_resume":
                 self.resume()
             elif var.config.get("bot", "when_nobody_in_channel") == "pause":
-                self.send_msg(constants.strings("auto_paused"))
+                self.send_channel_msg(constants.strings("auto_paused"))
 
         elif len(own_channel.get_users()) == 1: 
             # if the bot is the only user left in the channel
@@ -359,7 +361,7 @@ class MumbleBot:
         self.log.info("bot: play music " + music_wrapper.format_debug_string())
 
         if var.config.getboolean('bot', 'announce_current_music'):
-            self.send_msg(music_wrapper.format_current_playing())
+            self.send_channel_msg(music_wrapper.format_current_playing())
 
         if var.config.getboolean('debug', 'ffmpeg'):
             ffmpeg_debug = "debug"
@@ -450,7 +452,7 @@ class MumbleBot:
                     self.log.error("bot: with ffmpeg error: %s", self.last_ffmpeg_err)
                     self.last_ffmpeg_err = ""
 
-                    self.send_msg(constants.strings('unable_play', item=current.format_title()))
+                    self.send_channel_msg(constants.strings('unable_play', item=current.format_title()))
                     var.playlist.remove_by_id(current.id)
                     var.cache.free_and_delete(current.id)
 
@@ -462,7 +464,7 @@ class MumbleBot:
                             if not current.is_ready():
                                 self.log.info("bot: current music isn't ready, start downloading.")
                                 var.playlist.async_prepare(var.playlist.current_index)
-                                self.send_msg(constants.strings('download_in_progress', item=current.format_title()))
+                                self.send_channel_msg(constants.strings('download_in_progress', item=current.format_title()))
                             self.wait_for_ready = True
                         else:
                             var.playlist.remove_by_id(current.id)
@@ -589,7 +591,7 @@ class MumbleBot:
                    uri, '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
 
         if var.config.getboolean('bot', 'announce_current_music'):
-            self.send_msg(var.playlist.current_item().format_current_playing())
+            self.send_channel_msg(var.playlist.current_item().format_current_playing())
 
         self.log.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
