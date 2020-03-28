@@ -433,9 +433,14 @@ class MusicDatabase:
     def query_all_paths(self):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT path FROM music WHERE id != 'info'").fetchall()
+        results = cursor.execute("SELECT path FROM music WHERE id != 'info' AND type = 'file'").fetchall()
         conn.close()
-        return [ result[0] for result in results ]
+        paths = []
+        for result in results:
+            if result and result[0]:
+                paths.append(result[0])
+
+        return paths
 
     def query_all_tags(self):
         conn = sqlite3.connect(self.db_path)
