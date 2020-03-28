@@ -1,4 +1,4 @@
-<div style="width: 100%; text-align: center">
+<div align="center">
 <img src="static/image/logo.png" alt="botamusique" width="200px" />
 <h1>botamusique</h1>
 </div>
@@ -44,7 +44,9 @@ Predicted functionalities will be those people would expect from any classic mus
 
 
 #### Install botamusique
+
 **Stable release (recommended)**
+
 This is the tested stable version, with auto-update support. To install the stable release, run these lines:
 ```
 curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources.tar.gz
@@ -57,6 +59,7 @@ venv/bin/pip install -r requirements.txt
 ```
 
 **Work-in-progress version (from the master branch of this repo)**
+
 We will test new features in this branch, maybe sometimes post some hotfixes. Please be noted that this version has no auto-update support. If you want to install this version, you need to have Git installed.
 We recommend you to install the stable version above, except you'd like to try out our half-baked features and put up with bugs amid them.
 ```
@@ -106,6 +109,7 @@ You can access the web interface through http://127.0.0.1:8181 if you keep it un
 Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would like to connect from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to the bot.
 
 4. Generate a certificate (Optional, but recommended)
+
 By default, murmur server uses certificates to identify users. Without a valid certificate, you wouldn't able to register the bot into your Murmur server. Some server even refused users without a certificate. Therefore, it is recommended to generate a certificate for the bot. If you have a certificate (for say, `botmusique.pem` in the folder of the bot), you can specify its location in
 ```
 [server]
@@ -139,6 +143,7 @@ If you want information about auto-starting and auto-restarting of the bot, you 
 
 
 ### Update
+
 If you enable `audo_check_update`, the bot will check for updates every time it starts.
 If you are using the recommended install, you can send `!update` to the bot (command by default).
 
