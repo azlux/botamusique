@@ -31,6 +31,7 @@ Predicted functionalities will be those people would expect from any classic mus
 1. [Installation](#installation)
 1. [Configuration](#configuration)
 1. [Run the bot](#run-the-bot)
+1. [Operate the bot](#operate-the-bot)
 1. [Update](#update)
 1. [Known issues](#known-issues)
 1. [Contributors](#contributors)
@@ -141,6 +142,13 @@ If you want information about auto-starting and auto-restarting of the bot, you 
 
 **For the detailed manual of using botamusique, please see the [wiki](https://github.com/azlux/botamusique/wiki).**
 
+### Operate the bot
+
+You can control the bot by both commands sent by text message and the web interface.
+
+By default, all commands start with `!`. You can type `!help` in the text message to see the full list of commands supported, or see the [wiki page](https://github.com/azlux/botamusique/wiki/Command-Help).
+
+The web interface can be used if you'd like an intuitive way of interacting with the bot. Through it is fairly straightforward, a walk-through can be found on the [wiki page](https://github.com/azlux/botamusique/wiki/Web-interface-walk-through).
 
 ### Update
 
@@ -168,6 +176,11 @@ You need to install a missing library: `apt install libtiff5`
 Exception: Could not find opus library. Make sure it is installed.
 ```
 You need to install the opus codec (not embedded in all system): `apt install libopus0`
+
+3. If you have a large amount of music files (>1000), it may take some time for the bot to boot, since
+it will build up the cache for the music library on booting. You may want to disable this auto-scanning by
+setting ``refresh_cache_on_startu=False`` in `[bot]` section and control the scanning manually by
+``!rescan`` command and the *Rescan Files* button on the web interface.
 
 
 ### Contributors

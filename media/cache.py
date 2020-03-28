@@ -109,8 +109,8 @@ class MusicCache(dict):
         self.log.info("library: rebuild directory cache")
         files = util.get_recursive_file_list_sorted(var.music_folder)
         for file in files:
-            item = self.fetch(bot, item_id_generators['file'](path=file))
-            if not item:
+            results = self.db.query_music(Condition().and_equal('path', file))
+            if not results:
                 item = item_builders['file'](bot, path=file)
                 self.log.debug("library: music save into database: %s" % item.format_debug_string())
                 self.db.insert_music(item.to_dict())
