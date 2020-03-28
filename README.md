@@ -1,4 +1,7 @@
-# <img src="static/image/logo.png" alt="botamusique" width="250px" /> botamusique
+<div style="width: 100%; text-align: center">
+<img src="static/image/logo.png" alt="botamusique" width="200px" />
+<h1>botamusique</h1>
+</div>
 
 Botamusique is a [Mumble](https://www.mumble.info/) music bot.
 Predicted functionalities will be those people would expect from any classic music player.
