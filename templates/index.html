@@ -553,7 +553,7 @@
                 var length = data.length;
                 var start_from = data.start_from;
                 playlist_range_from = start_from;
-                playlist_range_to = start_from + length - 1;
+                playlist_range_to = start_from + items.length - 1;
 
                 if(items.length < length && start_from > 0) {
                     _from = start_from - 5;
