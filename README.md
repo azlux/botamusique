@@ -1,4 +1,4 @@
-# <img src="static/image/logo.png" alt="botamusique" style="zoom:33%;" /> botamusique
+# <img src="static/image/logo.png" alt="botamusique" width="250px" /> botamusique
 
 Botamusique is a [Mumble](https://www.mumble.info/) music bot.
 Predicted functionalities will be those people would expect from any classic music player.
@@ -9,11 +9,10 @@ Predicted functionalities will be those people would expect from any classic mus
 1. **Support multiple music sources:**
     - Music in local folders (which can be uploaded through the web interface).
     - Youtube/Soundcloud URLs and playlists (everything supported by youtube-dl).
-    - Radio stations from URL and http://www.radio-browser.info API (query from > 24k stations).
-2. **User-friendly web remote control interface.** Powered by Flask. Which supports
-    - Playlist management,
-    - File management,
-    - Upload files, etc.
+    - Radio stations from URL and http://www.radio-browser.info API.
+2. **Modern and powerful web remote control interface.** Powered by Flask. Which supports
+    - Playlist management.
+    - Music library management, including uploading, browsing all files and edit tags, etc.
 3. **Powerful command system.** Commands and words the bot says are fully customizable. Support partial-match for commands.
 4. **Ducking.** The bot would automatically lower its volume if people are talking.
 
@@ -22,14 +21,13 @@ Predicted functionalities will be those people would expect from any classic mus
 
 ![botamusique in Mumble channel](https://user-images.githubusercontent.com/2306637/75210917-68fbf680-57bd-11ea-9cf8-c0871edff13f.jpg)
 
-![botamusique web interface](https://user-images.githubusercontent.com/2306637/75210648-9b592400-57bc-11ea-851a-c56907acf702.jpg)
+![botamusique web interface](https://user-images.githubusercontent.com/2306637/77822763-b4911f80-7130-11ea-9bc5-83c36c995ab9.png)
 
 -----
-## Menu
+## Quick Start Guide
 1. [Installation](#installation)
 1. [Configuration](#configuration)
-1. [Web Interface](#web-interface)
-1. [Starting the bot](#starting-the-bot)
+1. [Run the bot](#run-the-bot)
 1. [Update](#update)
 1. [Known issues](#known-issues)
 1. [Contributors](#contributors)
@@ -41,8 +39,10 @@ Predicted functionalities will be those people would expect from any classic mus
 1. Install [Opus Codec](https://www.opus-codec.org/) (which should be already installed if you installed Mumble or Murmur, or you may try to install `opus-tools` with your package manager).
 1. Install ffmpeg. If ffmpeg isn't in your package manager, you may need to find another source. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
+
 #### Install botamusique
-Stable release (**recommended**):
+**Stable release (recommended)**
+This is the tested stable version, with auto-update support. To install the stable release, run these lines:
 ```
 curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources.tar.gz
 tar -xzf botamusique.tar.gz
@@ -53,7 +53,9 @@ venv/bin/pip install -r pymumble/requirements.txt
 venv/bin/pip install -r requirements.txt
 ```
 
-Testing version (from master):
+**Work-in-progress version (from the master branch of this repo)**
+We will test new features in this branch, maybe sometimes post some hotfixes. Please be noted that this version has no auto-update support. If you want to install this version, you need to have Git installed.
+We recommend you to install the stable version above, except you'd like to try out our half-baked features and put up with bugs amid them.
 ```
 git clone --recurse-submodules https://github.com/azlux/botamusique.git
 cd botamusique
@@ -66,6 +68,8 @@ venv/bin/pip install -r requirements.txt
 
 ### Configuration
 Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
+
+We list some basic settings for you to quickly get things working. 
 
 #### Basic settings
 1. Usually, the first thing is to set the Murmur server you'd like the bot to connect to. You may also specify which channel the bot stays, and tokens used by the bot.
@@ -82,23 +86,7 @@ music_folder = music_folder/
 tmp_folder = /tmp/
 ```
 
-#### Sections explained
-- `server`: configuration about the server. This will be overridden by the `./mumbleBot.py` parameters.
-- `bot`: basic configuration of the bot, eg. name, comment, folder, default volume, etc.
-- `webinterface`: basic configuration about the interface.
-- `commands`: you can customize the command you want for each action (eg. put `help = helpme` , the bot will respond to `!helpme`)
-- `radio`: a list of default radio (eg. play a jazz radio with the command `!radio jazz`)
-- `strings`: you can customize all words the bot can say.
-- `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
-
-#### (Optional) Generate a certificate
-Otherwise, you wouldn't able to register the bot into your Murmur server.
-Please do the following:
-`openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
-
-
-### Web interface
-**Disabled by default** for performance and security reasons. You need to enable it in `configuration.ini`.
+3. **Web interface is disabled by default** for performance and security reasons. But it is extremely powerful, so we encourage you to have a try. To enable it, set
 ```
 [webinterface]
 enabled = True
@@ -112,10 +100,30 @@ listening_port = 8181
 
 You can access the web interface through http://127.0.0.1:8181 if you keep it unchanged.
 
-Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would like to accept requests from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to your router to the bot.
+Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would like to connect from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to the bot.
+
+4. Generate a certificate (Optional, but recommended)
+By default, murmur server uses certificates to identify users. Without a valid certificate, you wouldn't able to register the bot into your Murmur server. Some server even refused users without a certificate. Therefore, it is recommended to generate a certificate for the bot. If you have a certificate (for say, `botmusique.pem` in the folder of the bot), you can specify its location in
+```
+[server]
+certificate=botamusique.pem
+```
+
+If you don't have a certificate, you may generate one by:
+`openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
 
 
-### Starting the bot
+#### Sections explained
+- `server`: configuration about the server. Will be overridden by the `./mumbleBot.py` parameters.
+- `bot`: basic configuration of the bot, eg. name, comment, folder, default volume, etc.
+- `webinterface`: basic configuration about the web interface.
+- `commands`: you can customize the command you want for each action (eg. put `help = helpme` , the bot will respond to `!helpme`)
+- `radio`: a list of default radio (eg. play a jazz radio with the command `!radio jazz`)
+- `strings`: you can customize all words the bot can say.
+- `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
+
+
+### Run the bot
 If you have set up everything in your `configuration.ini`, you can
 `venv/bin/python mumbleBot.py --config configuration.ini`
 
@@ -139,7 +147,7 @@ venv/bin/pip install --upgrade -r requirements.txt
 ```
 
 
-### Known Issues
+### Known issues
 
 1. During installation, you may encounter the following error:
 ```
