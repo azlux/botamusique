@@ -238,9 +238,10 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
         msgs = [constants.strings('multiple_file_added')]
 
         for music_wrapper in music_wrappers:
-            var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             msgs.append("{} ({})".format(music_wrapper.item().title, music_wrapper.item().path))
+
+        var.playlist.extend(music_wrappers)
 
         send_multi_lines(bot, msgs, None)
         return
@@ -1035,6 +1036,22 @@ def cmd_search_library(bot, user, text, command, parameter):
 
 def cmd_shortlist(bot, user, text, command, parameter):
     global song_shortlist, log
+    if parameter.strip() == "*":
+        msgs = [constants.strings('multiple_file_added') + "<ul>"]
+        music_wrappers = []
+        for kwargs in song_shortlist:
+            kwargs['user'] = user
+            music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
+            music_wrappers.append(music_wrapper)
+            log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+            msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type, music_wrapper.item().title))
+
+        var.playlist.extend(music_wrappers)
+
+        msgs.append("</ul>")
+        send_multi_lines(bot, msgs, None, "")
+        return
+
     try:
         indexes = [int(i) for i in parameter.split(" ")]
     except ValueError:
@@ -1043,17 +1060,21 @@ def cmd_shortlist(bot, user, text, command, parameter):
 
     if len(indexes) > 1:
         msgs = [constants.strings('multiple_file_added') + "<ul>"]
+        music_wrappers = []
         for index in indexes:
             if 1 <= index <= len(song_shortlist):
                 kwargs = song_shortlist[index - 1]
                 kwargs['user'] = user
                 music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
-                var.playlist.append(music_wrapper)
+                music_wrappers.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                 msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type, music_wrapper.item().title))
             else:
+                var.playlist.extend(music_wrappers)
                 bot.send_msg(constants.strings('bad_parameter', command=command), text)
                 return
+
+        var.playlist.extend(music_wrappers)
 
         msgs.append("</ul>")
         send_multi_lines(bot, msgs, None, "")

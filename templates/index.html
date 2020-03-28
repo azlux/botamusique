@@ -14,7 +14,7 @@
     <div class="container">
         <div class="bs-docs-section">
             <div class="page-header" id="banner">
-                <h1><i class="fa fa-music" aria-hidden="true"></i> botamusique Web Interface</h1>
+                <h1><img src="static/image/logo.png" style="width: 200px;" /> botamusique Web Interface</h1>
             </div>
         </div>
         <div class="bs-docs-section">
@@ -96,7 +96,7 @@
                                 </tr>
                                 <tr id="playlist-expand" class="table-dark" style="display: none;">
                                     <td colspan="4" style="text-align:center;">
-                                        <a class="text-muted" href="javascript:">See items <span class="playlist-expand-item-range"></span> on the playlist.</a>
+                                        <a class="text-muted" href="javascript:">See item <span class="playlist-expand-item-range"></span> on the playlist.</a>
                                     </td>
                                 </tr>
                                 <tr class="playlist-item-template" style="display: none;">
@@ -650,7 +650,8 @@
                             updatePlaylist();
                         }
                         if(data.current_index !== playlist_current_index){
-                            if(data.current_index > playlist_range_to || data.current_index < playlist_range_from){
+                            if((data.current_index > playlist_range_to || data.current_index < playlist_range_from)
+                            && data.current_index !== -1) {
                                 playlist_range_from = 0;
                                 playlist_range_to = 0;
                                 updatePlaylist();

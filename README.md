@@ -1,4 +1,4 @@
-# botamusique
+# <img src="static/image/logo.png" alt="botamusique" style="zoom:33%;" /> botamusique
 
 Botamusique is a [Mumble](https://www.mumble.info/) music bot.
 Predicted functionalities will be those people would expect from any classic music player.
@@ -23,7 +23,6 @@ Predicted functionalities will be those people would expect from any classic mus
 ![botamusique in Mumble channel](https://user-images.githubusercontent.com/2306637/75210917-68fbf680-57bd-11ea-9cf8-c0871edff13f.jpg)
 
 ![botamusique web interface](https://user-images.githubusercontent.com/2306637/75210648-9b592400-57bc-11ea-851a-c56907acf702.jpg)
-
 
 -----
 ## Menu

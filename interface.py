@@ -61,7 +61,7 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
-web.config['TEMPLATES_AUTO_RELOAD'] = True
+#web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
 
@@ -463,11 +463,14 @@ def library():
 
             if request.form['action'] == 'add':
                 items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+                music_wrappers = []
                 for item in items:
                     music_wrapper = get_cached_wrapper(item, user)
-                    var.playlist.append(music_wrapper)
+                    music_wrappers.append(music_wrapper)
 
                     log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+
+                var.playlist.extend(music_wrappers)
 
                 return redirect("./", code=302)
             elif request.form['action'] == 'delete':
