@@ -236,7 +236,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
         if music_wrappers:
             var.playlist.append(music_wrappers[0])
             log.info("cmd: add to playlist: " + music_wrappers[0].format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrappers[0].format_song_string()))
+            bot.send_msg(constants.strings('file_added', item=music_wrappers[0].format_song_string()), text)
             return
 
     # assume parameter is a path
@@ -244,7 +244,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
     if music_wrappers:
         var.playlist.append(music_wrappers[0])
         log.info("cmd: add to playlist: " + music_wrappers[0].format_debug_string())
-        bot.send_msg(constants.strings('file_added', item=music_wrappers[0].format_song_string()))
+        bot.send_msg(constants.strings('file_added', item=music_wrappers[0].format_song_string()), text)
         return
 
     # assume parameter is a folder
@@ -271,7 +271,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
         music_wrapper = get_cached_wrapper_from_dict(bot, matches[0], user)
         var.playlist.append(music_wrapper)
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
+        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
         return
     elif len(matches) > 1:
         song_shortlist = matches
@@ -330,7 +330,7 @@ def cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cach
             msg = constants.strings('wrong_pattern', error=str(e))
             bot.send_msg(msg, text)
     else:
-        bot.send_msg(constants.strings('bad_parameter', command=command))
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
 
 def cmd_play_url(bot, user, text, command, parameter):
@@ -342,7 +342,7 @@ def cmd_play_url(bot, user, text, command, parameter):
         var.playlist.append(music_wrapper)
 
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-        bot.send_channel_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
+        bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
         if len(var.playlist) == 2:
             # If I am the second item on the playlist. (I am the next one!)
             bot.async_download_next()
@@ -393,7 +393,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
 
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
+            bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
         else:
             bot.send_msg(constants.strings('bad_url'), text)
 
