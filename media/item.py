@@ -106,7 +106,7 @@ class BaseItem:
 
     def send_client_message(self, msg):
         if self.bot:
-            self.bot.send_msg(msg)
+            self.bot.send_channel_msg(msg) # TODO: this is way too ugly. It mixed up bot with items. Change it into exceptions in the future.
 
     def to_dict(self):
         return {"type": self.type,
