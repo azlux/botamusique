@@ -443,7 +443,7 @@ class MumbleBot:
             else:
                 time.sleep(0.1)
 
-            if not self.is_pause and (self.thread is None or not raw_music):
+            if not self.is_pause and (self.thread is None or self.thread.poll() is not None):
                 # ffmpeg thread has gone. indicate that last song has finished, or something is wrong.
                 if self.read_pcm_size < 481 and len(var.playlist) > 0 and var.playlist.current_index != -1 \
                         and self.last_ffmpeg_err:
@@ -567,14 +567,13 @@ class MumbleBot:
         self.log.info("bot: music paused at %.2f seconds." % self.playhead)
 
     def resume(self):
-        self.is_pause = False
-
         if var.playlist.current_index == -1:
             var.playlist.next()
 
         music_wrapper = var.playlist.current_item()
 
         if not music_wrapper or not music_wrapper.id == self.pause_at_id or not music_wrapper.is_ready():
+            self.is_pause = False
             self.playhead = 0
             return
 
@@ -602,6 +601,7 @@ class MumbleBot:
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.last_volume_cycle_time = time.time()
         self.pause_at_id = ""
+        self.is_pause = False
 
 
 def start_web_interface(addr, port):

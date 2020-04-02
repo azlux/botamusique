@@ -202,7 +202,7 @@ class BasePlaylist(list):
             self.from_list(music_wrappers, current_index)
 
     def _debug_print(self):
-        print("===== Playlist(%d)=====" % self.current_index)
+        print("===== Playlist(%d) =====" % self.current_index)
         for index, item_wrapper in enumerate(self):
             if index == self.current_index:
                 print("-> %d %s" % (index, item_wrapper.format_debug_string()))

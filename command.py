@@ -68,8 +68,8 @@ def register_all_commands(bot):
 
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
-    bot.register_command('loop', cmd_loop_state, True)
-    bot.register_command('item', cmd_item, True)
+    #bot.register_command('loop', cmd_loop_state, True)
+    #bot.register_command('item', cmd_item, True)
 
 
 def send_multi_lines(bot, lines, text, linebreak="<br />"):
@@ -1191,5 +1191,4 @@ def cmd_loop_state(bot, user, text, command, parameter):
 
 
 def cmd_item(bot, user, text, command, parameter):
-    print(bot.wait_for_downloading)
-    print(var.playlist.current_item().to_dict())
+    var.playlist._debug_print()
