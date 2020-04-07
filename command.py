@@ -828,14 +828,17 @@ def cmd_repeat(bot, user, text, command, parameter):
         repeat = int(parameter)
 
     music = var.playlist.current_item()
-    for _ in range(repeat):
-        var.playlist.insert(
-            var.playlist.current_index + 1,
-            music
-        )
-        log.info("bot: add to playlist: " + music.format_debug_string())
+    if music:
+        for _ in range(repeat):
+            var.playlist.insert(
+                var.playlist.current_index + 1,
+                music
+            )
+            log.info("bot: add to playlist: " + music.format_debug_string())
 
-    bot.send_channel_msg(constants.strings("repeat", song=music.format_song_string(), n=str(repeat)))
+        bot.send_channel_msg(constants.strings("repeat", song=music.format_song_string(), n=str(repeat)))
+    else:
+        bot.send_channel_msg(constants.strings("queue_empty"))
 
 
 def cmd_mode(bot, user, text, command, parameter):
