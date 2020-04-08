@@ -7,6 +7,7 @@ import time
 import variables as var
 from media.cache import CachedItemWrapper, get_cached_wrapper_from_dict, get_cached_wrapper_by_id
 from database import Condition
+from media.item import ValidationFailedError, PreparationFailedError
 
 
 def get_playlist(mode, _list=None, index=None):
@@ -196,7 +197,7 @@ class BasePlaylist(list):
             items.sort(key=lambda v: int(v[0]))
             for item in items:
                 item = json.loads(item[1])
-                music_wrapper = get_cached_wrapper_by_id(var.bot, item['id'], item['user'])
+                music_wrapper = get_cached_wrapper_by_id(item['id'], item['user'])
                 if music_wrapper:
                     music_wrappers.append(music_wrapper)
             self.from_list(music_wrappers, current_index)
@@ -224,32 +225,22 @@ class BasePlaylist(list):
             item = self.pending_items.pop()
             self.log.debug("playlist: validating %s" % item.format_debug_string())
             ver = item.version
-            if not item.validate() or item.is_failed():
+
+            try:
+                item.validate()
+            except ValidationFailedError as e:
                 self.log.debug("playlist: validating failed.")
+                if var.bot:
+                    var.bot.send_channel_msg(e.msg)
                 var.cache.free_and_delete(item.id)
                 self.remove_by_id(item.id)
                 continue
+
             if item.version > ver:
                 self.version += 1
 
         self.log.debug("playlist: validating finished.")
         self.validating_thread_lock.release()
-
-    def async_prepare(self, index):
-        th = threading.Thread(
-            target=self._prepare, name="Prepare-" + self[index].id[:7], args=(index,))
-        self.log.info(
-            "%s: start preparing item in thread: " % self[index].item().type + self[index].format_debug_string())
-        th.daemon = True
-        th.start()
-        return th
-
-    def _prepare(self, index):
-        item = self[index]
-        ver = item.version
-        item.prepare()
-        if item.version > ver:
-            self.version += 1
 
 
 class OneshotPlaylist(BasePlaylist):
@@ -363,7 +354,7 @@ class AutoPlaylist(OneshotPlaylist):
                                                     Condition().and_like('tags', "%don't autoplay,%")))
 
         if dicts:
-            _list = [get_cached_wrapper_from_dict(var.bot, _dict, "AutoPlay") for _dict in dicts]
+            _list = [get_cached_wrapper_from_dict(_dict, "AutoPlay") for _dict in dicts]
             self.from_list(_list, -1)
 
     # def from_list(self, _list, current_index):

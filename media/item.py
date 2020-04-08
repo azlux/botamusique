@@ -5,12 +5,12 @@ item_loaders = {}
 item_id_generators = {}
 
 
-def example_builder(bot, **kwargs):
-    return BaseItem(bot)
+def example_builder(**kwargs):
+    return BaseItem()
 
 
-def example_loader(bot, _dict):
-    return BaseItem(bot, from_dict=_dict)
+def example_loader(_dict):
+    return BaseItem(from_dict=_dict)
 
 
 def example_id_generator(**kwargs):
@@ -22,22 +22,28 @@ item_loaders['base'] = example_loader
 item_id_generators['base'] = example_id_generator
 
 
-def dicts_to_items(bot, music_dicts):
+def dicts_to_items(music_dicts):
     items = []
     for music_dict in music_dicts:
         type = music_dict['type']
-        items.append(item_loaders[type](bot, music_dict))
+        items.append(item_loaders[type](music_dict))
     return items
 
 
-def dict_to_item(bot, music_dict):
+def dict_to_item(music_dict):
     type = music_dict['type']
-    return item_loaders[type](bot, music_dict)
+    return item_loaders[type](music_dict)
 
+class ValidationFailedError(Exception):
+    def __init__(self, msg = None):
+        self.msg = msg
+
+class PreparationFailedError(Exception):
+    def __init__(self, msg = None):
+        self.msg = msg
 
 class BaseItem:
-    def __init__(self, bot, from_dict=None):
-        self.bot = bot
+    def __init__(self, from_dict=None):
         self.log = logging.getLogger("bot")
         self.type = "base"
         self.title = ""
@@ -64,7 +70,7 @@ class BaseItem:
         return True if self.ready == "failed" else False
 
     def validate(self):
-        return False
+        raise ValidationFailedError(None)
 
     def uri(self):
         raise
@@ -103,10 +109,6 @@ class BaseItem:
 
     def display_type(self):
         return ""
-
-    def send_client_message(self, msg):
-        if self.bot:
-            self.bot.send_channel_msg(msg) # TODO: this is way too ugly. It mixed up bot with items. Change it into exceptions in the future.
 
     def to_dict(self):
         return {"type": self.type,

@@ -86,15 +86,15 @@ def get_radio_title(url):
     return url
 
 
-def radio_item_builder(bot, **kwargs):
+def radio_item_builder(**kwargs):
     if 'name' in kwargs:
-        return RadioItem(bot, kwargs['url'], kwargs['name'])
+        return RadioItem(kwargs['url'], kwargs['name'])
     else:
-        return RadioItem(bot, kwargs['url'], '')
+        return RadioItem(kwargs['url'], '')
 
 
-def radio_item_loader(bot, _dict):
-    return RadioItem(bot, "", "", _dict)
+def radio_item_loader(_dict):
+    return RadioItem("", "", _dict)
 
 
 def radio_item_id_generator(**kwargs):
@@ -107,9 +107,9 @@ item_id_generators['radio'] = radio_item_id_generator
 
 
 class RadioItem(BaseItem):
-    def __init__(self, bot, url, name="", from_dict=None):
+    def __init__(self, url, name="", from_dict=None):
         if from_dict is None:
-            super().__init__(bot)
+            super().__init__()
             self.url = url
             if not name:
                 self.title = get_radio_server_description(self.url)  # The title of the radio station
@@ -117,7 +117,7 @@ class RadioItem(BaseItem):
                 self.title = name
             self.id = hashlib.md5(url.encode()).hexdigest()
         else:
-            super().__init__(bot, from_dict)
+            super().__init__(from_dict)
             self.url = from_dict['url']
             self.title = from_dict['title']
 

@@ -253,7 +253,7 @@ def post():
             log.debug("web: Post request from %s: %s" % (request.remote_addr, str(request.form)))
 
         if 'add_item_at_once' in request.form:
-            music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['add_item_at_once'], user)
+            music_wrapper = get_cached_wrapper_by_id(request.form['add_item_at_once'], user)
             if music_wrapper:
                 var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
                 log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
@@ -265,7 +265,7 @@ def post():
                 abort(404)
 
         if 'add_item_bottom' in request.form:
-            music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['add_item_bottom'], user)
+            music_wrapper = get_cached_wrapper_by_id(request.form['add_item_bottom'], user)
 
             if music_wrapper:
                 var.playlist.append(music_wrapper)
@@ -274,7 +274,7 @@ def post():
                 abort(404)
 
         elif 'add_item_next' in request.form:
-            music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['add_item_next'], user)
+            music_wrapper = get_cached_wrapper_by_id(request.form['add_item_next'], user)
             if music_wrapper:
                 var.playlist.insert(var.playlist.current_index + 1, music_wrapper)
                 log.info('web: add to playlist(next): ' + music_wrapper.format_debug_string())
@@ -282,7 +282,7 @@ def post():
                 abort(404)
 
         elif 'add_url' in request.form:
-            music_wrapper = get_cached_wrapper_from_scrap(var.bot, type='url', url=request.form['add_url'], user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(type='url', url=request.form['add_url'], user=user)
             var.playlist.append(music_wrapper)
 
             log.info("web: add to playlist: " + music_wrapper.format_debug_string())
@@ -292,7 +292,7 @@ def post():
 
         elif 'add_radio' in request.form:
             url = request.form['add_radio']
-            music_wrapper = get_cached_wrapper_from_scrap(var.bot, type='radio', url=url, user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(type='radio', url=url, user=user)
             var.playlist.append(music_wrapper)
 
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -335,7 +335,7 @@ def post():
         elif 'delete_item_from_library' in request.form:
             _id = request.form['delete_item_from_library']
             var.playlist.remove_by_id(_id)
-            item = var.cache.get_item_by_id(var.bot, _id)
+            item = var.cache.get_item_by_id(_id)
 
             if os.path.isfile(item.uri()):
                 log.info("web: delete file " + item.uri())
@@ -345,7 +345,7 @@ def post():
             time.sleep(0.1)
 
         elif 'add_tag' in request.form:
-            music_wrappers = get_cached_wrappers_by_tags(var.bot, [request.form['add_tag']], user)
+            music_wrappers = get_cached_wrappers_by_tags([request.form['add_tag']], user)
             for music_wrapper in music_wrappers:
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             var.playlist.extend(music_wrappers)
@@ -373,7 +373,7 @@ def post():
                 var.db.set('playlist', 'playback_mode', "autoplay")
                 log.info("web: playback mode changed to autoplay.")
             if action == "rescan":
-                var.cache.build_dir_cache(var.bot)
+                var.cache.build_dir_cache()
                 log.info("web: Local file cache refreshed.")
             elif action == "stop":
                 if var.config.getboolean("bot", "clear_when_stop_in_oneshot", fallback=False) \
@@ -462,7 +462,7 @@ def library():
                 return ('', 204)
 
             if request.form['action'] == 'add':
-                items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+                items = dicts_to_items(var.music_db.query_music(condition))
                 music_wrappers = []
                 for item in items:
                     music_wrapper = get_cached_wrapper(item, user)
@@ -474,10 +474,10 @@ def library():
 
                 return redirect("./", code=302)
             elif request.form['action'] == 'delete':
-                items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+                items = dicts_to_items(var.music_db.query_music(condition))
                 for item in items:
                     var.playlist.remove_by_id(item.id)
-                    item = var.cache.get_item_by_id(var.bot, item.id)
+                    item = var.cache.get_item_by_id(item.id)
 
                     if os.path.isfile(item.uri()):
                         log.info("web: delete file " + item.uri())
@@ -500,7 +500,7 @@ def library():
                     current_page = 1
 
                 condition.limit(ITEM_PER_PAGE)
-                items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+                items = dicts_to_items(var.music_db.query_music(condition))
 
                 results = []
                 for item in items:
@@ -531,7 +531,7 @@ def library():
         elif request.form['action'] == 'edit_tags':
             tags = list(dict.fromkeys(request.form['tags'].split(","))) # remove duplicated items
             if request.form['id'] in var.cache:
-                music_wrapper = get_cached_wrapper_by_id(var.bot, request.form['id'], user)
+                music_wrapper = get_cached_wrapper_by_id(request.form['id'], user)
                 music_wrapper.clear_tags()
                 music_wrapper.add_tags(tags)
                 var.playlist.version += 1
@@ -591,7 +591,7 @@ def upload():
         else:
             continue
 
-    var.cache.build_dir_cache(var.bot)
+    var.cache.build_dir_cache()
     var.music_db.manage_special_tags()
     log.info("web: Local file cache refreshed.")
 
@@ -603,8 +603,7 @@ def download():
     global log
 
     if 'id' in request.args and request.args['id']:
-        item = dicts_to_items(var.bot,
-                               var.music_db.query_music(
+        item = dicts_to_items(var.music_db.query_music(
                                    Condition().and_equal('id', request.args['id'])))[0]
 
         requested_file = item.uri()
@@ -618,7 +617,7 @@ def download():
 
     else:
         condition = build_library_query_condition(request.args)
-        items = dicts_to_items(var.bot, var.music_db.query_music(condition))
+        items = dicts_to_items(var.music_db.query_music(condition))
 
         zipfile = util.zipdir([item.uri() for item in items])
 

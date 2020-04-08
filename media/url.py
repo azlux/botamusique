@@ -12,18 +12,19 @@ import base64
 import constants
 import media
 import variables as var
-from media.item import BaseItem, item_builders, item_loaders, item_id_generators
+from media.item import BaseItem, item_builders, item_loaders, item_id_generators, ValidationFailedError, \
+    PreparationFailedError
 import media.system
 
 log = logging.getLogger("bot")
 
 
-def url_item_builder(bot, **kwargs):
-    return URLItem(bot, kwargs['url'])
+def url_item_builder(**kwargs):
+    return URLItem(kwargs['url'])
 
 
-def url_item_loader(bot, _dict):
-    return URLItem(bot, "", _dict)
+def url_item_loader(_dict):
+    return URLItem("", _dict)
 
 
 def url_item_id_generator(**kwargs):
@@ -36,10 +37,10 @@ item_id_generators['url'] = url_item_id_generator
 
 
 class URLItem(BaseItem):
-    def __init__(self, bot, url, from_dict=None):
+    def __init__(self, url, from_dict=None):
         self.validating_lock = threading.Lock()
         if from_dict is None:
-            super().__init__(bot)
+            super().__init__()
             self.url = url if url[-1] != "/" else url[:-1]
             self.title = ''
             self.duration = 0
@@ -47,7 +48,7 @@ class URLItem(BaseItem):
             self.path = var.tmp_folder + self.id + ".mp3"
             self.thumbnail = ''
         else:
-            super().__init__(bot, from_dict)
+            super().__init__(from_dict)
             self.url = from_dict['url']
             self.duration = from_dict['duration']
             self.path = from_dict['path']
@@ -77,10 +78,10 @@ class URLItem(BaseItem):
             self.validating_lock.release()
             return True
 
-        if self.ready == 'failed':
-            self.validating_lock.release()
-            return False
-
+        # if self.ready == 'failed':
+        #     self.validating_lock.release()
+        #     return False
+        #
         if os.path.exists(self.path):
             self.validating_lock.release()
             self.ready = "yes"
@@ -97,8 +98,7 @@ class URLItem(BaseItem):
             # Check the length, useful in case of playlist, it wasn't checked before)
             log.info(
                 "url: " + self.url + " has a duration of " + str(self.duration) + " min -- too long")
-            self.send_client_message(constants.strings('too_long', song=self.title))
-            return False
+            raise ValidationFailedError(constants.strings('too_long', song=self.title))
         else:
             self.ready = "validated"
             self.version += 1  # notify wrapper to save me
@@ -136,8 +136,7 @@ class URLItem(BaseItem):
         if not succeed:
             self.ready = 'failed'
             self.log.error("url: error while fetching info from the URL")
-            self.send_client_message(constants.strings('unable_download'))
-            return False
+            raise ValidationFailedError(constants.strings('unable_download', item=self.format_title()))
 
     def _download(self):
         media.system.clear_tmp_folder(var.tmp_folder, var.config.getint('bot', 'tmp_folder_max_size'))
@@ -190,10 +189,9 @@ class URLItem(BaseItem):
             else:
                 for f in glob.glob(base_path + "*"):
                     os.remove(f)
-                self.send_client_message(constants.strings('unable_download'))
                 self.ready = "failed"
                 self.downloading = False
-                return False
+                raise PreparationFailedError(constants.strings('unable_download', item=self.format_title()))
 
     def _read_thumbnail_from_file(self, path_thumbnail):
         if os.path.isfile(path_thumbnail):

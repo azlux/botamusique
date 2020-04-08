@@ -7,7 +7,7 @@ import mutagen
 from PIL import Image
 
 import variables as var
-from media.item import BaseItem, item_builders, item_loaders, item_id_generators
+from media.item import BaseItem, item_builders, item_loaders, item_id_generators, ValidationFailedError
 import constants
 
 '''
@@ -22,12 +22,12 @@ type : file
 '''
 
 
-def file_item_builder(bot, **kwargs):
-    return FileItem(bot, kwargs['path'])
+def file_item_builder(**kwargs):
+    return FileItem(kwargs['path'])
 
 
-def file_item_loader(bot, _dict):
-    return FileItem(bot, "", _dict)
+def file_item_loader(_dict):
+    return FileItem("", _dict)
 
 
 def file_item_id_generator(**kwargs):
@@ -40,9 +40,9 @@ item_id_generators['file'] = file_item_id_generator
 
 
 class FileItem(BaseItem):
-    def __init__(self, bot, path, from_dict=None):
+    def __init__(self, path, from_dict=None):
         if not from_dict:
-            super().__init__(bot)
+            super().__init__()
             self.path = path
             self.title = ""
             self.artist = ""
@@ -53,7 +53,7 @@ class FileItem(BaseItem):
                 self.ready = "yes"
             self.keywords = self.title + " " + self.artist
         else:
-            super().__init__(bot, from_dict)
+            super().__init__(from_dict)
             self.artist = from_dict['artist']
             self.thumbnail = from_dict['thumbnail']
             if not self.validate():
@@ -71,8 +71,7 @@ class FileItem(BaseItem):
         if not os.path.exists(self.uri()):
             self.log.info(
                 "file: music file missed for %s" % self.format_debug_string())
-            self.send_client_message(constants.strings('file_missed', file=self.path))
-            return False
+            raise ValidationFailedError(constants.strings('file_missed', file=self.path))
 
         if not self.keywords:
             self.keywords = self.title + " " + self.artist # migrate from previous version

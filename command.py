@@ -227,7 +227,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
 
     # if parameter is {index}
     if parameter.isdigit():
-        music_wrappers = get_cached_wrappers_from_dicts(bot, var.music_db.query_music(Condition()
+        music_wrappers = get_cached_wrappers_from_dicts(var.music_db.query_music(Condition()
                                                                                       .and_equal('type', 'file')
                                                                                       .order_by('path')
                                                                                       .limit(1)
@@ -240,7 +240,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
             return
 
     # assume parameter is a path
-    music_wrappers = get_cached_wrappers_from_dicts(bot, var.music_db.query_music(Condition().and_equal('path', parameter)), user)
+    music_wrappers = get_cached_wrappers_from_dicts(var.music_db.query_music(Condition().and_equal('path', parameter)), user)
     if music_wrappers:
         var.playlist.append(music_wrappers[0])
         log.info("cmd: add to playlist: " + music_wrappers[0].format_debug_string())
@@ -248,7 +248,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
         return
 
     # assume parameter is a folder
-    music_wrappers = get_cached_wrappers_from_dicts(bot, var.music_db.query_music(Condition()
+    music_wrappers = get_cached_wrappers_from_dicts(var.music_db.query_music(Condition()
                                                          .and_equal('type', 'file')
                                                          .and_like('path', parameter + '%')), user)
     if music_wrappers:
@@ -268,7 +268,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
                                        .and_equal('type', 'file')
                                        .and_like('path', '%' + parameter + '%', case_sensitive=False))
     if len(matches) == 1:
-        music_wrapper = get_cached_wrapper_from_dict(bot, matches[0], user)
+        music_wrapper = get_cached_wrapper_from_dict(matches[0], user)
         var.playlist.append(music_wrapper)
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
         bot.send_msg(constants.strings('file_added', item=music_wrapper.format_song_string()), text)
@@ -286,7 +286,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
     if do_not_refresh_cache:
         bot.send_msg(constants.strings("no_file"), text)
     else:
-        var.cache.build_dir_cache(bot)
+        var.cache.build_dir_cache()
         cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=True)
 
 
@@ -304,7 +304,7 @@ def cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cach
                 match = re.search(parameter, file)
                 if match and match[0]:
                     count += 1
-                    music_wrapper = get_cached_wrapper(dict_to_item(bot, file_dict), user)
+                    music_wrapper = get_cached_wrapper(dict_to_item(file_dict), user)
                     music_wrappers.append(music_wrapper)
                     log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                     msgs.append("<li><b>{}</b> ({})</li>".format(music_wrapper.item().title,
@@ -323,7 +323,7 @@ def cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cach
                 if do_not_refresh_cache:
                     bot.send_msg(constants.strings("no_file"), text)
                 else:
-                    var.cache.build_dir_cache(bot)
+                    var.cache.build_dir_cache()
                     cmd_play_file_match(bot, user, text, command, parameter, do_not_refresh_cache=True)
 
         except re.error as e:
@@ -338,7 +338,7 @@ def cmd_play_url(bot, user, text, command, parameter):
 
     url = util.get_url_from_input(parameter)
     if url:
-        music_wrapper = get_cached_wrapper_from_scrap(bot, type='url', url=url, user=user)
+        music_wrapper = get_cached_wrapper_from_scrap(type='url', url=url, user=user)
         var.playlist.append(music_wrapper)
 
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -364,7 +364,7 @@ def cmd_play_playlist(bot, user, text, command, parameter):
     items = get_playlist_info(url=url, start_index=offset, user=user)
     if len(items) > 0:
         items = var.playlist.extend(list(map(
-            lambda item: get_cached_wrapper_from_scrap(bot, **item), items)))
+            lambda item: get_cached_wrapper_from_scrap(**item), items)))
         for music in items:
             log.info("cmd: add to playlist: " + music.format_debug_string())
     else:
@@ -389,7 +389,7 @@ def cmd_play_radio(bot, user, text, command, parameter):
             parameter = parameter.split()[0]
         url = util.get_url_from_input(parameter)
         if url:
-            music_wrapper = get_cached_wrapper_from_scrap(bot, type='radio', url=url, user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(type='radio', url=url, user=user)
 
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -489,7 +489,7 @@ def cmd_rb_play(bot, user, text, command, parameter):
         url = radiobrowser.geturl_byid(parameter)
         if url != "-1":
             log.info('cmd: Found url: ' + url)
-            music_wrapper = get_cached_wrapper_from_scrap(bot, type='radio', url=url, name=stationname, user=user)
+            music_wrapper = get_cached_wrapper_from_scrap(type='radio', url=url, name=stationname, user=user)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.async_download_next()
@@ -870,7 +870,7 @@ def cmd_play_tags(bot, user, text, command, parameter):
 
     tags = parameter.split(",")
     tags = list(map(lambda t: t.strip(), tags))
-    music_wrappers = get_cached_wrappers_by_tags(bot, tags, user)
+    music_wrappers = get_cached_wrappers_by_tags(tags, user)
     for music_wrapper in music_wrappers:
         count += 1
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
@@ -991,7 +991,7 @@ def cmd_find_tagged(bot, user, text, command, parameter):
     song_shortlist = music_dicts
 
     for i, music_dict in enumerate(music_dicts):
-        item = dict_to_item(bot, music_dict)
+        item = dict_to_item(music_dict)
         count += 1
         if count > ITEMS_PER_PAGE:
             break
@@ -1024,7 +1024,7 @@ def cmd_search_library(bot, user, text, command, parameter):
 
     music_dicts = var.music_db.query_music_by_keywords(keywords)
     if music_dicts:
-        items = dicts_to_items(bot, music_dicts)
+        items = dicts_to_items(music_dicts)
         song_shortlist = music_dicts
 
         if len(items) == 1:
@@ -1061,7 +1061,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
         music_wrappers = []
         for kwargs in song_shortlist:
             kwargs['user'] = user
-            music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
+            music_wrapper = get_cached_wrapper_from_scrap(**kwargs)
             music_wrappers.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type, music_wrapper.item().title))
@@ -1085,7 +1085,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
             if 1 <= index <= len(song_shortlist):
                 kwargs = song_shortlist[index - 1]
                 kwargs['user'] = user
-                music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
+                music_wrapper = get_cached_wrapper_from_scrap(**kwargs)
                 music_wrappers.append(music_wrapper)
                 log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
                 msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type, music_wrapper.item().title))
@@ -1104,7 +1104,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
         if 1 <= index <= len(song_shortlist):
             kwargs = song_shortlist[index - 1]
             kwargs['user'] = user
-            music_wrapper = get_cached_wrapper_from_scrap(bot, **kwargs)
+            music_wrapper = get_cached_wrapper_from_scrap(**kwargs)
             var.playlist.append(music_wrapper)
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
             bot.send_channel_msg(constants.strings('file_added', item=music_wrapper.format_song_string()))
@@ -1128,7 +1128,7 @@ def cmd_delete_from_library(bot, user, text, command, parameter):
             if 1 <= index <= len(song_shortlist):
                 music_dict = song_shortlist[index - 1]
                 if 'id' in music_dict:
-                    music_wrapper = get_cached_wrapper_by_id(bot, music_dict['id'], user)
+                    music_wrapper = get_cached_wrapper_by_id(music_dict['id'], user)
                     log.info("cmd: remove from library: " + music_wrapper.format_debug_string())
                     msgs.append("<li>[{}] <b>{}</b></li>".format(music_wrapper.item().type, music_wrapper.item().title))
                     var.playlist.remove_by_id(music_dict['id'])
@@ -1150,7 +1150,7 @@ def cmd_delete_from_library(bot, user, text, command, parameter):
         if 1 <= index <= len(song_shortlist):
             music_dict = song_shortlist[index - 1]
             if 'id' in music_dict:
-                music_wrapper = get_cached_wrapper_by_id(bot, music_dict['id'], user)
+                music_wrapper = get_cached_wrapper_by_id(music_dict['id'], user)
                 bot.send_msg(constants.strings('file_deleted', item=music_wrapper.format_song_string()), text)
                 log.info("cmd: remove from library: " + music_wrapper.format_debug_string())
                 var.playlist.remove_by_id(music_dict['id'])
@@ -1177,7 +1177,7 @@ def cmd_drop_database(bot, user, text, command, parameter):
 def cmd_refresh_cache(bot, user, text, command, parameter):
     global log
     if bot.is_admin(user):
-        var.cache.build_dir_cache(bot)
+        var.cache.build_dir_cache()
         log.info("command: Local file cache refreshed.")
         bot.send_msg(constants.strings('cache_refreshed'), text)
     else:

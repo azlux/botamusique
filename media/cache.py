@@ -21,12 +21,12 @@ class MusicCache(dict):
         self.log = logging.getLogger("bot")
         self.dir_lock = threading.Lock()
 
-    def get_item_by_id(self, bot, id):  # Why all these functions need a bot? Because it need the bot to send message!
+    def get_item_by_id(self, id):
         if id in self:
             return self[id]
 
         # if not cached, query the database
-        item = self.fetch(bot, id)
+        item = self.fetch(id)
         if item is not None:
             self[id] = item
             self.log.debug("library: music found in database: %s" % item.format_debug_string())
@@ -36,7 +36,7 @@ class MusicCache(dict):
             # print(id)
             # raise KeyError("Unable to fetch item from the database! Please try to refresh the cache by !recache.")
 
-    def get_item(self, bot, **kwargs):
+    def get_item(self, **kwargs):
         # kwargs should provide type and id, and parameters to build the item if not existed in the library.
         # if cached
         if 'id' in kwargs:
@@ -48,31 +48,31 @@ class MusicCache(dict):
             return self[id]
 
         # if not cached, query the database
-        item = self.fetch(bot, id)
+        item = self.fetch(id)
         if item is not None:
             self[id] = item
             self.log.debug("library: music found in database: %s" % item.format_debug_string())
             return item
 
         # if not in the database, build one
-        self[id] = item_builders[kwargs['type']](bot, **kwargs)  # newly built item will not be saved immediately
+        self[id] = item_builders[kwargs['type']](**kwargs)  # newly built item will not be saved immediately
         return self[id]
 
-    def get_items_by_tags(self, bot, tags):
+    def get_items_by_tags(self, tags):
         music_dicts = self.db.query_music_by_tags(tags)
         items = []
         if music_dicts:
             for music_dict in music_dicts:
                 id = music_dict['id']
-                self[id] = dict_to_item(bot, music_dict)
+                self[id] = dict_to_item(music_dict)
                 items.append(self[id])
 
         return items
 
-    def fetch(self, bot, id):
+    def fetch(self, id):
         music_dict = self.db.query_music_by_id(id)
         if music_dict:
-            self[id] = dict_to_item(bot, music_dict)
+            self[id] = dict_to_item(music_dict)
             return self[id]
         else:
             return None
@@ -83,7 +83,7 @@ class MusicCache(dict):
         self.db.manage_special_tags()
 
     def free_and_delete(self, id):
-        item = self.get_item_by_id(None, id)
+        item = self.get_item_by_id(id)
         if item:
             self.log.debug("library: DELETE item from the database: %s" % item.format_debug_string())
 
@@ -104,14 +104,14 @@ class MusicCache(dict):
         self.log.debug("library: all cache freed")
         self.clear()
 
-    def build_dir_cache(self, bot):
+    def build_dir_cache(self):
         self.dir_lock.acquire()
         self.log.info("library: rebuild directory cache")
         files = util.get_recursive_file_list_sorted(var.music_folder)
         for file in files:
             results = self.db.query_music(Condition().and_equal('path', file))
             if not results:
-                item = item_builders['file'](bot, path=file)
+                item = item_builders['file'](path=file)
                 self.log.debug("library: music save into database: %s" % item.format_debug_string())
                 self.db.insert_music(item.to_dict())
 
@@ -207,33 +207,33 @@ def get_cached_wrappers(items, user):
 
     return wrappers
 
-def get_cached_wrapper_from_scrap(bot, **kwargs):
-    item = var.cache.get_item(bot, **kwargs)
+def get_cached_wrapper_from_scrap(**kwargs):
+    item = var.cache.get_item(**kwargs)
     if 'user' not in kwargs:
         raise KeyError("Which user added this song?")
     return CachedItemWrapper(var.cache, item.id, kwargs['type'], kwargs['user'])
 
-def get_cached_wrapper_from_dict(bot, dict_from_db, user):
+def get_cached_wrapper_from_dict(dict_from_db, user):
     if dict_from_db:
-        item = dict_to_item(bot, dict_from_db)
+        item = dict_to_item(dict_from_db)
         return get_cached_wrapper(item, user)
     return None
 
-def get_cached_wrappers_from_dicts(bot, dicts_from_db, user):
+def get_cached_wrappers_from_dicts(dicts_from_db, user):
     items = []
     for dict_from_db in dicts_from_db:
         if dict_from_db:
-            items.append(get_cached_wrapper_from_dict(bot, dict_from_db, user))
+            items.append(get_cached_wrapper_from_dict(dict_from_db, user))
 
     return items
 
-def get_cached_wrapper_by_id(bot, id, user):
-    item = var.cache.get_item_by_id(bot, id)
+def get_cached_wrapper_by_id(id, user):
+    item = var.cache.get_item_by_id(id)
     if item:
         return CachedItemWrapper(var.cache, item.id, item.type, user)
 
-def get_cached_wrappers_by_tags(bot, tags, user):
-    items = var.cache.get_items_by_tags(bot, tags)
+def get_cached_wrappers_by_tags(tags, user):
+    items = var.cache.get_items_by_tags(tags)
     ret = []
     for item in items:
         ret.append(CachedItemWrapper(var.cache, item.id, item.type, user))
