@@ -838,7 +838,7 @@ def cmd_repeat(bot, user, text, command, parameter):
 
         bot.send_channel_msg(constants.strings("repeat", song=music.format_song_string(), n=str(repeat)))
     else:
-        bot.send_channel_msg(constants.strings("queue_empty"))
+        bot.send_msg(constants.strings("queue_empty"), text)
 
 
 def cmd_mode(bot, user, text, command, parameter):
