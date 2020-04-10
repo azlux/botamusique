@@ -13,7 +13,7 @@ Predicted functionalities will be those people would expect from any classic mus
     - Music in local folders (which can be uploaded through the web interface).
     - Youtube/Soundcloud URLs and playlists (everything supported by youtube-dl).
     - Radio stations from URL and http://www.radio-browser.info API.
-2. **Modern and powerful web remote control interface.** Powered by Flask. Which supports
+2. **Modern and powerful web remote control interface.** Powered by Flask. Which supports:
     - Playlist management.
     - Music library management, including uploading, browsing all files and edit tags, etc.
 3. **Powerful command system.** Commands and words the bot says are fully customizable. Support partial-match for commands.
@@ -86,7 +86,7 @@ host = 127.0.0.1
 port = 64738
 ````
 
-2. You need to specify a folder that stores your music file. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
+2. You need to specify a folder that stores your music files. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
 ```
 [bot]
 music_folder = music_folder/
@@ -179,7 +179,7 @@ You need to install the opus codec (not embedded in all system): `apt install li
 
 3. If you have a large amount of music files (>1000), it may take some time for the bot to boot, since
 it will build up the cache for the music library on booting. You may want to disable this auto-scanning by
-setting ``refresh_cache_on_startu=False`` in `[bot]` section and control the scanning manually by
+setting ``refresh_cache_on_startup=False`` in `[bot]` section and control the scanning manually by
 ``!rescan`` command and the *Rescan Files* button on the web interface.
 
 4. Alpine Linux requires some extra dependencies during the installation (in order to compile Pillow):
