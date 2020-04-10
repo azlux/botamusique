@@ -225,20 +225,6 @@ def cmd_pause(bot, user, text, command, parameter):
 def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=False):
     global log, song_shortlist
 
-    # if parameter is {index}
-    if parameter.isdigit():
-        music_wrappers = get_cached_wrappers_from_dicts(var.music_db.query_music(Condition()
-                                                                                      .and_equal('type', 'file')
-                                                                                      .order_by('path')
-                                                                                      .limit(1)
-                                                                                      .offset(int(parameter))), user)
-
-        if music_wrappers:
-            var.playlist.append(music_wrappers[0])
-            log.info("cmd: add to playlist: " + music_wrappers[0].format_debug_string())
-            bot.send_msg(constants.strings('file_added', item=music_wrappers[0].format_song_string()), text)
-            return
-
     # assume parameter is a path
     music_wrappers = get_cached_wrappers_from_dicts(var.music_db.query_music(Condition().and_equal('path', parameter)), user)
     if music_wrappers:
@@ -256,7 +242,7 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
 
         for music_wrapper in music_wrappers:
             log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
-            msgs.append("{} ({})".format(music_wrapper.item().title, music_wrapper.item().path))
+            msgs.append("<b>{:s}</b> ({:s})".format(music_wrapper.item().title, music_wrapper.item().path))
 
         var.playlist.extend(music_wrappers)
 
@@ -753,36 +739,36 @@ def cmd_remove(bot, user, text, command, parameter):
 
 
 def cmd_list_file(bot, user, text, command, parameter):
-    global log
+    global song_shortlist
 
-    page = 0
+    files = var.music_db.query_music(Condition()
+                                     .and_equal('type', 'file')
+                                     .order_by('path'))
 
-    files = [ file['path'] for file in var.music_db.query_music(Condition()
-                                                                .and_equal('type', 'file')
-                                                                .order_by('path')
-                                                                .limit(ITEMS_PER_PAGE)
-                                                                .offset(page * ITEMS_PER_PAGE)) ]
+    song_shortlist = files
 
-    msgs = [constants.strings("multiple_file_found")]
+    msgs = [constants.strings("multiple_file_found") + "<ul>"]
     try:
         count = 0
         for index, file in enumerate(files):
             if parameter:
-                match = re.search(parameter, file)
+                match = re.search(parameter, file['path'])
                 if not match:
                     continue
 
             count += 1
             if count > ITEMS_PER_PAGE:
                 break
-            msgs.append("<b>{:0>3d}</b> - {:s}".format(index, file))
+            msgs.append("<li><b>{:d}</b> - <b>{:s}</b> ({:s})</li>".format(index + 1, file['title'], file['path']))
 
         if count != 0:
+            msgs.append("</ul>")
             if count > ITEMS_PER_PAGE:
                 msgs.append(constants.strings("records_omitted"))
-            send_multi_lines(bot, msgs, text)
+            msgs.append(constants.strings("shortlist_instruction"))
+            send_multi_lines(bot, msgs, text, "")
         else:
-            bot.send_msg(constants.strings('no_file'), text)
+            bot.send_msg(constants.strings("no_file"), text)
 
     except re.error as e:
         msg = constants.strings('wrong_pattern', error=str(e))
