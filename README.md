@@ -179,7 +179,7 @@ You need to install the opus codec (not embedded in all system): `apt install li
 
 3. If you have a large amount of music files (>1000), it may take some time for the bot to boot, since
 it will build up the cache for the music library on booting. You may want to disable this auto-scanning by
-setting ``refresh_cache_on_startu=False`` in `[bot]` section and control the scanning manually by
+setting ``refresh_cache_on_startup=False`` in `[bot]` section and control the scanning manually by
 ``!rescan`` command and the *Rescan Files* button on the web interface.
 
 4. Alpine Linux requires some extra dependencies during the installation (in order to compile Pillow):
