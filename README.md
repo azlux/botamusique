@@ -13,7 +13,7 @@ Predicted functionalities will be those people would expect from any classic mus
     - Music in local folders (which can be uploaded through the web interface).
     - Youtube/Soundcloud URLs and playlists (everything supported by youtube-dl).
     - Radio stations from URL and http://www.radio-browser.info API.
-2. **Modern and powerful web remote control interface.** Powered by Flask. Which supports
+2. **Modern and powerful web remote control interface.** Powered by Flask. Which supports:
     - Playlist management.
     - Music library management, including uploading, browsing all files and edit tags, etc.
 3. **Powerful command system.** Commands and words the bot says are fully customizable. Support partial-match for commands.
@@ -86,7 +86,7 @@ host = 127.0.0.1
 port = 64738
 ````
 
-2. You need to specify a folder that stores your music file. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
+2. You need to specify a folder that stores your music files. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
 ```
 [bot]
 music_folder = music_folder/
