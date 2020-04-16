@@ -724,7 +724,7 @@
                 $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
                 $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
             }
-            $("#volume-slider").value = volume;
+            document.getElementById("volume-slider").value = Math.round(volume*100);
         }
 
         function themeInit(){

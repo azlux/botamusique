@@ -406,7 +406,7 @@ def post():
             elif action == "volume_set_value":
                 if 'new_volume' in request.form:
                     # new_volume is slider value ranging from 0-100
-                    var.bot.volume_set = (request.form['new_volume'] * 0.01)
+                    var.bot.volume_set = (int(request.form['new_volume']) * 0.01)
                     if var.bot.volume_set > 1:
                         var.bot.volume_set = 1
                     elif var.bot.volume_set < 0:
