@@ -108,4 +108,7 @@
    font-style: italic !important;
    font-weight: 300;
 }
-
+#volume-slider {
+   margin-top: 8px;
+   margin-right: 6px;
+}
