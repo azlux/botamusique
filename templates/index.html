@@ -68,15 +68,17 @@
                                     onclick="request('post', {action : 'volume_down'})">
                                 <i class="fa fa-volume-down" aria-hidden="true"></i>
                             </button>
+
+                            <input type="range" class="custom-range" id="volume-slider" 
+                                    min="0" max="100" step="1" value="50"
+                                    onchange="request('post', {action : 'volume_set_value', new_volume : this.value})">
+                            </input>
+
                             <button type="button" class="btn btn-warning btn-space"
                                     onclick="request('post', {action : 'volume_up'})">
                                 <i class="fa fa-volume-up" aria-hidden="true"></i>
                             </button>
 
-                            <input id="volume-slider" type="range"
-                                    min="0" max="100" step="1" value="50"
-                                    onchange="request('post', {action : 'volume_set_value', new_volume : this.value})">
-                            </input>
                         </div>
 
                         <table class="table">
