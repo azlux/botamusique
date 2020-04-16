@@ -234,13 +234,15 @@ def status():
                         'current_index': var.playlist.current_index,
                         'empty': False,
                         'play': not var.bot.is_pause,
-                        'mode': var.playlist.mode})
+                        'mode': var.playlist.mode,
+                        'volume': var.db.getfloat('bot', 'volume')})
     else:
         return jsonify({'ver': var.playlist.version,
                         'current_index': var.playlist.current_index,
                         'empty': True,
                         'play': not var.bot.is_pause,
-                        'mode': var.playlist.mode})
+                        'mode': var.playlist.mode,
+                        'volume': var.db.getfloat('bot', 'volume')})
 
 
 @web.route("/post", methods=['POST'])
@@ -401,6 +403,16 @@ def post():
                     var.bot.volume_set = 0
                 var.db.set('bot', 'volume', str(var.bot.volume_set))
                 log.info("web: volume up to %d" % (var.bot.volume_set * 100))
+            elif action == "volume_set_value":
+                if 'new_volume' in request.form:
+                    # new_volume is slider value ranging from 0-100
+                    var.bot.volume_set = (request.form['new_volume'] * 0.01)
+                    if var.bot.volume_set > 1:
+                        var.bot.volume_set = 1
+                    elif var.bot.volume_set < 0:
+                        var.bot.volume_set = 0
+                    var.db.set('bot', 'volume', str(var.bot.volume_set))
+                    log.info("web: volume set to %d" % (var.bot.volume_set * 100))
 
     return status()
 
