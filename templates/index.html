@@ -72,6 +72,11 @@
                                     onclick="request('post', {action : 'volume_up'})">
                                 <i class="fa fa-volume-up" aria-hidden="true"></i>
                             </button>
+
+                            <input id="volume-slider" type="range"
+                                    min="0" max="100" step="1" value="50"
+                                    onchange="request('post', {action : 'volume_set_value', new_volume : this.value})">
+                            </input>
                         </div>
 
                         <table class="table">
@@ -497,7 +502,7 @@
                         if (data.ver !== playlist_ver) {
                             checkForPlaylistUpdate();
                         }
-                        updateControls(data.empty, data.play, data.mode);
+                        updateControls(data.empty, data.play, data.mode, data.volume);
                     }
                 }
             });
@@ -659,7 +664,7 @@
                                 displayActiveItem(data.current_index);
                             }
                         }
-                        updateControls(data.empty, data.play, data.mode);
+                        updateControls(data.empty, data.play, data.mode, data.volume);
                     }
                 }
             });
@@ -682,7 +687,7 @@
             );
         }
 
-        function updateControls(empty, play, mode){
+        function updateControls(empty, play, mode, volume){
             if(empty){
                 $("#play-btn").prop("disabled", true);
                 $("#pause-btn").prop("disabled", true);
@@ -719,7 +724,7 @@
                 $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
                 $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
             }
-
+            $("#volume-slider").value = volume;
         }
 
         function themeInit(){
