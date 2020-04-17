@@ -70,7 +70,7 @@
                             </button>
 
                             <input type="range" class="custom-range" id="volume-slider" 
-                                    min="0" max="100" step="1" value="50"
+                                    min="0" max="1" step="0.01" value="0.5"
                                     onchange="request('post', {action : 'volume_set_value', new_volume : this.value})">
                             </input>
 
@@ -726,7 +726,13 @@
                 $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
                 $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
             }
-            document.getElementById("volume-slider").value = Math.round(volume*100);
+            if(volume > 1) {
+                document.getElementById("volume-slider").value = 1;
+            } else if(volume < 0) {
+                document.getElementById("volume-slider").value = 0;
+            } else {
+                document.getElementById("volume-slider").value = volume;
+            }
         }
 
         function themeInit(){
