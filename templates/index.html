@@ -236,7 +236,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="library-info-col col-5" style="padding: 12px 0;">
+                                <div class="library-info-col library-info-title col-5" style="padding: 12px 0;">
                                     <div>
                                         <span class="library-item-type lead text-muted btn-space">[File]</span>
                                         <span class="library-item-title lead btn-space">This is my title</span>
@@ -836,6 +836,16 @@
         var item_template = $("#library-item");
 
         function bindLibraryResultEvent() {
+            $(".library-thumb-col").unbind().hover(
+                function (e) { $(e.currentTarget).find(".library-thumb-grp").addClass("library-thumb-grp-hover"); },
+                function (e) { $(e.currentTarget).find(".library-thumb-grp").removeClass("library-thumb-grp-hover"); }
+            );
+
+            $(".library-info-title").unbind().hover(
+                function (e) { $(e.currentTarget).parent().find(".library-thumb-grp").addClass("library-thumb-grp-hover"); },
+                function (e) { $(e.currentTarget).parent().find(".library-thumb-grp").removeClass("library-thumb-grp-hover"); }
+            );
+
             $(".library-item-play").unbind().click(
                 function (e) {
                     request('post', {
