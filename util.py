@@ -163,19 +163,29 @@ def url_unban(url):
     return res
 
 
-def pipe_no_wait(pipefd):
-    """ Used to fetch the STDERR of ffmpeg. pipefd is the file descriptor returned from os.pipe()"""
+def pipe_no_wait():
+    """ Generate a non-block pipe used to fetch the STDERR of ffmpeg.
+    """
+
     if platform == "linux" or platform == "linux2" or platform == "darwin":
         import fcntl
         import os
-        try:
-            fl = fcntl.fcntl(pipefd, fcntl.F_GETFL)
-            fcntl.fcntl(pipefd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-        except:
-            print(sys.exc_info()[1])
-            return False
+
+        pipe_rd = 0
+        pipe_wd = 0
+
+        if hasattr(os, "pipe2"):
+            pipe_rd, pipe_wd = os.pipe2(os.O_NONBLOCK)
         else:
-            return True
+            pipe_rd, pipe_wd = os.pipe()
+
+            try:
+                fl = fcntl.fcntl(pipe_rd, fcntl.F_GETFL)
+                fcntl.fcntl(pipe_rd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+            except:
+                print(sys.exc_info()[1])
+                return None, None
+        return pipe_rd, pipe_wd
 
     elif platform == "win32":
         # https://stackoverflow.com/questions/34504970/non-blocking-read-on-os-pipe-on-windows
@@ -185,6 +195,8 @@ def pipe_no_wait(pipefd):
         from ctypes import windll, byref, wintypes, WinError, POINTER
         from ctypes.wintypes import HANDLE, DWORD, BOOL
 
+        pipe_rd, pipe_wd = os.pipe()
+
         LPDWORD = POINTER(DWORD)
         PIPE_NOWAIT = wintypes.DWORD(0x00000001)
         ERROR_NO_DATA = 232
@@ -193,13 +205,13 @@ def pipe_no_wait(pipefd):
         SetNamedPipeHandleState.argtypes = [HANDLE, LPDWORD, LPDWORD, LPDWORD]
         SetNamedPipeHandleState.restype = BOOL
 
-        h = msvcrt.get_osfhandle(pipefd)
+        h = msvcrt.get_osfhandle(pipe_rd)
 
         res = windll.kernel32.SetNamedPipeHandleState(h, byref(PIPE_NOWAIT), None, None)
         if res == 0:
             print(WinError())
-            return False
-        return True
+            return None, None
+        return pipe_rd, pipe_wd
 
 
 class Dir(object):

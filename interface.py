@@ -236,6 +236,7 @@ def status():
                         'play': not var.bot.is_pause,
                         'mode': var.playlist.mode,
                         'volume': var.bot.volume_set})
+
     else:
         return jsonify({'ver': var.playlist.version,
                         'current_index': var.playlist.current_index,
@@ -412,6 +413,7 @@ def post():
                     else:
                         # value for new volume is between 0 and 1, round to two decimal digits
                         var.bot.volume_set = round(float(request.form['new_volume']), 2)
+
                     var.db.set('bot', 'volume', str(var.bot.volume_set))
                     log.info("web: volume set to %d" % (var.bot.volume_set * 100))
 
