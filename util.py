@@ -185,7 +185,7 @@ def pipe_no_wait():
             except:
                 print(sys.exc_info()[1])
                 return None, None
-            return pipe_rd, pipe_wd
+        return pipe_rd, pipe_wd
 
     elif platform == "win32":
         # https://stackoverflow.com/questions/34504970/non-blocking-read-on-os-pipe-on-windows
