@@ -71,7 +71,7 @@
 
                             <input type="range" class="custom-range" id="volume-slider" 
                                     min="0" max="1" step="0.01" value="0.5"
-                                    onchange="request('post', {action : 'volume_set_value', new_volume : this.value})">
+                                    onchange="setVolumeDelayed(this.value)">
                             </input>
 
                             <button type="button" class="btn btn-warning btn-space"
@@ -493,6 +493,8 @@
         var playlist_range_from = 0;
         var playlist_range_to = 0;
 
+        var last_volume = 0;
+
         function request(_url, _data, refresh=false){
             console.log(_data);
             $.ajax({
@@ -726,12 +728,15 @@
                 $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
                 $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
             }
-            if(volume > 1) {
-                document.getElementById("volume-slider").value = 1;
-            } else if(volume < 0) {
-                document.getElementById("volume-slider").value = 0;
-            } else {
-                document.getElementById("volume-slider").value = volume;
+            if(volume != last_volume) {
+                last_volume = volume;
+                if(volume > 1) {
+                    document.getElementById("volume-slider").value = 1;
+                } else if(volume < 0) {
+                    document.getElementById("volume-slider").value = 0;
+                } else {
+                    document.getElementById("volume-slider").value = volume;
+                }
             }
         }
 
@@ -1169,6 +1174,13 @@
             updateResults(active_page);
         }
 
+        var volume_update_timer;
+        function setVolumeDelayed(new_volume_value) {
+            window.clearTimeout(volume_update_timer);
+            volume_update_timer = window.setTimeout(function() {
+                request('post', {action : 'volume_set_value', new_volume : new_volume_value});
+                }, 500); // delay in milliseconds
+        }
 
         themeInit();
         updateResults();
