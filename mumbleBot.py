@@ -162,6 +162,8 @@ class MumbleBot:
         self._display_rms = False
         self._max_rms = 0
 
+        self.redirect_ffmpeg_log = var.config.getboolean('debug', 'redirect_ffmpeg_log', fallback=True)
+
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
 
@@ -375,9 +377,12 @@ class MumbleBot:
 
         # The ffmpeg process is a thread
         # prepare pipe for catching stderr of ffmpeg
-        pipe_rd, pipe_wd = os.pipe()
-        util.pipe_no_wait(pipe_rd)  # Let the pipe work in non-blocking mode
-        self.thread_stderr = os.fdopen(pipe_rd)
+        if self.redirect_ffmpeg_log:
+            pipe_rd, pipe_wd = util.pipe_no_wait()  # Let the pipe work in non-blocking mode
+            self.thread_stderr = os.fdopen(pipe_rd)
+        else:
+            pipe_rd, pipe_wd = None, None
+
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.is_pause = False
         self.read_pcm_size = 0
@@ -449,12 +454,13 @@ class MumbleBot:
                 raw_music = self.thread.stdout.read(480)
                 self.read_pcm_size += 480
 
-                try:
-                    self.last_ffmpeg_err = self.thread_stderr.readline()
-                    if self.last_ffmpeg_err:
-                        self.log.debug("ffmpeg: " + self.last_ffmpeg_err.strip("\n"))
-                except:
-                    pass
+                if self.redirect_ffmpeg_log:
+                    try:
+                        self.last_ffmpeg_err = self.thread_stderr.readline()
+                        if self.last_ffmpeg_err:
+                            self.log.debug("ffmpeg: " + self.last_ffmpeg_err.strip("\n"))
+                    except:
+                        pass
 
                 if raw_music:
                     # Adjust the volume and send it to mumble
@@ -623,9 +629,12 @@ class MumbleBot:
         self.log.info("bot: execute ffmpeg command: " + " ".join(command))
         # The ffmpeg process is a thread
         # prepare pipe for catching stderr of ffmpeg
-        pipe_rd, pipe_wd = os.pipe()
-        util.pipe_no_wait(pipe_rd)  # Let the pipe work in non-blocking mode
-        self.thread_stderr = os.fdopen(pipe_rd)
+        if self.redirect_ffmpeg_log:
+            pipe_rd, pipe_wd = util.pipe_no_wait()  # Let the pipe work in non-blocking mode
+            self.thread_stderr = os.fdopen(pipe_rd)
+        else:
+            pipe_rd, pipe_wd = None, None
+
         self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
         self.last_volume_cycle_time = time.time()
         self.pause_at_id = ""
