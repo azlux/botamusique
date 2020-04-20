@@ -6,11 +6,11 @@
 
     <title>botamusique web interface</title>
 
+    <link rel="icon" href="../static/image/favicon.ico" />
+
     <link id="pagestyle" rel="stylesheet" href="../static/css/bootstrap.min.css">
     <link rel="stylesheet" href="../static/css/custom.css">
     <link rel="stylesheet" href="../static/css/tylervigario.css">
-
-    <link rel="icon" href="../static/image/favicon.ico" />
 </head>
 
 <body>
@@ -19,7 +19,7 @@
             <div class="col-auto">
                 <img src="../static/image/logo.png" height="200px">
             </div>
-            <div class="col-auto my-auto">
+            <div class="col my-auto">
                 <h1>botamusique Web Interface</h1>
             </div>
         </div>
@@ -356,29 +356,39 @@
             <div class="card-body">
                 <form action="./upload" method="post" enctype="multipart/form-data">
                     <div class="row">
-                        <div id="uploadBox" class="col-lg-7 input-group mb-3">
-                            <div id="uploadField" style="display: flex; width: 100%">
-                                <div class="custom-file">
-                                    <input type="file" name="file[]" class="custom-file-input" id="uploadSelectFile"
-                                        aria-describedby="uploadSubmit" value="Browse Music file" multiple />
-                                    <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
+                        <div id="uploadBox" class="col-lg-7">
+                            <div class="input-group mb-3">
+                                <div id="uploadField" style="display: flex; width: 100%">
+                                    <div class="custom-file">
+                                        <input type="file" name="file[]" class="custom-file-input" id="uploadSelectFile"
+                                            aria-describedby="uploadSubmit" value="Browse Music file" multiple />
+                                        <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-4 input-group mb-3">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">Upload To</span>
+                        <div class="col-lg-5">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Upload To</span>
+                                        </div>
+                                        <input class="form-control" list="targetdirs" id="targetdir" name="targetdir"
+                                            placeholder="uploads" />
+                                        <datalist id="targetdirs">
+                                            {% for dir in dirs %}
+                                            <option value="{{ dir }}">
+                                                {% endfor %}
+                                        </datalist>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary" type="submit" id="uploadSubmit">Upload!</button>
+                                </div>
                             </div>
-                            <input class="form-control" list="targetdirs" id="targetdir" name="targetdir"
-                                placeholder="uploads" />
-                            <datalist id="targetdirs">
-                                {% for dir in dirs %}
-                                <option value="{{ dir }}">
-                                    {% endfor %}
-                            </datalist>
                         </div>
                     </div>
-                    <button class="btn btn-primary" type="submit" id="uploadSubmit">Upload!</button>
                 </form>
             </div>
         </div>
