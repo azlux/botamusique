@@ -2,7 +2,7 @@
 import logging
 import math
 
-import pymumble.pymumble_py3 as pymumble
+import pymumble_py3 as pymumble
 import re
 
 import constants

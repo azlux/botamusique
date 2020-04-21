@@ -12,7 +12,7 @@ import subprocess as sp
 import argparse
 import os
 import os.path
-import pymumble.pymumble_py3 as pymumble
+import pymumble_py3 as pymumble
 import variables as var
 import logging
 import logging.handlers
