@@ -45,7 +45,6 @@
 }
 .library-item{
    display: flex;
-   margin-left: 5px;
    padding: .5rem .5rem .5rem 0;
    height: 72px;
    transition: ease-in-out 200ms;
