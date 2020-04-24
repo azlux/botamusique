@@ -11,7 +11,6 @@ case "$1" in
     testing)
         git fetch
         git pull --all
-        git submodule update
         ;;
     *)
         ;;
