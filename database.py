@@ -3,7 +3,9 @@ import sqlite3
 import json
 import datetime
 import time
+import logging
 
+log = logging.getLogger("bot")
 
 class DatabaseError(Exception):
     pass
@@ -187,7 +189,7 @@ class Condition:
         return self
 
 SETTING_DB_VERSION = 1
-MUSIC_DB_VERSION = 1
+MUSIC_DB_VERSION = 2
 
 class SettingsDatabase:
     def __init__(self, db_path):
@@ -319,59 +321,8 @@ class MusicDatabase:
     def __init__(self, db_path):
         self.db_path = db_path
 
-        self.db_version_check_and_create()
+        MusicDatabaseMigration(self).migrate()
         self.manage_special_tags()
-
-    def has_table(self, table):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table,)).fetchall()
-        conn.close()
-        if len(tables) == 0:
-            return False
-        return True
-
-    def create_table(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute("CREATE TABLE music ("
-                       "id TEXT PRIMARY KEY, "
-                       "type TEXT, "
-                       "title TEXT, "
-                       "keywords TEXT, "
-                       "metadata TEXT, "
-                       "tags TEXT, "
-                       "path TEXT, "
-                       "create_at DATETIME DEFAULT CURRENT_TIMESTAMP"
-                       ")")
-        cursor.execute("INSERT INTO music (id, title) "
-                       "VALUES ('info', ?)", (MUSIC_DB_VERSION,))
-
-        conn.commit()
-        conn.close()
-
-    def db_version_check_and_create(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        if self.has_table('music'):
-            ver = cursor.execute("SELECT title FROM music WHERE id='info'").fetchone()
-            if ver and int(ver[0]) == MUSIC_DB_VERSION:
-                conn.close()
-                return True
-            else:
-                cursor.execute("ALTER TABLE music RENAME TO music_old")
-                conn.commit()
-
-                self.create_table()
-                
-                cursor.execute("INSERT INTO music (id, type, title, metadata, tags)"
-                               "SELECT id, type, title, metadata, tags FROM music_old")
-                cursor.execute("DROP TABLE music_old")
-                conn.commit()
-                conn.close()
-        else:
-            self.create_table()
 
     def insert_music(self, music_dict, _conn=None):
         conn = sqlite3.connect(self.db_path) if _conn is None else _conn
@@ -567,8 +518,6 @@ class MusicDatabase:
                 if 'path' not in music_dict or result[5]:
                     music_dict['path'] = result[5]
                 music_dict['keywords'] = result[6]
-                if not music_dict['tags'][0]:
-                    music_dict['tags'] = []
 
                 music_dicts.append(music_dict)
 
@@ -589,3 +538,89 @@ class MusicDatabase:
         cursor = conn.cursor()
         cursor.execute("DROP TABLE music")
         conn.close()
+
+
+class MusicDatabaseMigration:
+    def __init__(self, db: MusicDatabase):
+        self.db = db
+        self.migrate_func = {}
+        self.migrate_func[0] = self.migrate_from_0_to_1
+        self.migrate_func[1] = self.migrate_from_1_to_2
+
+    def migrate(self):
+        conn = sqlite3.connect(self.db.db_path)
+        cursor = conn.cursor()
+        if self.has_table('music', conn):
+            current_version = 0
+            ver = cursor.execute("SELECT title FROM music WHERE id='info'").fetchone()
+            if ver:
+                current_version = int(ver[0])
+
+            if current_version == MUSIC_DB_VERSION:
+                conn.close()
+                return
+            else:
+                log.info(f"database: migrating from music table version {current_version} to {MUSIC_DB_VERSION}...")
+                while current_version < MUSIC_DB_VERSION:
+                    log.debug(f"database: migrate step {current_version}/{MUSIC_DB_VERSION - 1}")
+                    current_version = self.migrate_func[current_version](conn)
+                log.info(f"database: migration done.")
+
+        else:
+            log.info(f"database: no music table found. Creating music table version {MUSIC_DB_VERSION}.")
+            self.create_table_version_2(conn)
+
+        conn.close()
+
+    def has_table(self, table, conn):
+        cursor = conn.cursor()
+        tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table,)).fetchall()
+        if len(tables) == 0:
+            return False
+        return True
+
+    def create_table_version_1(self, conn):
+        cursor = conn.cursor()
+
+        cursor.execute("CREATE TABLE music ("
+                       "id TEXT PRIMARY KEY, "
+                       "type TEXT, "
+                       "title TEXT, "
+                       "keywords TEXT, "
+                       "metadata TEXT, "
+                       "tags TEXT, "
+                       "path TEXT, "
+                       "create_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+                       ")")
+        cursor.execute("INSERT INTO music (id, title) "
+                       "VALUES ('info', ?)", (MUSIC_DB_VERSION,))
+
+        conn.commit()
+
+    def create_table_version_2(self, conn):
+        self.create_table_version_1(conn)
+
+    def migrate_from_0_to_1(self, conn):
+        cursor = conn.cursor()
+        cursor.execute("ALTER TABLE music RENAME TO music_old")
+        conn.commit()
+
+        self.create_table_version_1(conn)
+
+        cursor.execute("INSERT INTO music (id, type, title, metadata, tags)"
+                       "SELECT id, type, title, metadata, tags FROM music_old")
+        cursor.execute("DROP TABLE music_old")
+        conn.commit()
+
+        return 1 # return new version number
+
+    def migrate_from_1_to_2(self, conn):
+        items_to_update = self.db.query_music(Condition(), conn)
+        for item in items_to_update:
+            item['keywords'] = item['title']
+            if 'artist' in item:
+                item['keywords'] += ' ' + item['artist']
+            self.db.insert_music(item)
+        conn.commit()
+
+        return 2 # return new version number

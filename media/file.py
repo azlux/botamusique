@@ -73,10 +73,6 @@ class FileItem(BaseItem):
                 "file: music file missed for %s" % self.format_debug_string())
             raise ValidationFailedError(constants.strings('file_missed', file=self.path))
 
-        if not self.keywords:
-            self.keywords = self.title + " " + self.artist # migrate from previous version
-            self.version += 1
-
         # self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
         self.ready = "yes"
         return True
