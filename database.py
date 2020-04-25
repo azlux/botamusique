@@ -486,7 +486,7 @@ class MusicDatabase:
         if len(results) > 0:
             for result in results:
                 id = result[0]
-                tags = result[1].strip(",").split(",")
+                tags = filter(None, result[1].strip(",").split(","))
                 lookup[id] = tags if tags[0] else []
 
         return lookup
