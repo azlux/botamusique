@@ -384,6 +384,12 @@ def post():
                     var.bot.clear()
                 else:
                     var.bot.stop()
+            elif action == "next":
+                if not var.bot.is_pause:
+                    var.bot.interrupt()
+                else:
+                    var.playlist.next()
+                    var.bot.wait_for_ready = True
             elif action == "pause":
                 var.bot.pause()
             elif action == "resume":

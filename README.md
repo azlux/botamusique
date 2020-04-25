@@ -64,11 +64,10 @@ venv/bin/pip install -r requirements.txt
 We will test new features in this branch, maybe sometimes post some hotfixes. Please be noted that this version has no auto-update support. If you want to install this version, you need to have Git installed.
 We recommend you to install the stable version above, except you'd like to try out our half-baked features and put up with bugs amid them.
 ```
-git clone --recurse-submodules https://github.com/azlux/botamusique.git
+git clone https://github.com/azlux/botamusique.git
 cd botamusique
 python3 -m venv venv
 venv/bin/pip install wheel
-venv/bin/pip install -r pymumble/requirements.txt
 venv/bin/pip install -r requirements.txt
 ```
 

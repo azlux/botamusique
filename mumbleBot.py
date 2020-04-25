@@ -48,13 +48,6 @@ class MumbleBot:
         else:
             self.channel = var.config.get("server", "channel", fallback=None)
 
-        if args.verbose:
-            self.log.setLevel(logging.DEBUG)
-            self.log.debug("Starting in DEBUG loglevel")
-        elif args.quiet:
-            self.log.setLevel(logging.ERROR)
-            self.log.error("Starting in ERROR loglevel")
-
         var.user = args.user
         var.music_folder = util.solve_filepath(var.config.get('bot', 'music_folder'))
         var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
@@ -710,6 +703,13 @@ if __name__ == '__main__':
     bot_logger = logging.getLogger("bot")
     formatter = logging.Formatter('[%(asctime)s %(levelname)s %(threadName)s] %(message)s', "%b %d %H:%M:%S")
     bot_logger.setLevel(logging.INFO)
+
+    if args.verbose:
+        bot_logger.setLevel(logging.DEBUG)
+        bot_logger.debug("Starting in DEBUG loglevel")
+    elif args.quiet:
+        bot_logger.setLevel(logging.ERROR)
+        bot_logger.error("Starting in ERROR loglevel")
 
     logfile = util.solve_filepath(var.config.get('bot', 'logfile'))
     handler = None

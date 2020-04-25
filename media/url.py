@@ -42,11 +42,12 @@ class URLItem(BaseItem):
         if from_dict is None:
             super().__init__()
             self.url = url if url[-1] != "/" else url[:-1]
-            self.title = ''
+            self.title = ""
             self.duration = 0
             self.id = hashlib.md5(url.encode()).hexdigest()
             self.path = var.tmp_folder + self.id + ".mp3"
-            self.thumbnail = ''
+            self.thumbnail = ""
+            self.keywords = ""
         else:
             super().__init__(from_dict)
             self.url = from_dict['url']
@@ -126,6 +127,7 @@ class URLItem(BaseItem):
                     info = ydl.extract_info(self.url, download=False)
                     self.duration = info['duration'] / 60
                     self.title = info['title']
+                    self.keywords = info['title']
                     succeed = True
                     return True
                 except youtube_dl.utils.DownloadError:
