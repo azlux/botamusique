@@ -514,9 +514,8 @@ class MusicDatabase:
                 music_dict['type'] = result[1]
                 music_dict['title'] = result[2]
                 music_dict['id'] = result[0]
-                music_dict['tags'] = result[4].strip(",").split(",")
-                if 'path' not in music_dict or result[5]:
-                    music_dict['path'] = result[5]
+                music_dict['tags'] = result[4].strip(",").split(",") if result[4] else ''
+                music_dict['path'] = result[5]
                 music_dict['keywords'] = result[6]
 
                 music_dicts.append(music_dict)
@@ -566,10 +565,14 @@ class MusicDatabaseMigration:
                     current_version = self.migrate_func[current_version](conn)
                 log.info(f"database: migration done.")
 
+                cursor.execute("UPDATE music SET title=? "
+                               "WHERE id='info'", (MUSIC_DB_VERSION,))
+
         else:
             log.info(f"database: no music table found. Creating music table version {MUSIC_DB_VERSION}.")
             self.create_table_version_2(conn)
 
+        conn.commit()
         conn.close()
 
     def has_table(self, table, conn):
@@ -620,6 +623,13 @@ class MusicDatabaseMigration:
             item['keywords'] = item['title']
             if 'artist' in item:
                 item['keywords'] += ' ' + item['artist']
+
+            tags = []
+            for tag in item['tags']:
+                if tag:
+                    tags.append(tag)
+            item['tags'] = tags
+
             self.db.insert_music(item)
         conn.commit()
 
