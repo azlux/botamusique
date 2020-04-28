@@ -28,22 +28,9 @@
         <div id="playlist">
             <div class="row">
                 <div class="col">
-                    <div class="btn-group mb-2">
-                        <button type="button" id="play-btn" class="btn btn-info btn-space"
-                            onclick="request('post', {action : 'resume'})" disabled>
-                            <i class="fas fa-play" aria-hidden="true"></i>
-                        </button>
-
-                        <button type="button" id="pause-btn" class="btn btn-warning btn-space"
-                            onclick="request('post', {action : 'pause'})" disabled>
-                            <i class="fas fa-pause" aria-hidden="true"></i>
-                        </button>
-
-                        <button type="button" id="stop-btn" class="btn btn-danger btn-space"
-                            onclick="request('post', {action : 'stop'})" disabled>
-                            <i class="fas fa-stop" aria-hidden="true"></i>
-                        </button>
-                    </div>
+                    <button type="button" id="play-pause-btn" class="btn btn-info mb-2" onclick="togglePlayPause()">
+                        <i class="fas fa-play"></i>
+                    </button>
                 </div>
                 <div class="col text-right">
                     <div class="btn-group mb-2">

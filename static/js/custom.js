@@ -43,6 +43,9 @@ var playlist_range_to = 0;
 
 var last_volume = 0;
 
+var playing = false;
+var playPauseBtn = $("#play-pause-btn");
+
 function request(_url, _data, refresh = false) {
     console.log(_data);
     $.ajax({
@@ -56,7 +59,7 @@ function request(_url, _data, refresh = false) {
                 }
                 updateControls(data.empty, data.play, data.mode, data.volume);
             }
-        }
+        },
     });
     if (refresh) {
         location.reload()
@@ -241,18 +244,15 @@ function bindPlaylistEvent() {
 
 function updateControls(empty, play, mode, volume) {
     if (empty) {
-        $("#play-btn").prop("disabled", true);
-        $("#pause-btn").prop("disabled", true);
-        $("#stop-btn").prop("disabled", true);
+        playPauseBtn.prop("disabled", true);
     } else {
+        playPauseBtn.prop("disabled", false);
         if (play) {
-            $("#play-btn").prop("disabled", true);
-            $("#pause-btn").prop("disabled", false);
-            $("#stop-btn").prop("disabled", false);
+            playing = true;
+            playPauseBtn.find('[data-fa-i2svg]').removeClass('fa-play').addClass('fa-pause');
         } else {
-            $("#play-btn").prop("disabled", false);
-            $("#pause-btn").prop("disabled", true);
-            $("#stop-btn").prop("disabled", true);
+            playing = false;
+            playPauseBtn.find('[data-fa-i2svg]').removeClass('fa-pause').addClass('fa-play');
         }
     }
     if (mode === "one-shot") {
@@ -311,6 +311,14 @@ function setPageTheme(theme) {
         document.getElementById("pagestyle").setAttribute("href", "../static/css/bootstrap.min.css");
     else if (theme === "dark")
         document.getElementById("pagestyle").setAttribute("href", "../static/css/bootstrap.darkly.min.css");
+}
+
+function togglePlayPause() {
+    if (playing) {
+        request('post', {action: 'pause'});
+    } else {
+        request('post', {action: 'resume'});
+    }
 }
 
 // Check the version of playlist to see if update is needed.
