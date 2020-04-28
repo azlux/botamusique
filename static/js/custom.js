@@ -46,6 +46,13 @@ var last_volume = 0;
 var playing = false;
 var playPauseBtn = $("#play-pause-btn");
 
+var playModeBtns = {
+    'one-shot': $('#one-shot-mode-btn'),
+    random: $('#random-mode-btn'),
+    repeat: $('#repeat-mode-btn'),
+    autoplay: $('#autoplay-mode-btn')
+};
+
 function request(_url, _data, refresh = false) {
     console.log(_data);
     $.ajax({
@@ -255,27 +262,14 @@ function updateControls(empty, play, mode, volume) {
             playPauseBtn.find('[data-fa-i2svg]').removeClass('fa-pause').addClass('fa-play');
         }
     }
-    if (mode === "one-shot") {
-        $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
-        $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-    } else if (mode === "repeat") {
-        $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
-        $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-    } else if (mode === "random") {
-        $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false); // This is a feature.
-        $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-    } else if (mode === "autoplay") {
-        $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-        $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
+
+    let otherModes = Object.assign({}, playModeBtns);
+    delete otherModes[mode];
+    for (_mode in otherModes) {
+        otherModes[_mode].removeClass('active');
     }
+    playModeBtns[mode].addClass('active');
+
     if (volume != last_volume) {
         last_volume = volume;
         if (volume > 1) {
@@ -319,6 +313,10 @@ function togglePlayPause() {
     } else {
         request('post', {action: 'resume'});
     }
+}
+
+function changePlayMode(mode) {
+    request('post', {action: mode});
 }
 
 // Check the version of playlist to see if update is needed.
