@@ -6,17 +6,17 @@
 
     <title>botamusique web interface</title>
 
-    <link rel="icon" href="static/image/favicon.ico" />
+    <link rel="icon" href="../static/image/favicon.ico" />
 
-    <link id="pagestyle" rel="stylesheet" href="static/css/bootstrap.min.css">
-    <link rel="stylesheet" href="static/css/custom.css">
+    <link id="pagestyle" rel="stylesheet" href="../static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../static/css/custom.css">
 </head>
 
 <body>
     <div class="container page-header mb-5" id="banner">
         <div class="row">
             <div class="col-auto">
-                <img src="static/image/logo.png" height="200px">
+                <img src="../static/image/logo.png" height="200px">
             </div>
             <div class="col my-auto">
                 <h1>botamusique Web Interface</h1>
@@ -43,7 +43,7 @@
                                 onclick="changePlayMode('one-shot')">
                                 <i class="fas fa-tasks mr-2" aria-hidden="true"></i>One-shot
                             </a>
-                            <a class="dropdown-item" href="#" id="random-mode-btn" onclick="changePlayMode('random')">
+                            <a class="dropdown-item" href="#" id="random-mode-btn" onclick="changePlayMode('randomize')">
                                 <i class="fas fa-random mr-2" aria-hidden="true"></i>Random
                             </a>
                             <a class="dropdown-item" href="#" id="repeat-mode-btn" onclick="changePlayMode('repeat')">
@@ -87,12 +87,12 @@
                     <tbody id="playlist-table" class="playlist-table">
                         <tr id="playlist-loading">
                             <td colspan="4" style="text-align:center;">
-                                <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                                <img style="margin: auto; width: 35px;" src="../static/image/loading.svg" />
                             </td>
                         </tr>
                         <tr id="playlist-empty" style="display: none;">
                             <td colspan="4" style="text-align:center;">
-                                <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                                <img style="margin: auto; width: 35px;" src="../static/image/empty_box.svg" />
                             </td>
                         </tr>
                         <tr id="playlist-expand" class="table-dark" style="display: none;">
@@ -107,7 +107,7 @@
                                 <input hidden type="text" class="playlist-item-id" value="" />
                                 <div class="playlist-title">
                                     <img width="80" class="playlist-item-thumbnail"
-                                        src="static/image/unknown-album.png" />
+                                        src="../static/image/unknown-album.png" />
                                 </div>
                                 <div class="playlist-artwork">
                                     <b class="playlist-item-title"></b>
@@ -210,10 +210,10 @@
 
                 <div id="library-group" class="list-group library-group" style="overflow: auto;">
                     <div id="library-item-loading" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                        <img style="margin: auto; width: 35px;" src="../static/image/loading.svg" />
                     </div>
                     <div id="library-item-empty" style="display: none" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                        <img style="margin: auto; width: 35px;" src="../static/image/empty_box.svg" />
                     </div>
                     <div id="library-item" style="display: none;" class="list-group-item library-item">
                         <input hidden type="text" class="library-item-id" value="" />
@@ -221,7 +221,7 @@
                         <div class="library-thumb-col">
                             <div class="library-thumb-img">
                                 <img class="library-item-thumb library-thumb-img"
-                                    src="static/image/unknown-album.png" />
+                                    src="../static/image/unknown-album.png" />
                             </div>
                             <div class="btn-group-vertical library-thumb-grp">
                                 <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
@@ -463,10 +463,10 @@
         </div>
     </div>
 
-    <script src="static/js/jquery-3.4.1.min.js"></script>
-    <script src="static/js/bootstrap.bundle.min.js"></script>
-    <script src="static/js/fontawesome.all.js"></script>
-    <script src="static/js/custom.js"></script>
+    <script src="../static/js/jquery-3.4.1.min.js"></script>
+    <script src="../static/js/bootstrap.bundle.min.js"></script>
+    <script src="../static/js/fontawesome.all.js"></script>
+    <script src="../static/js/custom.js"></script>
 </body>
 
 </html>
