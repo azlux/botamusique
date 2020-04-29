@@ -1,407 +1,420 @@
 <!DOCTYPE html>
 
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta charset="UTF-8">
+
     <title>botamusique web interface</title>
+
+    <link rel="icon" href="static/image/favicon.ico" />
+
     <link id="pagestyle" rel="stylesheet" href="static/css/bootstrap.min.css">
     <link rel="stylesheet" href="static/css/custom.css">
-    <link rel="icon" href="static/image/favicon.ico" />
-    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
-    <META HTTP-EQUIV="Expires" CONTENT="-1">
 </head>
 
 <body>
-    <div class="container">
-        <div class="bs-docs-section">
-            <div class="page-header" id="banner">
-                <h1><img src="static/image/logo.png" style="width: 200px;" /> botamusique Web Interface</h1>
+    <div class="container page-header mb-5" id="banner">
+        <div class="row">
+            <div class="col-auto">
+                <img src="static/image/logo.png" height="200px">
+            </div>
+            <div class="col my-auto">
+                <h1>botamusique Web Interface</h1>
             </div>
         </div>
-        <div class="bs-docs-section">
+    </div>
+
+    <div class="container mb-5">
+        <div id="playlist">
             <div class="row">
-            <div class="col">
-                <div id="playlist" class="col-lg-12">
-                    <div>
-                        <div class="btn-group" style="margin-bottom: 10px;">
-                            <button type="button" id="play-btn" class="btn btn-info btn-space"
-                                    onclick="request('post', {action : 'resume'})" disabled>
-                                <i class="fas fa-play" aria-hidden="true"></i>
-                            </button>
-
-                            <button type="button" id="pause-btn" class="btn btn-warning btn-space"
-                                    onclick="request('post', {action : 'pause'})" disabled>
-                                <i class="fas fa-pause" aria-hidden="true"></i>
-                            </button>
-
-                            <button type="button" id="stop-btn" class="btn btn-danger btn-space"
-                                    onclick="request('post', {action : 'stop'})" disabled>
-                                <i class="fas fa-stop" aria-hidden="true"></i>
-                            </button>
-                        </div>
-
-                        <div class="btn-group" style="float: right;">
-                            <button type="button" id="oneshot-btn" class="btn btn-primary btn-space"
-                                    title="One-shot Mode"
-                                    onclick="request('post', {action : 'one-shot'})" disabled>
-                                <i class="fas fa-tasks" aria-hidden="true"></i>
-                            </button>
-
-                            <button type="button" id="random-btn" class="btn btn-primary btn-space"
-                                    title="Random Mode"
-                                    onclick="request('post', {action : 'randomize'})" disabled>
-                                <i class="fas fa-random" aria-hidden="true"></i>
-                            </button>
-
-                            <button type="button" id="repeat-btn" class="btn btn-primary btn-space"
-                                    title="Repeat Mode"
-                                    onclick="request('post', {action : 'repeat'})" disabled>
-                                <i class="fas fa-redo" aria-hidden="true"></i>
-                            </button>
-
-                            <button type="button" id="autoplay-btn" class="btn btn-primary btn-space"
-                                    title="Autoplay Mode"
-                                    onclick="request('post', {action : 'autoplay'})" disabled>
-                                <i class="fas fa-robot" aria-hidden="true"></i>
-                            </button>
-
-                            <button type="button" class="btn btn-warning btn-space"
-                                    onclick="request('post', {action : 'volume_down'})">
-                                <i class="fa fa-volume-down" aria-hidden="true"></i>
-                            </button>
-
-                            <input type="range" class="custom-range" id="volume-slider" 
-                                    min="0" max="1" step="0.01" value="0.5"
-                                    onchange="setVolumeDelayed(this.value)">
-
-                            </input>
-
-                            <button type="button" class="btn btn-warning btn-space"
-                                    onclick="request('post', {action : 'volume_up'})">
-                                <i class="fa fa-volume-up" aria-hidden="true"></i>
-                            </button>
-
-                        </div>
-
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col" class="playlist-title-td">Title</th>
-                                    <th scope="col">Url/Path</th>
-                                    <th scope="col">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="playlist-table" class="playlist-table">
-                                <tr id="playlist-loading">
-                                    <td colspan="4" style="text-align:center;">
-                                        <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
-                                    </td>
-                                </tr>
-                                <tr id="playlist-empty" style="display: none;">
-                                    <td colspan="4" style="text-align:center;">
-                                        <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
-                                    </td>
-                                </tr>
-                                <tr id="playlist-expand" class="table-dark" style="display: none;">
-                                    <td colspan="4" style="text-align:center;">
-                                        <a class="text-muted" href="javascript:">See item <span class="playlist-expand-item-range"></span> on the playlist.</a>
-                                    </td>
-                                </tr>
-                                <tr class="playlist-item-template" style="display: none;">
-                                    <input hidden type="text" class="playlist-item-id" value="" />
-                                    <th scope="row" class="playlist-item-index"></th>
-                                    <td>
-                                        <div class="playlist-title">
-                                            <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png"/>
-                                        </div>
-                                        <div class="playlist-artwork">
-                                            <b class="playlist-item-title"></b>
-                                            <span class="playlist-item-type badge badge-secondary"></span>
-                                            <br />
-                                            <span class="playlist-item-artist"></span>
-                                            <br />
-
-                                            <div class="playlist-item-tags">
-                                                <a class="playlist-item-edit tag-space tag-click"><i class="fas fa-edit" style="color: #AAAAAA"></i></a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <small class="playlist-item-path"></small>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button type="button" class="playlist-item-play btn btn-info btn-sm btn-space">
-                                                <i class="fa fa-play" aria-hidden="true"></i>
-                                            </button>
-                                            <button type="button" class="playlist-item-trash btn btn-danger btn-sm btn-space">
-                                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-danger btn-space"
-                                    onclick="request('post', {action : 'clear'})">
-                                <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
-                            </button>
+                <div class="col-auto">
+                    <button type="button" id="play-pause-btn" class="btn btn-info mb-2" onclick="togglePlayPause()">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <div class="dropdown mb-2">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Mode
+                        </button>
+                        <div class="dropdown-menu" aria-labelledby="play-mode">
+                            <a class="dropdown-item" href="#" id="one-shot-mode-btn"
+                                onclick="changePlayMode('one-shot')">
+                                <i class="fas fa-tasks mr-2" aria-hidden="true"></i>One-shot
+                            </a>
+                            <a class="dropdown-item" href="#" id="random-mode-btn" onclick="changePlayMode('randomize')">
+                                <i class="fas fa-random mr-2" aria-hidden="true"></i>Random
+                            </a>
+                            <a class="dropdown-item" href="#" id="repeat-mode-btn" onclick="changePlayMode('repeat')">
+                                <i class="fas fa-redo mr-2" aria-hidden="true"></i>Repeat
+                            </a>
+                            <a class="dropdown-item" href="#" id="autoplay-mode-btn"
+                                onclick="changePlayMode('autoplay')">
+                                <i class="fas fa-robot mr-2" aria-hidden="true"></i>Autoplay
+                            </a>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        </div>
+                <div class="col text-right">
+                    <div class="btn-group mb-2">
+                        <button type="button" class="btn btn-warning btn-space"
+                            onclick="request('post', {action : 'volume_down'})">
+                            <i class="fa fa-volume-down" aria-hidden="true"></i>
+                        </button>
 
-        <div class="bs-docs-section">
-            <div class="row">
-                <div class="col">
-                    <div class="page-header">
-                        <h1 id="forms">Music Library</h1>
+                        <input type="range" class="custom-range" id="volume-slider" min="0" max="1" step="0.01"
+                            value="0.5" onchange="setVolumeDelayed(this.value)" />
+
+                        <button type="button" class="btn btn-warning btn-space"
+                            onclick="request('post', {action : 'volume_up'})">
+                            <i class="fa fa-volume-up" aria-hidden="true"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col">
-                    <div id="browser" class="card">
-                        <div class="card-header">
-                            <h4 class="card-title">Browser</h4>
-                        </div>
 
-                        <div class="card-body">
-                            <div class="alert alert-secondary">
-                                <h4 class="alert-heading">Filters</h4>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <div id="filter-type" class="form-group row">
-                                            <label class="col-sm-2 col-form-label">Type</label>
-                                            <div class="btn-group btn-group-toggle" data-toggle="buttons" style="height: 35px; padding-top:5px;">
-                                                <button type="button" id="filter-type-file" class="btn btn-secondary btn-sm" onclick="setFilterType('file')">File</button>
-                                                <button type="button" id="filter-type-url" class="btn btn-secondary btn-sm" onclick="setFilterType('url')">URL</button>
-                                                <button type="button" id="filter-type-radio" class="btn btn-secondary btn-sm" onclick="setFilterType('radio')">Radio</button>
-                                            </div>
-                                        </div>
-                                        <div id="filter-path" class="form-group row">
-                                            <label class="col-sm-2 col-form-label" for="filter-dir" style="max-width: none">Directory</label>
-                                            <div class="col-sm-8">
-                                                <select class="form-control form-control-sm" id="filter-dir" style="margin-top:5px;" disabled>
-                                                        <option value="">.</option>
-                                                        {% for dir in dirs %}
-                                                        <option value="{{ dir }}">{{ dir }}</option>
-                                                        {% endfor %}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div id="filter-path" class="form-group row">
-                                            <label class="col-sm-2 col-form-label" for="filter-keywords" style="max-width: none">Keywords</label>
-                                            <div class="col-sm-8">
-                                                <input class="form-control form-control-sm" id="filter-keywords" name="keywords"
-                                                       placeholder="Keywords..." style="margin-top:5px;"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div id="filter-type" class="form-group row">
-                                            <label class="col-sm-2 col-form-label">Tags</label>
-                                            <div class="col-sm-10" style="padding-top:5px;">
-                                                {% for tag in tags_color_lookup.keys() %}
-                                                    <span id="filter-tag" class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
-                                                {% endfor %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                        </div>
-
-                        <div id="library-group" class="list-group library-group">
-                            <div id="library-item-loading" class="list-group-item library-item">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col" class="playlist-title-td">Title</th>
+                            <th scope="col">Url/Path</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playlist-table" class="playlist-table">
+                        <tr id="playlist-loading">
+                            <td colspan="4" style="text-align:center;">
                                 <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
-                            </div>
-                            <div id="library-item-empty" style="display: none" class="list-group-item library-item">
+                            </td>
+                        </tr>
+                        <tr id="playlist-empty" style="display: none;">
+                            <td colspan="4" style="text-align:center;">
                                 <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
-                            </div>
-                            <div id="library-item" style="display: none;" class="list-group-item library-item">
-                                <input hidden type="text" class="library-item-id" value="" />
-                                <div class="library-thumb-col">
-                                    <div class="library-thumb-img">
-                                        <img class="library-item-thumb library-thumb-img" src="static/image/unknown-album.png"/>
-                                    </div>
-                                    <div class="btn-group-vertical library-thumb-grp">
-                                        <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
-                                            <i class="fa fa-play" aria-hidden="true"></i>
-                                        </div>
+                            </td>
+                        </tr>
+                        <tr id="playlist-expand" class="table-dark" style="display: none;">
+                            <td colspan="4" style="text-align:center;">
+                                <a class="text-muted" href="javascript:">See item <span
+                                        class="playlist-expand-item-range"></span> on the playlist.</a>
+                            </td>
+                        </tr>
+                        <tr class="playlist-item-template" style="display: none;">
+                            <th scope="row" class="playlist-item-index"></th>
+                            <td>
+                                <input hidden type="text" class="playlist-item-id" value="" />
+                                <div class="playlist-title">
+                                    <img width="80" class="playlist-item-thumbnail"
+                                        src="static/image/unknown-album.png" />
+                                </div>
+                                <div class="playlist-artwork">
+                                    <b class="playlist-item-title"></b>
+                                    <span class="playlist-item-type badge badge-secondary"></span>
+                                    <br />
+                                    <span class="playlist-item-artist"></span>
+                                    <br />
+
+                                    <div class="playlist-item-tags">
+                                        <a class="playlist-item-edit tag-space tag-click"><i class="fas fa-edit"
+                                                style="color: #AAAAAA"></i></a>
                                     </div>
                                 </div>
-                                <div class="library-info-col library-info-title col-5" style="padding: 12px 0;">
-                                    <div>
-                                        <span class="library-item-type lead text-muted btn-space">[File]</span>
-                                        <span class="library-item-title lead btn-space">This is my title</span>
-                                        <span class="library-item-artist text-muted"> - Artist</span>
-                                    </div>
-                                </div>
-                                <div class="library-info-col col-4" style="padding: 3px;">
-                                    <span class="library-item-path text-muted path">Path/to/the/file</span>
-                                    <div class="library-item-tags">
-                                        <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit" style="color: #AAAAAA"></i></a>
-                                        <span class="library-item-notag badge badge-light text-muted font-italic">No tag</span>
-                                        <span class="library-item-tag tag-space badge">Tag</span>
-                                    </div>
-                                </div>
-
-
-                                <div class="btn-group library-action">
-                                    <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button" title="Next to play">
-                                        <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="5 5 17 17">
-                                            <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z"/>
-                                            <path d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z"/>
-                                        </svg>
-
+                            </td>
+                            <td>
+                                <small class="playlist-item-path"></small>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="playlist-item-play btn btn-info btn-sm btn-space">
+                                        <i class="fa fa-play" aria-hidden="true"></i>
                                     </button>
-                                    <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space" type="button" title="Add to bottom">
-                                        <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="2 2 20 20"><path d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z" /></svg>
-
-                                    </button>
-                                    <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
-                                        <i class="fa fa-download" aria-hidden="true"></i>
-                                    </button>
-                                    <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button">
-                                        <i class="fas fa-trash-alt"></i>
+                                    <button type="button" class="playlist-item-trash btn btn-danger btn-sm btn-space">
+                                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
                                     </button>
                                 </div>
-                            </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                        </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-danger btn-space" onclick="request('post', {action : 'clear'})">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
+                </button>
+            </div>
+        </div>
+    </div>
 
-                        <div class="list-group">
-                            <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
-                                <ul id="library-page-ul" class="pagination pagination">
-                                    <li class="library-page-li page-item active">
-                                        <a class="library-page-no page-link">1</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+    <div class="container mb-3">
+        <h2 id="forms">Music Library</h2>
 
-                        <div class="btn-group" style="margin-bottom: 5px;" role="group">
-                            <button type="submit" class="btn btn-secondary btn-space" onclick="addAllResults()"><i class="fa fa-plus" aria-hidden="true"></i> Add All</button>
-                            <button type="submit" class="btn btn-secondary btn-space"
-                                    onclick="request('post', {action : 'rescan'}); updateResults()">
-                                <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
-                            </button>
-                            <button type="submit" class="btn btn-secondary btn-space" onclick="downloadAllResults()"><i class="fa fa-download" aria-hidden="true"></i> Download All</button>
-                            <button type="button" class="btn btn-danger btn-space"
-                                    data-toggle="modal" data-target="#deleteWarningModal"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete All</button>
+        <div id="browser" class="card">
+            <div class="card-header">
+                <h4 class="card-title">Browser</h4>
+            </div>
 
-                        </div>
-
-                        <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog" aria-labelledby="Warning-Delete-File" aria-hidden="true">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
+            <div class="card-body">
+                <div class="card mb-3" style="background-color: #e2e3e5;">
+                    <div class="card-body">
+                        <h5 class="card-title">Filters</h5>
+                        <hr>
+                        <div class="row">
+                            <div class="col">
+                                <label>Type</label>
+                                <div id="filter-type" class="input-group mb-2">
+                                    <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
+                                        <button type="button" id="filter-type-file" class="btn btn-secondary btn-sm"
+                                            onclick="setFilterType('file')">File
+                                        </button>
+                                        <button type="button" id="filter-type-url" class="btn btn-secondary btn-sm"
+                                            onclick="setFilterType('url')">URL
+                                        </button>
+                                        <button type="button" id="filter-type-radio" class="btn btn-secondary btn-sm"
+                                            onclick="setFilterType('radio')">Radio
                                         </button>
                                     </div>
-                                    <div class="modal-body">
-                                        All files listed here, include files on other pages, will be deleted from your hard-drive.
-                                        Is that what you want?
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="deleteAllResults()">Delete All Listed Files</button>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
 
-    <div id="upload" class="container">
-        <div class="bs-docs-section">
-            <div class="row">
-            <div class="col">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Upload File</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="./upload" method="post" enctype="multipart/form-data">
-                            <div class="row" style="margin-bottom: 5px;">
-                                <div id="uploadBox" class="col-lg-7 input-group">
-                                    <div id="uploadField" style="display: flex; width: 100%">
-                                        <div class="custom-file btn-space">
-                                            <input type="file" name="file[]" class="custom-file-input" id="uploadSelectFile"
-                                                   aria-describedby="uploadSubmit" value="Browse Music file" multiple/>
-                                            <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 input-group-append">
-                                    <span class="input-group-text">Upload To</span>
-                                    <input class="form-control btn-space" list="targetdirs" id="targetdir" name="targetdir"
-                                           placeholder="uploads" />
-                                    <datalist id="targetdirs">
+                                <label for="filter-dir">Directory</label>
+                                <div id="filter-path" class="input-group mb-2">
+                                    <select class="form-control form-control-sm" id="filter-dir" disabled>
+                                        <option value="">.</option>
                                         {% for dir in dirs %}
-                                            <option value="{{ dir }}" />
+                                        <option value="{{ dir }}">{{ dir }}</option>
                                         {% endfor %}
-                                    </datalist>
+                                    </select>
                                 </div>
-                                <button class="btn btn-primary btn-space" type="submit"
-                                        id="uploadSubmit" style="margin-left: -5px;">Upload!</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
 
-        <div class="bs-docs-section" style="margin-bottom: 150px;">
-            <div class="row">
-            <div class="col">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Add URL</h5>
+                                <label for="filter-keywords">Keywords</label>
+                                <div id="filter-path" class="input-group mb-2">
+                                    <input class="form-control form-control-sm" id="filter-keywords" name="keywords"
+                                        placeholder="Keywords..." style="margin-top:5px;" />
+                                </div>
+                            </div>
+
+                            <div class="col">
+                                <label for="filter-tag">Tags</label>
+                                <div id="filter-type mb-2">
+                                    {% for tag in tags_color_lookup.keys() %}
+                                    <span id="filter-tag"
+                                        class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <label>Add Youtube/Soundcloud URL</label>
-                        <div class="input-group">
-                            <input class="form-control btn-space" type="text" id="add_url_input" placeholder="URL...">
-                            <button type="submit" class="btn btn-primary"
-                            onclick="var $i = $('#add_url_input')[0]; request('post', {add_url :  $i.value }); $i.value = ''; ">Add URL</button>
+                </div>
+
+                <div id="library-group" class="list-group library-group" style="overflow: auto;">
+                    <div id="library-item-loading" class="list-group-item library-item">
+                        <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                    </div>
+                    <div id="library-item-empty" style="display: none" class="list-group-item library-item">
+                        <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                    </div>
+                    <div id="library-item" style="display: none;" class="list-group-item library-item">
+                        <input hidden type="text" class="library-item-id" value="" />
+
+                        <div class="library-thumb-col">
+                            <div class="library-thumb-img">
+                                <img class="library-item-thumb library-thumb-img"
+                                    src="static/image/unknown-album.png" />
+                            </div>
+                            <div class="btn-group-vertical library-thumb-grp">
+                                <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
+                                    <i class="fa fa-play" aria-hidden="true"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="library-info-col library-info-title col-5" style="padding: 12px 0;">
+                            <div>
+                                <span class="library-item-type lead text-muted btn-space">[File]</span>
+                                <span class="library-item-title lead btn-space">This is my title</span>
+                                <span class="library-item-artist text-muted"> - Artist</span>
+                            </div>
+                        </div>
+
+                        <div class="library-info-col col-4" style="padding: 3px;">
+                            <span class="library-item-path text-muted path">Path/to/the/file</span>
+                            <div class="library-item-tags">
+                                <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit"
+                                        style="color: #AAAAAA"></i></a>
+                                <span class="library-item-notag badge badge-light text-muted font-italic">No
+                                    tag</span>
+                                <span class="library-item-tag tag-space badge">Tag</span>
+                            </div>
+                        </div>
+
+                        <div class="btn-group library-action">
+                            <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button"
+                                title="Next to play">
+                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
+                                    viewBox="5 5 17 17">
+                                    <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z" />
+                                    <path
+                                        d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z" />
+                                </svg>
+
+                            </button>
+                            <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space"
+                                type="button" title="Add to bottom">
+                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
+                                    viewBox="2 2 20 20">
+                                    <path
+                                        d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z" />
+                                </svg>
+
+                            </button>
+                            <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
+                                <i class="fa fa-download" aria-hidden="true"></i>
+                            </button>
+                            <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="list-group">
+                    <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
+                        <ul id="library-page-ul" class="pagination pagination">
+                            <li class="library-page-li page-item active">
+                                <a class="library-page-no page-link">1</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="btn-group" style="margin-bottom: 5px;" role="group">
+                    <button type="submit" class="btn btn-secondary btn-space" onclick="addAllResults()"><i
+                            class="fa fa-plus" aria-hidden="true"></i> Add All</button>
+                    <button type="submit" class="btn btn-secondary btn-space"
+                        onclick="request('post', {action : 'rescan'}); updateResults()">
+                        <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
+                    </button>
+                    <button type="submit" class="btn btn-secondary btn-space" onclick="downloadAllResults()"><i
+                            class="fa fa-download" aria-hidden="true"></i> Download All</button>
+                    <button type="button" class="btn btn-danger btn-space" data-toggle="modal"
+                        data-target="#deleteWarningModal"><i class="fas fa-trash-alt" aria-hidden="true"></i>
+                        Delete All</button>
+                </div>
+
+                <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog"
+                    aria-labelledby="Warning-Delete-File" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                All files listed here, include files on other pages, will be deleted from your
+                                hard-drive.
+                                Is that what you want?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-danger" data-dismiss="modal"
+                                    onclick="deleteAllResults()">Delete All Listed Files</button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Add Radio</h5>
-                    </div>
-                    <div class="card-body">
-                        <label>Add Radio URL</label>
-                        <div class="input-group">
-                            <input class="form-control btn-space" type="text" id="add_radio_input" placeholder="Radio Address...">
-                            <button type="submit" class="btn btn-primary"
-                            onclick="var $i = $('#add_radio_input')[0]; request('post', {add_radio : $i.value }); $i.value = '';">Add Radio</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
         </div>
     </div>
 
-    <div class="floating-button" onclick="switchTheme()"> <i class="fas fa-lightbulb" aria-hidden="true"></i> </div>
+    <div id="upload" class="container mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Upload File</h5>
+            </div>
+            <div class="card-body">
+                <form action="./upload" method="post" enctype="multipart/form-data">
+                    <div class="row">
+                        <div id="uploadBox" class="col-lg-7">
+                            <div class="input-group mb-3">
+                                <div id="uploadField" style="display: flex; width: 100%">
+                                    <div class="custom-file">
+                                        <input type="file" name="file[]" class="custom-file-input" id="uploadSelectFile"
+                                            aria-describedby="uploadSubmit" value="Browse Music file" multiple />
+                                        <label class="custom-file-label" for="uploadSelectFile">Choose file</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="input-group mb-3">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Upload To</span>
+                                        </div>
+                                        <input class="form-control" list="targetdirs" id="targetdir" name="targetdir"
+                                            placeholder="uploads" />
+                                        <datalist id="targetdirs">
+                                            {% for dir in dirs %}
+                                            <option value="{{ dir }}">
+                                                {% endfor %}
+                                        </datalist>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary" type="submit" id="uploadSubmit">Upload!</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5">
+        <div class="card-deck">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Add URL</h5>
+                </div>
+                <div class="card-body">
+                    <label for="add_url_input">Add Youtube or Soundcloud URL</label>
+                    <div class="input-group mb-2">
+                        <input class="form-control" type="text" id="add_url_input" placeholder="URL...">
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                        onclick="var $i = $('#add_url_input')[0]; request('post', {add_url :  $i.value }); $i.value = ''; ">Add
+                        URL
+                    </button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Add Radio</h5>
+                </div>
+                <div class="card-body">
+                    <label for="add_radio_input">Add Radio URL</label>
+                    <div class="input-group mb-2">
+                        <input class="form-control" type="text" id="add_radio_input" placeholder="Radio Address...">
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                        onclick="var $i = $('#add_radio_input')[0]; request('post', {add_radio : $i.value }); $i.value = '';">Add
+                        Radio
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="floating-button" onclick="switchTheme()">
+        <i class="fas fa-lightbulb" aria-hidden="true"></i>
+    </div>
 
     <form id="download-form" action="download" method="GET" target="_blank">
         <input hidden type="text" name="id" value="">
@@ -425,14 +438,17 @@
                     <input hidden type="text" id="addTagModalItemId" name="id" value="">
                     <div class="modal-tag" style="display: none; width: 100%;">
                         <span class="modal-tag-text tag-space badge badge-pill badge-dark">Tag</span>
-                        <a class="modal-tag-remove tag-click small"><i class="fas fa-times-circle btn-outline-danger"></i></a>
+                        <a class="modal-tag-remove tag-click small"><i
+                                class="fas fa-times-circle btn-outline-danger"></i></a>
                     </div>
                     <div id="addTagModalTags" style="margin-left: 5px; margin-bottom: 10px;">
                     </div>
                     <div class="input-group">
-                        <input class="form-control form-control-sm btn-space" type="text" id="addTagModalInput" placeholder="tag1,tag2,..." >
-                        <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm" onclick="addTagModalAdd()">
-                            <i class="fa fa-plus" aria-hidden="true" ></i>
+                        <input class="form-control form-control-sm btn-space" type="text" id="addTagModalInput"
+                            placeholder="tag1,tag2,...">
+                        <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm"
+                            onclick="addTagModalAdd()">
+                            <i class="fa fa-plus" aria-hidden="true"></i>
                             Add
                         </button>
                     </div>
@@ -440,764 +456,17 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button id="addTagModalSubmit" type="button" class="btn btn-success" data-dismiss="modal" onclick="addTagModalSubmit()">Edit!</button>
+                    <button id="addTagModalSubmit" type="button" class="btn btn-success" data-dismiss="modal"
+                        onclick="addTagModalSubmit()">Edit!</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="static/js/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
-    <script src="static/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <script src="static/js/fontawesome.all.js" crossorigin="anonymous"></script>
-
-    <script>
-        $('#uploadSelectFile').on('change', function () {
-            //get the file name
-            var fileName = $(this).val().replace('C:\\fakepath\\', " ");
-            //replace the "Choose a file" label
-            $(this).next('.custom-file-label').html(fileName);
-        });
-        $('a.a-submit, button.btn-submit').on('click', function (event) {
-            $(event.target).closest('form').submit();
-        });
-
-
-        // ----------------------
-        // ------ Playlist ------
-        // ----------------------
-
-
-        var pl_item_template = $(".playlist-item-template");
-        var pl_id_element = $(".playlist-item-id");
-        var pl_index_element = $(".playlist-item-index");
-        var pl_title_element = $(".playlist-item-title");
-        var pl_artist_element = $(".playlist-item-artist");
-        var pl_thumb_element = $(".playlist-item-thumbnail");
-        var pl_type_element = $(".playlist-item-type");
-        var pl_path_element = $(".playlist-item-path");
-
-        var pl_tag_edit_element = $(".playlist-item-edit");
-
-        var notag_element = $(".library-item-notag"); // these elements are shared with library
-        var tag_element = $(".library-item-tag");
-
-        var add_tag_modal = $("#addTagModal");
-
-        var playlist_loading = $("#playlist-loading");
-        var playlist_table = $("#playlist-table");
-        var playlist_empty = $("#playlist-empty");
-        var playlist_expand = $("#playlist-expand");
-
-        var playlist_ver = 0;
-        var playlist_current_index = 0;
-
-        var playlist_range_from = 0;
-        var playlist_range_to = 0;
-
-        var last_volume = 0;
-
-        function request(_url, _data, refresh=false){
-            console.log(_data);
-            $.ajax({
-                type: 'POST',
-                url: _url,
-                data : _data,
-                statusCode : {
-                    200 : function(data) {
-                        if (data.ver !== playlist_ver) {
-                            checkForPlaylistUpdate();
-                        }
-                        updateControls(data.empty, data.play, data.mode, data.volume);
-                    }
-                }
-            });
-            if(refresh){
-                location.reload()
-            }
-        }
-
-        function addPlaylistItem(item){
-            pl_id_element.val(item.id);
-            pl_index_element.html(item.index + 1);
-            pl_title_element.html(item.title);
-            pl_artist_element.html(item.artist);
-            pl_thumb_element.attr("src", item.thumbnail);
-            pl_type_element.html(item.type);
-            pl_path_element.html(item.path);
-
-            var item_copy = pl_item_template.clone();
-            item_copy.attr("id", "playlist-item-" + item.index);
-            item_copy.addClass("playlist-item");
-
-            var tags = item_copy.find(".playlist-item-tags");
-            tags.empty();
-
-            var tag_edit_copy = pl_tag_edit_element.clone();
-            tag_edit_copy.click(function(){
-                addTagModalShow(item.id, item.title, item.tags);
-            });
-            tag_edit_copy.appendTo(tags);
-
-            if(item.tags.length > 0){
-                item.tags.forEach(function (tag_tuple){
-                    tag_copy = tag_element.clone();
-                    tag_copy.html(tag_tuple[0]);
-                    tag_copy.addClass("badge-" + tag_tuple[1]);
-                    tag_copy.appendTo(tags);
-                });
-            }else{
-                tag_copy = notag_element.clone();
-                tag_copy.appendTo(tags);
-            }
-
-            item_copy.appendTo(playlist_table);
-            item_copy.show();
-        }
-
-        function displayPlaylist(data){
-            playlist_table.animate({opacity: 0}, 200, function(){
-                playlist_loading.hide();
-                $(".playlist-item").remove();
-                var items = data.items;
-                var length = data.length;
-                var start_from = data.start_from;
-                playlist_range_from = start_from;
-                playlist_range_to = start_from + items.length - 1;
-
-                if(items.length < length && start_from > 0) {
-                    _from = start_from - 5;
-                    _from = _from > 0 ? _from : 0;
-                    _to = start_from - 1;
-                    if(_to > 0) {
-                        insertExpandPrompt(_from, start_from + length - 1, _from, _to);
-                    }
-                }
-
-                items.forEach(
-                    function (item) {
-                        addPlaylistItem(item);
-                    }
-                );
-
-                if(items.length < length && start_from + items.length < length) {
-                    _from = start_from + items.length;
-                    _to = start_from + items.length - 1 + 10;
-                    _to = _to < length - 1 ? _to : length - 1;
-                    if(start_from + items.length < _to) {
-                        insertExpandPrompt(start_from, _to, _from, _to);
-                    }
-                }
-
-                displayActiveItem(data.current_index);
-                bindPlaylistEvent();
-                playlist_table.animate({opacity: 1}, 200);
-            });
-        }
-
-        function displayActiveItem(current_index){
-            $(".playlist-item").removeClass("table-active");
-            $("#playlist-item-"+current_index).addClass("table-active");
-        }
-
-        function insertExpandPrompt(real_from, real_to ,display_from, display_to){
-            var expand_copy = playlist_expand.clone();
-            if(display_from !== display_to){
-                expand_copy.find(".playlist-expand-item-range").html((display_from+1) + "~" + (display_to+1));
-            }else{
-                expand_copy.find(".playlist-expand-item-range").html(display_from);
-            }
-
-            expand_copy.addClass('playlist-item');
-            expand_copy.appendTo(playlist_table);
-            expand_copy.click(function(){
-                playlist_range_from = real_from;
-                playlist_range_to = real_to;
-                checkForPlaylistUpdate();
-            });
-            expand_copy.show();
-        }
-
-        function updatePlaylist(){
-            playlist_table.animate({opacity: 0}, 200, function(){
-                playlist_empty.hide();
-                playlist_loading.show();
-                $("#playlist-table .playlist-item").css("opacity", 0);
-                data = {};
-                if(!(playlist_range_from === 0 && playlist_range_to === 0)) {
-                    data = {
-                        range_from: playlist_range_from,
-                        range_to: playlist_range_to
-                    };
-                }
-                $.ajax({
-                    type: 'GET',
-                    url: 'playlist',
-                    data: data,
-                    statusCode : {
-                        200: displayPlaylist,
-                        204: function(){
-                            playlist_loading.hide();
-                            playlist_empty.show();
-                            $(".playlist-item").remove();
-                        }
-                    }
-                });
-                playlist_table.animate({opacity: 1}, 200);
-            });
-        }
-
-        function checkForPlaylistUpdate(){
-            $.ajax({
-                type: 'POST',
-                url : 'post',
-                statusCode : {
-                    200 : function(data){
-                        if(data.ver !== playlist_ver){
-                            playlist_ver = data.ver;
-                            playlist_range_from = 0;
-                            playlist_range_to = 0;
-                            updatePlaylist();
-                        }
-                        if(data.current_index !== playlist_current_index){
-                            if((data.current_index > playlist_range_to || data.current_index < playlist_range_from)
-                            && data.current_index !== -1) {
-                                playlist_range_from = 0;
-                                playlist_range_to = 0;
-                                updatePlaylist();
-                            }else{
-                                playlist_current_index = data.current_index;
-                                displayActiveItem(data.current_index);
-                            }
-                        }
-                        updateControls(data.empty, data.play, data.mode, data.volume);
-                    }
-                }
-            });
-        }
-
-        function bindPlaylistEvent() {
-            $(".playlist-item-play").unbind().click(
-                function (e) {
-                    request('post', {
-                        'play_music': ($(e.currentTarget).parent().parent().parent().find(".playlist-item-index").html() - 1)
-                    });
-                }
-            );
-            $(".playlist-item-trash").unbind().click(
-                function (e) {
-                    request('post', {
-                        'delete_music': ($(e.currentTarget).parent().parent().parent().find(".playlist-item-index").html() - 1)
-                    });
-                }
-            );
-        }
-
-        function updateControls(empty, play, mode, volume){
-            if(empty){
-                $("#play-btn").prop("disabled", true);
-                $("#pause-btn").prop("disabled", true);
-                $("#stop-btn").prop("disabled", true);
-            }else{
-                if(play){
-                    $("#play-btn").prop("disabled", true);
-                    $("#pause-btn").prop("disabled", false);
-                    $("#stop-btn").prop("disabled", false);
-                }else{
-                    $("#play-btn").prop("disabled", false);
-                    $("#pause-btn").prop("disabled", true);
-                    $("#stop-btn").prop("disabled", true);
-                }
-            }
-            if(mode === "one-shot"){
-                $("#oneshot-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
-                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-            }else if(mode === "repeat"){
-                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#repeat-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
-                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-            }else if(mode === "random"){
-                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", false); // This is a feature.
-                $("#autoplay-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-            }else if(mode === "autoplay"){
-                $("#oneshot-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#repeat-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#random-btn").removeClass("btn-primary").addClass("btn-secondary").prop("disabled", false);
-                $("#autoplay-btn").removeClass("btn-secondary").addClass("btn-primary").prop("disabled", true);
-            }
-            if(volume != last_volume) {
-                last_volume = volume;
-                if(volume > 1) {
-                    document.getElementById("volume-slider").value = 1;
-                } else if(volume < 0) {
-                    document.getElementById("volume-slider").value = 0;
-                } else {
-                    document.getElementById("volume-slider").value = volume;
-                }
-            }
-        }
-
-        function themeInit(){
-            var theme = localStorage.getItem("theme");
-            if(theme !== null){
-                setPageTheme(theme);
-            }
-        }
-
-        function switchTheme(){
-            var theme = localStorage.getItem("theme");
-            if(theme === "light" || theme === null){
-                setPageTheme("dark");
-                localStorage.setItem("theme", "dark");
-            }else{
-                setPageTheme("light");
-                localStorage.setItem("theme", "light");
-            }
-        }
-
-        function setPageTheme(theme) {
-            if(theme === "light")
-                document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.min.css");
-            else if(theme === "dark")
-                document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
-        }
-
-        // Check the version of playlist to see if update is needed.
-        setInterval(checkForPlaylistUpdate , 3000);
-
-        // ---------------------
-        // ------ Browser ------
-        // ---------------------
-        var filter_file = false;
-        var filter_url = false;
-        var filter_radio = false;
-        var filter_dir = $("#filter-dir");
-        var filter_keywords = $("#filter-keywords");
-        var filter_btn_file = $("#filter-type-file");
-        var filter_btn_url = $("#filter-type-url");
-        var filter_btn_radio = $("#filter-type-radio");
-
-        function setFilterType(type){
-            filter_types = [];
-
-            if(type === "file"){
-                if(filter_btn_file.hasClass("btn-primary")){
-                    filter_btn_file.removeClass("btn-primary").addClass("btn-secondary");
-                    filter_dir.prop("disabled", true);
-                    filter_file = false;
-                }else{
-                    filter_btn_file.removeClass("btn-secondary").addClass("btn-primary");
-                    filter_dir.prop("disabled", false);
-                    filter_file = true;
-                }
-            }else if(type === "url"){
-                if(filter_btn_url.hasClass("btn-primary")) {
-                    filter_btn_url.removeClass("btn-primary").addClass("btn-secondary");
-                    filter_url = false;
-                }else{
-                    filter_btn_url.removeClass("btn-secondary").addClass("btn-primary");
-                    filter_url = true;
-                }
-            }else if(type === "radio"){
-                if(filter_btn_radio.hasClass("btn-primary")) {
-                    filter_btn_radio.removeClass("btn-primary").addClass("btn-secondary");
-                    filter_radio = false;
-                }else{
-                    filter_btn_radio.removeClass("btn-secondary").addClass("btn-primary");
-                    filter_types.push('radio');
-                    filter_radio = true;
-                }
-            }
-            updateResults();
-        }
-
-        // Bind Event
-        var _tag = null;
-        $(".filter-tag").click(function (e) {
-            var tag = $(e.currentTarget);
-            _tag = tag;
-            if (!tag.hasClass('tag-clicked')) {
-                tag.addClass('tag-clicked');
-                tag.removeClass('tag-unclicked');
-            } else {
-                tag.addClass('tag-unclicked');
-                tag.removeClass('tag-clicked');
-            }
-            updateResults();
-        });
-
-        filter_dir.change(function(){updateResults()});
-        filter_keywords.change(function(){updateResults()});
-
-        var item_template = $("#library-item");
-
-        function bindLibraryResultEvent() {
-            $(".library-thumb-col").unbind().hover(
-                function (e) { $(e.currentTarget).find(".library-thumb-grp").addClass("library-thumb-grp-hover"); },
-                function (e) { $(e.currentTarget).find(".library-thumb-grp").removeClass("library-thumb-grp-hover"); }
-            );
-
-            $(".library-info-title").unbind().hover(
-                function (e) { $(e.currentTarget).parent().find(".library-thumb-grp").addClass("library-thumb-grp-hover"); },
-                function (e) { $(e.currentTarget).parent().find(".library-thumb-grp").removeClass("library-thumb-grp-hover"); }
-            );
-
-            $(".library-item-play").unbind().click(
-                function (e) {
-                    request('post', {
-                        'add_item_at_once': $(e.currentTarget).parent().parent().parent().find(".library-item-id").val()
-                    });
-                }
-            );
-
-            $(".library-item-trash").unbind().click(
-                function (e) {
-                    request('post', {
-                        'delete_item_from_library': $(e.currentTarget).parent().parent().find(".library-item-id").val()
-                    });
-                    updateResults(active_page);
-                }
-            );
-
-            $(".library-item-download").unbind().click(
-                function (e) {
-                    var id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
-                    //window.open('/download?id=' + id);
-                    downloadId(id);
-                }
-            );
-
-            $(".library-item-add-next").unbind().click(
-                function (e) {
-                    var id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
-                    request('post', {
-                        'add_item_next': id
-                    });
-                }
-            );
-
-            $(".library-item-add-bottom").unbind().click(
-                function (e) {
-                    var id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
-                    request('post', {
-                        'add_item_bottom': id
-                    });
-                }
-            );
-        }
-
-        var lib_group = $("#library-group");
-        var id_element = $(".library-item-id");
-        var title_element = $(".library-item-title");
-        var artist_element = $(".library-item-artist");
-        var thumb_element = $(".library-item-thumb");
-        var type_element = $(".library-item-type");
-        var path_element = $(".library-item-path");
-
-        var tag_edit_element = $(".library-item-edit");
-        //var notag_element = $(".library-item-notag");
-        //var tag_element = $(".library-item-tag");
-
-        //var add_tag_modal = $("#addTagModal");
-
-        function addResultItem(item){
-            id_element.val(item.id);
-            title_element.html(item.title);
-            artist_element.html(item.artist ? ("- " + item.artist) : "");
-            thumb_element.attr("src", item.thumb);
-            type_element.html("[" + item.type + "]");
-            path_element.html(item.path);
-
-            var item_copy = item_template.clone();
-            item_copy.addClass("library-item-active");
-
-            var tags = item_copy.find(".library-item-tags");
-            tags.empty();
-
-            var tag_edit_copy = tag_edit_element.clone();
-            tag_edit_copy.click(function(){
-                addTagModalShow(item.id, item.title, item.tags);
-            });
-            tag_edit_copy.appendTo(tags);
-
-            if(item.tags.length > 0){
-                item.tags.forEach(function (tag_tuple){
-                    tag_copy = tag_element.clone();
-                    tag_copy.html(tag_tuple[0]);
-                    tag_copy.addClass("badge-" + tag_tuple[1]);
-                    tag_copy.appendTo(tags);
-                });
-            }else{
-                tag_copy = notag_element.clone();
-                tag_copy.appendTo(tags);
-            }
-
-            item_copy.appendTo(lib_group);
-            item_copy.show();
-        }
-
-        function getFilters(dest_page=1){
-            var tags = $(".tag-clicked");
-            var tags_list = [];
-            tags.each(function (index, tag){
-                tags_list.push(tag.innerHTML);
-            });
-
-            filter_types = [];
-            if(filter_file){ filter_types.push("file"); }
-            if(filter_url){ filter_types.push("url"); }
-            if(filter_radio){ filter_types.push("radio"); }
-
-            return {
-                type: filter_types.join(','),
-                dir: filter_dir.val(),
-                tags: tags_list.join(","),
-                keywords: filter_keywords.val(),
-                page: dest_page
-            };
-        }
-
-        var lib_loading = $("#library-item-loading");
-        var lib_empty = $("#library-item-empty");
-        var active_page = 1;
-
-        function updateResults(dest_page=1){
-            active_page = dest_page;
-            data = getFilters(dest_page);
-            data.action = "query";
-
-            lib_group.animate({opacity: 0}, 200, function() {
-                $.ajax({
-                    type: 'POST',
-                    url : 'library',
-                    data: data,
-                    statusCode: {
-                        200: processResults,
-                        204: function(){
-                            lib_loading.hide();
-                            lib_empty.show();
-                            page_ul.empty();
-                        }
-                    }
-                });
-
-                $(".library-item-active").remove();
-                lib_empty.hide();
-                lib_loading.show();
-                lib_group.animate({opacity: 1}, 200);
-            });
-        }
-
-        var download_form = $("#download-form");
-        var download_id = download_form.find("input[name='id']");
-        var download_type = download_form.find("input[name='type']");
-        var download_dir = download_form.find("input[name='dir']");
-        var download_tags = download_form.find("input[name='tags']");
-        var download_keywords = download_form.find("input[name='keywords']");
-
-        function addAllResults(){
-            data = getFilters();
-            data.action = "add";
-
-            console.log(data);
-
-            $.ajax({
-                type: 'POST',
-                url : 'library',
-                data: data
-            });
-
-            checkForPlaylistUpdate();
-        }
-
-        function deleteAllResults(){
-            data = getFilters();
-            data.action = "delete";
-
-            console.log(data);
-
-            $.ajax({
-                type: 'POST',
-                url : 'library',
-                data: data
-            });
-
-            checkForPlaylistUpdate();
-            updateResults();
-        }
-
-        function downloadAllResults(){
-            cond = getFilters();
-            download_id.val();
-            download_type.val(cond.type);
-            download_dir.val(cond.dir);
-            download_tags.val(cond.tags);
-            download_keywords.val(cond.keywords);
-            download_form.submit();
-        }
-
-        function downloadId(id){
-            download_id.attr("value" ,id);
-            download_type.attr("value", "");
-            download_dir.attr("value", "");
-            download_tags.attr("value", "");
-            download_keywords.attr("value", "");
-            download_form.submit();
-        }
-
-        var page_ul = $("#library-page-ul");
-        var page_li = $(".library-page-li");
-        var page_no = $(".library-page-no");
-
-        function processResults(data){
-            lib_group.animate({opacity: 0}, 200, function() {
-                lib_loading.hide();
-                total_pages = data.total_pages;
-                active_page = data.active_page;
-                items = data.items;
-                items.forEach(
-                    function (item) {
-                        addResultItem(item);
-                        bindLibraryResultEvent();
-                    }
-                );
-
-                page_ul.empty();
-                page_li.removeClass('active').empty();
-
-                i = 1;
-                var page_li_copy;
-                var page_no_copy;
-
-                if(total_pages > 25){
-                    i = (active_page - 12 >= 1) ? active_page - 12 : 1;
-                    _i = total_pages - 23;
-                    i = (i < _i) ? i : _i;
-                    page_li_copy = page_li.clone();
-                    page_no_copy = page_no.clone();
-                    page_no_copy.html("&laquo;");
-
-                    page_no_copy.click(function (e) {
-                        updateResults(1);
-                    });
-
-                    page_no_copy.appendTo(page_li_copy);
-                    page_li_copy.appendTo(page_ul);
-                }
-
-                limit = i + 24;
-                for (; i <= total_pages && i <= limit; i++) {
-                    page_li_copy = page_li.clone();
-                    page_no_copy = page_no.clone();
-                    page_no_copy.html(i.toString());
-                    if (active_page === i) {
-                        page_li_copy.addClass("active");
-                    } else {
-                        page_no_copy.click(function (e) {
-                            _page_no = $(e.currentTarget).html();
-                            updateResults(_page_no);
-                        });
-                    }
-                    page_no_copy.appendTo(page_li_copy);
-                    page_li_copy.appendTo(page_ul);
-                }
-
-                if(limit < total_pages){
-                    page_li_copy = page_li.clone();
-                    page_no_copy = page_no.clone();
-                    page_no_copy.html("&raquo;");
-
-                    page_no_copy.click(function (e) {
-                        updateResults(total_pages);
-                    });
-
-                    page_no_copy.appendTo(page_li_copy);
-                    page_li_copy.appendTo(page_ul);
-                }
-
-                lib_group.animate({opacity: 1}, 200);
-            });
-        }
-
-        var add_tag_modal_title = $("#addTagModalTitle");
-        var add_tag_modal_item_id = $("#addTagModalItemId");
-        var add_tag_modal_tags = $("#addTagModalTags");
-        var add_tag_modal_input = $("#addTagModalInput");
-        var modal_tag = $(".modal-tag");
-        var modal_tag_text = $(".modal-tag-text");
-
-        function addTagModalShow(_id, _title, _tag_tuples){
-            add_tag_modal_title.html("Edit tags for " + _title);
-            add_tag_modal_item_id.val(_id);
-            add_tag_modal_tags.empty();
-            _tag_tuples.forEach(function(tag_tuple){
-                modal_tag_text.html(tag_tuple[0]);
-                var tag_copy = modal_tag.clone();
-                var modal_tag_remove = tag_copy.find(".modal-tag-remove");
-                modal_tag_remove.click(function(e){
-                    $(e.currentTarget).parent().remove();
-                });
-                tag_copy.show();
-                tag_copy.appendTo(add_tag_modal_tags);
-                modal_tag_text.html("");
-            });
-            add_tag_modal.modal('show');
-        }
-
-        function addTagModalAdd(){
-            new_tags = add_tag_modal_input.val().split(",").map(function(str){return str.trim()});
-            new_tags.forEach(function(tag){
-                modal_tag_text.html(tag);
-                var tag_copy = modal_tag.clone();
-                var modal_tag_remove = tag_copy.find(".modal-tag-remove");
-                modal_tag_remove.click(function(e){
-                    $(e.currentTarget).parent().remove();
-                });
-                tag_copy.show();
-                tag_copy.appendTo(add_tag_modal_tags);
-                modal_tag_text.html("");
-            });
-            add_tag_modal_input.val("");
-        }
-
-        function addTagModalSubmit(){
-            var all_tags = $(".modal-tag-text");
-            tags = [];
-            all_tags.each(function(i, element){
-                if(element.innerHTML){
-                    tags.push(element.innerHTML);
-                }
-            });
-
-            $.ajax({
-                    type: 'POST',
-                    url : 'library',
-                    data: {
-                        action: 'edit_tags',
-                        id: add_tag_modal_item_id.val(),
-                        tags: tags.join(",")
-                    }
-                });
-            updateResults(active_page);
-        }
-
-        var volume_update_timer;
-        function setVolumeDelayed(new_volume_value) {
-            window.clearTimeout(volume_update_timer);
-            volume_update_timer = window.setTimeout(function() {
-                request('post', {action : 'volume_set_value', new_volume : new_volume_value});
-                }, 500); // delay in milliseconds
-        }
-
-        themeInit();
-        updateResults();
-        $(document).ready(updatePlaylist);
-
-    </script>
+    <script src="static/js/jquery-3.4.1.min.js"></script>
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/fontawesome.all.js"></script>
+    <script src="static/js/custom.js"></script>
 </body>
 
 </html>
