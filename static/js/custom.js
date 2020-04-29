@@ -52,6 +52,12 @@ var playModeBtns = {
     repeat: $('#repeat-mode-btn'),
     autoplay: $('#autoplay-mode-btn')
 };
+var playModeIcon = {
+    'one-shot': 'fa-tasks',
+    random: 'fa-random',
+    repeat: 'fa-redo',
+    autoplay: 'fa-robot'
+};
 
 function request(_url, _data, refresh = false) {
     console.log(_data);
@@ -263,12 +269,16 @@ function updateControls(empty, play, mode, volume) {
         }
     }
 
-    let otherModes = Object.assign({}, playModeBtns);
-    delete otherModes[mode];
-    for (_mode in otherModes) {
-        otherModes[_mode].removeClass('active');
+    for (const otherModes of Object.values(playModeBtns)) {
+        otherModes.removeClass('active');
     }
     playModeBtns[mode].addClass('active');
+
+    let playModeIndicator = $('#modeIndicator');
+    for (const icon_class of Object.values(playModeIcon)) {
+        playModeIndicator.removeClass(icon_class);
+    }
+    playModeIndicator.addClass(playModeIcon[mode]);
 
     if (volume != last_volume) {
         last_volume = volume;
