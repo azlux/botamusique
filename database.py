@@ -514,7 +514,7 @@ class MusicDatabase:
                 music_dict['type'] = result[1]
                 music_dict['title'] = result[2]
                 music_dict['id'] = result[0]
-                music_dict['tags'] = result[4].strip(",").split(",") if result[4] else ''
+                music_dict['tags'] = result[4].strip(",").split(",") if result[4] else []
                 music_dict['path'] = result[5]
                 music_dict['keywords'] = result[6]
 
