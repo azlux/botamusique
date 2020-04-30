@@ -75,7 +75,7 @@ venv/bin/pip install -r requirements.txt
 ### Configuration
 Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
 
-We list some basic settings for you to quickly get things working. 
+We list some basic settings for you to quickly get things working.
 
 #### Basic settings
 1. Usually, the first thing is to set the Murmur server you'd like the bot to connect to. You may also specify which channel the bot stays, and tokens used by the bot.
@@ -83,7 +83,7 @@ We list some basic settings for you to quickly get things working.
 [server]
 host = 127.0.0.1
 port = 64738
-````
+```
 
 2. You need to specify a folder that stores your music files. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
 ```
