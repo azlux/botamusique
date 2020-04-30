@@ -312,9 +312,9 @@ function switchTheme() {
 
 function setPageTheme(theme) {
     if (theme === "light")
-        document.getElementById("pagestyle").setAttribute("href", "../static/css/bootstrap.min.css");
+        document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.min.css");
     else if (theme === "dark")
-        document.getElementById("pagestyle").setAttribute("href", "../static/css/bootstrap.darkly.min.css");
+        document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
 }
 
 function togglePlayPause() {
