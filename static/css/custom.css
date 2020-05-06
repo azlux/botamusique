@@ -1,22 +1,22 @@
-.btn-space{margin-right:5px;}
-.tag-space{margin-right:3px;}
-.playlist-title-td{width:60%}
-.playlist-title{float:left; }
+.btn-space {margin-right: 5px;}
+.tag-space {margin-right: 3px;}
+.playlist-title-td {width: 60%;}
+.playlist-title {float: left;}
 .playlist-item {transition: all 0.2s ease-in-out;}
-.playlist-artwork{
-   float:left;
-   margin-left:10px;
+.playlist-artwork {
+   float: left;
+   margin-left: 10px;
    white-space: nowrap;
    overflow: hidden;
 }
-.tag-click{
-   cursor:pointer;
+.tag-click {
+   cursor: pointer;
    transition: 400ms;
 }
-.tag-unclicked{
+.tag-unclicked {
    opacity: 0.6;
 }
-.tag-clicked{
+.tag-clicked {
    box-shadow: 2px 4px 10px #777777;
    transform: scale(1.2);
    opacity: 1;
@@ -41,7 +41,7 @@
     background-color: hsl(0, 0%, 43%);
     color: white;
 }
-.library-item{
+.library-item {
    display: flex;
    padding: .5rem .5rem .5rem 0;
    height: 72px;
@@ -98,15 +98,14 @@
 .library-action {
     margin-left: auto;
 }
-.library-info-col .path{
+.library-info-col .path {
    font-style: italic !important;
    font-weight: 300;
 }
 #volume-slider {
    margin-top: 8px;
-   margin-right: 6px;
 }
-#playlist .dropdown{
+.dropdown {
     display: inline-block;
 }
 @media (max-width: 399.98px) {
