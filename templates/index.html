@@ -26,36 +26,35 @@
 
     <div class="container mb-5">
         <div id="playlist">
-            <div class="row">
-                <div class="col-auto">
-                    <button type="button" id="play-pause-btn" class="btn btn-info mb-2" onclick="togglePlayPause()">
-                        <i class="fas fa-play"></i>
-                    </button>
-                </div>
-                <div class="col btn-group">
-                    <div class="dropdown mb-2 btn-space" style="margin-left: auto;">
+            <div class="btn-toolbar mb-2" role="toolbar" aria-label="Playlist controls">
+                <button type="button" id="play-pause-btn" class="btn btn-info mb-2" onclick="togglePlayPause()">
+                    <i class="fas fa-play"></i>
+                </button>
+                <div class="ml-auto">
+                    <div class="dropdown mr-2">
                         <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
                         </button>
                         <div class="dropdown-menu" aria-labelledby="play-mode">
                             <a class="dropdown-item" href="#" id="one-shot-mode-btn"
-                               onclick="changePlayMode('one-shot')">
+                                onclick="changePlayMode('one-shot')">
                                 <i class="fas fa-tasks mr-2" aria-hidden="true"></i>One-shot
                             </a>
-                            <a class="dropdown-item" href="#" id="random-mode-btn" onclick="changePlayMode('randomize')">
+                            <a class="dropdown-item" href="#" id="random-mode-btn"
+                                onclick="changePlayMode('randomize')">
                                 <i class="fas fa-random mr-2" aria-hidden="true"></i>Random
                             </a>
                             <a class="dropdown-item" href="#" id="repeat-mode-btn" onclick="changePlayMode('repeat')">
                                 <i class="fas fa-redo mr-2" aria-hidden="true"></i>Repeat
                             </a>
                             <a class="dropdown-item" href="#" id="autoplay-mode-btn"
-                               onclick="changePlayMode('autoplay')">
+                                onclick="changePlayMode('autoplay')">
                                 <i class="fas fa-robot mr-2" aria-hidden="true"></i>Autoplay
                             </a>
                         </div>
                     </div>
-                    <div class="btn-group mb-2">
+                    <div class="btn-group" role="group">
                         <button type="button" class="btn btn-warning btn-space"
                             onclick="request('post', {action : 'volume_down'})">
                             <i class="fa fa-volume-down" aria-hidden="true"></i>
@@ -164,15 +163,15 @@
                                 <label>Type</label>
                                 <div id="filter-type" class="input-group mb-2">
                                     <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                                        <button type="button" id="filter-type-file" class="btn btn-secondary btn-sm"
-                                            onclick="setFilterType('file')">File
-                                        </button>
-                                        <button type="button" id="filter-type-url" class="btn btn-secondary btn-sm"
-                                            onclick="setFilterType('url')">URL
-                                        </button>
-                                        <button type="button" id="filter-type-radio" class="btn btn-secondary btn-sm"
-                                            onclick="setFilterType('radio')">Radio
-                                        </button>
+                                        <label class="btn btn-secondary" onclick="setFilterType('file')">
+                                            <input type="radio" name="options" id="filter-type-file"> File
+                                        </label>
+                                        <label class="btn btn-secondary" onclick="setFilterType('url')">
+                                            <input type="radio" name="options" id="filter-type-url"> URL
+                                        </label>
+                                        <label class="btn btn-secondary" onclick="setFilterType('radio')">
+                                            <input type="radio" name="options" id="filter-type-radio"> Radio
+                                        </label>
                                     </div>
                                 </div>
 

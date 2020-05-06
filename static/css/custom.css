@@ -1,5 +1,3 @@
-.bs-docs-section{margin-top:4em}
-.bs-docs-section .page-header h1 { padding: 2rem 0; font-size: 3rem; margin-bottom: 10px }
 .btn-space{margin-right:5px;}
 .tag-space{margin-right:3px;}
 .playlist-title-td{width:60%}
@@ -107,4 +105,17 @@
 #volume-slider {
    margin-top: 8px;
    margin-right: 6px;
+}
+#playlist .dropdown{
+    display: inline-block;
+}
+@media (max-width: 399.98px) {
+    #volume-slider {
+        width: 80px;
+    }
+}
+@media (max-width: 329.98px) {
+    #volume-slider {
+        display: none;
+    }
 }

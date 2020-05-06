@@ -269,8 +269,8 @@ function updateControls(empty, play, mode, volume) {
         }
     }
 
-    for (const otherModes of Object.values(playModeBtns)) {
-        otherModes.removeClass('active');
+    for (const otherMode of Object.values(playModeBtns)) {
+        otherMode.removeClass('active');
     }
     playModeBtns[mode].addClass('active');
 
