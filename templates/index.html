@@ -162,15 +162,15 @@
                             <div class="col">
                                 <label>Type</label>
                                 <div id="filter-type" class="input-group mb-2">
-                                    <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                                        <label class="btn btn-secondary" onclick="setFilterType('file')">
-                                            <input type="radio" name="options" id="filter-type-file"> File
+                                    <div class="btn-group btn-group-sm btn-group-toggle">
+                                        <label id="filter-type-file" class="btn btn-secondary" onclick="setFilterType(event, 'file')">
+                                            <input type="radio" name="options"> File
                                         </label>
-                                        <label class="btn btn-secondary" onclick="setFilterType('url')">
-                                            <input type="radio" name="options" id="filter-type-url"> URL
+                                        <label id="filter-type-url" class="btn btn-secondary" onclick="setFilterType(event, 'url')">
+                                            <input type="radio" name="options"> URL
                                         </label>
-                                        <label class="btn btn-secondary" onclick="setFilterType('radio')">
-                                            <input type="radio" name="options" id="filter-type-radio"> Radio
+                                        <label id="filter-type-radio" class="btn btn-secondary" onclick="setFilterType(event, 'radio')">
+                                            <input type="radio" name="options"> Radio
                                         </label>
                                     </div>
                                 </div>
