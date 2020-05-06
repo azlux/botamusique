@@ -347,10 +347,10 @@ function setFilterType(event, type) {
     event.preventDefault();
 
     if (filters[type].hasClass('active')) {
-        filters[type].removeClass('active');
+        filters[type].removeClass('active btn-primary').addClass('btn-secondary');
         filters[type].find('input[type=radio]').removeAttr('checked');
     } else {
-        filters[type].addClass('active');
+        filters[type].removeClass('btn-secondary').addClass('active btn-primary');
         filters[type].find('input[type=radio]').attr('checked', 'checked');
     }
 
