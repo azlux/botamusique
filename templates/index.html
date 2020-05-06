@@ -51,15 +51,15 @@
                     </div>
                 </div>
                 <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-warning ml-2"
+                    <button type="button" class="btn btn-warning ml-1"
                         onclick="request('post', {action : 'volume_down'})">
                         <i class="fa fa-volume-down" aria-hidden="true"></i>
                     </button>
 
-                    <input type="range" class="custom-range ml-2" id="volume-slider" min="0" max="1" step="0.01"
+                    <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01"
                         value="0.5" onchange="setVolumeDelayed(this.value)" />
 
-                    <button type="button" class="btn btn-warning ml-2"
+                    <button type="button" class="btn btn-warning ml-1"
                         onclick="request('post', {action : 'volume_up'})">
                         <i class="fa fa-volume-up" aria-hidden="true"></i>
                     </button>
