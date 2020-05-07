@@ -269,8 +269,8 @@ function updateControls(empty, play, mode, volume) {
         }
     }
 
-    for (const otherModes of Object.values(playModeBtns)) {
-        otherModes.removeClass('active');
+    for (const otherMode of Object.values(playModeBtns)) {
+        otherMode.removeClass('active');
     }
     playModeBtns[mode].addClass('active');
 
@@ -335,46 +335,25 @@ setInterval(checkForPlaylistUpdate, 3000);
 // ---------------------
 // ------ Browser ------
 // ---------------------
-var filter_file = false;
-var filter_url = false;
-var filter_radio = false;
+var filters = {
+    file: $('#filter-type-file'),
+    url: $('#filter-type-url'),
+    radio: $('#filter-type-radio'),
+};
 var filter_dir = $("#filter-dir");
 var filter_keywords = $("#filter-keywords");
-var filter_btn_file = $("#filter-type-file");
-var filter_btn_url = $("#filter-type-url");
-var filter_btn_radio = $("#filter-type-radio");
 
-function setFilterType(type) {
-    filter_types = [];
+function setFilterType(event, type) {
+    event.preventDefault();
 
-    if (type === "file") {
-        if (filter_btn_file.hasClass("btn-primary")) {
-            filter_btn_file.removeClass("btn-primary").addClass("btn-secondary");
-            filter_dir.prop("disabled", true);
-            filter_file = false;
-        } else {
-            filter_btn_file.removeClass("btn-secondary").addClass("btn-primary");
-            filter_dir.prop("disabled", false);
-            filter_file = true;
-        }
-    } else if (type === "url") {
-        if (filter_btn_url.hasClass("btn-primary")) {
-            filter_btn_url.removeClass("btn-primary").addClass("btn-secondary");
-            filter_url = false;
-        } else {
-            filter_btn_url.removeClass("btn-secondary").addClass("btn-primary");
-            filter_url = true;
-        }
-    } else if (type === "radio") {
-        if (filter_btn_radio.hasClass("btn-primary")) {
-            filter_btn_radio.removeClass("btn-primary").addClass("btn-secondary");
-            filter_radio = false;
-        } else {
-            filter_btn_radio.removeClass("btn-secondary").addClass("btn-primary");
-            filter_types.push('radio');
-            filter_radio = true;
-        }
+    if (filters[type].hasClass('active')) {
+        filters[type].removeClass('active btn-primary').addClass('btn-secondary');
+        filters[type].find('input[type=radio]').removeAttr('checked');
+    } else {
+        filters[type].removeClass('btn-secondary').addClass('active btn-primary');
+        filters[type].find('input[type=radio]').attr('checked', 'checked');
     }
+
     updateResults();
 }
 
@@ -511,9 +490,11 @@ function getFilters(dest_page = 1) {
     });
 
     filter_types = [];
-    if (filter_file) { filter_types.push("file"); }
-    if (filter_url) { filter_types.push("url"); }
-    if (filter_radio) { filter_types.push("radio"); }
+    for (const filter in filters) {
+        if (filters[filter].hasClass('active')) {
+            filter_types.push(filter);
+        }
+    }
 
     return {
         type: filter_types.join(','),

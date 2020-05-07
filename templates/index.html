@@ -24,125 +24,119 @@
         </div>
     </div>
 
-    <div class="container mb-5">
-        <div id="playlist">
-            <div class="row">
-                <div class="col-auto">
-                    <button type="button" id="play-pause-btn" class="btn btn-info mb-2" onclick="togglePlayPause()">
-                        <i class="fas fa-play"></i>
+    <div id="playlist" class="container mb-5">
+        <div class="btn-toolbar mb-2" role="toolbar" aria-label="Playlist controls">
+            <button type="button" id="play-pause-btn" class="btn btn-info mb-2" onclick="togglePlayPause()">
+                <i class="fas fa-play"></i>
+            </button>
+            <div class="ml-auto">
+                <div class="dropdown mr-2">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="play-mode">
+                        <a class="dropdown-item" href="#" id="one-shot-mode-btn" onclick="changePlayMode('one-shot')">
+                            <i class="fas fa-tasks mr-2" aria-hidden="true"></i>One-shot
+                        </a>
+                        <a class="dropdown-item" href="#" id="random-mode-btn" onclick="changePlayMode('randomize')">
+                            <i class="fas fa-random mr-2" aria-hidden="true"></i>Random
+                        </a>
+                        <a class="dropdown-item" href="#" id="repeat-mode-btn" onclick="changePlayMode('repeat')">
+                            <i class="fas fa-redo mr-2" aria-hidden="true"></i>Repeat
+                        </a>
+                        <a class="dropdown-item" href="#" id="autoplay-mode-btn" onclick="changePlayMode('autoplay')">
+                            <i class="fas fa-robot mr-2" aria-hidden="true"></i>Autoplay
+                        </a>
+                    </div>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-warning ml-1"
+                        onclick="request('post', {action : 'volume_down'})">
+                        <i class="fa fa-volume-down" aria-hidden="true"></i>
+                    </button>
+
+                    <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01"
+                        value="0.5" onchange="setVolumeDelayed(this.value)" />
+
+                    <button type="button" class="btn btn-warning ml-1"
+                        onclick="request('post', {action : 'volume_up'})">
+                        <i class="fa fa-volume-up" aria-hidden="true"></i>
                     </button>
                 </div>
-                <div class="col btn-group">
-                    <div class="dropdown mb-2 btn-space" style="margin-left: auto;">
-                        <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
-                        </button>
-                        <div class="dropdown-menu" aria-labelledby="play-mode">
-                            <a class="dropdown-item" href="#" id="one-shot-mode-btn"
-                               onclick="changePlayMode('one-shot')">
-                                <i class="fas fa-tasks mr-2" aria-hidden="true"></i>One-shot
-                            </a>
-                            <a class="dropdown-item" href="#" id="random-mode-btn" onclick="changePlayMode('randomize')">
-                                <i class="fas fa-random mr-2" aria-hidden="true"></i>Random
-                            </a>
-                            <a class="dropdown-item" href="#" id="repeat-mode-btn" onclick="changePlayMode('repeat')">
-                                <i class="fas fa-redo mr-2" aria-hidden="true"></i>Repeat
-                            </a>
-                            <a class="dropdown-item" href="#" id="autoplay-mode-btn"
-                               onclick="changePlayMode('autoplay')">
-                                <i class="fas fa-robot mr-2" aria-hidden="true"></i>Autoplay
-                            </a>
-                        </div>
-                    </div>
-                    <div class="btn-group mb-2">
-                        <button type="button" class="btn btn-warning btn-space"
-                            onclick="request('post', {action : 'volume_down'})">
-                            <i class="fa fa-volume-down" aria-hidden="true"></i>
-                        </button>
-
-                        <input type="range" class="custom-range" id="volume-slider" min="0" max="1" step="0.01"
-                            value="0.5" onchange="setVolumeDelayed(this.value)" />
-
-                        <button type="button" class="btn btn-warning btn-space"
-                            onclick="request('post', {action : 'volume_up'})">
-                            <i class="fa fa-volume-up" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
             </div>
+        </div>
 
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col" class="playlist-title-td">Title</th>
-                            <th scope="col">Url/Path</th>
-                            <th scope="col">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="playlist-table" class="playlist-table">
-                        <tr id="playlist-loading">
-                            <td colspan="4" style="text-align:center;">
-                                <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
-                            </td>
-                        </tr>
-                        <tr id="playlist-empty" style="display: none;">
-                            <td colspan="4" style="text-align:center;">
-                                <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
-                            </td>
-                        </tr>
-                        <tr id="playlist-expand" class="table-dark" style="display: none;">
-                            <td colspan="4" style="text-align:center;">
-                                <a class="text-muted" href="javascript:">See item <span
-                                        class="playlist-expand-item-range"></span> on the playlist.</a>
-                            </td>
-                        </tr>
-                        <tr class="playlist-item-template" style="display: none;">
-                            <th scope="row" class="playlist-item-index"></th>
-                            <td>
-                                <input hidden type="text" class="playlist-item-id" value="" />
-                                <div class="playlist-title">
-                                    <img width="80" class="playlist-item-thumbnail"
-                                        src="static/image/unknown-album.png" />
-                                </div>
-                                <div class="playlist-artwork">
-                                    <b class="playlist-item-title"></b>
-                                    <span class="playlist-item-type badge badge-secondary"></span>
-                                    <br />
-                                    <span class="playlist-item-artist"></span>
-                                    <br />
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col" class="d-none d-md-table-cell">#</th>
+                        <th scope="col" class="playlist-title-td">Title</th>
+                        <th scope="col" class="d-none d-md-table-cell">Url/Path</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="playlist-table" class="playlist-table">
+                    <tr id="playlist-loading">
+                        <td colspan="4" class="text-center">
+                            <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                        </td>
+                    </tr>
+                    <tr id="playlist-empty" style="display: none;">
+                        <td colspan="4" class="text-center">
+                            <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                        </td>
+                    </tr>
+                    <tr id="playlist-expand" class="table-dark" style="display: none;">
+                        <td colspan="4" class="text-center">
+                            <a class="text-muted" href="javascript;">See item <span
+                                    class="playlist-expand-item-range"></span> on the playlist.
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="playlist-item-template" style="display: none;">
+                        <th scope="row" class="playlist-item-index d-none d-md-table-cell"></th>
+                        <td>
+                            <input hidden type="text" class="playlist-item-id" value="" />
+                            <div class="playlist-title">
+                                <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png" />
+                            </div>
+                            <div class="playlist-artwork">
+                                <b class="playlist-item-title"></b>
+                                <span class="playlist-item-type badge badge-secondary"></span>
+                                <br />
+                                <span class="playlist-item-artist"></span>
+                                <br />
 
-                                    <div class="playlist-item-tags">
-                                        <a class="playlist-item-edit tag-space tag-click"><i class="fas fa-edit"
-                                                style="color: #AAAAAA"></i></a>
-                                    </div>
+                                <div class="playlist-item-tags">
+                                    <a class="playlist-item-edit tag-space tag-click"><i class="fas fa-edit"
+                                            style="color: #AAAAAA"></i></a>
                                 </div>
-                            </td>
-                            <td>
-                                <small class="playlist-item-path"></small>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <button type="button" class="playlist-item-play btn btn-info btn-sm btn-space">
-                                        <i class="fa fa-play" aria-hidden="true"></i>
-                                    </button>
-                                    <button type="button" class="playlist-item-trash btn btn-danger btn-sm btn-space">
-                                        <i class="fas fa-trash-alt" aria-hidden="true"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            <small class="playlist-item-path"></small>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="playlist-item-play btn btn-info btn-sm">
+                                    <i class="fa fa-play" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="playlist-item-trash btn btn-danger btn-sm ml-1">
+                                    <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
-            <div class="btn-group">
-                <button type="button" class="btn btn-danger btn-space" onclick="request('post', {action : 'clear'})">
-                    <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
-                </button>
-            </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-danger mr-1" onclick="request('post', {action : 'clear'})">
+                <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
+            </button>
         </div>
     </div>
 
@@ -163,16 +157,19 @@
                             <div class="col">
                                 <label>Type</label>
                                 <div id="filter-type" class="input-group mb-2">
-                                    <div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-                                        <button type="button" id="filter-type-file" class="btn btn-secondary btn-sm"
-                                            onclick="setFilterType('file')">File
-                                        </button>
-                                        <button type="button" id="filter-type-url" class="btn btn-secondary btn-sm"
-                                            onclick="setFilterType('url')">URL
-                                        </button>
-                                        <button type="button" id="filter-type-radio" class="btn btn-secondary btn-sm"
-                                            onclick="setFilterType('radio')">Radio
-                                        </button>
+                                    <div class="btn-group btn-group-sm btn-group-toggle">
+                                        <label id="filter-type-file" class="btn btn-secondary"
+                                            onclick="setFilterType(event, 'file')">
+                                            <input type="checkbox" name="options"> File
+                                        </label>
+                                        <label id="filter-type-url" class="btn btn-secondary"
+                                            onclick="setFilterType(event, 'url')">
+                                            <input type="checkbox" name="options"> URL
+                                        </label>
+                                        <label id="filter-type-radio" class="btn btn-secondary"
+                                            onclick="setFilterType(event, 'radio')">
+                                            <input type="checkbox" name="options"> Radio
+                                        </label>
                                     </div>
                                 </div>
 
@@ -236,7 +233,7 @@
                             </div>
                         </div>
 
-                        <div class="library-info-col col-4" style="padding: 3px;">
+                        <div class="library-info-col col-4 d-none d-md-flex" style="padding: 3px;">
                             <span class="library-item-path text-muted path">Path/to/the/file</span>
                             <div class="library-item-tags">
                                 <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit"
@@ -288,18 +285,21 @@
                     </div>
                 </div>
 
-                <div class="btn-group" style="margin-bottom: 5px;" role="group">
-                    <button type="submit" class="btn btn-secondary btn-space" onclick="addAllResults()"><i
-                            class="fa fa-plus" aria-hidden="true"></i> Add All</button>
-                    <button type="submit" class="btn btn-secondary btn-space"
+                <div class="btn-group" role="group" class="mb-2">
+                    <button type="submit" class="btn btn-secondary mr-1" onclick="addAllResults()"><i class="fa fa-plus"
+                            aria-hidden="true"></i> Add All
+                    </button>
+                    <button type="submit" class="btn btn-secondary mr-1"
                         onclick="request('post', {action : 'rescan'}); updateResults()">
                         <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
                     </button>
-                    <button type="submit" class="btn btn-secondary btn-space" onclick="downloadAllResults()"><i
-                            class="fa fa-download" aria-hidden="true"></i> Download All</button>
-                    <button type="button" class="btn btn-danger btn-space" data-toggle="modal"
+                    <button type="submit" class="btn btn-secondary mr-1" onclick="downloadAllResults()"><i
+                            class="fa fa-download" aria-hidden="true"></i> Download All
+                    </button>
+                    <button type="button" class="btn btn-danger mr-1" data-toggle="modal"
                         data-target="#deleteWarningModal"><i class="fas fa-trash-alt" aria-hidden="true"></i>
-                        Delete All</button>
+                        Delete All
+                    </button>
                 </div>
 
                 <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog"
@@ -461,10 +461,10 @@
         </div>
     </div>
 
-    <script src="static/js/jquery-3.4.1.min.js"></script>
+    <script src="static/js/jquery-3.5.1.min.js"></script>
     <script src="static/js/popper.min.js"></script>
     <script src="static/js/bootstrap.min.js"></script>
-    <script src="static/js/fontawesome.all.js"></script>
+    <script src="static/js/fontawesome.all.min.js"></script>
     <script src="static/js/custom.js"></script>
 </body>
 
