@@ -700,6 +700,7 @@ if __name__ == '__main__':
     var.db = SettingsDatabase(var.dbfile)
 
     # Setup logger
+
     bot_logger = logging.getLogger("bot")
     formatter = logging.Formatter('[%(asctime)s %(levelname)s %(threadName)s] %(message)s', "%b %d %H:%M:%S")
     bot_logger.setLevel(logging.INFO)
@@ -714,7 +715,10 @@ if __name__ == '__main__':
     logfile = util.solve_filepath(var.config.get('bot', 'logfile'))
     handler = None
     if logfile:
+        print(f"Redirecting stdout and stderr to log file: {logfile}")
         handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
+        sys.stdout = util.LoggerIOWrapper(bot_logger, logging.INFO, fallback_io_buffer=sys.stdout.buffer)
+        sys.stderr = util.LoggerIOWrapper(bot_logger, logging.ERROR, fallback_io_buffer=sys.stderr.buffer)
     else:
         handler = logging.StreamHandler()
 
@@ -755,3 +759,4 @@ if __name__ == '__main__':
 
     # Start the main loop.
     var.bot.loop()
+

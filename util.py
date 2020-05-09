@@ -4,6 +4,7 @@
 import hashlib
 import magic
 import os
+import io
 import sys
 import variables as var
 import zipfile
@@ -335,3 +336,16 @@ def youtube_search(query):
         error_traceback = traceback.format_exc().split("During")[0]
         log.error("util: youtube query failed with error:\n %s" % error_traceback)
         return False
+
+class LoggerIOWrapper(io.TextIOWrapper):
+    def __init__(self, logger: logging.Logger, logging_level, fallback_io_buffer):
+        super().__init__(fallback_io_buffer, write_through=True)
+        self.logger = logger
+        self.logging_level = logging_level
+
+    def write(self, text):
+        if isinstance(text, bytes):
+            self.logger.log(self.logging_level, text.decode('utf-8').rstrip())
+        else:
+            self.logger.log(self.logging_level, text.rstrip())
+
