@@ -345,7 +345,10 @@ class LoggerIOWrapper(io.TextIOWrapper):
 
     def write(self, text):
         if isinstance(text, bytes):
-            self.logger.log(self.logging_level, text.decode('utf-8').rstrip())
+            msg = text.decode('utf-8').rstrip()
+            self.logger.log(self.logging_level, msg)
+            super().write(msg + "\n")
         else:
             self.logger.log(self.logging_level, text.rstrip())
+            super().write(text + "\n")
 

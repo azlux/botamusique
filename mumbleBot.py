@@ -13,6 +13,7 @@ import argparse
 import os
 import os.path
 import pymumble_py3 as pymumble
+import pymumble_py3.constants
 import variables as var
 import logging
 import logging.handlers
@@ -123,6 +124,10 @@ class MumbleBot:
         self.mumble.set_codec_profile("audio")
         self.mumble.start()  # start the mumble thread
         self.mumble.is_ready()  # wait for the connection
+
+        if self.mumble.connected >= pymumble_py3.constants.PYMUMBLE_CONN_STATE_FAILED:
+            exit()
+
         self.set_comment()
         self.mumble.users.myself.unmute()  # by sure the user is not muted
         self.join_channel()
