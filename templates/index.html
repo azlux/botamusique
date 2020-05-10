@@ -30,7 +30,7 @@
                 <i class="fas fa-play"></i>
             </button>
             <div class="ml-auto">
-                <div class="dropdown mr-2">
+                <div class="dropdown d-inline-block mr-2">
                     <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
@@ -53,7 +53,7 @@
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-warning ml-1"
                         onclick="request('post', {action : 'volume_down'})">
-                        <i class="fa fa-volume-down" aria-hidden="true"></i>
+                        <i class="fas fa-volume-down" aria-hidden="true"></i>
                     </button>
 
                     <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01"
@@ -61,7 +61,7 @@
 
                     <button type="button" class="btn btn-warning ml-1"
                         onclick="request('post', {action : 'volume_up'})">
-                        <i class="fa fa-volume-up" aria-hidden="true"></i>
+                        <i class="fas fa-volume-up" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -72,7 +72,7 @@
                 <thead>
                     <tr>
                         <th scope="col" class="d-none d-md-table-cell">#</th>
-                        <th scope="col" class="playlist-title-td">Title</th>
+                        <th scope="col" class="w-50">Title</th>
                         <th scope="col" class="d-none d-md-table-cell">Url/Path</th>
                         <th scope="col">Action</th>
                     </tr>
@@ -83,24 +83,25 @@
                             <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
                         </td>
                     </tr>
-                    <tr id="playlist-empty" style="display: none;">
+                    <tr id="playlist-empty" class="d-none">
                         <td colspan="4" class="text-center">
                             <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
                         </td>
                     </tr>
-                    <tr id="playlist-expand" class="table-dark" style="display: none;">
+                    <tr id="playlist-expand" class="table-dark d-none">
                         <td colspan="4" class="text-center">
                             <a class="text-muted" href="javascript;">See item <span
                                     class="playlist-expand-item-range"></span> on the playlist.
                             </a>
                         </td>
                     </tr>
-                    <tr class="playlist-item-template" style="display: none;">
+                    <tr class="playlist-item-template d-none">
                         <th scope="row" class="playlist-item-index d-none d-md-table-cell"></th>
                         <td>
                             <input hidden type="text" class="playlist-item-id" value="" />
-                            <div class="playlist-title">
-                                <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png" />
+                            <div class="float-left">
+                                <img width="80" class="playlist-item-thumbnail"
+                                    src="static/image/unknown-album.png" />
                             </div>
                             <div class="playlist-artwork">
                                 <b class="playlist-item-title"></b>
@@ -110,8 +111,9 @@
                                 <br />
 
                                 <div class="playlist-item-tags">
-                                    <a class="playlist-item-edit tag-space tag-click"><i class="fas fa-edit"
-                                            style="color: #AAAAAA"></i></a>
+                                    <a class="playlist-item-edit tag-space tag-click">
+                                        <i class="fas fa-edit" style="color: #AAAAAA"></i>
+                                    </a>
                                 </div>
                             </div>
                         </td>
@@ -121,7 +123,7 @@
                         <td>
                             <div class="btn-group">
                                 <button type="button" class="playlist-item-play btn btn-info btn-sm">
-                                    <i class="fa fa-play" aria-hidden="true"></i>
+                                    <i class="fas fa-play" aria-hidden="true"></i>
                                 </button>
                                 <button type="button" class="playlist-item-trash btn btn-danger btn-sm ml-1">
                                     <i class="fas fa-trash-alt" aria-hidden="true"></i>
@@ -149,7 +151,7 @@
             </div>
 
             <div class="card-body">
-                <div class="card mb-3" style="background-color: #e2e3e5;">
+                <div class="card mb-3 bg-light">
                     <div class="card-body">
                         <h5 class="card-title">Filters</h5>
                         <hr>
@@ -220,7 +222,7 @@
                             </div>
                             <div class="btn-group-vertical library-thumb-grp">
                                 <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
-                                    <i class="fa fa-play" aria-hidden="true"></i>
+                                    <i class="fas fa-play" aria-hidden="true"></i>
                                 </div>
                             </div>
                         </div>
@@ -265,7 +267,7 @@
 
                             </button>
                             <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
-                                <i class="fa fa-download" aria-hidden="true"></i>
+                                <i class="fas fa-download" aria-hidden="true"></i>
                             </button>
                             <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button">
                                 <i class="fas fa-trash-alt"></i>
@@ -286,7 +288,7 @@
                 </div>
 
                 <div class="btn-group" role="group" class="mb-2">
-                    <button type="submit" class="btn btn-secondary mr-1" onclick="addAllResults()"><i class="fa fa-plus"
+                    <button type="submit" class="btn btn-secondary mr-1" onclick="addAllResults()"><i class="fas fa-plus"
                             aria-hidden="true"></i> Add All
                     </button>
                     <button type="submit" class="btn btn-secondary mr-1"
@@ -294,7 +296,7 @@
                         <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
                     </button>
                     <button type="submit" class="btn btn-secondary mr-1" onclick="downloadAllResults()"><i
-                            class="fa fa-download" aria-hidden="true"></i> Download All
+                            class="fas fa-download" aria-hidden="true"></i> Download All
                     </button>
                     <button type="button" class="btn btn-danger mr-1" data-toggle="modal"
                         data-target="#deleteWarningModal"><i class="fas fa-trash-alt" aria-hidden="true"></i>
@@ -446,7 +448,7 @@
                             placeholder="tag1,tag2,...">
                         <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm"
                             onclick="addTagModalAdd()">
-                            <i class="fa fa-plus" aria-hidden="true"></i>
+                            <i class="fas fa-plus" aria-hidden="true"></i>
                             Add
                         </button>
                     </div>

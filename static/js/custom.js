@@ -13,7 +13,6 @@ $('a.a-submit, button.btn-submit').on('click', function (event) {
 // ------ Playlist ------
 // ----------------------
 
-
 var pl_item_template = $(".playlist-item-template");
 var pl_id_element = $(".playlist-item-id");
 var pl_index_element = $(".playlist-item-index");
@@ -90,7 +89,7 @@ function addPlaylistItem(item) {
 
     var item_copy = pl_item_template.clone();
     item_copy.attr("id", "playlist-item-" + item.index);
-    item_copy.addClass("playlist-item");
+    item_copy.addClass("playlist-item").removeClass("d-none");
 
     var tags = item_copy.find(".playlist-item-tags");
     tags.empty();
@@ -114,7 +113,6 @@ function addPlaylistItem(item) {
     }
 
     item_copy.appendTo(playlist_table);
-    item_copy.show();
 }
 
 function displayPlaylist(data) {
@@ -164,6 +162,7 @@ function displayActiveItem(current_index) {
 
 function insertExpandPrompt(real_from, real_to, display_from, display_to) {
     var expand_copy = playlist_expand.clone();
+    playlist_expand.removeClass('d-none');
     if (display_from !== display_to) {
         expand_copy.find(".playlist-expand-item-range").html((display_from + 1) + "~" + (display_to + 1));
     } else {
@@ -177,14 +176,13 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to) {
         playlist_range_to = real_to;
         checkForPlaylistUpdate();
     });
-    expand_copy.show();
 }
 
 function updatePlaylist() {
     playlist_table.animate({ opacity: 0 }, 200, function () {
-        playlist_empty.hide();
+        playlist_empty.addClass('d-none');
         playlist_loading.show();
-        $("#playlist-table .playlist-item").css("opacity", 0);
+        playlist_table.find(".playlist-item").css("opacity", 0);
         data = {};
         if (!(playlist_range_from === 0 && playlist_range_to === 0)) {
             data = {
@@ -200,7 +198,7 @@ function updatePlaylist() {
                 200: displayPlaylist,
                 204: function () {
                     playlist_loading.hide();
-                    playlist_empty.show();
+                    playlist_empty.removeClass('d-none');
                     $(".playlist-item").remove();
                 }
             }
@@ -292,6 +290,24 @@ function updateControls(empty, play, mode, volume) {
     }
 }
 
+function togglePlayPause() {
+    if (playing) {
+        request('post', {action: 'pause'});
+    } else {
+        request('post', {action: 'resume'});
+    }
+}
+
+function changePlayMode(mode) {
+    request('post', {action: mode});
+}
+
+// Check the version of playlist to see if update is needed.
+setInterval(checkForPlaylistUpdate, 3000);
+
+// ---------------------
+// ------ Browser ------
+// ---------------------
 function themeInit() {
     var theme = localStorage.getItem("theme");
     if (theme !== null) {
@@ -316,21 +332,6 @@ function setPageTheme(theme) {
     else if (theme === "dark")
         document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
 }
-
-function togglePlayPause() {
-    if (playing) {
-        request('post', {action: 'pause'});
-    } else {
-        request('post', {action: 'resume'});
-    }
-}
-
-function changePlayMode(mode) {
-    request('post', {action: mode});
-}
-
-// Check the version of playlist to see if update is needed.
-setInterval(checkForPlaylistUpdate, 3000);
 
 // ---------------------
 // ------ Browser ------
