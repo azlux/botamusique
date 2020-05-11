@@ -26,8 +26,11 @@
 
     <div id="playlist" class="container mb-5">
         <div class="btn-toolbar mb-2" role="toolbar" aria-label="Playlist controls">
-            <button type="button" id="play-pause-btn" class="btn btn-info mb-2" onclick="togglePlayPause()">
+            <button type="button" id="play-pause-btn" class="btn btn-info mb-2 btn-space" onclick="togglePlayPause()">
                 <i class="fas fa-play"></i>
+            </button>
+            <button type="button" id="fast-forward-btn" class="btn btn-info mb-2" onclick="request('post', {action : 'next'})">
+                <i class="fas fa-fast-forward"></i>
             </button>
             <div class="ml-auto">
                 <div class="dropdown mr-2">
