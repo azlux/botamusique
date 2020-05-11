@@ -358,6 +358,10 @@ function setFilterType(event, type) {
         filters[type].find('input[type=radio]').attr('checked', 'checked');
     }
 
+    if (type === 'file') {
+        filter_dir.prop('disabled', !filters['file'].hasClass('active'));
+    }
+
     updateResults();
 }
 
