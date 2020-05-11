@@ -305,9 +305,10 @@ function changePlayMode(mode) {
 // Check the version of playlist to see if update is needed.
 setInterval(checkForPlaylistUpdate, 3000);
 
-// ---------------------
-// ------ Browser ------
-// ---------------------
+
+// ----------------------
+// --- THEME SWITCHER ---
+// ----------------------
 function themeInit() {
     var theme = localStorage.getItem("theme");
     if (theme !== null) {
@@ -333,9 +334,11 @@ function setPageTheme(theme) {
         document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
 }
 
+
 // ---------------------
 // ------ Browser ------
 // ---------------------
+
 var filters = {
     file: $('#filter-type-file'),
     url: $('#filter-type-url'),
