@@ -8,33 +8,6 @@
    white-space: nowrap;
    overflow: hidden;
 }
-#volume-slider {
-   margin-top: 8px;
-   width: 200px;
-}
-@media (max-width: 509.98px) {
-    #volume-slider {
-        width: 140px;
-    }
-}
-@media (max-width: 439.98px) {
-    #volume-slider {
-        width: 100px;
-    }
-}
-@media (max-width: 404.98px) {
-    #volume-slider {
-        width: 80px;
-    }
-}
-@media (max-width: 384.98px) {
-    #volume-slider {
-        display: none;
-    }
-}
-
-/* Library */
-.tag-space {margin-right: 3px;}
 .tag-click {
    cursor: pointer;
    transition: 400ms;
@@ -129,4 +102,43 @@
 .floating-button:hover {
     background-color: hsl(0, 0%, 43%);
     color: white;
+}
+#volume-slider {
+    margin-top: 4px;
+    margin-right: 5px;
+}
+.dropdown {
+    display: inline-block;
+}
+#volume-popover {
+    position: relative;
+    background: #333;
+    color: white;
+    font-weight: bold;
+    padding: 4px 8px;
+    font-size: 20px;
+    border-radius: 4px;
+    display: none;
+}
+#volume-popover[data-show] {
+    display: flex;
+}
+#volume-popover a {
+    cursor: pointer;
+}
+#volume-popover-arrow,
+#volume-popover-arrow::before {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  z-index: -1;
+}
+
+#volume-popover-arrow::before {
+  content: '';
+  transform: rotate(45deg);
+  background: #333;
+}
+#volume-popover[data-popper-placement^='top'] > #volume-popover-arrow {
+  bottom: -4px;
 }
