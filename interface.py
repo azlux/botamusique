@@ -576,10 +576,13 @@ def upload():
     if not files:
         abort(400)
 
+    response_code = 303
+
     for file in files:
         filename = file.filename
         if filename == '':
-            abort(400)
+            response_code = 400
+            continue
 
         targetdir = request.form['targetdir'].strip()
         if targetdir == '':
@@ -597,30 +600,37 @@ def upload():
         if "audio" in file.mimetype:
             storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
             if not storagepath.startswith(os.path.abspath(var.music_folder)):
-                abort(403)
+                response_code = 500
+                continue
 
             try:
                 os.makedirs(storagepath)
             except OSError as ee:
                 if ee.errno != errno.EEXIST:
                     log.error(f'web: failed to create directory {storagepath}')
-                    abort(500)
+                    response_code = 500
+                    continue
 
             filepath = os.path.join(storagepath, filename)
             log.info(f'web: - save path: {filepath}')
             if os.path.exists(filepath):
+                log.error(f'web: file existed! File was not saved.')
                 continue
 
             file.save(filepath)
         else:
             log.error(f'web: unsupported file type {file.mimetype}! File was not saved.')
-            abort(415)
+            response_code = 415
+            continue
 
     var.cache.build_dir_cache()
     var.music_db.manage_special_tags()
     log.info("web: Local file cache refreshed.")
 
-    return redirect("./", code=303)
+    if response_code == 303:
+        return redirect("./", code=303)
+    else:
+        return abort(response_code)
 
 
 @web.route('/download', methods=["GET"])
