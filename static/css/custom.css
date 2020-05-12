@@ -10,6 +10,27 @@
 }
 #volume-slider {
    margin-top: 8px;
+   width: 200px;
+}
+@media (max-width: 509.98px) {
+    #volume-slider {
+        width: 140px;
+    }
+}
+@media (max-width: 439.98px) {
+    #volume-slider {
+        width: 100px;
+    }
+}
+@media (max-width: 404.98px) {
+    #volume-slider {
+        width: 80px;
+    }
+}
+@media (max-width: 384.98px) {
+    #volume-slider {
+        display: none;
+    }
 }
 
 /* Library */
