@@ -43,7 +43,8 @@ var playlist_range_to = 0;
 var last_volume = 0;
 
 var playing = false;
-var playPauseBtn = $("#play-pause-btn");
+var playPauseBtn = $('#play-pause-btn');
+var fastForwardBtn = $('#fast-forward-btn');
 
 var playModeBtns = {
     'one-shot': $('#one-shot-mode-btn'),
@@ -255,9 +256,11 @@ function bindPlaylistEvent() {
 
 function updateControls(empty, play, mode, volume) {
     if (empty) {
-        playPauseBtn.prop("disabled", true);
+        playPauseBtn.prop('disabled', true);
+        fastForwardBtn.prop('disabled', true);
     } else {
-        playPauseBtn.prop("disabled", false);
+        playPauseBtn.prop('disabled', false);
+        fastForwardBtn.prop('disabled', false);
         if (play) {
             playing = true;
             playPauseBtn.find('[data-fa-i2svg]').removeClass('fa-play').addClass('fa-pause');
