@@ -740,6 +740,40 @@ function addTagModalSubmit() {
     updateResults(active_page);
 }
 
+
+// ---------------------
+// ------- Volume ------
+// ---------------------
+
+var volume_popover_btn = document.querySelector("#volume-popover-btn");
+var volume_popover_div = document.querySelector("#volume-popover");
+var volume_popover_instance = null;
+
+var volume_popover_show = false;
+function toggleVolumePopover(){
+    if (volume_popover_show){
+        volume_popover_instance = Popper.createPopper(volume_popover_btn, volume_popover_div, {
+            placement: 'top',
+            modifiers: [
+                {
+                    name: 'offset',
+                    options: {
+                        offset: [0, 8]
+                    }
+                }
+            ]
+        } );
+        volume_popover_div.setAttribute('data-show', '');
+    } else {
+        volume_popover_div.removeAttribute('data-show');
+        if (volume_popover_instance){
+            volume_popover_instance.destroy();
+            volume_popover_instance = null;
+        }
+    }
+    volume_popover_show = !volume_popover_show;
+}
+
 var volume_update_timer;
 function setVolumeDelayed(new_volume_value) {
     window.clearTimeout(volume_update_timer);
