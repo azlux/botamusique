@@ -26,14 +26,14 @@
 
     <div id="playlist" class="container mb-5">
         <div class="btn-toolbar mb-2" role="toolbar" aria-label="Playlist controls">
-            <button type="button" id="play-pause-btn" class="btn btn-info mb-2 btn-space" onclick="togglePlayPause()">
+            <button type="button" id="play-pause-btn" class="btn btn-info mb-2 mr-1" onclick="togglePlayPause()" disabled>
                 <i class="fas fa-play"></i>
             </button>
-            <button type="button" id="fast-forward-btn" class="btn btn-info mb-2" onclick="request('post', {action : 'next'})">
+            <button type="button" id="fast-forward-btn" class="btn btn-info mb-2 mr-1" onclick="request('post', {action : 'next'})" disabled>
                 <i class="fas fa-fast-forward"></i>
             </button>
             <div class="ml-auto">
-                <div class="dropdown mr-2">
+                <div class="dropdown d-inline-block mr-2">
                     <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
@@ -56,7 +56,7 @@
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-warning ml-1"
                         onclick="request('post', {action : 'volume_down'})">
-                        <i class="fa fa-volume-down" aria-hidden="true"></i>
+                        <i class="fas fa-volume-down" aria-hidden="true"></i>
                     </button>
 
                     <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01"
@@ -64,7 +64,7 @@
 
                     <button type="button" class="btn btn-warning ml-1"
                         onclick="request('post', {action : 'volume_up'})">
-                        <i class="fa fa-volume-up" aria-hidden="true"></i>
+                        <i class="fas fa-volume-up" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                 <thead>
                     <tr>
                         <th scope="col" class="d-none d-md-table-cell">#</th>
-                        <th scope="col" class="playlist-title-td">Title</th>
+                        <th scope="col" class="w-50">Title</th>
                         <th scope="col" class="d-none d-md-table-cell">Url/Path</th>
                         <th scope="col">Action</th>
                     </tr>
@@ -86,23 +86,23 @@
                             <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
                         </td>
                     </tr>
-                    <tr id="playlist-empty" style="display: none;">
+                    <tr id="playlist-empty" class="d-none">
                         <td colspan="4" class="text-center">
                             <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
                         </td>
                     </tr>
-                    <tr id="playlist-expand" class="table-dark" style="display: none;">
+                    <tr id="playlist-expand" class="table-dark d-none">
                         <td colspan="4" class="text-center">
                             <a class="text-muted" href="javascript;">See item <span
                                     class="playlist-expand-item-range"></span> on the playlist.
                             </a>
                         </td>
                     </tr>
-                    <tr class="playlist-item-template" style="display: none;">
+                    <tr class="playlist-item-template d-none">
                         <th scope="row" class="playlist-item-index d-none d-md-table-cell"></th>
                         <td>
                             <input hidden type="text" class="playlist-item-id" value="" />
-                            <div class="playlist-title">
+                            <div class="float-left">
                                 <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png" />
                             </div>
                             <div class="playlist-artwork">
@@ -113,8 +113,9 @@
                                 <br />
 
                                 <div class="playlist-item-tags">
-                                    <a class="playlist-item-edit tag-space tag-click"><i class="fas fa-edit"
-                                            style="color: #AAAAAA"></i></a>
+                                    <a class="playlist-item-edit tag-space tag-click">
+                                        <i class="fas fa-edit" style="color: #AAAAAA"></i>
+                                    </a>
                                 </div>
                             </div>
                         </td>
@@ -124,7 +125,7 @@
                         <td>
                             <div class="btn-group">
                                 <button type="button" class="playlist-item-play btn btn-info btn-sm">
-                                    <i class="fa fa-play" aria-hidden="true"></i>
+                                    <i class="fas fa-play" aria-hidden="true"></i>
                                 </button>
                                 <button type="button" class="playlist-item-trash btn btn-danger btn-sm ml-1">
                                     <i class="fas fa-trash-alt" aria-hidden="true"></i>
@@ -146,191 +147,181 @@
     <div class="container mb-3">
         <h2 id="forms">Music Library</h2>
 
-        <div id="browser" class="card">
-            <div class="card-header">
-                <h4 class="card-title">Browser</h4>
-            </div>
-
+        <div class="card mb-3 bg-light">
             <div class="card-body">
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title">Filters</h5>
-                        <hr>
-                        <div class="row">
-                            <div class="col">
-                                <label>Type</label>
-                                <div id="filter-type" class="input-group mb-2">
-                                    <div class="btn-group btn-group-sm btn-group-toggle">
-                                        <label id="filter-type-file" class="btn btn-secondary"
-                                            onclick="setFilterType(event, 'file')">
-                                            <input type="checkbox" name="options"> File
-                                        </label>
-                                        <label id="filter-type-url" class="btn btn-secondary"
-                                            onclick="setFilterType(event, 'url')">
-                                            <input type="checkbox" name="options"> URL
-                                        </label>
-                                        <label id="filter-type-radio" class="btn btn-secondary"
-                                            onclick="setFilterType(event, 'radio')">
-                                            <input type="checkbox" name="options"> Radio
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <label for="filter-dir">Directory</label>
-                                <div id="filter-path" class="input-group mb-2">
-                                    <select class="form-control form-control-sm" id="filter-dir" disabled>
-                                        <option value="">.</option>
-                                        {% for dir in dirs %}
-                                        <option value="{{ dir }}">{{ dir }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-
-                                <label for="filter-keywords">Keywords</label>
-                                <div id="filter-path" class="input-group mb-2">
-                                    <input class="form-control form-control-sm" id="filter-keywords" name="keywords"
-                                        placeholder="Keywords..." style="margin-top:5px;" />
-                                </div>
-                            </div>
-
-                            <div class="col">
-                                <label for="filter-tag">Tags</label>
-                                <div id="filter-type mb-2">
-                                    {% for tag in tags_color_lookup.keys() %}
-                                    <span id="filter-tag"
-                                        class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="library-group" class="list-group library-group" style="overflow: auto;">
-                    <div id="library-item-loading" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
-                    </div>
-                    <div id="library-item-empty" style="display: none" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
-                    </div>
-                    <div id="library-item" style="display: none;" class="list-group-item library-item">
-                        <input hidden type="text" class="library-item-id" value="" />
-
-                        <div class="library-thumb-col">
-                            <div class="library-thumb-img">
-                                <img class="library-item-thumb library-thumb-img"
-                                    src="static/image/unknown-album.png" />
-                            </div>
-                            <div class="btn-group-vertical library-thumb-grp">
-                                <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
-                                    <i class="fa fa-play" aria-hidden="true"></i>
-                                </div>
+                <h5 class="card-title">Filters</h5>
+                <hr>
+                <div class="row">
+                    <div class="col">
+                        <label>Type</label>
+                        <div id="filter-type" class="input-group mb-2">
+                            <div class="btn-group btn-group-sm btn-group-toggle">
+                                <label id="filter-type-file" class="btn btn-secondary"
+                                    onclick="setFilterType(event, 'file')">
+                                    <input type="checkbox" name="options"> File
+                                </label>
+                                <label id="filter-type-url" class="btn btn-secondary"
+                                    onclick="setFilterType(event, 'url')">
+                                    <input type="checkbox" name="options"> URL
+                                </label>
+                                <label id="filter-type-radio" class="btn btn-secondary"
+                                    onclick="setFilterType(event, 'radio')">
+                                    <input type="checkbox" name="options"> Radio
+                                </label>
                             </div>
                         </div>
 
-                        <div class="library-info-col library-info-title col-5" style="padding: 12px 0;">
-                            <div>
-                                <span class="library-item-type lead text-muted btn-space">[File]</span>
-                                <span class="library-item-title lead btn-space">This is my title</span>
-                                <span class="library-item-artist text-muted"> - Artist</span>
-                            </div>
+                        <label for="filter-dir">Directory</label>
+                        <div id="filter-path" class="input-group mb-2">
+                            <select class="form-control form-control-sm" id="filter-dir" disabled>
+                                <option value="">.</option>
+                                {% for dir in dirs %}
+                                <option value="{{ dir }}">{{ dir }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
 
-                        <div class="library-info-col col-4 d-none d-md-flex" style="padding: 3px;">
-                            <span class="library-item-path text-muted path">Path/to/the/file</span>
-                            <div class="library-item-tags">
-                                <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit"
-                                        style="color: #AAAAAA"></i></a>
-                                <span class="library-item-notag badge badge-light text-muted font-italic">No
-                                    tag</span>
-                                <span class="library-item-tag tag-space badge">Tag</span>
-                            </div>
-                        </div>
-
-                        <div class="btn-group library-action">
-                            <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button"
-                                title="Next to play">
-                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
-                                    viewBox="5 5 17 17">
-                                    <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z" />
-                                    <path
-                                        d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z" />
-                                </svg>
-
-                            </button>
-                            <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space"
-                                type="button" title="Add to bottom">
-                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
-                                    viewBox="2 2 20 20">
-                                    <path
-                                        d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z" />
-                                </svg>
-
-                            </button>
-                            <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
-                                <i class="fa fa-download" aria-hidden="true"></i>
-                            </button>
-                            <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
+                        <label for="filter-keywords">Keywords</label>
+                        <div id="filter-path" class="input-group mb-2">
+                            <input class="form-control form-control-sm" id="filter-keywords" name="keywords"
+                                placeholder="Keywords..." style="margin-top:5px;" />
                         </div>
                     </div>
 
-                </div>
-
-                <div class="list-group">
-                    <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
-                        <ul id="library-page-ul" class="pagination pagination">
-                            <li class="library-page-li page-item active">
-                                <a class="library-page-no page-link">1</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="btn-group" role="group" class="mb-2">
-                    <button type="submit" class="btn btn-secondary mr-1" onclick="addAllResults()"><i class="fa fa-plus"
-                            aria-hidden="true"></i> Add All
-                    </button>
-                    <button type="submit" class="btn btn-secondary mr-1"
-                        onclick="request('post', {action : 'rescan'}); updateResults()">
-                        <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
-                    </button>
-                    <button type="submit" class="btn btn-secondary mr-1" onclick="downloadAllResults()"><i
-                            class="fa fa-download" aria-hidden="true"></i> Download All
-                    </button>
-                    <button type="button" class="btn btn-danger mr-1" data-toggle="modal"
-                        data-target="#deleteWarningModal"><i class="fas fa-trash-alt" aria-hidden="true"></i>
-                        Delete All
-                    </button>
-                </div>
-
-                <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog"
-                    aria-labelledby="Warning-Delete-File" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                All files listed here, include files on other pages, will be deleted from your
-                                hard-drive.
-                                Is that what you want?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-danger" data-dismiss="modal"
-                                    onclick="deleteAllResults()">Delete All Listed Files</button>
-                            </div>
+                    <div class="col">
+                        <label for="filter-tag">Tags</label>
+                        <div id="filter-type mb-2">
+                            {% for tag in tags_color_lookup.keys() %}
+                            <span id="filter-tag"
+                                class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <div id="library-group" class="list-group library-group" style="overflow: auto;">
+            <div id="library-item-loading" class="list-group-item library-item">
+                <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+            </div>
+            <div id="library-item-empty" style="display: none" class="list-group-item library-item">
+                <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+            </div>
+            <div id="library-item" style="display: none;" class="list-group-item library-item">
+                <input hidden type="text" class="library-item-id" value="" />
+
+                <div class="library-thumb-col">
+                    <div class="library-thumb-img">
+                        <img class="library-item-thumb library-thumb-img" src="static/image/unknown-album.png" />
+                    </div>
+                    <div class="btn-group-vertical library-thumb-grp">
+                        <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
+                            <i class="fas fa-play" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="library-info-col library-info-title col-5" style="padding: 12px 0;">
+                    <div>
+                        <span class="library-item-type lead text-muted btn-space">[File]</span>
+                        <span class="library-item-title lead btn-space">This is my title</span>
+                        <span class="library-item-artist text-muted"> - Artist</span>
+                    </div>
+                </div>
+
+                <div class="library-info-col col-4 d-none d-md-flex" style="padding: 3px;">
+                    <span class="library-item-path text-muted path">Path/to/the/file</span>
+                    <div class="library-item-tags">
+                        <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit"
+                                style="color: #AAAAAA"></i></a>
+                        <span class="library-item-notag badge badge-light text-muted font-italic">No
+                            tag</span>
+                        <span class="library-item-tag tag-space badge">Tag</span>
+                    </div>
+                </div>
+
+                <div class="btn-group library-action">
+                    <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button"
+                        title="Next to play">
+                        <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="5 5 17 17">
+                            <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z" />
+                            <path
+                                d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z" />
+                        </svg>
+
+                    </button>
+                    <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space" type="button"
+                        title="Add to bottom">
+                        <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="2 2 20 20">
+                            <path
+                                d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z" />
+                        </svg>
+
+                    </button>
+                    <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                    </button>
+                    <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="list-group">
+            <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
+                <ul id="library-page-ul" class="pagination pagination">
+                    <li class="library-page-li page-item active">
+                        <a class="library-page-no page-link">1</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="btn-group" role="group" class="mb-2">
+            <button type="submit" class="btn btn-secondary mr-1" onclick="addAllResults()"><i class="fas fa-plus"
+                    aria-hidden="true"></i> Add All
+            </button>
+            <button type="submit" class="btn btn-secondary mr-1"
+                onclick="request('post', {action : 'rescan'}); updateResults()">
+                <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
+            </button>
+            <button type="submit" class="btn btn-secondary mr-1" onclick="downloadAllResults()"><i
+                    class="fas fa-download" aria-hidden="true"></i> Download All
+            </button>
+            <button type="button" class="btn btn-danger mr-1" data-toggle="modal" data-target="#deleteWarningModal"><i
+                    class="fas fa-trash-alt" aria-hidden="true"></i>
+                Delete All
+            </button>
+        </div>
+
+        <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog"
+            aria-labelledby="Warning-Delete-File" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        All files listed here, include files on other pages, will be deleted from your
+                        hard-drive.
+                        Is that what you want?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal"
+                            onclick="deleteAllResults()">Delete All Listed Files</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
 
     <div id="upload" class="container mb-3">
         <div class="card">
@@ -449,7 +440,7 @@
                             placeholder="tag1,tag2,...">
                         <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm"
                             onclick="addTagModalAdd()">
-                            <i class="fa fa-plus" aria-hidden="true"></i>
+                            <i class="fas fa-plus" aria-hidden="true"></i>
                             Add
                         </button>
                     </div>
