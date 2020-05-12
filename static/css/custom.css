@@ -1,7 +1,6 @@
 .btn-space {margin-right: 5px;}
-.tag-space {margin-right: 3px;}
-.playlist-title-td {width: 60%;}
-.playlist-title {float: left;}
+
+/* Playlist */
 .playlist-item {transition: all 0.2s ease-in-out;}
 .playlist-artwork {
    float: left;
@@ -9,6 +8,12 @@
    white-space: nowrap;
    overflow: hidden;
 }
+#volume-slider {
+   margin-top: 8px;
+}
+
+/* Library */
+.tag-space {margin-right: 3px;}
 .tag-click {
    cursor: pointer;
    transition: 400ms;
@@ -21,25 +26,6 @@
    transform: scale(1.2);
    opacity: 1;
    margin: 5px;
-}
-.floating-button {
-   width: 50px;
-   height: 50px;
-   background-color: #aaaaaa40;
-   border-radius: 50%;
-   box-shadow: 0 6px 10px 0 #66666647;
-   transition: all 0.1s ease-in-out;
-   font-size: 25px;
-   color: #9896967a;
-   text-align: center;
-   line-height: 52px;
-   position: fixed;
-   right: 50px;
-   bottom: 40px;
-}
-.floating-button:hover {
-    background-color: hsl(0, 0%, 43%);
-    color: white;
 }
 .library-item {
    display: flex;
@@ -102,19 +88,24 @@
    font-style: italic !important;
    font-weight: 300;
 }
-#volume-slider {
-   margin-top: 8px;
+
+/* Theme changer */
+.floating-button {
+   width: 50px;
+   height: 50px;
+   background-color: #aaaaaa40;
+   border-radius: 50%;
+   box-shadow: 0 6px 10px 0 #66666647;
+   transition: all 0.1s ease-in-out;
+   font-size: 25px;
+   color: #9896967a;
+   text-align: center;
+   line-height: 52px;
+   position: fixed;
+   right: 50px;
+   bottom: 40px;
 }
-.dropdown {
-    display: inline-block;
-}
-@media (max-width: 399.98px) {
-    #volume-slider {
-        width: 80px;
-    }
-}
-@media (max-width: 329.98px) {
-    #volume-slider {
-        display: none;
-    }
+.floating-button:hover {
+    background-color: hsl(0, 0%, 43%);
+    color: white;
 }
