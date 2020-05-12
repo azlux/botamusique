@@ -2,6 +2,8 @@
 import sqlite3
 from functools import wraps
 from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort
+from werkzeug.utils import secure_filename
+
 import variables as var
 import util
 import math
@@ -572,51 +574,53 @@ def upload():
 
     files = request.files.getlist("file[]")
     if not files:
-        return redirect("./", code=400)
+        abort(400)
 
-    # filename = secure_filename(file.filename).strip()
     for file in files:
         filename = file.filename
         if filename == '':
-            return redirect("./", code=400)
+            abort(400)
 
         targetdir = request.form['targetdir'].strip()
         if targetdir == '':
             targetdir = 'uploads/'
         elif '../' in targetdir:
-            return redirect("./", code=400)
+            abort(403)
 
-        log.info('web: Uploading file from %s:' % request.remote_addr)
-        log.info('web: - filename: ' + filename)
-        log.info('web: - targetdir: ' + targetdir)
-        log.info('web: - mimetype: ' + file.mimetype)
+        filename = secure_filename(file.filename).strip()
+
+        log.info(f'web: Uploading file from {request.remote_addr}:')
+        log.info(f'web: - file name: {filename}')
+        log.info(f'web: - target dir: {targetdir}')
+        log.info(f'web: - mime type: {file.mimetype}')
 
         if "audio" in file.mimetype:
             storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
-            print('storagepath:', storagepath)
             if not storagepath.startswith(os.path.abspath(var.music_folder)):
-                return redirect("./", code=400)
+                abort(403)
 
             try:
                 os.makedirs(storagepath)
             except OSError as ee:
                 if ee.errno != errno.EEXIST:
-                    return redirect("./", code=500)
+                    log.error(f'web: failed to create directory {storagepath}')
+                    abort(500)
 
             filepath = os.path.join(storagepath, filename)
-            log.info(' - filepath: ' + filepath)
+            log.info(f'web: - save path: {filepath}')
             if os.path.exists(filepath):
                 continue
 
             file.save(filepath)
         else:
-            continue
+            log.error(f'web: unsupported file type {file.mimetype}! File was not saved.')
+            abort(415)
 
     var.cache.build_dir_cache()
     var.music_db.manage_special_tags()
     log.info("web: Local file cache refreshed.")
 
-    return redirect("./", code=302)
+    return redirect("./", code=303)
 
 
 @web.route('/download', methods=["GET"])
