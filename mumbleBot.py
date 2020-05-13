@@ -666,7 +666,7 @@ if __name__ == '__main__':
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini',
                         help='Load configuration from this file. Default: configuration.ini')
     parser.add_argument("--db", dest='db', type=str,
-                        default=None, help='settings database file. Default: settings.db')
+                        default=None, help='settings database file. Default: settings-{username_of_the_bot}.db')
     parser.add_argument("--music-db", dest='music_db', type=str,
                         default=None, help='music library database file. Default: music.db')
 
@@ -739,8 +739,14 @@ if __name__ == '__main__':
     # ======================
     #     Load Database
     # ======================
+    if args.user:
+        username = args.user
+    else:
+        username = var.config.get("bot", "username")
+
+    sanitized_username = "".join([x if x.isalnum() else "_" for x in username])
     var.settings_db_path = args.db if args.db is not None else util.solve_filepath(
-        config.get("bot", "database_path", fallback="settings.db"))
+        config.get("bot", "database_path", fallback=f"settings-{sanitized_username}.db"))
     var.music_db_path = args.music_db if args.music_db is not None else util.solve_filepath(
         config.get("bot", "music_database_path", fallback="music.db"))
 
@@ -775,7 +781,6 @@ if __name__ == '__main__':
     # ======================
     #  Create bot instance
     # ======================
-
     var.bot = MumbleBot(args)
     command.register_all_commands(var.bot)
 
