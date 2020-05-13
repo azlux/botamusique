@@ -115,6 +115,7 @@ class MusicCache(dict):
                 self.log.debug("library: music save into database: %s" % item.format_debug_string())
                 self.db.insert_music(item.to_dict())
 
+        self.db.manage_special_tags()
         self.dir_lock.release()
 
 
