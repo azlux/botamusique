@@ -1,3 +1,4 @@
+import os
 import re
 import sqlite3
 import json
@@ -188,61 +189,12 @@ class Condition:
 
         return self
 
-SETTING_DB_VERSION = 1
+SETTING_DB_VERSION = 2
 MUSIC_DB_VERSION = 2
 
 class SettingsDatabase:
     def __init__(self, db_path):
         self.db_path = db_path
-
-        # connect
-        conn = sqlite3.connect(self.db_path)
-
-        self.db_version_check_and_create()
-
-        conn.commit()
-        conn.close()
-
-    def has_table(self, table):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table,)).fetchall()
-        conn.close()
-        if len(tables) == 0:
-            return False
-        return True
-
-    def db_version_check_and_create(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        if self.has_table('botamusique'):
-            # check version
-            ver = self.getint("bot", "db_version", fallback=None)
-
-            if ver is None or ver != SETTING_DB_VERSION:
-                # old_name = "botamusique_old_%s" % datetime.datetime.now().strftime("%Y%m%d")
-                # cursor.execute("ALTER TABLE botamusique RENAME TO %s" % old_name)
-                cursor.execute("DROP TABLE botamusique")
-                conn.commit()
-                self.create_table()
-        else:
-            self.create_table()
-
-        conn.close()
-
-    def create_table(self):
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS botamusique ("
-                       "section TEXT, "
-                       "option TEXT, "
-                       "value TEXT, "
-                       "UNIQUE(section, option))")
-        cursor.execute("INSERT INTO botamusique (section, option, value) "
-                       "VALUES (?, ?, ?)", ("bot", "db_version", SETTING_DB_VERSION))
-        conn.commit()
-        conn.close()
 
     def get(self, section, option, **kwargs):
         conn = sqlite3.connect(self.db_path)
@@ -320,9 +272,6 @@ class SettingsDatabase:
 class MusicDatabase:
     def __init__(self, db_path):
         self.db_path = db_path
-
-        MusicDatabaseMigration(self).migrate()
-        self.manage_special_tags()
 
     def insert_music(self, music_dict, _conn=None):
         conn = sqlite3.connect(self.db_path) if _conn is None else _conn
@@ -539,15 +488,53 @@ class MusicDatabase:
         conn.close()
 
 
-class MusicDatabaseMigration:
-    def __init__(self, db: MusicDatabase):
-        self.db = db
-        self.migrate_func = {}
-        self.migrate_func[0] = self.migrate_from_0_to_1
-        self.migrate_func[1] = self.migrate_from_1_to_2
+class DatabaseMigration:
+    def __init__(self, settings_db: SettingsDatabase, music_db: MusicDatabase):
+        self.settings_db = settings_db
+        self.music_db = music_db
+        self.settings_table_migrate_func = {}
+        self.settings_table_migrate_func[0] = self.settings_table_migrate_from_0_to_2
+        self.settings_table_migrate_func[1] = self.settings_table_migrate_from_0_to_2
+        self.music_table_migrate_func = {}
+        self.music_table_migrate_func[0] = self.music_table_migrate_from_0_to_1
+        self.music_table_migrate_func[1] = self.music_table_migrate_from_1_to_2
 
     def migrate(self):
-        conn = sqlite3.connect(self.db.db_path)
+        self.settings_database_migrate()
+        self.music_database_migrate()
+
+    def settings_database_migrate(self):
+        conn = sqlite3.connect(self.settings_db.db_path)
+        cursor = conn.cursor()
+        if self.has_table('botamusique', conn):
+            current_version = 0
+            ver = cursor.execute("SELECT value FROM botamusique WHERE section='bot' "
+                                 "AND option='db_version'").fetchone()
+            if ver:
+                current_version = int(ver[0])
+
+            if current_version == SETTING_DB_VERSION:
+                conn.close()
+                return
+            else:
+                log.info(f"database: migrating from settings table version {current_version} to {SETTING_DB_VERSION}...")
+                while current_version < SETTING_DB_VERSION:
+                    log.debug(f"database: migrate step {current_version}/{SETTING_DB_VERSION - 1}")
+                    current_version = self.settings_table_migrate_func[current_version](conn)
+                log.info(f"database: migration done.")
+
+                cursor.execute("UPDATE botamusique SET value=? "
+                               "WHERE section='bot' AND option='db_version'", (SETTING_DB_VERSION,))
+
+        else:
+            log.info(f"database: no settings table found. Creating settings table version {SETTING_DB_VERSION}.")
+            self.create_settings_table_version_2(conn)
+
+        conn.commit()
+        conn.close()
+
+    def music_database_migrate(self):
+        conn = sqlite3.connect(self.music_db.db_path)
         cursor = conn.cursor()
         if self.has_table('music', conn):
             current_version = 0
@@ -562,7 +549,7 @@ class MusicDatabaseMigration:
                 log.info(f"database: migrating from music table version {current_version} to {MUSIC_DB_VERSION}...")
                 while current_version < MUSIC_DB_VERSION:
                     log.debug(f"database: migrate step {current_version}/{MUSIC_DB_VERSION - 1}")
-                    current_version = self.migrate_func[current_version](conn)
+                    current_version = self.music_table_migrate_func[current_version](conn)
                 log.info(f"database: migration done.")
 
                 cursor.execute("UPDATE music SET title=? "
@@ -570,7 +557,7 @@ class MusicDatabaseMigration:
 
         else:
             log.info(f"database: no music table found. Creating music table version {MUSIC_DB_VERSION}.")
-            self.create_table_version_2(conn)
+            self.create_music_table_version_2(conn)
 
         conn.commit()
         conn.close()
@@ -582,7 +569,20 @@ class MusicDatabaseMigration:
             return False
         return True
 
-    def create_table_version_1(self, conn):
+    def create_settings_table_version_2(self, conn):
+        cursor = conn.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS botamusique ("
+                       "section TEXT, "
+                       "option TEXT, "
+                       "value TEXT, "
+                       "UNIQUE(section, option))")
+        cursor.execute("INSERT INTO botamusique (section, option, value) "
+                       "VALUES (?, ?, ?)", ("bot", "db_version", 2))
+        conn.commit()
+
+        return 1
+
+    def create_music_table_version_1(self, conn):
         cursor = conn.cursor()
 
         cursor.execute("CREATE TABLE music ("
@@ -600,15 +600,37 @@ class MusicDatabaseMigration:
 
         conn.commit()
 
-    def create_table_version_2(self, conn):
-        self.create_table_version_1(conn)
+    def create_music_table_version_2(self, conn):
+        self.create_music_table_version_1(conn)
 
-    def migrate_from_0_to_1(self, conn):
+    def settings_table_migrate_from_0_to_2(self, conn):
+        cursor = conn.cursor()
+        cursor.execute("DROP TABLE botamusique")
+        conn.commit()
+        self.create_settings_table_version_2(conn)
+
+        # move music database into a separated file
+        if self.has_table('music', conn) and not os.path.exists(self.music_db.db_path):
+            log.info(f"database: move music db into separated file.")
+            cursor.execute(f"ATTACH DATABASE '{self.music_db.db_path}' AS music_db")
+            cursor.execute(f"SELECT sql FROM sqlite_master "
+                           f"WHERE type='table' AND name='music'")
+            sql_create_table = cursor.fetchone()[0]
+            sql_create_table = sql_create_table.replace("music", "music_db.music")
+            cursor.execute(sql_create_table)
+            cursor.execute("INSERT INTO music_db.music SELECT * FROM music")
+            conn.commit()
+            cursor.execute("DETACH DATABASE music_db")
+
+            cursor.execute("DROP TABLE music")
+        return 2
+
+    def music_table_migrate_from_0_to_1(self, conn):
         cursor = conn.cursor()
         cursor.execute("ALTER TABLE music RENAME TO music_old")
         conn.commit()
 
-        self.create_table_version_1(conn)
+        self.create_music_table_version_1(conn)
 
         cursor.execute("INSERT INTO music (id, type, title, metadata, tags)"
                        "SELECT id, type, title, metadata, tags FROM music_old")
@@ -617,7 +639,7 @@ class MusicDatabaseMigration:
 
         return 1 # return new version number
 
-    def migrate_from_1_to_2(self, conn):
+    def music_table_migrate_from_1_to_2(self, conn):
         items_to_update = self.db.query_music(Condition(), conn)
         for item in items_to_update:
             item['keywords'] = item['title']

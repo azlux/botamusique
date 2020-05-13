@@ -23,7 +23,7 @@ from packaging import version
 import util
 import command
 import constants
-from database import SettingsDatabase, MusicDatabase
+from database import SettingsDatabase, MusicDatabase, DatabaseMigration
 import media.system
 from media.item import ValidationFailedError, PreparationFailedError
 from media.playlist import BasePlaylist
@@ -666,7 +666,9 @@ if __name__ == '__main__':
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini',
                         help='Load configuration from this file. Default: configuration.ini')
     parser.add_argument("--db", dest='db', type=str,
-                        default=None, help='database file. Default: database.db')
+                        default=None, help='settings database file. Default: settings-{username_of_the_bot}.db')
+    parser.add_argument("--music-db", dest='music_db', type=str,
+                        default=None, help='music library database file. Default: music.db')
 
     parser.add_argument("-q", "--quiet", dest="quiet",
                         action="store_true", help="Only Error logs")
@@ -691,20 +693,21 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # ======================
+    #     Load Config
+    # ======================
+
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
+    var.config = config
     parsed_configs = config.read([util.solve_filepath('configuration.default.ini'), util.solve_filepath(args.config)],
                                  encoding='utf-8')
-    var.dbfile = args.db if args.db is not None else util.solve_filepath(
-        config.get("bot", "database_path", fallback="database.db"))
-
     if len(parsed_configs) == 0:
         logging.error('Could not read configuration from file \"{}\"'.format(args.config))
         sys.exit()
 
-    var.config = config
-    var.db = SettingsDatabase(var.dbfile)
-
-    # Setup logger
+    # ======================
+    #     Setup Logger
+    # ======================
 
     bot_logger = logging.getLogger("bot")
     formatter = logging.Formatter('[%(asctime)s %(levelname)s %(threadName)s] %(message)s', "%b %d %H:%M:%S")
@@ -732,14 +735,38 @@ if __name__ == '__main__':
     logging.getLogger("root").addHandler(handler)
     var.bot_logger = bot_logger
 
+
+    # ======================
+    #     Load Database
+    # ======================
+    if args.user:
+        username = args.user
+    else:
+        username = var.config.get("bot", "username")
+
+    sanitized_username = "".join([x if x.isalnum() else "_" for x in username])
+    var.settings_db_path = args.db if args.db is not None else util.solve_filepath(
+        config.get("bot", "database_path", fallback=f"settings-{sanitized_username}.db"))
+    var.music_db_path = args.music_db if args.music_db is not None else util.solve_filepath(
+        config.get("bot", "music_database_path", fallback="music.db"))
+
+    var.db = SettingsDatabase(var.settings_db_path)
+
     if var.config.get("bot", "save_music_library", fallback=True):
-        var.music_db = MusicDatabase(var.dbfile)
+        var.music_db = MusicDatabase(var.music_db_path)
     else:
         var.music_db = MusicDatabase(":memory:")
 
+    DatabaseMigration(var.db, var.music_db).migrate()
+
     var.cache = MusicCache(var.music_db)
 
-    # load playback mode
+    if var.config.get("bot", "refresh_cache_on_startup", fallback=True):
+        var.cache.build_dir_cache()
+
+    # ======================
+    #   Load playback mode
+    # ======================
     playback_mode = None
     if var.db.has_option("playlist", "playback_mode"):
         playback_mode = var.db.get('playlist', 'playback_mode')
@@ -751,11 +778,11 @@ if __name__ == '__main__':
     else:
         raise KeyError("Unknown playback mode '%s'" % playback_mode)
 
+    # ======================
+    #  Create bot instance
+    # ======================
     var.bot = MumbleBot(args)
     command.register_all_commands(var.bot)
-
-    if var.config.get("bot", "refresh_cache_on_startup", fallback=True):
-        var.cache.build_dir_cache()
 
     # load playlist
     if var.config.getboolean('bot', 'save_playlist', fallback=True):

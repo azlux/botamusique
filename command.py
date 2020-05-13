@@ -1151,9 +1151,9 @@ def cmd_drop_database(bot, user, text, command, parameter):
 
     if bot.is_admin(user):
         var.db.drop_table()
-        var.db = SettingsDatabase(var.dbfile)
+        var.db = SettingsDatabase(var.settings_db_path)
         var.music_db.drop_table()
-        var.music_db = MusicDatabase(var.dbfile)
+        var.music_db = MusicDatabase(var.settings_db_path)
         log.info("command: database dropped.")
         bot.send_msg(constants.strings('database_dropped'), text)
     else:

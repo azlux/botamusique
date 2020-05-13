@@ -13,7 +13,8 @@ cache: 'media.cache.MusicCache' = None
 user = ""
 is_proxified = False
 
-dbfile = None
+settings_db_path = None
+music_db_path = None
 db = None
 music_db: 'database.MusicDatabase' = None
 config: 'database.SettingsDatabase' = None
