@@ -8,8 +8,10 @@ import logging
 
 log = logging.getLogger("bot")
 
+
 class DatabaseError(Exception):
     pass
+
 
 class Condition:
     def __init__(self):
@@ -18,6 +20,7 @@ class Condition:
         self._limit = 0
         self._offset = 0
         self._order_by = ""
+        self._desc = ""
         self.has_regex = False
         pass
 
@@ -189,8 +192,10 @@ class Condition:
 
         return self
 
+
 SETTING_DB_VERSION = 2
 MUSIC_DB_VERSION = 2
+
 
 class SettingsDatabase:
     def __init__(self, db_path):
@@ -199,7 +204,8 @@ class SettingsDatabase:
     def get(self, section, option, **kwargs):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        result = cursor.execute("SELECT value FROM botamusique WHERE section=? AND option=?", (section, option)).fetchall()
+        result = cursor.execute("SELECT value FROM botamusique WHERE section=? AND option=?",
+                                (section, option)).fetchall()
         conn.close()
 
         if len(result) > 0:
@@ -230,7 +236,8 @@ class SettingsDatabase:
     def has_option(self, section, option):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        result = cursor.execute("SELECT value FROM botamusique WHERE section=? AND option=?", (section, option)).fetchall()
+        result = cursor.execute("SELECT value FROM botamusique WHERE section=? AND option=?",
+                                (section, option)).fetchall()
         conn.close()
         if len(result) > 0:
             return True
@@ -247,14 +254,14 @@ class SettingsDatabase:
     def remove_section(self, section):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM botamusique WHERE section=?", (section, ))
+        cursor.execute("DELETE FROM botamusique WHERE section=?", (section,))
         conn.commit()
         conn.close()
 
     def items(self, section):
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        results = cursor.execute("SELECT option, value FROM botamusique WHERE section=?", (section, )).fetchall()
+        results = cursor.execute("SELECT option, value FROM botamusique WHERE section=?", (section,)).fetchall()
         conn.close()
 
         if len(results) > 0:
@@ -427,7 +434,7 @@ class MusicDatabase:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         results = cursor.execute("SELECT id, tags FROM music "
-                                  "WHERE id != 'info' AND %s" % condition.sql(conn), condition.filler).fetchall()
+                                 "WHERE id != 'info' AND %s" % condition.sql(conn), condition.filler).fetchall()
 
         conn.close()
 
@@ -449,7 +456,8 @@ class MusicDatabase:
             condition = Condition().and_not_sub_condition(Condition().and_equal('id', 'info'))
 
         results = cursor.execute("SELECT id, type, title, metadata, tags, path, keywords FROM music "
-                                 "WHERE id IN (SELECT id FROM music WHERE %s ORDER BY RANDOM() LIMIT ?) ORDER BY RANDOM()"
+                                 "WHERE id IN (SELECT id FROM music WHERE %s ORDER BY RANDOM() LIMIT ?) "
+                                 "ORDER BY RANDOM()"
                                  % condition.sql(conn), condition.filler + [count]).fetchall()
         conn.close()
 
@@ -492,12 +500,10 @@ class DatabaseMigration:
     def __init__(self, settings_db: SettingsDatabase, music_db: MusicDatabase):
         self.settings_db = settings_db
         self.music_db = music_db
-        self.settings_table_migrate_func = {}
-        self.settings_table_migrate_func[0] = self.settings_table_migrate_from_0_to_2
-        self.settings_table_migrate_func[1] = self.settings_table_migrate_from_0_to_2
-        self.music_table_migrate_func = {}
-        self.music_table_migrate_func[0] = self.music_table_migrate_from_0_to_1
-        self.music_table_migrate_func[1] = self.music_table_migrate_from_1_to_2
+        self.settings_table_migrate_func = {0: self.settings_table_migrate_from_0_to_1,
+                                            1: self.settings_table_migrate_from_1_to_2}
+        self.music_table_migrate_func = {0: self.music_table_migrate_from_0_to_1,
+                                         1: self.music_table_migrate_from_1_to_2}
 
     def migrate(self):
         self.settings_database_migrate()
@@ -517,7 +523,8 @@ class DatabaseMigration:
                 conn.close()
                 return
             else:
-                log.info(f"database: migrating from settings table version {current_version} to {SETTING_DB_VERSION}...")
+                log.info(
+                    f"database: migrating from settings table version {current_version} to {SETTING_DB_VERSION}...")
                 while current_version < SETTING_DB_VERSION:
                     log.debug(f"database: migrate step {current_version}/{SETTING_DB_VERSION - 1}")
                     current_version = self.settings_table_migrate_func[current_version](conn)
@@ -603,12 +610,15 @@ class DatabaseMigration:
     def create_music_table_version_2(self, conn):
         self.create_music_table_version_1(conn)
 
-    def settings_table_migrate_from_0_to_2(self, conn):
+    def settings_table_migrate_from_0_to_1(self, conn):
         cursor = conn.cursor()
         cursor.execute("DROP TABLE botamusique")
         conn.commit()
         self.create_settings_table_version_2(conn)
+        return 2  # return new version number
 
+    def settings_table_migrate_from_1_to_2(self, conn):
+        cursor = conn.cursor()
         # move music database into a separated file
         if self.has_table('music', conn) and not os.path.exists(self.music_db.db_path):
             log.info(f"database: move music db into separated file.")
@@ -623,7 +633,10 @@ class DatabaseMigration:
             cursor.execute("DETACH DATABASE music_db")
 
             cursor.execute("DROP TABLE music")
-        return 2
+
+        cursor.execute("UPDATE botamusique SET value=2 "
+                       "WHERE section='bot' AND option='db_version'")
+        return 2  # return new version number
 
     def music_table_migrate_from_0_to_1(self, conn):
         cursor = conn.cursor()
@@ -637,10 +650,10 @@ class DatabaseMigration:
         cursor.execute("DROP TABLE music_old")
         conn.commit()
 
-        return 1 # return new version number
+        return 1  # return new version number
 
     def music_table_migrate_from_1_to_2(self, conn):
-        items_to_update = self.db.query_music(Condition(), conn)
+        items_to_update = self.music_db.query_music(Condition(), conn)
         for item in items_to_update:
             item['keywords'] = item['title']
             if 'artist' in item:
@@ -652,7 +665,7 @@ class DatabaseMigration:
                     tags.append(tag)
             item['tags'] = tags
 
-            self.db.insert_music(item)
+            self.music_db.insert_music(item)
         conn.commit()
 
-        return 2 # return new version number
+        return 2  # return new version number
