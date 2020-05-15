@@ -67,15 +67,6 @@ class MumbleBot:
         # self.download_threads = []
         self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
 
-        if var.config.getboolean("webinterface", "enabled"):
-            wi_addr = var.config.get("webinterface", "listening_addr")
-            wi_port = var.config.getint("webinterface", "listening_port")
-            tt = threading.Thread(
-                target=start_web_interface, name="WebThread", args=(wi_addr, wi_port))
-            tt.daemon = True
-            self.log.info('Starting web interface on {}:{}'.format(wi_addr, wi_port))
-            tt.start()
-
         if var.config.getboolean("bot", "auto_check_update"):
             th = threading.Thread(target=self.check_update, name="UpdateThread")
             th.daemon = True
@@ -155,7 +146,7 @@ class MumbleBot:
         if var.config.get("bot", "when_nobody_in_channel", fallback='') in ['pause', 'pause_resume', 'stop']:
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, self.users_changed)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, self.users_changed)
-        
+
         # Debug use
         self._loop_status = 'Idle'
         self._display_rms = False
@@ -712,7 +703,7 @@ if __name__ == '__main__':
         print(f"Redirecting stdout and stderr to log file: {logfile}")
         handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
         sys.stdout = util.LoggerIOWrapper(bot_logger, logging.INFO, fallback_io_buffer=sys.stdout.buffer)
-        sys.stderr = util.LoggerIOWrapper(bot_logger, logging.ERROR, fallback_io_buffer=sys.stderr.buffer)
+        sys.stderr = util.LoggerIOWrapper(bot_logger, logging.INFO, fallback_io_buffer=sys.stderr.buffer)
     else:
         handler = logging.StreamHandler()
 
@@ -773,6 +764,18 @@ if __name__ == '__main__':
     if var.config.getboolean('bot', 'save_playlist', fallback=True):
         var.bot_logger.info("bot: load playlist from previous session")
         var.playlist.load()
+
+    # ============================
+    #   Start the web interface
+    # ============================
+    if var.config.getboolean("webinterface", "enabled"):
+        wi_addr = var.config.get("webinterface", "listening_addr")
+        wi_port = var.config.getint("webinterface", "listening_port")
+        tt = threading.Thread(
+            target=start_web_interface, name="WebThread", args=(wi_addr, wi_port))
+        tt.daemon = True
+        bot_logger.info('Starting web interface on {}:{}'.format(wi_addr, wi_port))
+        tt.start()
 
     # Start the main loop.
     var.bot.loop()
