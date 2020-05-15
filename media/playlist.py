@@ -249,6 +249,12 @@ class OneshotPlaylist(BasePlaylist):
         self.mode = "one-shot"
         self.current_index = -1
 
+    def current_item(self):
+        if self.current_index == -1:
+            self.current_index = 0
+
+        return self[self.current_index]
+
     def from_list(self, _list, current_index):
         if len(_list) > 0:
             if current_index > -1:
@@ -259,6 +265,7 @@ class OneshotPlaylist(BasePlaylist):
         return self
 
     def next(self):
+        print(f"*** next asked")
         if len(self) > 0:
             self.version += 1
 
@@ -289,7 +296,7 @@ class OneshotPlaylist(BasePlaylist):
     def point_to(self, index):
         self.version += 1
         self.current_index = -1
-        for i in range(index + 1):
+        for i in range(index):
             super().__delitem__(0)
 
 

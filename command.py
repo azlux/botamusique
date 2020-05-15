@@ -191,20 +191,29 @@ def cmd_url_unban(bot, user, text, command, parameter):
 def cmd_play(bot, user, text, command, parameter):
     global log
 
-    if len(var.playlist) > 0:
-        if parameter:
-            if parameter.isdigit() and 1 <= int(parameter) <= len(var.playlist):
-                # First "-1" transfer 12345 to 01234, second "-1"
-                # point to the previous item. the loop will next to
-                # the one you want
-                var.playlist.point_to(int(parameter) - 1 - 1)
+    params = parameter.split()
+    index = -1
+    start_at = 0
+    if len(params) > 0:
+        if params[0].isdigit() and 1 <= int(params[0]) <= len(var.playlist):
+            index = int(params[0])
+        else:
+            bot.send_msg(constants.strings('invalid_index', index=parameter), text)
 
-                if not bot.is_pause:
-                    bot.interrupt()
+        if len(params) > 1:
+            _start_at = params[1]
+            match = re.search("(?:(\d\d):)?(?:(\d\d):)?(\d\d(?:\.\d*)?)", _start_at, flags=re.IGNORECASE)
+            if match:
+                if match[1] is None and match[2] is None:
+                    start_at = float(match[3])
+                elif match[2] is None:
+                    start_at = float(match[3]) + 60 * int(match[1])
                 else:
-                    bot.is_pause = False
-            else:
-                bot.send_msg(constants.strings('invalid_index', index=parameter), text)
+                    start_at = float(match[3]) + 60 * int(match[2]) + 3600 * int(match[2])
+
+    if len(var.playlist) > 0:
+        if index != -1:
+            bot.play(int(index) - 1, start_at)
 
         elif bot.is_pause:
             bot.resume()

@@ -328,11 +328,7 @@ def post():
             log.info("web: jump to: " + music_wrapper.format_debug_string())
 
             if len(var.playlist) >= int(request.form['play_music']):
-                var.playlist.point_to(int(request.form['play_music']) - 1)
-                if not var.bot.is_pause:
-                    var.bot.interrupt()
-                else:
-                    var.bot.is_pause = False
+                var.bot.play(int(request.form['play_music']))
                 time.sleep(0.1)
 
         elif 'delete_item_from_library' in request.form:
