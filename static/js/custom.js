@@ -29,7 +29,7 @@ const add_tag_modal = $("#addTagModal");
 const playlist_loading = $("#playlist-loading");
 const playlist_table = $("#playlist-table");
 const playlist_empty = $("#playlist-empty");
-const playlist_expand = $("#playlist-expand");
+const playlist_expand = $(".playlist-expand");
 
 let playlist_ver = 0;
 let playlist_current_index = 0;
@@ -129,7 +129,7 @@ function displayPlaylist(data) {
             _from = _from > 0 ? _from : 0;
             let _to = start_from - 1;
             if (_to > 0) {
-                insertExpandPrompt(_from, start_from + length - 1, _from, _to);
+                insertExpandPrompt(_from, start_from + length - 1, _from, _to, length);
             }
         }
 
@@ -144,7 +144,7 @@ function displayPlaylist(data) {
             let _to = start_from + items.length - 1 + 10;
             _to = _to < length - 1 ? _to : length - 1;
             if (start_from + items.length < _to) {
-                insertExpandPrompt(start_from, _to, _from, _to);
+                insertExpandPrompt(start_from, _to, _from, _to, length);
             }
         }
 
@@ -159,13 +159,15 @@ function displayActiveItem(current_index) {
     $("#playlist-item-" + current_index).addClass("table-active");
 }
 
-function insertExpandPrompt(real_from, real_to, display_from, display_to) {
+function insertExpandPrompt(real_from, real_to, display_from, display_to, total_length) {
     let expand_copy = playlist_expand.clone();
-    playlist_expand.removeClass('d-none');
+    expand_copy.addClass('playlist-item');
+    expand_copy.removeClass('d-none');
     if (display_from !== display_to) {
-        expand_copy.find(".playlist-expand-item-range").html((display_from + 1) + "~" + (display_to + 1));
+        expand_copy.find(".playlist-expand-item-range").html((display_from + 1) + "~" + (display_to + 1)
+            + " of " + (total_length) + " items");
     } else {
-        expand_copy.find(".playlist-expand-item-range").html(display_from);
+        expand_copy.find(".playlist-expand-item-range").html(display_from + " of " + (total_length) + " items");
     }
 
     expand_copy.addClass('playlist-item');
@@ -173,7 +175,7 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to) {
     expand_copy.click(function () {
         playlist_range_from = real_from;
         playlist_range_to = real_to;
-        checkForPlaylistUpdate();
+        updatePlaylist();
     });
 }
 
