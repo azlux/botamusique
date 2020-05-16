@@ -265,7 +265,6 @@ class OneshotPlaylist(BasePlaylist):
         return self
 
     def next(self):
-        print(f"*** next asked")
         if len(self) > 0:
             self.version += 1
 

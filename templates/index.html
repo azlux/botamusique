@@ -250,17 +250,15 @@
                             <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button"
                                     title="Next to play">
                                 <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="5 5 17 17">
-                                    <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z" />
-                                    <path
-                                            d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z" />
+                                    <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z"></path>
+                                    <path d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z"></path>
                                 </svg>
 
                             </button>
                             <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space" type="button"
                                     title="Add to bottom">
                                 <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="2 2 20 20">
-                                    <path
-                                            d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z" />
+                                    <path d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z"></path>
                                 </svg>
 
                             </button>
@@ -357,8 +355,8 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">Upload To</span>
                                         </div>
-                                        <input class="form-control" list="targetdirs" id="targetdir" name="targetdir"
-                                            placeholder="uploads" />
+                                        <input class="form-control" list="targetdirs" id="uploadTargetDir" name="targetdir"
+                                               placeholder="uploads" />
                                         <datalist id="targetdirs">
                                             {% for dir in dirs %}
                                             <option value="{{ dir }}">
@@ -367,7 +365,7 @@
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <button class="btn btn-primary" type="submit" id="uploadSubmit">Upload!</button>
+                                    <button class="btn btn-primary" type="button" id="uploadSubmit"><i class="fas fa-upload mr-1"></i>Upload!</button>
                                 </div>
                             </div>
                         </div>
@@ -424,7 +422,7 @@
         <input hidden type="text" name="keywords" value="">
     </form>
 
-    <!-- Add tags input -->
+    <!-- Add tags modal -->
     <div class="modal fade" id="addTagModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -462,6 +460,42 @@
             </div>
         </div>
     </div>
+
+    <!-- Upload files modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadTitle"><i class="fas fa-upload mr-1"></i>Uploading files...</h5>
+                </div>
+                <div id="uploadModalBody" class="modal-body">
+                    <div id="uploadSuccessAlert" class="alert alert-success" role="alert" style="display: none">
+                        <i class="fas fa-check mr-1"></i>
+                        Uploaded finished!
+                    </div>
+                    <div id="uploadModalList" style="margin-left: 5px; margin-bottom: 10px;">
+                        <div class="uploadItem" style="display: none; width: 100%; padding-bottom: 8px;">
+                            <i class="far fa-file-alt mr-1"></i>
+                            <span class="uploadItemTitle mr-3"></span>
+                            <span class="uploadItemError text-danger"></span>
+                            <div class="progress" style="margin-top: 5px; height: 10px;">
+                                <div class="uploadProgress progress-bar" role="progressbar" aria-valuenow="0"
+                                     aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="uploadClose" class="btn btn-success" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Close</button>
+                    <button type="button" id="uploadCancel" class="btn btn-danger">
+                        <i class="fas fa-trash-alt mr-1" aria-hidden="true"></i> Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="maxUploadFileSize" value="31457280" />
 
     <script src="static/js/jquery-3.5.1.min.js"></script>
     <script src="static/js/popper.min.js"></script>

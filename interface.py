@@ -2,6 +2,8 @@
 import sqlite3
 from functools import wraps
 from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort
+from werkzeug.utils import secure_filename
+
 import variables as var
 import util
 import math
@@ -61,7 +63,7 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
-#web.config['TEMPLATES_AUTO_RELOAD'] = True
+web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
 
@@ -70,6 +72,7 @@ def init_proxy():
     global web
     if var.is_proxified:
         web.wsgi_app = ReverseProxied(web.wsgi_app)
+
 
 # https://stackoverflow.com/questions/29725217/password-protect-one-webpage-in-flask-app
 
@@ -94,11 +97,13 @@ def requires_auth(f):
     def decorated(*args, **kwargs):
         global log
         auth = request.authorization
-        if var.config.getboolean("webinterface", "require_auth") and (not auth or not check_auth(auth.username, auth.password)):
+        if var.config.getboolean("webinterface", "require_auth") and (
+                not auth or not check_auth(auth.username, auth.password)):
             if auth:
                 log.info("web: Failed login attempt, user: %s" % auth.username)
             return authenticate()
         return f(*args, **kwargs)
+
     return decorated
 
 
@@ -129,13 +134,14 @@ def build_tags_color_lookup():
 
     return color_lookup
 
+
 def get_all_dirs():
     dirs = []
     paths = var.music_db.query_all_paths()
     for path in paths:
         pos = 0
         while True:
-            pos = path.find("/", pos+1)
+            pos = path.find("/", pos + 1)
             if pos == -1:
                 break
             folder = path[:pos]
@@ -173,12 +179,11 @@ def playlist():
         _from = int(request.args['range_from'])
         _to = int(request.args['range_to'])
     else:
-        if var.playlist.current_index - int(DEFAULT_DISPLAY_COUNT/2) > 0:
-            _from = var.playlist.current_index - int(DEFAULT_DISPLAY_COUNT/2)
+        if var.playlist.current_index - int(DEFAULT_DISPLAY_COUNT / 2) > 0:
+            _from = var.playlist.current_index - int(DEFAULT_DISPLAY_COUNT / 2)
             _to = _from - 1 + DEFAULT_DISPLAY_COUNT
 
-
-    tags_color_lookup = build_tags_color_lookup() # TODO: cached this?
+    tags_color_lookup = build_tags_color_lookup()  # TODO: cached this?
     items = []
 
     for index, item_wrapper in enumerate(var.playlist[_from: _to + 1]):
@@ -196,12 +201,12 @@ def playlist():
             if item.artist:
                 artist = item.artist
         elif isinstance(item, URLItem):
-            path = f" <a href=\"{ item.url }\"><i>{ item.url }</i></a>"
+            path = f" <a href=\"{item.url}\"><i>{item.url}</i></a>"
         elif isinstance(item, PlaylistURLItem):
-            path = f" <a href=\"{ item.url }\"><i>{ item.url }</i></a>"
-            artist = f" <a href=\"{ item.playlist_url }\"><i>{ item.playlist_title }</i></a>"
+            path = f" <a href=\"{item.url}\"><i>{item.url}</i></a>"
+            artist = f" <a href=\"{item.playlist_url}\"><i>{item.playlist_title}</i></a>"
         elif isinstance(item, RadioItem):
-            path = f" <a href=\"{ item.url }\"><i>{ item.url }</i></a>"
+            path = f" <a href=\"{item.url}\"><i>{item.url}</i></a>"
 
         thumb = ""
         if item.type != 'radio' and item.thumbnail:
@@ -373,6 +378,7 @@ def post():
                 log.info("web: playback mode changed to autoplay.")
             if action == "rescan":
                 var.cache.build_dir_cache()
+                var.music_db.manage_special_tags()
                 log.info("web: Local file cache refreshed.")
             elif action == "stop":
                 if var.config.getboolean("bot", "clear_when_stop_in_oneshot", fallback=False) \
@@ -421,6 +427,7 @@ def post():
 
     return status()
 
+
 def build_library_query_condition(form):
     try:
         condition = Condition()
@@ -457,6 +464,7 @@ def build_library_query_condition(form):
     except KeyError:
         abort(400)
 
+
 @web.route("/library", methods=['POST'])
 @requires_auth
 def library():
@@ -476,7 +484,7 @@ def library():
                 pass
 
             if not total_count:
-                return ('', 204)
+                return '', 204
 
             if request.form['action'] == 'add':
                 items = dicts_to_items(var.music_db.query_music(condition))
@@ -521,11 +529,8 @@ def library():
 
                 results = []
                 for item in items:
-                    result = {}
-                    result['id'] = item.id
-                    result['title'] = item.title
-                    result['type'] = item.display_type()
-                    result['tags'] = [(tag, tag_color(tag)) for tag in item.tags]
+                    result = {'id': item.id, 'title': item.title, 'type': item.display_type(),
+                              'tags': [(tag, tag_color(tag)) for tag in item.tags]}
                     if item.type != 'radio' and item.thumbnail:
                         result['thumb'] = f"data:image/PNG;base64,{item.thumbnail}"
                     else:
@@ -546,7 +551,7 @@ def library():
                     'active_page': current_page
                 })
         elif request.form['action'] == 'edit_tags':
-            tags = list(dict.fromkeys(request.form['tags'].split(","))) # remove duplicated items
+            tags = list(dict.fromkeys(request.form['tags'].split(",")))  # remove duplicated items
             if request.form['id'] in var.cache:
                 music_wrapper = get_cached_wrapper_by_id(request.form['id'], user)
                 music_wrapper.clear_tags()
@@ -566,53 +571,50 @@ def library():
 def upload():
     global log
 
-    files = request.files.getlist("file[]")
-    if not files:
-        return redirect("./", code=400)
+    file = request.files['file']
+    if not file:
+        abort(400)
 
-    # filename = secure_filename(file.filename).strip()
-    for file in files:
-        filename = file.filename
-        if filename == '':
-            return redirect("./", code=400)
+    filename = file.filename
+    if filename == '':
+        abort(400)
 
-        targetdir = request.form['targetdir'].strip()
-        if targetdir == '':
-            targetdir = 'uploads/'
-        elif '../' in targetdir:
-            return redirect("./", code=400)
+    targetdir = request.form['targetdir'].strip()
+    if targetdir == '':
+        targetdir = 'uploads/'
+    elif '../' in targetdir:
+        abort(403)
 
-        log.info('web: Uploading file from %s:' % request.remote_addr)
-        log.info('web: - filename: ' + filename)
-        log.info('web: - targetdir: ' + targetdir)
-        log.info('web: - mimetype: ' + file.mimetype)
+    filename = secure_filename(file.filename).strip()
 
-        if "audio" in file.mimetype:
-            storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
-            print('storagepath:', storagepath)
-            if not storagepath.startswith(os.path.abspath(var.music_folder)):
-                return redirect("./", code=400)
+    log.info('web: Uploading file from %s:' % request.remote_addr)
+    log.info('web: - filename: ' + filename)
+    log.info('web: - targetdir: ' + targetdir)
+    log.info('web: - mimetype: ' + file.mimetype)
 
-            try:
-                os.makedirs(storagepath)
-            except OSError as ee:
-                if ee.errno != errno.EEXIST:
-                    return redirect("./", code=500)
+    if "audio" in file.mimetype:
+        storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
+        if not storagepath.startswith(os.path.abspath(var.music_folder)):
+            abort(403)
 
-            filepath = os.path.join(storagepath, filename)
-            log.info(' - filepath: ' + filepath)
-            if os.path.exists(filepath):
-                continue
+        try:
+            os.makedirs(storagepath)
+        except OSError as ee:
+            if ee.errno != errno.EEXIST:
+                log.error(f'web: failed to create directory {storagepath}')
+                abort(500)
 
-            file.save(filepath)
-        else:
-            continue
+        filepath = os.path.join(storagepath, filename)
+        log.info('web: - file saved at: ' + filepath)
+        if os.path.exists(filepath):
+            return 'File existed!', 409
 
-    var.cache.build_dir_cache()
-    var.music_db.manage_special_tags()
-    log.info("web: Local file cache refreshed.")
+        file.save(filepath)
+    else:
+        log.error(f'web: unsupported file type {file.mimetype}! File was not saved.')
+        return 'Unsupported media type!', 415
 
-    return redirect("./", code=302)
+    return '', 200
 
 
 @web.route('/download', methods=["GET"])
@@ -621,7 +623,7 @@ def download():
 
     if 'id' in request.args and request.args['id']:
         item = dicts_to_items(var.music_db.query_music(
-                                   Condition().and_equal('id', request.args['id'])))[0]
+            Condition().and_equal('id', request.args['id'])))[0]
 
         requested_file = item.uri()
         log.info('web: Download of file %s requested from %s:' % (requested_file, request.remote_addr))

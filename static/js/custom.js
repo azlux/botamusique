@@ -4,9 +4,6 @@ $('#uploadSelectFile').on('change', function () {
     //replace the "Choose a file" label
     $(this).next('.custom-file-label').html(fileName);
 });
-$('a.a-submit, button.btn-submit').on('click', function (event) {
-    $(event.target).closest('form').submit();
-});
 
 
 // ----------------------
@@ -677,6 +674,10 @@ function processResults(data) {
     });
 }
 
+// ---------------------
+// ------ Tagging ------
+// ---------------------
+
 const add_tag_modal_title = $("#addTagModalTitle");
 const add_tag_modal_item_id = $("#addTagModalItemId");
 const add_tag_modal_tags = $("#addTagModalTags");
@@ -778,6 +779,154 @@ function setVolumeDelayed(new_volume_value) {
     volume_update_timer = window.setTimeout(function () {
         request('post', { action: 'volume_set_value', new_volume: new_volume_value });
     }, 500); // delay in milliseconds
+}
+
+// ---------------------
+// ------- Upload ------
+// ---------------------
+
+const uploadModal = $("#uploadModal");
+
+const uploadFileInput = document.getElementById("uploadSelectFile");
+const uploadModalItem = document.getElementsByClassName("uploadItem")[0];
+const uploadModalList = document.getElementById("uploadModalList");
+const uploadTargetDir = document.getElementById("uploadTargetDir");
+const uploadSuccessAlert = document.getElementById("uploadSuccessAlert");
+const uploadSubmitBtn = document.getElementById("uploadSubmit");
+const uploadCancelBtn = document.getElementById("uploadCancel");
+const uploadCloseBtn = document.getElementById("uploadClose");
+
+const maxFileSize = parseInt(document.getElementById("maxUploadFileSize").value);
+
+let filesToProceed = [];
+let filesProgressItem = {};
+let runningXHR = null;
+
+uploadSubmitBtn.addEventListener("click", uploadStart)
+
+function uploadStart(){
+    uploadModalList.textContent = '';
+    uploadSuccessAlert.style.display = 'none';
+    uploadCancelBtn.style.display = 'none';
+    uploadCloseBtn.style.display = 'block';
+    const file_list = uploadFileInput.files;
+
+    if (file_list.length) {
+        for (const file of file_list) {
+            generateUploadProgressItem(file);
+            if (file.size > maxFileSize) {
+                setUploadError(file.name, 'File too large!')
+                continue;
+            } else if (!file.type.includes("audio")) {
+                setUploadError(file.name, 'Unsupported media format!')
+                continue;
+            }
+
+            filesToProceed.push(file);
+        }
+
+        uploadFileInput.value = '';
+        uploadModal.modal("show");
+        uploadNextFile();
+    }
+}
+
+function setProgressBar(bar, progress) {
+    let prog_str = Math.floor(progress*100).toString();
+    bar.setAttribute("aria-valuenow", prog_str);
+    bar.style.width = prog_str + "%";
+}
+
+function setUploadError(filename, error){
+    let file_progress_item = filesProgressItem[filename];
+
+    file_progress_item.title.classList.add("text-muted");
+    file_progress_item.error.innerHTML += 'Error: ' + error;
+    setProgressBar(file_progress_item.progress, 1);
+    file_progress_item.progress.classList.add("bg-danger");
+    file_progress_item.progress.classList.remove("progress-bar-animated");
+}
+
+function generateUploadProgressItem(file){
+    let item_clone = uploadModalItem.cloneNode(true);
+    let title = item_clone.querySelector(".uploadItemTitle");
+    title.innerHTML = file.name;
+    let error = item_clone.querySelector(".uploadItemError");
+    let progress = item_clone.querySelector(".uploadProgress");
+    item_clone.style.display = "block";
+
+    let item = { title: title, error: error, progress: progress };
+    filesProgressItem[file.name] = item;
+    uploadModalList.appendChild(item_clone);
+
+    return item;
+}
+
+function uploadNextFile(){
+    uploadCancelBtn.style.display = 'block';
+    uploadCloseBtn.style.display = 'none';
+
+    let req = new XMLHttpRequest();
+    let file = filesToProceed.shift();
+    let file_progress_item = filesProgressItem[file.name];
+
+    req.addEventListener("load", function(){
+        if (this.status === 200) {
+            setProgressBar(file_progress_item.progress, 1);
+            file_progress_item.progress.classList.add("bg-success");
+            file_progress_item.progress.classList.remove("progress-bar-animated");
+        } else if (this.status === 400 || this.status === 403) {
+            setUploadError(file.name, 'Illegal request!')
+        } else if (this.status === 500) {
+            setUploadError(file.name, 'Server internal error!')
+        } else {
+            if (this.responseText) {
+                setUploadError(file.name, this.responseText)
+            } else {
+                setUploadError(file.name, 'Unknown error!')
+            }
+        }
+
+        if (filesToProceed.length) {
+            uploadNextFile();
+        } else {
+            uploadSuccessAlert.style.display = "block";
+            runningXHR = null;
+
+            uploadCancelBtn.style.display = 'none';
+            uploadCloseBtn.style.display = 'block';
+
+            request('post', {action : 'rescan'});
+            updateResults();
+        }
+    });
+
+    req.addEventListener("progress", function(e){
+        if (e.lengthComputable) {
+            setProgressBar(file_progress_item.progress, e.loaded / e.total);
+        }
+    });
+
+    let form = new FormData();
+    form.append('file', file);
+    form.append('targetdir', uploadTargetDir.value);
+
+    req.open('POST', 'upload');
+    req.send(form);
+
+    file_progress_item.progress.classList.add("progress-bar-striped");
+    file_progress_item.progress.classList.add("progress-bar-animated");
+
+    runningXHR = req;
+}
+
+function uploadCancel(){
+    runningXHR.abort()
+    filesToProceed = [];
+    uploadModal.modal('hide');
+    uploadFileInput.value = '';
+    request('post', {action : 'rescan'});
+    updateResults();
 }
 
 themeInit();
