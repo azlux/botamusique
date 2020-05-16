@@ -754,7 +754,7 @@ let volume_popover_show = false;
 volume_popover_btn.addEventListener('click', function(e){ e.stopPropagation(); })
 
 function toggleVolumePopover(){
-    if (volume_popover_show){
+    if (!volume_popover_show){
         volume_popover_instance = new Popper(volume_popover_btn, volume_popover_div, {
             placement: 'top',
             modifiers: {
@@ -776,6 +776,7 @@ function toggleVolumePopover(){
         if (volume_popover_instance){
             volume_popover_instance.destroy();
             volume_popover_instance = null;
+            volume_popover_show = !volume_popover_show;
         }
     }, { once: true } );
 }
@@ -809,13 +810,18 @@ let filesToProceed = [];
 let filesProgressItem = {};
 let runningXHR = null;
 
-uploadSubmitBtn.addEventListener("click", uploadStart)
+let areYouSureToCancelUploading = false;
+
+uploadSubmitBtn.addEventListener("click", uploadStart);
+uploadCancelBtn.addEventListener("click", uploadCancel)
 
 function uploadStart(){
     uploadModalList.textContent = '';
     uploadSuccessAlert.style.display = 'none';
     uploadCancelBtn.style.display = 'none';
     uploadCloseBtn.style.display = 'block';
+    areYouSureToCancelUploading = false;
+    $(uploadCancelBtn).tooltip('hide');
     const file_list = uploadFileInput.files;
 
     if (file_list.length) {
@@ -928,12 +934,19 @@ function uploadNextFile(){
 }
 
 function uploadCancel(){
-    runningXHR.abort()
-    filesToProceed = [];
-    uploadModal.modal('hide');
-    uploadFileInput.value = '';
-    request('post', {action : 'rescan'});
-    updateResults();
+    if (!areYouSureToCancelUploading){
+        $(uploadCancelBtn).tooltip('show');
+    } else {
+        $(uploadCancelBtn).tooltip('hide');
+        uploadModal.modal('hide');
+        runningXHR.abort()
+        filesToProceed = [];
+        uploadFileInput.value = '';
+        request('post', {action : 'rescan'});
+        updateResults();
+    }
+
+    areYouSureToCancelUploading = !areYouSureToCancelUploading;
 }
 
 themeInit();
