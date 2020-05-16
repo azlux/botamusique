@@ -1,6 +1,6 @@
 $('#uploadSelectFile').on('change', function () {
     //get the file name
-    var fileName = $(this).val().replace('C:\\fakepath\\', " ");
+    let fileName = $(this).val().replace('C:\\fakepath\\', " ");
     //replace the "Choose a file" label
     $(this).next('.custom-file-label').html(fileName);
 });
@@ -13,46 +13,47 @@ $('a.a-submit, button.btn-submit').on('click', function (event) {
 // ------ Playlist ------
 // ----------------------
 
-var pl_item_template = $(".playlist-item-template");
-var pl_id_element = $(".playlist-item-id");
-var pl_index_element = $(".playlist-item-index");
-var pl_title_element = $(".playlist-item-title");
-var pl_artist_element = $(".playlist-item-artist");
-var pl_thumb_element = $(".playlist-item-thumbnail");
-var pl_type_element = $(".playlist-item-type");
-var pl_path_element = $(".playlist-item-path");
+const pl_item_template = $(".playlist-item-template");
+const pl_id_element = $(".playlist-item-id");
+const pl_index_element = $(".playlist-item-index");
+const pl_title_element = $(".playlist-item-title");
+const pl_artist_element = $(".playlist-item-artist");
+const pl_thumb_element = $(".playlist-item-thumbnail");
+const pl_type_element = $(".playlist-item-type");
+const pl_path_element = $(".playlist-item-path");
 
-var pl_tag_edit_element = $(".playlist-item-edit");
+const pl_tag_edit_element = $(".playlist-item-edit");
 
-var notag_element = $(".library-item-notag"); // these elements are shared with library
-var tag_element = $(".library-item-tag");
+const notag_element = $(".library-item-notag"); // these elements are shared with library
+const tag_element = $(".library-item-tag");
 
-var add_tag_modal = $("#addTagModal");
+const add_tag_modal = $("#addTagModal");
 
-var playlist_loading = $("#playlist-loading");
-var playlist_table = $("#playlist-table");
-var playlist_empty = $("#playlist-empty");
-var playlist_expand = $("#playlist-expand");
+const playlist_loading = $("#playlist-loading");
+const playlist_table = $("#playlist-table");
+const playlist_empty = $("#playlist-empty");
+const playlist_expand = $("#playlist-expand");
 
-var playlist_ver = 0;
-var playlist_current_index = 0;
+let playlist_ver = 0;
+let playlist_current_index = 0;
 
-var playlist_range_from = 0;
-var playlist_range_to = 0;
+let playlist_range_from = 0;
+let playlist_range_to = 0;
 
-var last_volume = 0;
+let last_volume = 0;
 
-var playing = false;
-var playPauseBtn = $('#play-pause-btn');
-var fastForwardBtn = $('#fast-forward-btn');
+let playing = false;
 
-var playModeBtns = {
+const playPauseBtn = $('#play-pause-btn');
+const fastForwardBtn = $('#fast-forward-btn');
+
+const playModeBtns = {
     'one-shot': $('#one-shot-mode-btn'),
     random: $('#random-mode-btn'),
     repeat: $('#repeat-mode-btn'),
     autoplay: $('#autoplay-mode-btn')
 };
-var playModeIcon = {
+const playModeIcon = {
     'one-shot': 'fa-tasks',
     random: 'fa-random',
     repeat: 'fa-redo',
@@ -88,14 +89,14 @@ function addPlaylistItem(item) {
     pl_type_element.html(item.type);
     pl_path_element.html(item.path);
 
-    var item_copy = pl_item_template.clone();
+    let item_copy = pl_item_template.clone();
     item_copy.attr("id", "playlist-item-" + item.index);
     item_copy.addClass("playlist-item").removeClass("d-none");
 
-    var tags = item_copy.find(".playlist-item-tags");
+    let tags = item_copy.find(".playlist-item-tags");
     tags.empty();
 
-    var tag_edit_copy = pl_tag_edit_element.clone();
+    let tag_edit_copy = pl_tag_edit_element.clone();
     tag_edit_copy.click(function () {
         addTagModalShow(item.id, item.title, item.tags);
     });
@@ -103,13 +104,13 @@ function addPlaylistItem(item) {
 
     if (item.tags.length > 0) {
         item.tags.forEach(function (tag_tuple) {
-            tag_copy = tag_element.clone();
+            let tag_copy = tag_element.clone();
             tag_copy.html(tag_tuple[0]);
             tag_copy.addClass("badge-" + tag_tuple[1]);
             tag_copy.appendTo(tags);
         });
     } else {
-        tag_copy = notag_element.clone();
+        let tag_copy = notag_element.clone();
         tag_copy.appendTo(tags);
     }
 
@@ -120,16 +121,16 @@ function displayPlaylist(data) {
     playlist_table.animate({ opacity: 0 }, 200, function () {
         playlist_loading.hide();
         $(".playlist-item").remove();
-        var items = data.items;
-        var length = data.length;
-        var start_from = data.start_from;
+        let items = data.items;
+        let length = data.length;
+        let start_from = data.start_from;
         playlist_range_from = start_from;
         playlist_range_to = start_from + items.length - 1;
 
         if (items.length < length && start_from > 0) {
-            _from = start_from - 5;
+            let _from = start_from - 5;
             _from = _from > 0 ? _from : 0;
-            _to = start_from - 1;
+            let _to = start_from - 1;
             if (_to > 0) {
                 insertExpandPrompt(_from, start_from + length - 1, _from, _to);
             }
@@ -142,8 +143,8 @@ function displayPlaylist(data) {
         );
 
         if (items.length < length && start_from + items.length < length) {
-            _from = start_from + items.length;
-            _to = start_from + items.length - 1 + 10;
+            let _from = start_from + items.length;
+            let _to = start_from + items.length - 1 + 10;
             _to = _to < length - 1 ? _to : length - 1;
             if (start_from + items.length < _to) {
                 insertExpandPrompt(start_from, _to, _from, _to);
@@ -162,7 +163,7 @@ function displayActiveItem(current_index) {
 }
 
 function insertExpandPrompt(real_from, real_to, display_from, display_to) {
-    var expand_copy = playlist_expand.clone();
+    let expand_copy = playlist_expand.clone();
     playlist_expand.removeClass('d-none');
     if (display_from !== display_to) {
         expand_copy.find(".playlist-expand-item-range").html((display_from + 1) + "~" + (display_to + 1));
@@ -184,7 +185,7 @@ function updatePlaylist() {
         playlist_empty.addClass('d-none');
         playlist_loading.show();
         playlist_table.find(".playlist-item").css("opacity", 0);
-        data = {};
+        let data = {};
         if (!(playlist_range_from === 0 && playlist_range_to === 0)) {
             data = {
                 range_from: playlist_range_from,
@@ -281,7 +282,7 @@ function updateControls(empty, play, mode, volume) {
     }
     playModeIndicator.addClass(playModeIcon[mode]);
 
-    if (volume != last_volume) {
+    if (volume !== last_volume) {
         last_volume = volume;
         if (volume > 1) {
             document.getElementById("volume-slider").value = 1;
@@ -313,14 +314,14 @@ setInterval(checkForPlaylistUpdate, 3000);
 // --- THEME SWITCHER ---
 // ----------------------
 function themeInit() {
-    var theme = localStorage.getItem("theme");
+    let theme = localStorage.getItem("theme");
     if (theme !== null) {
         setPageTheme(theme);
     }
 }
 
 function switchTheme() {
-    var theme = localStorage.getItem("theme");
+    let theme = localStorage.getItem("theme");
     if (theme === "light" || theme === null) {
         setPageTheme("dark");
         localStorage.setItem("theme", "dark");
@@ -342,13 +343,13 @@ function setPageTheme(theme) {
 // ------ Browser ------
 // ---------------------
 
-var filters = {
+let filters = {
     file: $('#filter-type-file'),
     url: $('#filter-type-url'),
     radio: $('#filter-type-radio'),
 };
-var filter_dir = $("#filter-dir");
-var filter_keywords = $("#filter-keywords");
+let filter_dir = $("#filter-dir");
+let filter_keywords = $("#filter-keywords");
 
 function setFilterType(event, type) {
     event.preventDefault();
@@ -369,10 +370,8 @@ function setFilterType(event, type) {
 }
 
 // Bind Event
-var _tag = null;
 $(".filter-tag").click(function (e) {
-    var tag = $(e.currentTarget);
-    _tag = tag;
+    let tag = $(e.currentTarget);
     if (!tag.hasClass('tag-clicked')) {
         tag.addClass('tag-clicked');
         tag.removeClass('tag-unclicked');
@@ -386,7 +385,7 @@ $(".filter-tag").click(function (e) {
 filter_dir.change(function () { updateResults() });
 filter_keywords.change(function () { updateResults() });
 
-var item_template = $("#library-item");
+let item_template = $("#library-item");
 
 function bindLibraryResultEvent() {
     $(".library-thumb-col").unbind().hover(
@@ -418,7 +417,7 @@ function bindLibraryResultEvent() {
 
     $(".library-item-download").unbind().click(
         function (e) {
-            var id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
+            let id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
             //window.open('/download?id=' + id);
             downloadId(id);
         }
@@ -426,7 +425,7 @@ function bindLibraryResultEvent() {
 
     $(".library-item-add-next").unbind().click(
         function (e) {
-            var id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
+            let id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
             request('post', {
                 'add_item_next': id
             });
@@ -435,7 +434,7 @@ function bindLibraryResultEvent() {
 
     $(".library-item-add-bottom").unbind().click(
         function (e) {
-            var id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
+            let id = $(e.currentTarget).parent().parent().find(".library-item-id").val();
             request('post', {
                 'add_item_bottom': id
             });
@@ -443,15 +442,15 @@ function bindLibraryResultEvent() {
     );
 }
 
-var lib_group = $("#library-group");
-var id_element = $(".library-item-id");
-var title_element = $(".library-item-title");
-var artist_element = $(".library-item-artist");
-var thumb_element = $(".library-item-thumb");
-var type_element = $(".library-item-type");
-var path_element = $(".library-item-path");
+const lib_group = $("#library-group");
+const id_element = $(".library-item-id");
+const title_element = $(".library-item-title");
+const artist_element = $(".library-item-artist");
+const thumb_element = $(".library-item-thumb");
+const type_element = $(".library-item-type");
+const path_element = $(".library-item-path");
 
-var tag_edit_element = $(".library-item-edit");
+const tag_edit_element = $(".library-item-edit");
 //var notag_element = $(".library-item-notag");
 //var tag_element = $(".library-item-tag");
 
@@ -465,13 +464,13 @@ function addResultItem(item) {
     type_element.html("[" + item.type + "]");
     path_element.html(item.path);
 
-    var item_copy = item_template.clone();
+    let item_copy = item_template.clone();
     item_copy.addClass("library-item-active");
 
-    var tags = item_copy.find(".library-item-tags");
+    let tags = item_copy.find(".library-item-tags");
     tags.empty();
 
-    var tag_edit_copy = tag_edit_element.clone();
+    let tag_edit_copy = tag_edit_element.clone();
     tag_edit_copy.click(function () {
         addTagModalShow(item.id, item.title, item.tags);
     });
@@ -479,13 +478,13 @@ function addResultItem(item) {
 
     if (item.tags.length > 0) {
         item.tags.forEach(function (tag_tuple) {
-            tag_copy = tag_element.clone();
+            let tag_copy = tag_element.clone();
             tag_copy.html(tag_tuple[0]);
             tag_copy.addClass("badge-" + tag_tuple[1]);
             tag_copy.appendTo(tags);
         });
     } else {
-        tag_copy = notag_element.clone();
+        let tag_copy = notag_element.clone();
         tag_copy.appendTo(tags);
     }
 
@@ -494,13 +493,13 @@ function addResultItem(item) {
 }
 
 function getFilters(dest_page = 1) {
-    var tags = $(".tag-clicked");
-    var tags_list = [];
+    let tags = $(".tag-clicked");
+    let tags_list = [];
     tags.each(function (index, tag) {
         tags_list.push(tag.innerHTML);
     });
 
-    filter_types = [];
+    let filter_types = [];
     for (const filter in filters) {
         if (filters[filter].hasClass('active')) {
             filter_types.push(filter);
@@ -516,13 +515,13 @@ function getFilters(dest_page = 1) {
     };
 }
 
-var lib_loading = $("#library-item-loading");
-var lib_empty = $("#library-item-empty");
-var active_page = 1;
+let lib_loading = $("#library-item-loading");
+let lib_empty = $("#library-item-empty");
+let active_page = 1;
 
 function updateResults(dest_page = 1) {
     active_page = dest_page;
-    data = getFilters(dest_page);
+    let data = getFilters(dest_page);
     data.action = "query";
 
     lib_group.animate({ opacity: 0 }, 200, function () {
@@ -547,15 +546,15 @@ function updateResults(dest_page = 1) {
     });
 }
 
-var download_form = $("#download-form");
-var download_id = download_form.find("input[name='id']");
-var download_type = download_form.find("input[name='type']");
-var download_dir = download_form.find("input[name='dir']");
-var download_tags = download_form.find("input[name='tags']");
-var download_keywords = download_form.find("input[name='keywords']");
+const download_form = $("#download-form");
+const download_id = download_form.find("input[name='id']");
+const download_type = download_form.find("input[name='type']");
+const download_dir = download_form.find("input[name='dir']");
+const download_tags = download_form.find("input[name='tags']");
+const download_keywords = download_form.find("input[name='keywords']");
 
 function addAllResults() {
-    data = getFilters();
+    let data = getFilters();
     data.action = "add";
 
     console.log(data);
@@ -570,7 +569,7 @@ function addAllResults() {
 }
 
 function deleteAllResults() {
-    data = getFilters();
+    let data = getFilters();
     data.action = "delete";
 
     console.log(data);
@@ -586,7 +585,7 @@ function deleteAllResults() {
 }
 
 function downloadAllResults() {
-    cond = getFilters();
+    let cond = getFilters();
     download_id.val();
     download_type.val(cond.type);
     download_dir.val(cond.dir);
@@ -604,16 +603,16 @@ function downloadId(id) {
     download_form.submit();
 }
 
-var page_ul = $("#library-page-ul");
-var page_li = $(".library-page-li");
-var page_no = $(".library-page-no");
+const page_ul = $("#library-page-ul");
+const page_li = $(".library-page-li");
+const page_no = $(".library-page-no");
 
 function processResults(data) {
     lib_group.animate({ opacity: 0 }, 200, function () {
         lib_loading.hide();
-        total_pages = data.total_pages;
-        active_page = data.active_page;
-        items = data.items;
+        let total_pages = data.total_pages;
+        let active_page = data.active_page;
+        let items = data.items;
         items.forEach(
             function (item) {
                 addResultItem(item);
@@ -624,13 +623,13 @@ function processResults(data) {
         page_ul.empty();
         page_li.removeClass('active').empty();
 
-        i = 1;
-        var page_li_copy;
-        var page_no_copy;
+        let i = 1;
+        let page_li_copy;
+        let page_no_copy;
 
         if (total_pages > 25) {
             i = (active_page - 12 >= 1) ? active_page - 12 : 1;
-            _i = total_pages - 23;
+            let _i = total_pages - 23;
             i = (i < _i) ? i : _i;
             page_li_copy = page_li.clone();
             page_no_copy = page_no.clone();
@@ -644,7 +643,7 @@ function processResults(data) {
             page_li_copy.appendTo(page_ul);
         }
 
-        limit = i + 24;
+        let limit = i + 24;
         for (; i <= total_pages && i <= limit; i++) {
             page_li_copy = page_li.clone();
             page_no_copy = page_no.clone();
@@ -653,7 +652,7 @@ function processResults(data) {
                 page_li_copy.addClass("active");
             } else {
                 page_no_copy.click(function (e) {
-                    _page_no = $(e.currentTarget).html();
+                    let _page_no = $(e.currentTarget).html();
                     updateResults(_page_no);
                 });
             }
@@ -678,12 +677,12 @@ function processResults(data) {
     });
 }
 
-var add_tag_modal_title = $("#addTagModalTitle");
-var add_tag_modal_item_id = $("#addTagModalItemId");
-var add_tag_modal_tags = $("#addTagModalTags");
-var add_tag_modal_input = $("#addTagModalInput");
-var modal_tag = $(".modal-tag");
-var modal_tag_text = $(".modal-tag-text");
+const add_tag_modal_title = $("#addTagModalTitle");
+const add_tag_modal_item_id = $("#addTagModalItemId");
+const add_tag_modal_tags = $("#addTagModalTags");
+const add_tag_modal_input = $("#addTagModalInput");
+const modal_tag = $(".modal-tag");
+const modal_tag_text = $(".modal-tag-text");
 
 function addTagModalShow(_id, _title, _tag_tuples) {
     add_tag_modal_title.html("Edit tags for " + _title);
@@ -691,8 +690,8 @@ function addTagModalShow(_id, _title, _tag_tuples) {
     add_tag_modal_tags.empty();
     _tag_tuples.forEach(function (tag_tuple) {
         modal_tag_text.html(tag_tuple[0]);
-        var tag_copy = modal_tag.clone();
-        var modal_tag_remove = tag_copy.find(".modal-tag-remove");
+        let tag_copy = modal_tag.clone();
+        let modal_tag_remove = tag_copy.find(".modal-tag-remove");
         modal_tag_remove.click(function (e) {
             $(e.currentTarget).parent().remove();
         });
@@ -704,11 +703,11 @@ function addTagModalShow(_id, _title, _tag_tuples) {
 }
 
 function addTagModalAdd() {
-    new_tags = add_tag_modal_input.val().split(",").map(function (str) { return str.trim() });
+    let new_tags = add_tag_modal_input.val().split(",").map(function (str) { return str.trim() });
     new_tags.forEach(function (tag) {
         modal_tag_text.html(tag);
-        var tag_copy = modal_tag.clone();
-        var modal_tag_remove = tag_copy.find(".modal-tag-remove");
+        let tag_copy = modal_tag.clone();
+        let modal_tag_remove = tag_copy.find(".modal-tag-remove");
         modal_tag_remove.click(function (e) {
             $(e.currentTarget).parent().remove();
         });
@@ -720,8 +719,8 @@ function addTagModalAdd() {
 }
 
 function addTagModalSubmit() {
-    var all_tags = $(".modal-tag-text");
-    tags = [];
+    let all_tags = $(".modal-tag-text");
+    let tags = [];
     all_tags.each(function (i, element) {
         if (element.innerHTML) {
             tags.push(element.innerHTML);
@@ -740,16 +739,15 @@ function addTagModalSubmit() {
     updateResults(active_page);
 }
 
-
 // ---------------------
 // ------- Volume ------
 // ---------------------
 
-var volume_popover_btn = document.querySelector("#volume-popover-btn");
-var volume_popover_div = document.querySelector("#volume-popover");
-var volume_popover_instance = null;
+const volume_popover_btn = document.querySelector("#volume-popover-btn");
+const volume_popover_div = document.querySelector("#volume-popover");
+let volume_popover_instance = null;
+let volume_popover_show = false;
 
-var volume_popover_show = false;
 function toggleVolumePopover(){
     if (volume_popover_show){
         volume_popover_instance = Popper.createPopper(volume_popover_btn, volume_popover_div, {
@@ -774,7 +772,7 @@ function toggleVolumePopover(){
     volume_popover_show = !volume_popover_show;
 }
 
-var volume_update_timer;
+let volume_update_timer;
 function setVolumeDelayed(new_volume_value) {
     window.clearTimeout(volume_update_timer);
     volume_update_timer = window.setTimeout(function () {
