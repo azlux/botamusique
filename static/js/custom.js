@@ -901,7 +901,7 @@ function uploadNextFile(){
         }
     });
 
-    req.addEventListener("progress", function(e){
+    req.upload.addEventListener("progress", function(e){
         if (e.lengthComputable) {
             setProgressBar(file_progress_item.progress, e.loaded / e.total);
         }

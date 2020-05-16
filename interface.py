@@ -585,8 +585,6 @@ def upload():
     elif '../' in targetdir:
         abort(403)
 
-    filename = secure_filename(file.filename).strip()
-
     log.info('web: Uploading file from %s:' % request.remote_addr)
     log.info('web: - filename: ' + filename)
     log.info('web: - targetdir: ' + targetdir)
