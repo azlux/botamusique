@@ -749,18 +749,15 @@ const volume_popover_div = document.querySelector("#volume-popover");
 let volume_popover_instance = null;
 let volume_popover_show = false;
 
+volume_popover_btn.addEventListener('click', function(e){ e.stopPropagation(); })
+
 function toggleVolumePopover(){
     if (volume_popover_show){
-        volume_popover_instance = Popper.createPopper(volume_popover_btn, volume_popover_div, {
+        volume_popover_instance = new Popper(volume_popover_btn, volume_popover_div, {
             placement: 'top',
-            modifiers: [
-                {
-                    name: 'offset',
-                    options: {
-                        offset: [0, 8]
-                    }
-                }
-            ]
+            modifiers: {
+                offset: { offset: '0, 8' }
+            }
         } );
         volume_popover_div.setAttribute('data-show', '');
     } else {
@@ -771,6 +768,14 @@ function toggleVolumePopover(){
         }
     }
     volume_popover_show = !volume_popover_show;
+
+    document.addEventListener('click', function(){
+        volume_popover_div.removeAttribute('data-show');
+        if (volume_popover_instance){
+            volume_popover_instance.destroy();
+            volume_popover_instance = null;
+        }
+    }, { once: true } );
 }
 
 let volume_update_timer;

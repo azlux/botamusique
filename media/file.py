@@ -56,7 +56,9 @@ class FileItem(BaseItem):
             super().__init__(from_dict)
             self.artist = from_dict['artist']
             self.thumbnail = from_dict['thumbnail']
-            if not self.validate():
+            try:
+                self.validate()
+            except ValidationFailedError:
                 self.ready = "failed"
 
         self.type = "file"

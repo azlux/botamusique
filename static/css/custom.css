@@ -122,6 +122,7 @@
     font-size: 20px;
     border-radius: 4px;
     display: none;
+    /* margin-bottom: 5px; */
 }
 #volume-popover[data-show] {
     display: flex;
@@ -132,9 +133,11 @@
 #volume-popover-arrow,
 #volume-popover-arrow::before {
   position: absolute;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   z-index: -1;
+  top: 16px;
+  left: 46px;
 }
 
 #volume-popover-arrow::before {
