@@ -632,6 +632,7 @@ def start_web_interface(addr, port):
 
     interface.init_proxy()
     interface.web.env = 'development'
+    interface.web.secret_key = var.config.get('webinterface', 'flask_secret')
     interface.web.run(port=port, host=addr)
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import sqlite3
 from functools import wraps
-from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort
+from flask import Flask, render_template, request, redirect, send_file, Response, jsonify, abort, session
 from werkzeug.utils import secure_filename
 
 import variables as var
@@ -12,6 +12,7 @@ import os.path
 import errno
 from typing import Type
 import media
+import json
 from media.item import dicts_to_items, dict_to_item, BaseItem
 from media.file import FileItem
 from media.url import URLItem
@@ -65,7 +66,7 @@ class ReverseProxied(object):
 web = Flask(__name__)
 web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
-user = 'Remote Control'
+user = 'webuser'
 
 
 def init_proxy():
@@ -104,6 +105,42 @@ def requires_auth(f):
             return authenticate()
         return f(*args, **kwargs)
 
+    return decorated
+
+
+def set_cookie_token(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        global log
+        if var.config.getboolean("webinterface", "match_mumble_user"):
+            users = var.db.items('user')
+            if users:
+                for user in users:
+                    tp = json.loads(user[1])
+                    log.info(tp)
+                    if tp['token'] == request.args.get('token'):
+                        t_user = user[0]
+                        log.info(f"web: token validated for the user: {t_user}")
+                        session['user']=t_user
+                        return f(*args, **kwargs)
+                    log.info("web: Bad token used")
+                    abort(403)
+
+        return f(*args, **kwargs)
+    return decorated
+
+
+def requires_token(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        global log, user
+        if var.config.getboolean("webinterface", "match_mumble_user"):
+            if 'user' in session:
+                log.debug(f"Request done by {session['user']}")
+                user = session['user']
+            else:
+                abort(403)
+        return f(*args, **kwargs)
     return decorated
 
 
@@ -153,6 +190,7 @@ def get_all_dirs():
 
 @web.route("/", methods=['GET'])
 @requires_auth
+@set_cookie_token
 def index():
     while var.cache.dir_lock.locked():
         time.sleep(0.1)
@@ -167,6 +205,7 @@ def index():
 
 @web.route("/playlist", methods=['GET'])
 @requires_auth
+@requires_token
 def playlist():
     if len(var.playlist) == 0:
         return ('', 204)
@@ -262,6 +301,7 @@ def status():
 
 @web.route("/post", methods=['POST'])
 @requires_auth
+@requires_token
 def post():
     global log
 
@@ -480,6 +520,7 @@ def build_library_query_condition(form):
 
 @web.route("/library", methods=['POST'])
 @requires_auth
+@requires_token
 def library():
     global log
     ITEM_PER_PAGE = 10
@@ -581,6 +622,8 @@ def library():
 
 
 @web.route('/upload', methods=["POST"])
+#@requires_auth missing here ?
+@requires_token
 def upload():
     global log
 

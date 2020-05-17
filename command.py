@@ -65,7 +65,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('delete_from_library'), cmd_delete_from_library)
     bot.register_command(constants.commands('drop_database'), cmd_drop_database, no_partial_match=True)
     bot.register_command(constants.commands('rescan'), cmd_refresh_cache, no_partial_match=True)
-
+    bot.register_command(constants.commands('requests_webinterface_access'), cmd_web_access)
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
     #bot.register_command('loop', cmd_loop_state, True)
@@ -1178,6 +1178,14 @@ def cmd_refresh_cache(bot, user, text, command, parameter):
     else:
         bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
 
+
+def cmd_web_access(bot, user, text, command, parameter):
+    import secrets
+    import datetime
+    import json
+    token = secrets.token_urlsafe(5)
+    var.db.set("user", user, json.dumps({'token': token, 'datetime': str(datetime.datetime.now()), 'IP':''}))
+    bot.send_msg(constants.strings('webpage_token',token=token), text)
 
 # Just for debug use
 def cmd_real_time_rms(bot, user, text, command, parameter):
