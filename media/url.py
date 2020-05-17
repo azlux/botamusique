@@ -95,10 +95,10 @@ class URLItem(BaseItem):
         if not info:
             return False
 
-        if self.duration > var.config.getint('bot', 'max_track_duration') != 0:
+        if self.duration > var.config.getint('bot', 'max_track_duration') * 60 != 0:
             # Check the length, useful in case of playlist, it wasn't checked before)
             log.info(
-                "url: " + self.url + " has a duration of " + str(self.duration) + " min -- too long")
+                "url: " + self.url + " has a duration of " + str(self.duration / 60) + " min -- too long")
             raise ValidationFailedError(constants.strings('too_long', song=self.title))
         else:
             self.ready = "validated"
@@ -125,14 +125,14 @@ class URLItem(BaseItem):
             for i in range(attempts):
                 try:
                     info = ydl.extract_info(self.url, download=False)
-                    self.duration = info['duration'] / 60
+                    self.duration = info['duration']
                     self.title = info['title']
                     self.keywords = info['title']
                     succeed = True
                     return True
                 except youtube_dl.utils.DownloadError:
                     pass
-                except KeyError: # info has no 'duration'
+                except KeyError:  # info has no 'duration'
                     break
 
         if not succeed:

@@ -759,6 +759,7 @@ let volume_popover_instance = null;
 let volume_popover_show = false;
 
 volume_popover_btn.addEventListener('click', function(e){ e.stopPropagation(); })
+volume_popover_div.addEventListener('click', function(e){ e.stopPropagation(); })
 
 function toggleVolumePopover(){
     if (!volume_popover_show){
