@@ -50,6 +50,7 @@ class BaseItem:
         self.path = ""
         self.tags = []
         self.keywords = ""
+        self.duration = 0
         self.version = 0  # if version increase, wrapper will re-save this item
 
         if from_dict is None:
@@ -62,6 +63,7 @@ class BaseItem:
             self.title = from_dict['title']
             self.path = from_dict['path']
             self.keywords = from_dict['keywords']
+            self.duration = from_dict['duration']
 
     def is_ready(self):
         return True if self.ready == "yes" else False
@@ -117,4 +119,5 @@ class BaseItem:
                 "title": self.title,
                 "path": self.path,
                 "tags": self.tags,
-                "keywords": self.keywords}
+                "keywords": self.keywords,
+                "duration": self.duration}

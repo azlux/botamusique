@@ -196,15 +196,19 @@ def playlist():
         title = item.format_title()
         artist = "??"
         path = ""
+        duration = 0
         if isinstance(item, FileItem):
             path = item.path
             if item.artist:
                 artist = item.artist
+            duration = item.duration
         elif isinstance(item, URLItem):
             path = f" <a href=\"{item.url}\"><i>{item.url}</i></a>"
+            duration = item.duration
         elif isinstance(item, PlaylistURLItem):
             path = f" <a href=\"{item.url}\"><i>{item.url}</i></a>"
             artist = f" <a href=\"{item.playlist_url}\"><i>{item.playlist_title}</i></a>"
+            duration = item.duration
         elif isinstance(item, RadioItem):
             path = f" <a href=\"{item.url}\"><i>{item.url}</i></a>"
 
@@ -223,6 +227,7 @@ def playlist():
             'artist': artist,
             'thumbnail': thumb,
             'tags': tag_tuples,
+            'duration': duration
         })
 
     return jsonify({
@@ -240,7 +245,9 @@ def status():
                         'empty': False,
                         'play': not var.bot.is_pause,
                         'mode': var.playlist.mode,
-                        'volume': var.bot.volume_set})
+                        'volume': var.bot.volume_set,
+                        'playhead': var.bot.playhead
+                        })
 
     else:
         return jsonify({'ver': var.playlist.version,
@@ -248,7 +255,9 @@ def status():
                         'empty': True,
                         'play': not var.bot.is_pause,
                         'mode': var.playlist.mode,
-                        'volume': var.bot.volume_set})
+                        'volume': var.bot.volume_set,
+                        'playhead': 0
+                        })
 
 
 @web.route("/post", methods=['POST'])
@@ -335,6 +344,10 @@ def post():
             if len(var.playlist) >= int(request.form['play_music']):
                 var.bot.play(int(request.form['play_music']))
                 time.sleep(0.1)
+        elif 'move_playhead' in request.form:
+            if float(request.form['move_playhead']) < var.playlist.current_item().item().duration:
+                log.info(f"web: move playhead to {float(request.form['move_playhead'])} s.")
+                var.bot.play(var.playlist.current_index, float(request.form['move_playhead']))
 
         elif 'delete_item_from_library' in request.form:
             _id = request.form['delete_item_from_library']

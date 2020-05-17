@@ -410,9 +410,54 @@
         </div>
     </div>
 
-    <div class="floating-button" onclick="switchTheme()">
+
+    <div class="floating-button" style="bottom: 120px;" onclick="togglePlayer()">
+        <i class="fas fa-play" aria-hidden="true"></i>
+    </div>
+
+    <div class="floating-button" style="bottom: 50px;" onclick="switchTheme()">
         <i class="fas fa-lightbulb" aria-hidden="true"></i>
     </div>
+
+    <div id="playerToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-autohide="false">
+        <div class="toast-header">
+            <i class="fas fa-play-circle mr-2 text-primary"></i>
+            <strong class="mr-auto">Now Playing...</strong>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="toast-body" id="playerContainer">
+            <img id="playerArtworkIdle" src="static/image/empty_box.svg" />
+            <img id="playerArtwork" src="static/image/unknown-album.png" style="display: none;"/>
+            <div id="playerInfo">
+                <div id="playerActionBox">
+                    <button id="playerPlayBtn" class="btn btn-primary btn-sm btn-space" style="display: none"
+                            onclick="request('post', {action: 'resume'})">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button id="playerPauseBtn" class="btn btn-primary btn-sm btn-space" style="display: none"
+                            onclick="request('post', {action: 'pause'})">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <button id="playerSkipBtn" class="btn btn-primary btn-sm">
+                        <i class="fas fa-fast-forward"></i>
+                    </button>
+                </div>
+
+                <div style="overflow: hidden; max-width: 320px;">
+                    <strong id="playerTitle">Song Title</strong>
+                </div>
+                <span id="playerArtist">Artist</span>
+                <div id="playerBarBox" class="progress">
+                    <div id="playerBar" class="progress-bar" role="progressbar" aria-valuenow="50"
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer" style="height:50px; width: 100%; margin-top: 100px;"></div>
 
     <form id="download-form" action="download" method="GET" target="_blank">
         <input hidden type="text" name="id" value="">

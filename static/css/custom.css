@@ -86,7 +86,7 @@
    font-weight: 300;
 }
 
-/* Theme changer */
+/* Theme changer and player button */
 .floating-button {
    width: 50px;
    height: 50px;
@@ -100,7 +100,6 @@
    line-height: 52px;
    position: fixed;
    right: 50px;
-   bottom: 40px;
 }
 .floating-button:hover {
     background-color: hsl(0, 0%, 43%);
@@ -122,7 +121,6 @@
     font-size: 20px;
     border-radius: 4px;
     display: none;
-    /* margin-bottom: 5px; */
 }
 #volume-popover[data-show] {
     display: flex;
@@ -147,4 +145,70 @@
 }
 #volume-popover[data-popper-placement^='top'] > #volume-popover-arrow {
   bottom: -4px;
+}
+#playerToast {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    max-width: 800px;
+}
+#playerContainer {
+    display: flex;
+    height: 105px;
+}
+#playerArtwork {
+    width: 80px;
+    height: 80px;
+    border-radius: 5px;
+}
+#playerArtworkIdle {
+    width: 80px;
+    height: 80px;
+    border-radius: 5px;
+    margin: auto;
+    padding: 15px;
+}
+#playerInfo {
+    position: relative;
+    padding-top: 6px;
+    margin-left: 10px;
+    height: 80px;
+    font-size: 15px;
+}
+#playerTitle {
+    display: block;
+    white-space: nowrap;
+}
+#playerArtist {
+    display: block;
+    white-space: nowrap;
+    min-height: 20px;
+}
+#playerActionBox {
+    margin-top: 5px;
+    display: flex;
+    float: right;
+}
+#playerBarBox {
+    margin-top: 5px;
+    height: 15px;
+    width: 400px;
+    cursor: pointer;
+}
+.scrolling {
+    animation: scrolling 8s linear infinite;
+}
+@keyframes scrolling {
+    0% {
+        transform: translateX(100%);
+        opacity: 1;
+    }
+    95%{
+        transform: translateX(-90%);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
 }

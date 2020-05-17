@@ -6,6 +6,7 @@ import hashlib
 import mutagen
 from PIL import Image
 
+import util
 import variables as var
 from media.item import BaseItem, item_builders, item_loaders, item_id_generators, ValidationFailedError
 import constants
@@ -51,6 +52,7 @@ class FileItem(BaseItem):
             if os.path.exists(self.uri()):
                 self._get_info_from_tag()
                 self.ready = "yes"
+                self.duration = util.get_media_duration(self.uri())
             self.keywords = self.title + " " + self.artist
         else:
             super().__init__(from_dict)
@@ -75,7 +77,9 @@ class FileItem(BaseItem):
                 "file: music file missed for %s" % self.format_debug_string())
             raise ValidationFailedError(constants.strings('file_missed', file=self.path))
 
-        # self.version += 1 # 0 -> 1, notify the wrapper to save me when validate() is visited the first time
+        if self.duration == 0:
+            self.duration = util.get_media_duration(self.uri())
+            self.version += 1  # 0 -> 1, notify the wrapper to save me
         self.ready = "yes"
         return True
 
@@ -130,7 +134,8 @@ class FileItem(BaseItem):
         if not self.title:
             self.title = os.path.basename(file_no_ext)
 
-    def _prepare_thumbnail(self, im):
+    @staticmethod
+    def _prepare_thumbnail(im):
         im.thumbnail((100, 100), Image.ANTIALIAS)
         buffer = BytesIO()
         im = im.convert('RGB')

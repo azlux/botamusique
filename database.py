@@ -194,7 +194,7 @@ class Condition:
 
 
 SETTING_DB_VERSION = 2
-MUSIC_DB_VERSION = 2
+MUSIC_DB_VERSION = 3
 
 
 class SettingsDatabase:
@@ -503,7 +503,8 @@ class DatabaseMigration:
         self.settings_table_migrate_func = {0: self.settings_table_migrate_from_0_to_1,
                                             1: self.settings_table_migrate_from_1_to_2}
         self.music_table_migrate_func = {0: self.music_table_migrate_from_0_to_1,
-                                         1: self.music_table_migrate_from_1_to_2}
+                                         1: self.music_table_migrate_from_1_to_2,
+                                         2: self.music_table_migrate_from_2_to_3}
 
     def migrate(self):
         self.settings_database_migrate()
@@ -564,7 +565,7 @@ class DatabaseMigration:
 
         else:
             log.info(f"database: no music table found. Creating music table version {MUSIC_DB_VERSION}.")
-            self.create_music_table_version_2(conn)
+            self.create_music_table_version_3(conn)
 
         conn.commit()
         conn.close()
@@ -607,7 +608,7 @@ class DatabaseMigration:
 
         conn.commit()
 
-    def create_music_table_version_2(self, conn):
+    def create_music_table_version_3(self, conn):
         self.create_music_table_version_1(conn)
 
     def settings_table_migrate_from_0_to_1(self, conn):
@@ -669,3 +670,14 @@ class DatabaseMigration:
         conn.commit()
 
         return 2  # return new version number
+
+    def music_table_migrate_from_2_to_3(self, conn):
+        items_to_update = self.music_db.query_music(Condition(), conn)
+        for item in items_to_update:
+            if 'duration' not in item:
+                item['duration'] = 0
+
+            self.music_db.insert_music(item)
+        conn.commit()
+
+        return 3  # return new version number

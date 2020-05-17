@@ -337,6 +337,22 @@ def youtube_search(query):
         log.error("util: youtube query failed with error:\n %s" % error_traceback)
         return False
 
+
+def get_media_duration(path):
+    command = ("ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+               "-of", "default=noprint_wrappers=1:nokey=1", path)
+    process = sp.Popen(command, stdout=sp.PIPE, stderr=sp.PIPE)
+    stdout, stderr = process.communicate()
+
+    try:
+        if not stderr:
+            return float(stdout)
+        else:
+            return 0
+    except ValueError:
+        return 0
+
+
 class LoggerIOWrapper(io.TextIOWrapper):
     def __init__(self, logger: logging.Logger, logging_level, fallback_io_buffer):
         super().__init__(fallback_io_buffer, write_through=True)
@@ -351,4 +367,3 @@ class LoggerIOWrapper(io.TextIOWrapper):
         else:
             self.logger.log(self.logging_level, text.rstrip())
             super().write(text + "\n")
-

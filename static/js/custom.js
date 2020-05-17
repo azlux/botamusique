@@ -31,6 +31,8 @@ const playlist_table = $("#playlist-table");
 const playlist_empty = $("#playlist-empty");
 const playlist_expand = $(".playlist-expand");
 
+let playlist_items = null;
+
 let playlist_ver = 0;
 let playlist_current_index = 0;
 
@@ -69,6 +71,7 @@ function request(_url, _data, refresh = false) {
                     checkForPlaylistUpdate();
                 }
                 updateControls(data.empty, data.play, data.mode, data.volume);
+                updatePlayerPlayhead(data.playhead);
             }
         },
     });
@@ -119,6 +122,7 @@ function displayPlaylist(data) {
         playlist_loading.hide();
         $(".playlist-item").remove();
         let items = data.items;
+        playlist_items = items;
         let length = data.length;
         let start_from = data.start_from;
         playlist_range_from = start_from;
@@ -149,6 +153,7 @@ function displayPlaylist(data) {
         }
 
         displayActiveItem(data.current_index);
+        updatePlayerInfo(items[data.current_index]);
         bindPlaylistEvent();
         playlist_table.animate({ opacity: 1 }, 200);
     });
@@ -221,17 +226,22 @@ function checkForPlaylistUpdate() {
                     updatePlaylist();
                 }
                 if (data.current_index !== playlist_current_index) {
-                    if ((data.current_index > playlist_range_to || data.current_index < playlist_range_from)
-                        && data.current_index !== -1) {
-                        playlist_range_from = 0;
-                        playlist_range_to = 0;
-                        updatePlaylist();
-                    } else {
-                        playlist_current_index = data.current_index;
-                        displayActiveItem(data.current_index);
+                    if (data.current_index !== -1) {
+                        if ((data.current_index > playlist_range_to || data.current_index < playlist_range_from)) {
+                            playlist_range_from = 0;
+                            playlist_range_to = 0;
+                            updatePlaylist();
+                        } else {
+                            playlist_current_index = data.current_index;
+                            updatePlayerInfo(playlist_items[data.current_index]);
+                            displayActiveItem(data.current_index);
+                        }
                     }
                 }
                 updateControls(data.empty, data.play, data.mode, data.volume);
+                if (!data.empty){
+                    updatePlayerPlayhead(data.playhead);
+                }
             }
         }
     });
@@ -255,6 +265,7 @@ function bindPlaylistEvent() {
 }
 
 function updateControls(empty, play, mode, volume) {
+    updatePlayerControls(play, empty);
     if (empty) {
         playPauseBtn.prop('disabled', true);
         fastForwardBtn.prop('disabled', true);
@@ -305,9 +316,6 @@ function changePlayMode(mode) {
     request('post', {action: mode});
 }
 
-// Check the version of playlist to see if update is needed.
-setInterval(checkForPlaylistUpdate, 3000);
-
 
 // ----------------------
 // --- THEME SWITCHER ---
@@ -336,7 +344,6 @@ function setPageTheme(theme) {
     else if (theme === "dark")
         document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
 }
-
 
 // ---------------------
 // ------ Browser ------
@@ -844,12 +851,6 @@ function uploadStart(){
     }
 }
 
-function setProgressBar(bar, progress) {
-    let prog_str = Math.floor(progress*100).toString();
-    bar.setAttribute("aria-valuenow", prog_str);
-    bar.style.width = prog_str + "%";
-}
-
 function setUploadError(filename, error){
     let file_progress_item = filesProgressItem[filename];
 
@@ -916,7 +917,8 @@ function uploadNextFile(){
 
     req.upload.addEventListener("progress", function(e){
         if (e.lengthComputable) {
-            setProgressBar(file_progress_item.progress, e.loaded / e.total);
+            let percent = e.loaded / e.total;
+            setProgressBar(file_progress_item.progress, percent, Math.floor(percent) + "%");
         }
     });
 
@@ -949,6 +951,153 @@ function uploadCancel(){
     areYouSureToCancelUploading = !areYouSureToCancelUploading;
 }
 
+// ---------------------
+// ------  Player ------
+// ---------------------
+
+const player = document.getElementById("playerToast");
+const playerArtwork = document.getElementById("playerArtwork");
+const playerArtworkIdle = document.getElementById("playerArtworkIdle");
+const playerTitle = document.getElementById("playerTitle");
+const playerArtist = document.getElementById("playerArtist");
+const playerBar = document.getElementById("playerBar");
+const playerBarBox = document.getElementById("playerBarBox");
+const playerPlayBtn = document.getElementById("playerPlayBtn");
+const playerPauseBtn = document.getElementById("playerPauseBtn");
+const playerSkipBtn = document.getElementById("playerSkipBtn");
+
+let currentPlayingItem = null;
+
+function togglePlayer() {
+    $(player).toast("show");
+}
+
+function playerSetIdle(){
+    playerArtwork.style.display ='none';
+    playerArtworkIdle.style.display ='block';
+    playerTitle.textContent = '-- IDLE --';
+    playerArtist.textContent = '';
+    setProgressBar(playerBar, 0);
+}
+
+function updatePlayerInfo(item){
+    if (!item){
+        playerSetIdle();
+    }
+    playerArtwork.style.display ='block';
+    playerArtworkIdle.style.display ='none';
+    currentPlayingItem = item;
+    playerTitle.textContent = item.title;
+    playerArtist.textContent = item.artist;
+    playerArtwork.setAttribute("src", item.thumbnail);
+
+    if (isOverflown(playerTitle)) {
+        playerTitle.classList.add("scrolling")
+    } else {
+        playerTitle.classList.remove("scrolling")
+    }
+
+    if (isOverflown(playerArtist)) {
+        playerArtist.classList.add("scrolling")
+    } else {
+        playerArtist.classList.remove("scrolling")
+    }
+}
+
+function updatePlayerControls(play, empty) {
+    if (empty) {
+        playerSetIdle();
+        playerPlayBtn.setAttribute("disabled", "");
+        playerPauseBtn.setAttribute("disabled", "");
+        playerSkipBtn.setAttribute("disabled", "");
+    } else {
+        playerPlayBtn.removeAttribute("disabled");
+        playerPauseBtn.removeAttribute("disabled");
+        playerSkipBtn.removeAttribute("disabled");
+    }
+    if (play) {
+        playerPlayBtn.style.display ='none';
+        playerPauseBtn.style.display = 'block';
+    } else {
+        playerPlayBtn.style.display = 'block';
+        playerPauseBtn.style.display = 'none';
+    }
+}
+
+let playhead_timer;
+let player_playhead_position;
+let playhead_dragging = false;
+function updatePlayerPlayhead(playhead){
+    if (!currentPlayingItem || playhead_dragging){
+        return;
+    }
+    if (currentPlayingItem.duration !== 0 || currentPlayingItem.duration < playhead){
+        playerBar.classList.remove("progress-bar-animated");
+        clearInterval(playhead_timer);
+        player_playhead_position = playhead;
+        setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
+        if (playing) {
+            playhead_timer = setInterval(function () {
+                player_playhead_position += 0.1;
+                setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
+            }, 100); // delay in milliseconds
+        }
+    } else {
+        if (playing) {
+            playerBar.classList.add("progress-bar-animated");
+        } else {
+            playerBar.classList.remove("progress-bar-animated");
+        }
+        setProgressBar(playerBar, 1);
+    }
+}
+
+playerBarBox.addEventListener('mousedown', function () {
+    if (currentPlayingItem && currentPlayingItem.duration > 0){
+        playerBarBox.addEventListener('mousemove', playheadDragged);
+        clearInterval(playhead_timer);
+        playhead_dragging = true;
+    }
+});
+playerBarBox.addEventListener('mouseup', function (event) {
+    playerBarBox.removeEventListener('mousemove', playheadDragged);
+    let percent = event.offsetX / playerBarBox.clientWidth;
+    request('post', {move_playhead: percent * currentPlayingItem.duration});
+    playhead_dragging = false;
+});
+
+function playheadDragged(event){
+    let percent = event.offsetX / playerBarBox.clientWidth;
+    setProgressBar(playerBar, percent, secondsToStr(percent * currentPlayingItem.duration));
+}
+
+
+// ---------------------
+// -------  Util -------
+// ---------------------
+
+function isOverflown(element) {
+  return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
+}
+
+function setProgressBar(bar, progress, text="") {
+    let prog_str = (progress*100).toString();
+    bar.setAttribute("aria-valuenow", prog_str);
+    bar.style.width = prog_str + "%";
+    bar.textContent = text;
+}
+
+function secondsToStr(seconds) {
+    seconds = Math.floor(seconds);
+    let mins = Math.floor(seconds / 60);
+    let secs = seconds % 60;
+    return ("00" + mins).slice(-2) + ":" + ("00" + secs).slice(-2);
+}
+
+
 themeInit();
 updateResults();
 $(document).ready(updatePlaylist);
+
+// Check the version of playlist to see if update is needed.
+setInterval(checkForPlaylistUpdate, 3000);
