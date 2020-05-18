@@ -105,16 +105,12 @@ def requires_auth(f):
             if var.config.getboolean("webinterface", "require_auth") and (
                     not auth or not check_auth(auth.username, auth.password)):
                 if auth:
-                    log.warning(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
+                    log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
                 return authenticate()
         if auth_method == 'token':
-            if 'token' in session and 'token' not in request.args:
-                token = session['token']
-                token_user = var.db.get("web_token", token, fallback=None)
-                if token_user is not None:
-                    user = token_user
-                    log.debug(f"web: token validated for the user: {token_user}, from ip {request.remote_addr}.")
-                    return f(*args, **kwargs)
+            if 'user' in session and 'token' not in request.args:
+                user = session['user']
+                return f(*args, **kwargs)
             elif 'token' in request.args:
                 token = request.args.get('token')
                 token_user = var.db.get("web_token", token, fallback=None)
@@ -126,11 +122,12 @@ def requires_auth(f):
                     user_dict['IP'] = request.remote_addr
                     var.db.set("user", user, json.dumps(user_dict))
 
-                    log.info(f"web: new user access, token validated for the user: {token_user}, from ip {request.remote_addr}.")
+                    log.debug(f"web: new user access, token validated for the user: {token_user}, from ip {request.remote_addr}.")
                     session['token'] = token
+                    session['user'] = token_user
                     return f(*args, **kwargs)
 
-            log.info(f"web: bad token from ip {request.remote_addr}.")
+            log.debug(f"web: bad token from ip {request.remote_addr}.")
             abort(403)
 
         return f(*args, **kwargs)
