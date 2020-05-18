@@ -96,51 +96,39 @@ def authenticate():
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        global log
-        auth = request.authorization
-        if var.config.getboolean("webinterface", "require_auth") and (
-                not auth or not check_auth(auth.username, auth.password)):
-            if auth:
-                log.info("web: Failed login attempt, user: %s" % auth.username)
-            return authenticate()
-        return f(*args, **kwargs)
-
-    return decorated
-
-
-def set_cookie_token(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        global log
-        if var.config.getboolean("webinterface", "match_mumble_user"):
-            users = var.db.items('user')
-            if users:
-                for user in users:
-                    tp = json.loads(user[1])
-                    log.info(tp)
-                    if tp['token'] == request.args.get('token'):
-                        t_user = user[0]
-                        log.info(f"web: token validated for the user: {t_user}")
-                        session['user']=t_user
-                        return f(*args, **kwargs)
-                    log.info("web: Bad token used")
-                    abort(403)
-
-        return f(*args, **kwargs)
-    return decorated
-
-
-def requires_token(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
         global log, user
-        if var.config.getboolean("webinterface", "match_mumble_user"):
-            if 'user' in session:
-                log.debug(f"Request done by {session['user']}")
-                user = session['user']
+
+        auth_method = var.config.get("webinterface", "auth_method")
+
+        if auth_method == 'password':
+            auth = request.authorization
+            if var.config.getboolean("webinterface", "require_auth") and (
+                    not auth or not check_auth(auth.username, auth.password)):
+                if auth:
+                    log.warning("web: failed login attempt, user: %s" % auth.username)
+                return authenticate()
+        if auth_method == 'token':
+            if 'token' in session:
+                token = session['token']
+                token_user = var.db.get("web_token", token, fallback=None)
+                if token_user is not None:
+                    user = token_user
+                    log.debug(f"web: token validated for the user: {token_user}")
+                    return f(*args, **kwargs)
             else:
-                abort(403)
+                token = request.args.get('token')
+                token_user = var.db.get("web_token", token, fallback=None)
+                if token_user is not None:
+                    user = token_user
+                    log.info(f"web: new user access, token validated for the user: {token_user}")
+                    session['token'] = token
+                    return f(*args, **kwargs)
+
+            log.info(f"web: bad token used: {token}")
+            abort(403)
+
         return f(*args, **kwargs)
+
     return decorated
 
 
@@ -190,7 +178,6 @@ def get_all_dirs():
 
 @web.route("/", methods=['GET'])
 @requires_auth
-@set_cookie_token
 def index():
     while var.cache.dir_lock.locked():
         time.sleep(0.1)
@@ -205,7 +192,6 @@ def index():
 
 @web.route("/playlist", methods=['GET'])
 @requires_auth
-@requires_token
 def playlist():
     if len(var.playlist) == 0:
         return ('', 204)
@@ -301,7 +287,6 @@ def status():
 
 @web.route("/post", methods=['POST'])
 @requires_auth
-@requires_token
 def post():
     global log
 
@@ -520,7 +505,6 @@ def build_library_query_condition(form):
 
 @web.route("/library", methods=['POST'])
 @requires_auth
-@requires_token
 def library():
     global log
     ITEM_PER_PAGE = 10
@@ -622,8 +606,7 @@ def library():
 
 
 @web.route('/upload', methods=["POST"])
-#@requires_auth missing here ?
-@requires_token
+@requires_auth
 def upload():
     global log
 
@@ -672,6 +655,7 @@ def upload():
 
 
 @web.route('/download', methods=["GET"])
+@requires_auth
 def download():
     global log
 

@@ -928,6 +928,7 @@ function uploadNextFile(){
     form.append('targetdir', uploadTargetDir.value);
 
     req.open('POST', 'upload');
+    req.withCredentials = true;
     req.send(form);
 
     file_progress_item.progress.classList.add("progress-bar-striped");
