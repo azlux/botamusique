@@ -102,8 +102,7 @@ def requires_auth(f):
 
         if auth_method == 'password':
             auth = request.authorization
-            if var.config.getboolean("webinterface", "require_auth") and (
-                    not auth or not check_auth(auth.username, auth.password)):
+            if not auth or not check_auth(auth.username, auth.password):
                 if auth:
                     log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
                 return authenticate()
@@ -127,8 +126,10 @@ def requires_auth(f):
                     session['user'] = token_user
                     return f(*args, **kwargs)
 
-            log.debug(f"web: bad token from ip {request.remote_addr}.")
-            abort(403)
+            log.info(f"web: bad token from ip {request.remote_addr}.")
+            return render_template('need_token.html',
+                                   name=var.config.get('bot','username'),
+                                   command=f"{var.config.get('commands', 'command_symbol')[0]}{var.config.get('commands','requests_webinterface_access')}")
 
         return f(*args, **kwargs)
 

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="UTF-8">
+
+    <title>botamusique web interface</title>
+
+    <link rel="icon" href="static/image/favicon.ico" />
+
+    <link id="pagestyle" rel="stylesheet" href="static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/custom.css">
+</head>
+
+<body>
+    <div class="container mb-5" id="banner">
+        <div class="row">
+            <div class="col-auto">
+                <img src="static/image/logo.png" height="200px">
+            </div>
+            <div class="col my-auto">
+                <h1>botamusique Web Interface</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 800px">
+        <h3>Token from the {{ name }} bot needed.<br />Please send "{{ command }}" to the bot in mumble</h3>
+        <form action="." method="get">
+          <div class="form-group">
+           <label for="token_input">Token</label>
+            <input type="password" class="form-control" id="token_input" name="token">
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+
+
+    <div class="floating-button" style="bottom: 50px;" onclick="switchTheme()">
+        <i class="fas fa-lightbulb" aria-hidden="true"></i>
+    </div>
+
+    <script src="static/js/jquery-3.5.1.min.js"></script>
+    <script src="static/js/popper.min.js"></script>
+    <script src="static/js/bootstrap.min.js"></script>
+    <script src="static/js/fontawesome.all.min.js"></script>
+    <script src="static/js/custom.js"></script>
+</body>
+
+</html>
