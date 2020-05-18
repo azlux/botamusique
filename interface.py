@@ -105,26 +105,32 @@ def requires_auth(f):
             if var.config.getboolean("webinterface", "require_auth") and (
                     not auth or not check_auth(auth.username, auth.password)):
                 if auth:
-                    log.warning("web: failed login attempt, user: %s" % auth.username)
+                    log.warning(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
                 return authenticate()
         if auth_method == 'token':
-            if 'token' in session:
+            if 'token' in session and 'token' not in request.args:
                 token = session['token']
                 token_user = var.db.get("web_token", token, fallback=None)
                 if token_user is not None:
                     user = token_user
-                    log.debug(f"web: token validated for the user: {token_user}")
+                    log.debug(f"web: token validated for the user: {token_user}, from ip {request.remote_addr}.")
                     return f(*args, **kwargs)
-            else:
+            elif 'token' in request.args:
                 token = request.args.get('token')
                 token_user = var.db.get("web_token", token, fallback=None)
                 if token_user is not None:
                     user = token_user
-                    log.info(f"web: new user access, token validated for the user: {token_user}")
+
+                    user_info = var.db.get("user", user, fallback=None)
+                    user_dict = json.loads(user_info)
+                    user_dict['IP'] = request.remote_addr
+                    var.db.set("user", user, json.dumps(user_dict))
+
+                    log.info(f"web: new user access, token validated for the user: {token_user}, from ip {request.remote_addr}.")
                     session['token'] = token
                     return f(*args, **kwargs)
 
-            log.info(f"web: bad token used: {token}")
+            log.info(f"web: bad token used: {token}, from ip {request.remote_addr}.")
             abort(403)
 
         return f(*args, **kwargs)

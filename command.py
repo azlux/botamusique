@@ -1191,7 +1191,8 @@ def cmd_web_access(bot, user, text, command, parameter):
     else:
         token = secrets.token_urlsafe(5)
         var.db.set("web_token", token, user)
-        var.db.set("user", user, json.dumps({'token': token, 'datetime': str(datetime.datetime.now()), 'IP': ''}))
+
+    var.db.set("user", user, json.dumps({'token': token, 'datetime': str(datetime.datetime.now()), 'IP': ''}))
 
     access_address = var.config.get("webinterface", "access_address")
     bot.send_msg(constants.strings('webpage_token', address=access_address, token=token), text)
