@@ -130,7 +130,7 @@ def requires_auth(f):
                     session['token'] = token
                     return f(*args, **kwargs)
 
-            log.info(f"web: bad token used: {token}, from ip {request.remote_addr}.")
+            log.info(f"web: bad token from ip {request.remote_addr}.")
             abort(403)
 
         return f(*args, **kwargs)
