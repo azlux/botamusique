@@ -93,10 +93,17 @@ def authenticate():
                     {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
 
+bad_access_count = {}
+banned_ip = []
+
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        global log, user
+        global log, user, bad_access_count, banned_ip
+
+        if request.remote_addr in banned_ip:
+            abort(403)
 
         auth_method = var.config.get("webinterface", "auth_method")
 
@@ -104,7 +111,17 @@ def requires_auth(f):
             auth = request.authorization
             if not auth or not check_auth(auth.username, auth.password):
                 if auth:
-                    log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
+                    if request.remote_addr in bad_access_count:
+                        bad_access_count[request.remote_addr] += 1
+                        log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}."
+                                 f"{bad_access_count[request.remote_addr]} attempts.")
+                        if bad_access_count[request.remote_addr] > var.config.getint("webinterface", "max_attempts",
+                                                                                     fallback=10):
+                            banned_ip.append(request.remote_addr)
+                            log.info(f"web: access banned for {request.remote_addr}")
+                    else:
+                        bad_access_count[request.remote_addr] = 1
+                        log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
                 return authenticate()
         if auth_method == 'token':
             if 'user' in session and 'token' not in request.args:
@@ -121,15 +138,26 @@ def requires_auth(f):
                     user_dict['IP'] = request.remote_addr
                     var.db.set("user", user, json.dumps(user_dict))
 
-                    log.debug(f"web: new user access, token validated for the user: {token_user}, from ip {request.remote_addr}.")
+                    log.debug(
+                        f"web: new user access, token validated for the user: {token_user}, from ip {request.remote_addr}.")
                     session['token'] = token
                     session['user'] = token_user
                     return f(*args, **kwargs)
 
-            log.info(f"web: bad token from ip {request.remote_addr}.")
+            if request.remote_addr in bad_access_count:
+                bad_access_count[request.remote_addr] += 1
+                log.info(f"web: bad token from ip {request.remote_addr}, "
+                         f"{bad_access_count[request.remote_addr]} attempts.")
+                if bad_access_count[request.remote_addr] > var.config.getint("webinterface", "max_attempts", fallback=10):
+                    banned_ip.append(request.remote_addr)
+                    log.info(f"web: access banned for {request.remote_addr}")
+            else:
+                bad_access_count[request.remote_addr] = 1
+                log.info(f"web: bad token from ip {request.remote_addr}.")
+
             return render_template('need_token.html',
-                                   name=var.config.get('bot','username'),
-                                   command=f"{var.config.get('commands', 'command_symbol')[0]}{var.config.get('commands','requests_webinterface_access')}")
+                                   name=var.config.get('bot', 'username'),
+                                   command=f"{var.config.get('commands', 'command_symbol')[0]}{var.config.get('commands', 'requests_webinterface_access')}")
 
         return f(*args, **kwargs)
 

@@ -72,11 +72,14 @@ function request(_url, _data, refresh = false) {
                 }
                 updateControls(data.empty, data.play, data.mode, data.volume);
                 updatePlayerPlayhead(data.playhead);
+            },
+            403: function (){
+                location.reload(true);
             }
         },
     });
     if (refresh) {
-        location.reload()
+        location.reload(true)
     }
 }
 
@@ -541,6 +544,9 @@ function updateResults(dest_page = 1) {
                     lib_loading.hide();
                     lib_empty.show();
                     page_ul.empty();
+                },
+                403: function () {
+                    location.reload(true);
                 }
             }
         });

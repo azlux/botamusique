@@ -6,6 +6,7 @@ import pymumble_py3 as pymumble
 import re
 
 import constants
+import interface
 import media.system
 import util
 import variables as var
@@ -1181,18 +1182,28 @@ def cmd_web_access(bot, user, text, command, parameter):
     import datetime
     import json
 
-    user_info = var.db.get("user", user, fallback=None)
-    if user_info is not None:
-        user_dict = json.loads(user_info)
-        token = user_dict['token']
+    auth_method = var.config.get("webinterface", "auth_method")
+
+    if auth_method == 'token':
+        interface.banned_ip = []
+        interface.bad_access_count = {}
+
+        user_info = var.db.get("user", user, fallback=None)
+        if user_info is not None:
+            user_dict = json.loads(user_info)
+            token = user_dict['token']
+        else:
+            token = secrets.token_urlsafe(5)
+            var.db.set("web_token", token, user)
+
+        var.db.set("user", user, json.dumps({'token': token, 'datetime': str(datetime.datetime.now()), 'IP': ''}))
+
+        access_address = var.config.get("webinterface", "access_address") + "/?token=" + token
     else:
-        token = secrets.token_urlsafe(5)
-        var.db.set("web_token", token, user)
+        access_address = var.config.get("webinterface", "access_address")
 
-    var.db.set("user", user, json.dumps({'token': token, 'datetime': str(datetime.datetime.now()), 'IP': ''}))
+    bot.send_msg(constants.strings('webpage_address', address=access_address), text)
 
-    access_address = var.config.get("webinterface", "access_address")
-    bot.send_msg(constants.strings('webpage_token', address=access_address, token=token), text)
 
 # Just for debug use
 def cmd_real_time_rms(bot, user, text, command, parameter):
