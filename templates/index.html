@@ -328,8 +328,11 @@
         </div>
 
 {% if upload_enabled %}
-
     <div id="upload" class="container mb-3">
+{% else %}
+    <div id="upload" class="container mb-3" style="display: none;">
+    <input type="hidden" id="uploadDisabled" value="true" />
+{% endif %}
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">Upload File</h5>
@@ -374,8 +377,6 @@
             </div>
         </div>
     </div>
-
-{% endif %}
 
     <div class="container mb-5">
         <div class="card-deck">
