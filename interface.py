@@ -187,10 +187,13 @@ def index():
         time.sleep(0.1)
 
     tags_color_lookup = build_tags_color_lookup()
+    max_upload_file_size = util.parse_file_size(var.config.get("webinterface", "max_upload_file_size", fallback="30MB"))
 
     return render_template('index.html',
                            dirs=get_all_dirs(),
+                           upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True),
                            tags_color_lookup=tags_color_lookup,
+                           max_upload_file_size=max_upload_file_size
                            )
 
 
@@ -613,6 +616,9 @@ def library():
 @requires_auth
 def upload():
     global log
+
+    if not var.config.getboolean("webinterface", "upload_enabled", fallback=True):
+        abort(403)
 
     file = request.files['file']
     if not file:

@@ -199,17 +199,14 @@ def cmd_play(bot, user, text, command, parameter):
             index = int(params[0])
         else:
             bot.send_msg(constants.strings('invalid_index', index=parameter), text)
+            return
 
         if len(params) > 1:
-            _start_at = params[1]
-            match = re.search("(?:(\d\d):)?(?:(\d\d):)?(\d\d(?:\.\d*)?)", _start_at, flags=re.IGNORECASE)
-            if match:
-                if match[1] is None and match[2] is None:
-                    start_at = float(match[3])
-                elif match[2] is None:
-                    start_at = float(match[3]) + 60 * int(match[1])
-                else:
-                    start_at = float(match[3]) + 60 * int(match[2]) + 3600 * int(match[2])
+            try:
+                start_at = util.parse_time(params[1])
+            except ValueError:
+                bot.send_msg(constants.strings('bad_parameter', command=command), text)
+                return
 
     if len(var.playlist) > 0:
         if index != -1:

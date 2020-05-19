@@ -327,7 +327,7 @@
             </div>
         </div>
 
-
+{% if upload_enabled %}
 
     <div id="upload" class="container mb-3">
         <div class="card">
@@ -374,6 +374,8 @@
             </div>
         </div>
     </div>
+
+{% endif %}
 
     <div class="container mb-5">
         <div class="card-deck">
@@ -543,7 +545,7 @@
         </div>
     </div>
 
-    <input type="hidden" id="maxUploadFileSize" value="31457280" />
+    <input type="hidden" id="maxUploadFileSize" value="{{ max_upload_file_size }}" />
 
     <script src="static/js/jquery-3.5.1.min.js"></script>
     <script src="static/js/popper.min.js"></script>

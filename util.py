@@ -353,6 +353,32 @@ def get_media_duration(path):
         return 0
 
 
+def parse_time(human):
+    match = re.search("(?:(\d\d):)?(?:(\d\d):)?(\d\d(?:\.\d*)?)", human, flags=re.IGNORECASE)
+    if match:
+        if match[1] is None and match[2] is None:
+            return float(match[3])
+        elif match[2] is None:
+            return float(match[3]) + 60 * int(match[1])
+        else:
+            return float(match[3]) + 60 * int(match[2]) + 3600 * int(match[2])
+    else:
+        raise ValueError("Invalid time string given.")
+
+
+def parse_file_size(human):
+    units = {"B": 1, "KB": 1024, "MB": 1024*1024, "GB": 1024*1024*1024, "TB": 1024*1024*1024*1024,
+             "K": 1024, "M": 1024*1024, "G": 1024*1024*1024, "T": 1024*1024*1024*1024}
+    match = re.search("(\d+(?:\.\d*)?)\s*([A-Za-z]+)", human, flags=re.IGNORECASE)
+    if match:
+        num = float(match[1])
+        unit = match[2].upper()
+        if unit in units:
+            return int(num * units[unit])
+
+    raise ValueError("Invalid file size given.")
+
+
 class LoggerIOWrapper(io.TextIOWrapper):
     def __init__(self, logger: logging.Logger, logging_level, fallback_io_buffer):
         super().__init__(fallback_io_buffer, write_through=True)
