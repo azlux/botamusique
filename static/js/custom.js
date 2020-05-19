@@ -156,7 +156,7 @@ function displayPlaylist(data) {
         }
 
         displayActiveItem(data.current_index);
-        updatePlayerInfo(items[data.current_index]);
+        updatePlayerInfo(items[data.current_index - data.start_from]);
         bindPlaylistEvent();
         playlist_table.animate({ opacity: 1 }, 200);
     });
@@ -925,7 +925,7 @@ function uploadNextFile(){
     req.upload.addEventListener("progress", function(e){
         if (e.lengthComputable) {
             let percent = e.loaded / e.total;
-            setProgressBar(file_progress_item.progress, percent, Math.floor(percent) + "%");
+            setProgressBar(file_progress_item.progress, percent, Math.floor(percent*100) + "%");
         }
     });
 
