@@ -236,7 +236,7 @@ function checkForPlaylistUpdate() {
                             updatePlaylist();
                         } else {
                             playlist_current_index = data.current_index;
-                            updatePlayerInfo(playlist_items[data.current_index]);
+                            updatePlayerInfo(playlist_items[data.current_index - data.start_from]);
                             displayActiveItem(data.current_index);
                         }
                     }
