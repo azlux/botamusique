@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="UTF-8">
+
+    <title>botamusique web interface</title>
+
+    <link rel="icon" href="web/build/assets/image/favicon.ico" />
+
+    <link id="pagestyle" rel="stylesheet" href="web/build/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="web/build/assets/css/main.css">
+</head>
+
+<body>
+    <div class="container" style="max-width: 800px">
+        <div class="col-8" style="margin: auto; padding-top: 50px;">
+            <div class="card">
+                <div class="card-header">
+                    Token Required
+                </div>
+                <div class="card-body">
+                    <h3>Token Required!</h3>
+                    You are accessing the web interface of {{ name }}.
+                    A token is needed to grant you access.<br />
+                    Please send "{{ command }}" to the bot in mumble to acquire one.
+                    <form action="." method="get">
+                        <div class="form-group mt-3">
+                            <label for="token_input">Token</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control btn-space" id="token_input" name="token"
+                                       placeholder="xxxxxxx">
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="web/build/assets/js/jquery-3.5.1.min.js"></script>
+    <script src="web/build/assets/js/popper.min.js"></script>
+    <script src="web/build/assets/js/bootstrap.min.js"></script>
+    <script src="web/build/assets/js/fontawesome.all.min.js"></script>
+</body>
+
+</html>
