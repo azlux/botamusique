@@ -10,7 +10,7 @@ module.exports = {
     ],
   },
   output: {
-    filename: 'assets/js/[name].js',
+    filename: 'static/js/[name].js',
     path: path.resolve(__dirname, '../'),
     //ecmaVersion: 5,
   },
