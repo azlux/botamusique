@@ -19,13 +19,11 @@ module.exports = {
       filename: 'assets/css/[name].css',
     }),
     new HtmlWebpackPlugin({
-      title: 'botamusique',
       filename: 'templates/index.html',
       template: './src/templates/index.html',
       inject: false,
     }),
     new HtmlWebpackPlugin({
-      title: 'botamusique - Needs Auth',
       filename: 'templates/need_token.html',
       template: './src/templates/need_token.html',
       inject: false,
