@@ -125,7 +125,10 @@ function displayPlaylist(data) {
         playlist_loading.hide();
         $(".playlist-item").remove();
         let items = data.items;
-        playlist_items = items;
+        playlist_items = {};
+        for (let i in items){
+            playlist_items[items[i].index] = items[i]
+        }
         let length = data.length;
         let start_from = data.start_from;
         playlist_range_from = start_from;
@@ -156,7 +159,7 @@ function displayPlaylist(data) {
         }
 
         displayActiveItem(data.current_index);
-        updatePlayerInfo(items[data.current_index - data.start_from]);
+        updatePlayerInfo(playlist_items[data.current_index]);
         bindPlaylistEvent();
         playlist_table.animate({ opacity: 1 }, 200);
     });
@@ -236,7 +239,7 @@ function checkForPlaylistUpdate() {
                             updatePlaylist();
                         } else {
                             playlist_current_index = data.current_index;
-                            updatePlayerInfo(playlist_items[data.current_index - data.start_from]);
+                            updatePlayerInfo(playlist_items[data.current_index]);
                             displayActiveItem(data.current_index);
                         }
                     }
