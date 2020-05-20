@@ -6,16 +6,16 @@
 
     <title>botamusique web interface</title>
 
-    <link rel="icon" href="assets/img/favicon.ico" />
+    <link rel="icon" href="static/img/favicon.ico" />
 
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="static/css/main.css">
 </head>
 
 <body>
     <div class="container page-header mb-5" id="banner">
         <div class="row">
             <div class="col-auto">
-                <img src="assets/img/logo.png" height="200px">
+                <img src="static/img/logo.png" height="200px">
             </div>
             <div class="col my-auto">
                 <h1>botamusique Web Interface</h1>
@@ -88,12 +88,12 @@
                 <tbody id="playlist-table" class="playlist-table">
                     <tr id="playlist-loading">
                         <td colspan="4" class="text-center">
-                            <img style="margin: auto; width: 35px;" src="assets/img/loading.svg" />
+                            <img style="margin: auto; width: 35px;" src="static/img/loading.svg" />
                         </td>
                     </tr>
                     <tr id="playlist-empty" class="d-none">
                         <td colspan="4" class="text-center">
-                            <img style="margin: auto; width: 35px;" src="assets/img/empty_box.svg" />
+                            <img style="margin: auto; width: 35px;" src="static/img/empty_box.svg" />
                         </td>
                     </tr>
                     <tr class="playlist-expand table-dark d-none">
@@ -108,7 +108,7 @@
                         <td>
                             <input hidden type="text" class="playlist-item-id" value="" />
                             <div class="float-left">
-                                <img width="80" class="playlist-item-thumbnail" src="assets/img/unknown-album.png" />
+                                <img width="80" class="playlist-item-thumbnail" src="static/img/unknown-album.png" />
                             </div>
                             <div class="playlist-artwork">
                                 <b class="playlist-item-title"></b>
@@ -207,10 +207,10 @@
             <div class="card-body">
                 <div id="library-group" class="list-group library-group" style="overflow: auto;">
                     <div id="library-item-loading" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="assets/img/loading.svg" />
+                        <img style="margin: auto; width: 35px;" src="static/img/loading.svg" />
                     </div>
                     <div id="library-item-empty" style="display: none" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="assets/img/empty_box.svg" />
+                        <img style="margin: auto; width: 35px;" src="static/img/empty_box.svg" />
                     </div>
                     <div id="library-item" style="display: none;" class="list-group-item library-item">
                         <input hidden type="text" class="library-item-id" value="" />
@@ -218,7 +218,7 @@
                         <div class="library-thumb-col">
                             <div class="library-thumb-img">
                                 <img class="library-item-thumb library-thumb-img"
-                                    src="assets/img/unknown-album.png" />
+                                    src="static/img/unknown-album.png" />
                             </div>
                             <div class="btn-group-vertical library-thumb-grp">
                                 <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
@@ -251,10 +251,10 @@
 
     <div id="library-group" class="list-group library-group" style="overflow: auto;">
         <div id="library-item-loading" class="list-group-item library-item">
-            <img style="margin: auto; width: 35px;" src="assets/img/loading.svg" />
+            <img style="margin: auto; width: 35px;" src="static/img/loading.svg" />
         </div>
         <div id="library-item-empty" style="display: none" class="list-group-item library-item">
-            <img style="margin: auto; width: 35px;" src="assets/img/empty_box.svg" />
+            <img style="margin: auto; width: 35px;" src="static/img/empty_box.svg" />
         </div>
         <div id="library-item" style="display: none;" class="list-group-item library-item">
             <input hidden type="text" class="library-item-id" value="" />
@@ -456,8 +456,8 @@
                 </button>
             </div>
             <div class="toast-body" id="playerContainer">
-                <img id="playerArtworkIdle" src="assets/img/empty_box.svg" />
-                <img id="playerArtwork" src="assets/img/unknown-album.png" style="display: none;" />
+                <img id="playerArtworkIdle" src="static/img/empty_box.svg" />
+                <img id="playerArtwork" src="static/img/unknown-album.png" style="display: none;" />
                 <div id="playerInfo">
                     <div id="playerActionBox">
                         <button id="playerPlayBtn" class="btn btn-primary btn-sm btn-space" style="display: none"
@@ -574,7 +574,7 @@
 
         <input type="hidden" id="maxUploadFileSize" value="{{ max_upload_file_size }}" />
 
-        <script src="assets/js/main.js"></script>
+        <script src="static/js/main.js"></script>
 </body>
 
 </html>
