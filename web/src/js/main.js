@@ -344,9 +344,9 @@ function switchTheme() {
 function setPageTheme(theme) {
     return;
     if (theme === "light")
-        document.getElementById("pagestyle").setAttribute("href", "web/build/assets/css/bootstrap.min.css");
+        document.getElementById("pagestyle").setAttribute("href", "assets/css/bootstrap.min.css");
     else if (theme === "dark")
-        document.getElementById("pagestyle").setAttribute("href", "web/build/assets/css/bootstrap.darkly.min.css");
+        document.getElementById("pagestyle").setAttribute("href", "assets/css/bootstrap.darkly.min.css");
 }
 
 // ---------------------

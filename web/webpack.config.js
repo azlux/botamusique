@@ -11,12 +11,12 @@ module.exports = {
   },
   output: {
     filename: 'assets/js/[name].js',
-    path: path.resolve(__dirname, 'build/'),
+    path: path.resolve(__dirname, '../'),
     //ecmaVersion: 5,
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: 'assets/css/[name].css',
+      filename: 'static/css/[name].css',
     }),
     new HtmlWebpackPlugin({
       filename: 'templates/index.html',

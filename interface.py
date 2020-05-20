@@ -63,7 +63,7 @@ class ReverseProxied(object):
         return self.app(environ, start_response)
 
 
-web = Flask(__name__, static_folder="web/build/assets", template_folder="web/build/templates")
+web = Flask(__name__)
 web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'webuser'
