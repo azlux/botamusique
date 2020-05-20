@@ -1,0 +1,42 @@
+{
+  "name": "botamusique",
+  "private": true,
+  "scripts": {
+    "dev": "npm run development",
+    "development": "webpack --mode=development --config webpack.config.js --progress",
+    "prod": "npm run production",
+    "production": "webpack --mode=production --config webpack.config.js --progress",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/azlux/botamusique.git"
+  },
+  "author": "azlux",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/azlux/botamusique/issues"
+  },
+  "homepage": "https://github.com/azlux/botamusique#readme",
+  "devDependencies": {
+    "@babel/core": "^7.9.6",
+    "@babel/preset-env": "^7.9.6",
+    "babel-loader": "^8.1.0",
+    "core-js": "^3.6.5",
+    "css-loader": "^3.5.3",
+    "html-webpack-plugin": "^4.3.0",
+    "mini-css-extract-plugin": "^0.9.0",
+    "regenerator-runtime": "^0.13.5",
+    "sass": "^1.26.5",
+    "sass-loader": "^8.0.2",
+    "style-loader": "^1.2.1",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11"
+  },
+  "dependencies": {
+    "bootstrap": "^4.5.0",
+    "jquery": "^3.5.1",
+    "jquery-migrate": "^3.3.0",
+    "popper.js": "^1.16.1"
+  }
+}

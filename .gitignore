@@ -118,3 +118,6 @@ tmp/
 
 # Pycharm
 .idea/
+
+# Web
+node_modules/
