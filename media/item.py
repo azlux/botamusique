@@ -82,7 +82,7 @@ class BaseItem:
 
     def add_tags(self, tags):
         for tag in tags:
-            if tag not in self.tags:
+            if tag and tag not in self.tags:
                 self.tags.append(tag)
                 self.version += 1
 

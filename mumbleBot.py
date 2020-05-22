@@ -66,6 +66,8 @@ class MumbleBot:
         self.read_pcm_size = 0
         # self.download_threads = []
         self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
+        self.on_killing = threading.Lock()  # lock to acquire when killing ffmpeg thread is asked but ffmpeg is not
+                                            # killed yet
 
         if var.config.getboolean("bot", "auto_check_update"):
             th = threading.Thread(target=self.check_update, name="UpdateThread")
@@ -156,20 +158,21 @@ class MumbleBot:
 
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
-
         self.log.info(
             "\nSIGINT caught, quitting, {} more to kill".format(2 - self.nb_exit))
-        self.exit = True
-        self.pause()
-        if self.nb_exit > 1:
-            self.log.info("Forced Quit")
-            sys.exit(0)
-        self.nb_exit += 1
 
         if var.config.getboolean('bot', 'save_playlist', fallback=True) \
                 and var.config.get("bot", "save_music_library", fallback=True):
             self.log.info("bot: save playlist into database")
             var.playlist.save()
+
+        if self.nb_exit > 1:
+            self.log.info("Forced Quit")
+            sys.exit(0)
+        self.nb_exit += 1
+
+        self.pause()
+        self.exit = True
 
     def check_update(self):
         self.log.debug("update: checking for updates...")
@@ -336,6 +339,9 @@ class MumbleBot:
     # =======================
 
     def launch_music(self, music_wrapper, start_from=0):
+        self.on_killing.acquire()
+        self.on_killing.release()
+
         assert music_wrapper.is_ready()
 
         uri = music_wrapper.uri()
@@ -527,6 +533,8 @@ class MumbleBot:
         if delta > 0.001:
             if self.is_ducking and self.on_ducking:
                 self.volume = (self.volume - self.ducking_volume) * math.exp(- delta / 0.2) + self.ducking_volume
+            elif self.on_killing.locked():
+                self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.05)
             else:
                 self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.5)
 
@@ -582,19 +590,26 @@ class MumbleBot:
 
     def interrupt(self):
         # Kill the ffmpeg thread
-        if self.thread:
-            self.thread.kill()
-            self.thread = None
-        self.song_start_at = -1
-        self.read_pcm_size = 0
-        self.playhead = 0
+        if not self.on_killing.locked():
+            self.on_killing.acquire()
+            if self.thread:
+                volume_set = self.volume_set
+                self.volume_set = 0
+
+                while self.volume > 0.01:  # Waiting for volume_cycle to gradually tune volume to 0.
+                    time.sleep(0.01)
+
+                self.thread.kill()
+                self.thread = None
+                self.volume_set = volume_set
+            self.on_killing.release()
+
+            self.song_start_at = -1
+            self.read_pcm_size = 0
 
     def pause(self):
         # Kill the ffmpeg thread
-        if self.thread:
-            self.pause_at_id = var.playlist.current_item().id
-            self.thread.kill()
-            self.thread = None
+        self.interrupt()
         self.is_pause = True
         self.song_start_at = -1
         self.log.info("bot: music paused at %.2f seconds." % self.playhead)
