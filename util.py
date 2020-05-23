@@ -16,7 +16,7 @@ import youtube_dl
 from importlib import reload
 from sys import platform
 import traceback
-import urllib.request
+import requests
 from packaging import version
 
 log = logging.getLogger("bot")
@@ -101,8 +101,15 @@ def get_user_ban():
 
 
 def new_release_version():
-    v = urllib.request.urlopen(urllib.request.Request("https://packages.azlux.fr/botamusique/version")).read()
-    return v.rstrip().decode()
+    r = requests.get("https://packages.azlux.fr/botamusique/version")
+    v = r.text
+    return v.rstrip()
+
+
+def fetch_changelog():
+    r = requests.get("https://packages.azlux.fr/botamusique/changelog")
+    c = r.text
+    return c
 
 
 def update(current_version):

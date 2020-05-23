@@ -67,12 +67,7 @@ class MumbleBot:
         # self.download_threads = []
         self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
         self.on_killing = threading.Lock()  # lock to acquire when killing ffmpeg thread is asked but ffmpeg is not
-                                            # killed yet
-
-        if var.config.getboolean("bot", "auto_check_update"):
-            th = threading.Thread(target=self.check_update, name="UpdateThread")
-            th.daemon = True
-            th.start()
+        # killed yet
 
         if args.host:
             host = args.host
@@ -131,7 +126,7 @@ class MumbleBot:
         self.ducking_release = time.time()
         self.last_volume_cycle_time = time.time()
 
-        if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking", fallback=False)\
+        if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking", fallback=False) \
                 or var.config.getboolean("bot", "ducking"):
             self.is_ducking = True
             self.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
@@ -156,6 +151,17 @@ class MumbleBot:
 
         self.redirect_ffmpeg_log = var.config.getboolean('debug', 'redirect_ffmpeg_log', fallback=True)
 
+        if var.config.getboolean("bot", "auto_check_update"):
+            th = threading.Thread(target=self.check_update, name="UpdateThread")
+            th.daemon = True
+            th.start()
+
+        last_startup_version = var.db.get("bot", "version", fallback=None)
+        if not last_startup_version or version.parse(last_startup_version) < version.parse(self.version):
+            var.db.set("bot", "version", self.version)
+            changelog = util.fetch_changelog().replace("\n", "<br>")
+            self.send_channel_msg(constants.strings("update_successful", version=self.version, changelog=changelog))
+
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
         self.log.info(
@@ -178,8 +184,11 @@ class MumbleBot:
         self.log.debug("update: checking for updates...")
         new_version = util.new_release_version()
         if version.parse(new_version) > version.parse(self.version):
+            changelog = util.fetch_changelog()
             self.log.info("update: new version %s found, current installed version %s." % (new_version, self.version))
-            self.send_channel_msg(constants.strings('new_version_found'))
+            self.log.info("update: changelog: " + changelog)
+            changelog = changelog.replace("\n", "<br>")
+            self.send_channel_msg(constants.strings('new_version_found', new_version=new_version, changelog=changelog))
         else:
             self.log.debug("update: no new version found.")
 
@@ -475,7 +484,7 @@ class MumbleBot:
                     var.cache.free_and_delete(current.id)
 
                 # move to the next song.
-                if not self.wait_for_ready: # if wait_for_ready flag is not true, move to the next song.
+                if not self.wait_for_ready:  # if wait_for_ready flag is not true, move to the next song.
                     if var.playlist.next():
                         current = var.playlist.current_item()
                         try:
@@ -545,10 +554,10 @@ class MumbleBot:
         self._max_rms = max(rms, self._max_rms)
         if self._display_rms:
             if rms < self.ducking_threshold:
-                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(rms/200), end='\r')
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-' * int(rms / 200), end='\r')
             else:
-                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(self.ducking_threshold/200)
-                      + '+'*int((rms - self.ducking_threshold)/200), end='\r')
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-' * int(self.ducking_threshold / 200)
+                      + '+' * int((rms - self.ducking_threshold) / 200), end='\r')
 
         if rms > self.ducking_threshold:
             if self.on_ducking is False:
@@ -795,4 +804,3 @@ if __name__ == '__main__':
 
     # Start the main loop.
     var.bot.loop()
-
