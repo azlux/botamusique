@@ -386,6 +386,20 @@ def parse_file_size(human):
     raise ValueError("Invalid file size given.")
 
 
+def get_salted_password_hash(password):
+    salt = os.urandom(10)
+    hashed = hashlib.pbkdf2_hmac('sha1', password.encode("utf-8"), salt, 100000)
+
+    return hashed.hex(), salt.hex()
+
+
+def verify_password(password, salted_hash, salt):
+    hashed = hashlib.pbkdf2_hmac('sha1', password.encode("utf-8"), bytearray.fromhex(salt), 100000)
+    if hashed.hex() == salted_hash:
+        return True
+    return False
+
+
 class LoggerIOWrapper(io.TextIOWrapper):
     def __init__(self, logger: logging.Logger, logging_level, fallback_io_buffer):
         super().__init__(fallback_io_buffer, write_through=True)

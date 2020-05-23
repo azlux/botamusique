@@ -192,14 +192,15 @@ class MumbleBot:
         else:
             self.log.debug("update: no new version found.")
 
-    def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False):
+    def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False, admin=False):
         cmds = cmd.split(",")
         for command in cmds:
             command = command.strip()
             if command:
                 self.cmd_handle[command] = {'handle': handle,
                                             'partial_match': not no_partial_match,
-                                            'access_outside_channel': access_outside_channel}
+                                            'access_outside_channel': access_outside_channel,
+                                            'admin': admin}
                 self.log.debug("bot: command added: " + command)
 
     def set_comment(self):
@@ -286,6 +287,10 @@ class MumbleBot:
                         self.mumble.users[text.actor].send_text_message(
                             constants.strings('bad_command', command=command))
                         return
+
+                if self.cmd_handle[command_exc]['admin'] and not self.is_admin(user):
+                    self.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
+                    return
 
                 if not self.cmd_handle[command_exc]['access_outside_channel'] \
                         and not self.is_admin(user) \

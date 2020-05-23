@@ -1,9 +1,10 @@
 # coding=utf-8
 import logging
-import math
-
-import pymumble_py3 as pymumble
+import secrets
+import datetime
+import json
 import re
+import pymumble_py3 as pymumble
 
 import constants
 import interface
@@ -21,12 +22,12 @@ log = logging.getLogger("bot")
 
 
 def register_all_commands(bot):
-    bot.register_command(constants.commands('joinme'), cmd_joinme, no_partial_match=False, access_outside_channel=True)
-    bot.register_command(constants.commands('user_ban'), cmd_user_ban, no_partial_match=True)
-    bot.register_command(constants.commands('user_unban'), cmd_user_unban, no_partial_match=True)
-    bot.register_command(constants.commands('url_ban_list'), cmd_url_ban_list, no_partial_match=True)
-    bot.register_command(constants.commands('url_ban'), cmd_url_ban, no_partial_match=True)
-    bot.register_command(constants.commands('url_unban'), cmd_url_unban, no_partial_match=True)
+    bot.register_command(constants.commands('joinme'), cmd_joinme, access_outside_channel=True)
+    bot.register_command(constants.commands('user_ban'), cmd_user_ban, no_partial_match=True, admin=True)
+    bot.register_command(constants.commands('user_unban'), cmd_user_unban, no_partial_match=True, admin=True)
+    bot.register_command(constants.commands('url_ban_list'), cmd_url_ban_list, no_partial_match=True, admin=True)
+    bot.register_command(constants.commands('url_ban'), cmd_url_ban, no_partial_match=True, admin=True)
+    bot.register_command(constants.commands('url_unban'), cmd_url_unban, no_partial_match=True, admin=True)
     bot.register_command(constants.commands('play'), cmd_play)
     bot.register_command(constants.commands('pause'), cmd_pause)
     bot.register_command(constants.commands('play_file'), cmd_play_file)
@@ -42,8 +43,8 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('help'), cmd_help, no_partial_match=False, access_outside_channel=True)
     bot.register_command(constants.commands('stop'), cmd_stop)
     bot.register_command(constants.commands('clear'), cmd_clear)
-    bot.register_command(constants.commands('kill'), cmd_kill)
-    bot.register_command(constants.commands('update'), cmd_update, no_partial_match=True)
+    bot.register_command(constants.commands('kill'), cmd_kill, admin=True)
+    bot.register_command(constants.commands('update'), cmd_update, no_partial_match=True, admin=True)
     bot.register_command(constants.commands('stop_and_getout'), cmd_stop_and_getout)
     bot.register_command(constants.commands('volume'), cmd_volume)
     bot.register_command(constants.commands('ducking'), cmd_ducking)
@@ -64,9 +65,13 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('search'), cmd_search_library)
     bot.register_command(constants.commands('add_from_shortlist'), cmd_shortlist)
     bot.register_command(constants.commands('delete_from_library'), cmd_delete_from_library)
-    bot.register_command(constants.commands('drop_database'), cmd_drop_database, no_partial_match=True)
+    bot.register_command(constants.commands('drop_database'), cmd_drop_database, no_partial_match=True, admin=True)
     bot.register_command(constants.commands('rescan'), cmd_refresh_cache, no_partial_match=True)
     bot.register_command(constants.commands('requests_webinterface_access'), cmd_web_access)
+    bot.register_command(constants.commands('add_webinterface_user'), cmd_web_user_add, admin=True)
+    bot.register_command(constants.commands('remove_webinterface_user'), cmd_web_user_remove, admin=True)
+    bot.register_command(constants.commands('list_webinterface_user'), cmd_web_user_list, admin=True)
+    bot.register_command(constants.commands('change_user_password'), cmd_user_password)
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
     #bot.register_command('loop', cmd_loop_state, True)
@@ -126,67 +131,47 @@ def cmd_joinme(bot, user, text, command, parameter):
 def cmd_user_ban(bot, user, text, command, parameter):
     global log
 
-    if bot.is_admin(user):
-        if parameter:
-            bot.mumble.users[text.actor].send_text_message(util.user_ban(parameter))
-        else:
-            bot.mumble.users[text.actor].send_text_message(util.get_user_ban())
+    if parameter:
+        bot.mumble.users[text.actor].send_text_message(util.user_ban(parameter))
     else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
-    return
+        bot.mumble.users[text.actor].send_text_message(util.get_user_ban())
 
 
 def cmd_user_unban(bot, user, text, command, parameter):
     global log
 
-    if bot.is_admin(user):
-        if parameter:
-            bot.mumble.users[text.actor].send_text_message(util.user_unban(parameter))
-    else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
-    return
+    if parameter:
+        bot.mumble.users[text.actor].send_text_message(util.user_unban(parameter))
 
 
 def cmd_url_ban(bot, user, text, command, parameter):
     global log
 
-    if bot.is_admin(user):
-        if parameter:
-            bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(parameter)))
+    if parameter:
+        bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(parameter)))
 
-            id = item_id_generators['url'](url=parameter)
-            var.cache.free_and_delete(id)
-            var.playlist.remove_by_id(id)
-        else:
-            if var.playlist.current_item() and var.playlist.current_item().type == 'url':
-                item = var.playlist.current_item().item()
-                bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(item.url)))
-                var.cache.free_and_delete(item.id)
-                var.playlist.remove_by_id(item.id)
-            else:
-                bot.send_msg(constants.strings('bad_parameter', command=command), text)
+        id = item_id_generators['url'](url=parameter)
+        var.cache.free_and_delete(id)
+        var.playlist.remove_by_id(id)
     else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
-    return
+        if var.playlist.current_item() and var.playlist.current_item().type == 'url':
+            item = var.playlist.current_item().item()
+            bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(item.url)))
+            var.cache.free_and_delete(item.id)
+            var.playlist.remove_by_id(item.id)
+        else:
+            bot.send_msg(constants.strings('bad_parameter', command=command), text)
 
 
 def cmd_url_ban_list(bot, user, text, command, parameter):
-    if bot.is_admin(user):
-        bot.mumble.users[text.actor].send_text_message(util.get_url_ban())
-    else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
-    return
+    bot.mumble.users[text.actor].send_text_message(util.get_url_ban())
 
 
 def cmd_url_unban(bot, user, text, command, parameter):
     global log
 
-    if bot.is_admin(user):
-        if parameter:
-            bot.mumble.users[text.actor].send_text_message(util.url_unban(util.get_url_from_input(parameter)))
-    else:
-        bot.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
-    return
+    if parameter:
+        bot.mumble.users[text.actor].send_text_message(util.url_unban(util.get_url_from_input(parameter)))
 
 
 def cmd_play(bot, user, text, command, parameter):
@@ -584,12 +569,8 @@ def cmd_clear(bot, user, text, command, parameter):
 def cmd_kill(bot, user, text, command, parameter):
     global log
 
-    if bot.is_admin(user):
-        bot.pause()
-        bot.exit = True
-    else:
-        bot.mumble.users[text.actor].send_text_message(
-            constants.strings('not_admin'))
+    bot.pause()
+    bot.exit = True
 
 
 def cmd_update(bot, user, text, command, parameter):
@@ -1178,31 +1159,87 @@ def cmd_refresh_cache(bot, user, text, command, parameter):
 
 
 def cmd_web_access(bot, user, text, command, parameter):
-    import secrets
-    import datetime
-    import json
-
     auth_method = var.config.get("webinterface", "auth_method")
 
     if auth_method == 'token':
         interface.banned_ip = []
         interface.bad_access_count = {}
 
-        user_info = var.db.get("user", user, fallback=None)
-        if user_info is not None:
-            user_dict = json.loads(user_info)
-            token = user_dict['token']
-        else:
-            token = secrets.token_urlsafe(5)
-            var.db.set("web_token", token, user)
+        user_info = var.db.get("user", user, fallback='{}')
+        user_dict = json.loads(user_info)
+        if 'token' in user_dict:
+            var.db.remove_option("web_token", user_dict['token'])
 
-        var.db.set("user", user, json.dumps({'token': token, 'datetime': str(datetime.datetime.now()), 'IP': ''}))
+        token = secrets.token_urlsafe(5)
+        user_dict['token'] = token
+        user_dict['token_created'] = str(datetime.datetime.now())
+        user_dict['last_ip'] = ''
+        var.db.set("web_token", token, user)
+        var.db.set("user", user, json.dumps(user_dict))
 
         access_address = var.config.get("webinterface", "access_address") + "/?token=" + token
     else:
         access_address = var.config.get("webinterface", "access_address")
 
     bot.send_msg(constants.strings('webpage_address', address=access_address), text)
+
+
+def cmd_user_password(bot, user, text, command, parameter):
+    if not parameter:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
+        return
+
+    user_info = var.db.get("user", user, fallback='{}')
+    user_dict = json.loads(user_info)
+    user_dict['password'], user_dict['salt'] = util.get_salted_password_hash(parameter)
+
+    var.db.set("user", user, json.dumps(user_dict))
+
+    bot.send_msg(constants.strings('user_password_set'), text)
+
+
+def cmd_web_user_add(bot, user, text, command, parameter):
+    if not parameter:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
+        return
+
+    auth_method = var.config.get("webinterface", "auth_method")
+
+    if auth_method == 'password':
+        web_users = json.loads(var.db.get("privilege", "web_access", fallback='[]'))
+        if parameter not in web_users:
+            web_users.append(parameter)
+        var.db.set("privilege", "web_access", json.dumps(web_users))
+        bot.send_msg(constants.strings('web_user_list', users=", ". join(web_users)), text)
+    else:
+        bot.send_msg(constants.strings('command_disabled', command=command), text)
+
+
+def cmd_web_user_remove(bot, user, text, command, parameter):
+    if not parameter:
+        bot.send_msg(constants.strings('bad_parameter', command=command), text)
+        return
+
+    auth_method = var.config.get("webinterface", "auth_method")
+
+    if auth_method == 'password':
+        web_users = json.loads(var.db.get("privilege", "web_access", fallback='[]'))
+        if parameter in web_users:
+            web_users.remove(parameter)
+        var.db.set("privilege", "web_access", json.dumps(web_users))
+        bot.send_msg(constants.strings('web_user_list', users=", ". join(web_users)), text)
+    else:
+        bot.send_msg(constants.strings('command_disabled', command=command), text)
+
+
+def cmd_web_user_list(bot, user, text, command, parameter):
+    auth_method = var.config.get("webinterface", "auth_method")
+
+    if auth_method == 'password':
+        web_users = json.loads(var.db.get("privilege", "web_access", fallback='[]'))
+        bot.send_msg(constants.strings('web_user_list', users=", ". join(web_users)), text)
+    else:
+        bot.send_msg(constants.strings('command_disabled', command=command), text)
 
 
 # Just for debug use
