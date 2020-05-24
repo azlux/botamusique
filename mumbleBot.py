@@ -177,7 +177,6 @@ class MumbleBot:
             sys.exit(0)
         self.nb_exit += 1
 
-        self.pause()
         self.exit = True
 
     def check_update(self):
@@ -552,7 +551,7 @@ class MumbleBot:
             else:
                 self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.5)
 
-        self.last_volume_cycle_time = time.time()
+            self.last_volume_cycle_time = time.time()
 
     def ducking_sound_received(self, user, sound):
         rms = audioop.rms(sound.pcm, 2)
@@ -610,7 +609,7 @@ class MumbleBot:
                 volume_set = self.volume_set
                 self.volume_set = 0
 
-                while self.volume > 0.01:  # Waiting for volume_cycle to gradually tune volume to 0.
+                while self.volume > 0.01 and self.thread:  # Waiting for volume_cycle to gradually tune volume to 0.
                     time.sleep(0.01)
 
                 self.thread.kill()
@@ -626,6 +625,7 @@ class MumbleBot:
         self.interrupt()
         self.is_pause = True
         self.song_start_at = -1
+        self.pause_at_id = var.playlist.current_item().id
         self.log.info("bot: music paused at %.2f seconds." % self.playhead)
 
     def resume(self):
@@ -727,7 +727,7 @@ if __name__ == '__main__':
         bot_logger.setLevel(logging.ERROR)
         bot_logger.error("Starting in ERROR loglevel")
 
-    logfile = util.solve_filepath(var.config.get('bot', 'logfile'))
+    logfile = util.solve_filepath(var.config.get('bot', 'logfile').strip())
     handler = None
     if logfile:
         print(f"Redirecting stdout and stderr to log file: {logfile}")
