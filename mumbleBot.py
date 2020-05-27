@@ -12,8 +12,8 @@ import subprocess as sp
 import argparse
 import os
 import os.path
-import pymumble_py3 as pymumble
-import pymumble_py3.constants
+from pymumble.pymumble_py3.mumble import Mumble
+import pymumble.pymumble_py3.constants
 import variables as var
 import logging
 import logging.handlers
@@ -103,15 +103,15 @@ class MumbleBot:
         else:
             self.username = var.config.get("bot", "username")
 
-        self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
+        self.mumble = Mumble(host, user=self.username, port=port, password=password, tokens=tokens, stereo=True,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=certificate)
-        self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_TEXTMESSAGERECEIVED, self.message_received)
+        self.mumble.callbacks.set_callback(pymumble.pymumble_py3.constants.PYMUMBLE_CLBK_TEXTMESSAGERECEIVED, self.message_received)
 
         self.mumble.set_codec_profile("audio")
         self.mumble.start()  # start the mumble thread
         self.mumble.is_ready()  # wait for the connection
 
-        if self.mumble.connected >= pymumble_py3.constants.PYMUMBLE_CONN_STATE_FAILED:
+        if self.mumble.connected >= pymumble.pymumble_py3.constants.PYMUMBLE_CONN_STATE_FAILED:
             exit()
 
         self.set_comment()
@@ -131,7 +131,7 @@ class MumbleBot:
             self.ducking_volume = var.db.getfloat("bot", "ducking_volume", fallback=self.ducking_volume)
             self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
             self.ducking_threshold = var.db.getfloat("bot", "ducking_threshold", fallback=self.ducking_threshold)
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
+            self.mumble.callbacks.set_callback(pymumble.pymumble_py3.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
                                                self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
 
@@ -141,8 +141,8 @@ class MumbleBot:
         if var.config.get("bot", "when_nobody_in_channel", fallback='') in ['pause', 'pause_resume', 'stop']:
             user_change_callback = \
                 lambda user, action: threading.Thread(target=self.users_changed, args=(user, action), daemon=True).start()
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, user_change_callback)
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, user_change_callback)
+            self.mumble.callbacks.set_callback(pymumble.pymumble_py3.constants.PYMUMBLE_CLBK_USERREMOVED, user_change_callback)
+            self.mumble.callbacks.set_callback(pymumble.pymumble_py3.constants.PYMUMBLE_CLBK_USERUPDATED, user_change_callback)
 
         # Debug use
         self._loop_status = 'Idle'
@@ -370,7 +370,7 @@ class MumbleBot:
             ffmpeg_debug = "warning"
 
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
-                   uri, '-ss', f"{start_from:f}", '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
+                   uri, '-ss', f"{start_from:f}", '-ac', '2', '-f', 's16le', '-ar', '48000', '-')
         self.log.debug("bot: execute ffmpeg command: " + " ".join(command))
 
         # The ffmpeg process is a thread
@@ -381,7 +381,7 @@ class MumbleBot:
         else:
             pipe_rd, pipe_wd = None, None
 
-        self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
+        self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=960*2)
 
     def async_download_next(self):
         # Function start if the next music isn't ready
@@ -452,8 +452,8 @@ class MumbleBot:
                     self.song_start_at = time.time() - self.playhead
                 self.playhead = time.time() - self.song_start_at
 
-                raw_music = self.thread.stdout.read(480)
-                self.read_pcm_size += 480
+                raw_music = self.thread.stdout.read(960*2)
+                self.read_pcm_size += 960*2
 
                 if self.redirect_ffmpeg_log:
                     try:
