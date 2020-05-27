@@ -120,9 +120,9 @@ def requires_auth(f):
 
         if auth_method == 'password':
             auth = request.authorization
-            user = auth.username
-            if not auth or not check_auth(auth.username, auth.password):
-                if auth:
+            if auth:
+                user = auth.username
+                if not check_auth(auth.username, auth.password):
                     if request.remote_addr in bad_access_count:
                         bad_access_count[request.remote_addr] += 1
                         log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}."
@@ -134,6 +134,8 @@ def requires_auth(f):
                     else:
                         bad_access_count[request.remote_addr] = 1
                         log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
+                    return authenticate()
+            else:
                 return authenticate()
         if auth_method == 'token':
             if 'user' in session and 'token' not in request.args:

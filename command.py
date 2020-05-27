@@ -71,7 +71,7 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('add_webinterface_user'), cmd_web_user_add, admin=True)
     bot.register_command(constants.commands('remove_webinterface_user'), cmd_web_user_remove, admin=True)
     bot.register_command(constants.commands('list_webinterface_user'), cmd_web_user_list, admin=True)
-    bot.register_command(constants.commands('change_user_password'), cmd_user_password)
+    bot.register_command(constants.commands('change_user_password'), cmd_user_password, no_partial_match=True)
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
     #bot.register_command('loop', cmd_loop_state, True)
