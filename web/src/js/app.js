@@ -1,12 +1,10 @@
-// jQuery 3.x
-window.$ = window.jQuery = require('jquery/dist/jquery');
-require('jquery-migrate/dist/jquery-migrate');
+import 'jquery-migrate';
 
 // Popper 1.x
-require('popper.js/dist/popper');
+import 'popper.js';
 
 // Boostrap 4.x
-require('bootstrap/js/src/index');
+import 'bootstrap';
 
 // Application code
-require('./main.js');
+import './main.js';

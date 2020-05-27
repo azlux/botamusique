@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -15,6 +16,11 @@ module.exports = {
     //ecmaVersion: 5,
   },
   plugins: [
+    new webpack.ProvidePlugin({
+        $: 'jquery',
+        jQuery: 'jquery',
+        //Popper: 'popper.js',
+    }),
     new MiniCssExtractPlugin({
       filename: 'static/css/[name].css',
     }),
@@ -35,8 +41,18 @@ module.exports = {
         test: /\.s[ac]ss$/i,
         use: [
           MiniCssExtractPlugin.loader,
-          'css-loader',
-          'sass-loader'
+          'css-loader', // translates CSS into CommonJS modules
+          {
+            loader: 'postcss-loader', // Run postcss actions
+            options: {
+              plugins: function () { // postcss plugins, can be exported to postcss.config.js
+                return [
+                  require('autoprefixer')
+                ];
+              }
+            }
+          },
+          'sass-loader', // compiles Sass to CSS
         ],
       },
       {

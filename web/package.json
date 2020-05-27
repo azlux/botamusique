@@ -21,11 +21,13 @@
   "devDependencies": {
     "@babel/core": "^7.10.0",
     "@babel/preset-env": "^7.10.0",
+    "autoprefixer": "^9.8.0",
     "babel-loader": "^8.1.0",
     "core-js": "^3.6.5",
     "css-loader": "^3.5.3",
     "html-webpack-plugin": "^4.3.0",
     "mini-css-extract-plugin": "^0.9.0",
+    "postcss-loader": "^3.0.0",
     "regenerator-runtime": "^0.13.5",
     "sass": "^1.26.5",
     "sass-loader": "^8.0.2",
