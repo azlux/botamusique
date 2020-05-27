@@ -625,8 +625,9 @@ class MumbleBot:
         self.interrupt()
         self.is_pause = True
         self.song_start_at = -1
-        self.pause_at_id = var.playlist.current_item().id
-        self.log.info("bot: music paused at %.2f seconds." % self.playhead)
+        if len(var.playlist) > 0:
+            self.pause_at_id = var.playlist.current_item().id
+            self.log.info("bot: music paused at %.2f seconds." % self.playhead)
 
     def resume(self):
         self.is_pause = False
