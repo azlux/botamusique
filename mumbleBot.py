@@ -141,8 +141,10 @@ class MumbleBot:
             "Unknown action for when_nobody_in_channel"
 
         if var.config.get("bot", "when_nobody_in_channel", fallback='') in ['pause', 'pause_resume', 'stop']:
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, self.users_changed)
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, self.users_changed)
+            user_change_callback = \
+                lambda user, action: threading.Thread(target=self.users_changed, args=(user, action), daemon=True).start()
+            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, user_change_callback)
+            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, user_change_callback)
 
         # Debug use
         self._loop_status = 'Idle'
