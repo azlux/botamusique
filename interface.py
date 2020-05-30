@@ -66,7 +66,7 @@ class ReverseProxied(object):
 web = Flask(__name__)
 web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
-user = 'webuser'
+user = 'Remote Control'
 
 
 def init_proxy():
@@ -82,7 +82,18 @@ def check_auth(username, password):
     """This function is called to check if a username /
     password combination is valid.
     """
-    return username == var.config.get("webinterface", "user") and password == var.config.get("webinterface", "password")
+
+    if username == var.config.get("webinterface", "user") and password == var.config.get("webinterface", "password"):
+        return True
+
+    web_users = json.loads(var.db.get("privilege", "web_access", fallback='[]'))
+    if username in web_users:
+        user_dict = json.loads(var.db.get("user", username, fallback='{}'))
+        if 'password' in user_dict and 'salt' in user_dict and \
+                util.verify_password(password, user_dict['password'], user_dict['salt']):
+            return True
+
+    return False
 
 
 def authenticate():
@@ -109,8 +120,9 @@ def requires_auth(f):
 
         if auth_method == 'password':
             auth = request.authorization
-            if not auth or not check_auth(auth.username, auth.password):
-                if auth:
+            if auth:
+                user = auth.username
+                if not check_auth(auth.username, auth.password):
                     if request.remote_addr in bad_access_count:
                         bad_access_count[request.remote_addr] += 1
                         log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}."
@@ -122,6 +134,8 @@ def requires_auth(f):
                     else:
                         bad_access_count[request.remote_addr] = 1
                         log.info(f"web: failed login attempt, user: {auth.username}, from ip {request.remote_addr}.")
+                    return authenticate()
+            else:
                 return authenticate()
         if auth_method == 'token':
             if 'user' in session and 'token' not in request.args:

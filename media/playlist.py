@@ -10,8 +10,9 @@ from database import Condition
 from media.item import ValidationFailedError, PreparationFailedError
 
 
-def get_playlist(mode, _list=None, index=None):
-    if _list and index is None:
+def get_playlist(mode, _list=None, _index=None):
+    index = -1
+    if _list and _index is None:
         index = _list.current_index
 
     if _list is None:

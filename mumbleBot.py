@@ -66,11 +66,8 @@ class MumbleBot:
         self.read_pcm_size = 0
         # self.download_threads = []
         self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
-
-        if var.config.getboolean("bot", "auto_check_update"):
-            th = threading.Thread(target=self.check_update, name="UpdateThread")
-            th.daemon = True
-            th.start()
+        self.on_killing = threading.Lock()  # lock to acquire when killing ffmpeg thread is asked but ffmpeg is not
+        # killed yet
 
         if args.host:
             host = args.host
@@ -129,7 +126,7 @@ class MumbleBot:
         self.ducking_release = time.time()
         self.last_volume_cycle_time = time.time()
 
-        if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking", fallback=False)\
+        if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking", fallback=False) \
                 or var.config.getboolean("bot", "ducking"):
             self.is_ducking = True
             self.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
@@ -144,8 +141,10 @@ class MumbleBot:
             "Unknown action for when_nobody_in_channel"
 
         if var.config.get("bot", "when_nobody_in_channel", fallback='') in ['pause', 'pause_resume', 'stop']:
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, self.users_changed)
-            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, self.users_changed)
+            user_change_callback = \
+                lambda user, action: threading.Thread(target=self.users_changed, args=(user, action), daemon=True).start()
+            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, user_change_callback)
+            self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, user_change_callback)
 
         # Debug use
         self._loop_status = 'Idle'
@@ -154,40 +153,55 @@ class MumbleBot:
 
         self.redirect_ffmpeg_log = var.config.getboolean('debug', 'redirect_ffmpeg_log', fallback=True)
 
+        if var.config.getboolean("bot", "auto_check_update"):
+            th = threading.Thread(target=self.check_update, name="UpdateThread")
+            th.daemon = True
+            th.start()
+
+        last_startup_version = var.db.get("bot", "version", fallback=None)
+        if not last_startup_version or version.parse(last_startup_version) < version.parse(self.version):
+            var.db.set("bot", "version", self.version)
+            changelog = util.fetch_changelog().replace("\n", "<br>")
+            self.send_channel_msg(constants.strings("update_successful", version=self.version, changelog=changelog))
+
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
-
         self.log.info(
             "\nSIGINT caught, quitting, {} more to kill".format(2 - self.nb_exit))
-        self.exit = True
-        self.pause()
-        if self.nb_exit > 1:
-            self.log.info("Forced Quit")
-            sys.exit(0)
-        self.nb_exit += 1
 
         if var.config.getboolean('bot', 'save_playlist', fallback=True) \
                 and var.config.get("bot", "save_music_library", fallback=True):
             self.log.info("bot: save playlist into database")
             var.playlist.save()
 
+        if self.nb_exit > 1:
+            self.log.info("Forced Quit")
+            sys.exit(0)
+        self.nb_exit += 1
+
+        self.exit = True
+
     def check_update(self):
         self.log.debug("update: checking for updates...")
         new_version = util.new_release_version()
         if version.parse(new_version) > version.parse(self.version):
+            changelog = util.fetch_changelog()
             self.log.info("update: new version %s found, current installed version %s." % (new_version, self.version))
-            self.send_channel_msg(constants.strings('new_version_found'))
+            self.log.info("update: changelog: " + changelog)
+            changelog = changelog.replace("\n", "<br>")
+            self.send_channel_msg(constants.strings('new_version_found', new_version=new_version, changelog=changelog))
         else:
             self.log.debug("update: no new version found.")
 
-    def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False):
+    def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False, admin=False):
         cmds = cmd.split(",")
         for command in cmds:
             command = command.strip()
             if command:
                 self.cmd_handle[command] = {'handle': handle,
                                             'partial_match': not no_partial_match,
-                                            'access_outside_channel': access_outside_channel}
+                                            'access_outside_channel': access_outside_channel,
+                                            'admin': admin}
                 self.log.debug("bot: command added: " + command)
 
     def set_comment(self):
@@ -275,6 +289,10 @@ class MumbleBot:
                             constants.strings('bad_command', command=command))
                         return
 
+                if self.cmd_handle[command_exc]['admin'] and not self.is_admin(user):
+                    self.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
+                    return
+
                 if not self.cmd_handle[command_exc]['access_outside_channel'] \
                         and not self.is_admin(user) \
                         and not var.config.getboolean('bot', 'allow_other_channel_message') \
@@ -336,6 +354,9 @@ class MumbleBot:
     # =======================
 
     def launch_music(self, music_wrapper, start_from=0):
+        self.on_killing.acquire()
+        self.on_killing.release()
+
         assert music_wrapper.is_ready()
 
         uri = music_wrapper.uri()
@@ -469,7 +490,7 @@ class MumbleBot:
                     var.cache.free_and_delete(current.id)
 
                 # move to the next song.
-                if not self.wait_for_ready: # if wait_for_ready flag is not true, move to the next song.
+                if not self.wait_for_ready:  # if wait_for_ready flag is not true, move to the next song.
                     if var.playlist.next():
                         current = var.playlist.current_item()
                         try:
@@ -527,20 +548,22 @@ class MumbleBot:
         if delta > 0.001:
             if self.is_ducking and self.on_ducking:
                 self.volume = (self.volume - self.ducking_volume) * math.exp(- delta / 0.2) + self.ducking_volume
+            elif self.on_killing.locked():
+                self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.05)
             else:
                 self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.5)
 
-        self.last_volume_cycle_time = time.time()
+            self.last_volume_cycle_time = time.time()
 
     def ducking_sound_received(self, user, sound):
         rms = audioop.rms(sound.pcm, 2)
         self._max_rms = max(rms, self._max_rms)
         if self._display_rms:
             if rms < self.ducking_threshold:
-                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(rms/200), end='\r')
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-' * int(rms / 200), end='\r')
             else:
-                print('%6d/%6d  ' % (rms, self._max_rms) + '-'*int(self.ducking_threshold/200)
-                      + '+'*int((rms - self.ducking_threshold)/200), end='\r')
+                print('%6d/%6d  ' % (rms, self._max_rms) + '-' * int(self.ducking_threshold / 200)
+                      + '+' * int((rms - self.ducking_threshold) / 200), end='\r')
 
         if rms > self.ducking_threshold:
             if self.on_ducking is False:
@@ -582,22 +605,31 @@ class MumbleBot:
 
     def interrupt(self):
         # Kill the ffmpeg thread
-        if self.thread:
-            self.thread.kill()
-            self.thread = None
-        self.song_start_at = -1
-        self.read_pcm_size = 0
-        self.playhead = 0
+        if not self.on_killing.locked():
+            self.on_killing.acquire()
+            if self.thread:
+                volume_set = self.volume_set
+                self.volume_set = 0
+
+                while self.volume > 0.01 and self.thread:  # Waiting for volume_cycle to gradually tune volume to 0.
+                    time.sleep(0.01)
+
+                self.thread.kill()
+                self.thread = None
+                self.volume_set = volume_set
+            self.on_killing.release()
+
+            self.song_start_at = -1
+            self.read_pcm_size = 0
 
     def pause(self):
         # Kill the ffmpeg thread
-        if self.thread:
-            self.pause_at_id = var.playlist.current_item().id
-            self.thread.kill()
-            self.thread = None
+        self.interrupt()
         self.is_pause = True
         self.song_start_at = -1
-        self.log.info("bot: music paused at %.2f seconds." % self.playhead)
+        if len(var.playlist) > 0:
+            self.pause_at_id = var.playlist.current_item().id
+            self.log.info("bot: music paused at %.2f seconds." % self.playhead)
 
     def resume(self):
         self.is_pause = False
@@ -698,7 +730,7 @@ if __name__ == '__main__':
         bot_logger.setLevel(logging.ERROR)
         bot_logger.error("Starting in ERROR loglevel")
 
-    logfile = util.solve_filepath(var.config.get('bot', 'logfile'))
+    logfile = util.solve_filepath(var.config.get('bot', 'logfile').strip())
     handler = None
     if logfile:
         print(f"Redirecting stdout and stderr to log file: {logfile}")
@@ -780,4 +812,3 @@ if __name__ == '__main__':
 
     # Start the main loop.
     var.bot.loop()
-
