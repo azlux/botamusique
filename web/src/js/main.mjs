@@ -320,35 +320,6 @@ function changePlayMode(mode) {
 }
 
 
-// ----------------------
-// --- THEME SWITCHER ---
-// ----------------------
-function themeInit() {
-    let theme = localStorage.getItem("theme");
-    if (theme !== null) {
-        setPageTheme(theme);
-    }
-}
-
-function switchTheme() {
-    let theme = localStorage.getItem("theme");
-    if (theme === "light" || theme === null) {
-        setPageTheme("dark");
-        localStorage.setItem("theme", "dark");
-    } else {
-        setPageTheme("light");
-        localStorage.setItem("theme", "light");
-    }
-}
-
-function setPageTheme(theme) {
-    return;
-    if (theme === "light")
-        document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.min.css");
-    else if (theme === "dark")
-        document.getElementById("pagestyle").setAttribute("href", "static/css/bootstrap.darkly.min.css");
-}
-
 // ---------------------
 // ------ Browser ------
 // ---------------------
@@ -1103,8 +1074,6 @@ function secondsToStr(seconds) {
     return ("00" + mins).slice(-2) + ":" + ("00" + secs).slice(-2);
 }
 
-
-themeInit();
 updateResults();
 $(document).ready(updatePlaylist);
 

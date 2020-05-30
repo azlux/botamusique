@@ -1,11 +1,12 @@
 {
   "name": "botamusique",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "npm run development",
-    "development": "webpack --mode=development --config webpack.config.js --progress",
+    "development": "webpack --mode=development --config webpack.config.cjs --progress",
     "prod": "npm run production",
-    "production": "webpack --mode=production --config webpack.config.js --progress",
+    "production": "webpack --mode=production --config webpack.config.cjs --progress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,8 +20,10 @@
   },
   "homepage": "https://github.com/azlux/botamusique#readme",
   "devDependencies": {
-    "@babel/core": "^7.10.0",
-    "@babel/preset-env": "^7.10.0",
+    "@babel/core": "^7.10.1",
+    "@babel/plugin-proposal-class-properties": "^7.10.1",
+    "@babel/plugin-proposal-private-methods": "^7.10.1",
+    "@babel/preset-env": "^7.10.1",
     "autoprefixer": "^9.8.0",
     "babel-loader": "^8.1.0",
     "core-js": "^3.6.5",
@@ -29,7 +32,7 @@
     "mini-css-extract-plugin": "^0.9.0",
     "postcss-loader": "^3.0.0",
     "regenerator-runtime": "^0.13.5",
-    "sass": "^1.26.5",
+    "sass": "^1.26.7",
     "sass-loader": "^8.0.2",
     "style-loader": "^1.2.1",
     "webpack": "^4.43.0",
@@ -37,6 +40,7 @@
   },
   "dependencies": {
     "bootstrap": "^4.5.0",
+    "bootswatch": "^4.5.0",
     "jquery": "^3.5.1",
     "jquery-migrate": "^3.3.0",
     "popper.js": "^1.16.1"

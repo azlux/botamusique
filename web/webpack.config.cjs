@@ -1,14 +1,17 @@
 const path = require('path');
-const webpack = require('webpack');
+//const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: {
     main: [
-      './src/js/app.js',
-      './src/sass/app.scss',
+      './src/js/app.mjs',
+      './src/sass/app.scss'
     ],
+    dark: [
+      './src/sass/app-dark.scss'
+    ]
   },
   output: {
     filename: 'static/js/[name].js',
@@ -16,11 +19,11 @@ module.exports = {
     //ecmaVersion: 5,
   },
   plugins: [
-    new webpack.ProvidePlugin({
-        $: 'jquery',
-        jQuery: 'jquery',
-        //Popper: 'popper.js',
-    }),
+    /*new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      //Popper: 'popper.js',
+    }),*/
     new MiniCssExtractPlugin({
       filename: 'static/css/[name].css',
     }),
@@ -69,6 +72,10 @@ module.exports = {
                   'useBuiltIns': 'usage',
                 },
               ],
+            ],
+            plugins: [
+                //'@babel/plugin-proposal-private-methods',
+                '@babel/plugin-proposal-class-properties',
             ],
           },
         },
