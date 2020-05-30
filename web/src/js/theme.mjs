@@ -24,7 +24,7 @@ export default class {
     static set(dark = false) {
         // Swap CSS to selected theme
         document.getElementById('pagestyle')
-                .setAttribute('href', '../static/css/' + (dark ? 'dark' : 'main') + '.css');
+                .setAttribute('href', 'static/css/' + (dark ? 'dark' : 'main') + '.css');
 
         // Update local storage
         localStorage.setItem('darkTheme', dark);
