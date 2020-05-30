@@ -12,9 +12,6 @@ export default class {
     static init() {
         // Check LocalStorage for dark theme selection
         if (localStorage.getItem('darkTheme') === 'true') {
-            // Update internal state
-            this.#dark = true;
-
             // Update page theme
             this.set(true);
         }
@@ -31,6 +28,9 @@ export default class {
 
         // Update local storage
         localStorage.setItem('darkTheme', dark);
+
+        // Update internal state
+        this.#dark = dark;
     }
 
     /**

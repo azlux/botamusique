@@ -1,5 +1,4 @@
 const path = require('path');
-//const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -19,11 +18,6 @@ module.exports = {
     //ecmaVersion: 5,
   },
   plugins: [
-    /*new webpack.ProvidePlugin({
-      $: 'jquery',
-      jQuery: 'jquery',
-      //Popper: 'popper.js',
-    }),*/
     new MiniCssExtractPlugin({
       filename: 'static/css/[name].css',
     }),
@@ -74,7 +68,6 @@ module.exports = {
               ],
             ],
             plugins: [
-                //'@babel/plugin-proposal-private-methods',
                 '@babel/plugin-proposal-class-properties',
             ],
           },
