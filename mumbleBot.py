@@ -50,8 +50,6 @@ class MumbleBot:
             self.channel = var.config.get("server", "channel", fallback=None)
 
         var.user = args.user
-        var.music_folder = util.solve_filepath(var.config.get('bot', 'music_folder'))
-        var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
         var.is_proxified = var.config.getboolean(
             "webinterface", "is_web_proxified")
         self.exit = False
@@ -768,6 +766,8 @@ if __name__ == '__main__':
 
     DatabaseMigration(var.db, var.music_db).migrate()
 
+    var.music_folder = util.solve_filepath(var.config.get('bot', 'music_folder'))
+    var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
     var.cache = MusicCache(var.music_db)
 
     if var.config.get("bot", "refresh_cache_on_startup", fallback=True):
