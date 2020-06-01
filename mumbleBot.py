@@ -35,7 +35,7 @@ class MumbleBot:
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
-        self.log.info("bot: botamusique version %s, starting..." % self.version)
+        self.log.info(f"bot: botamusique version {self.version}, starting...")
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
         self.volume_set = var.config.getfloat('bot', 'volume')
@@ -184,8 +184,8 @@ class MumbleBot:
         new_version = util.new_release_version()
         if version.parse(new_version) > version.parse(self.version):
             changelog = util.fetch_changelog()
-            self.log.info("update: new version %s found, current installed version %s." % (new_version, self.version))
-            self.log.info("update: changelog: " + changelog)
+            self.log.info(f"update: new version {new_version} found, current installed version {self.version}.")
+            self.log.info(f"update: changelog: {changelog}")
             changelog = changelog.replace("\n", "<br>")
             self.send_channel_msg(constants.strings('new_version_found', new_version=new_version, changelog=changelog))
         else:
@@ -303,7 +303,7 @@ class MumbleBot:
             except:
                 error_traceback = traceback.format_exc()
                 error = error_traceback.rstrip().split("\n")[-1]
-                self.log.error("bot: command %s failed with error: %s\n" % (command_exc, error_traceback))
+                self.log.error(f"bot: command {command_exc} failed with error: {error_traceback}\n")
                 self.send_msg(constants.strings('error_executing_command', command=command_exc, error=error), text)
 
     def send_msg(self, msg, text):
@@ -406,7 +406,7 @@ class MumbleBot:
     def async_download(self, item):
         th = threading.Thread(
             target=self._download, name="Prepare-" + item.id[:7], args=(item,))
-        self.log.info("bot: start preparing item in thread: %s" % item.format_debug_string())
+        self.log.info(f"bot: start preparing item in thread: {item.format_debug_string()}")
         th.daemon = True
         th.start()
         return th
@@ -441,7 +441,7 @@ class MumbleBot:
 
             while self.thread and self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 # If the buffer isn't empty, I cannot send new music part, so I wait
-                self._loop_status = 'Wait for buffer %.3f' % self.mumble.sound_output.get_buffer_size()
+                self._loop_status = f'Wait for buffer {self.mumble.sound_output.get_buffer_size():.3f}'
                 time.sleep(0.01)
 
             if self.thread:
@@ -627,7 +627,7 @@ class MumbleBot:
         self.song_start_at = -1
         if len(var.playlist) > 0:
             self.pause_at_id = var.playlist.current_item().id
-            self.log.info("bot: music paused at %.2f seconds." % self.playhead)
+            self.log.info(f"bot: music paused at {self.playhead:.2f} seconds.")
 
     def resume(self):
         self.is_pause = False
@@ -785,7 +785,7 @@ if __name__ == '__main__':
     if playback_mode in ["one-shot", "repeat", "random", "autoplay"]:
         var.playlist = media.playlist.get_playlist(playback_mode)
     else:
-        raise KeyError("Unknown playback mode '%s'" % playback_mode)
+        raise KeyError(f"Unknown playback mode '{playback_mode}'")
 
     # ======================
     #  Create bot instance
