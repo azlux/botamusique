@@ -473,8 +473,8 @@ class MumbleBot:
                 if raw_music:
                     # Adjust the volume and send it to mumble
                     self.volume_cycle()
-                    self.mumble.sound_output.add_sound(
-                        audioop.mul(raw_music, 2, self.volume))
+                    # https://stackoverflow.com/questions/1165026/what-algorithms-could-i-use-for-audio-volume-level
+                    self.mumble.sound_output.add_sound(audioop.mul(raw_music, 2, math.pow(self.volume, math.e)))
                 else:
                     time.sleep(0.1)
             else:
