@@ -6,16 +6,17 @@ module.exports = {
   entry: {
     main: [
       './src/js/app.mjs',
-      './src/sass/app.scss'
+      './src/sass/app.scss',
     ],
     dark: [
-      './src/sass/app-dark.scss'
-    ]
+      './src/sass/app-dark.scss',
+    ],
   },
+  devtool: 'source-map',
   output: {
     filename: 'static/js/[name].js',
     path: path.resolve(__dirname, '../'),
-    //ecmaVersion: 5,
+    // ecmaVersion: 5,
   },
   plugins: [
     new MiniCssExtractPlugin({
@@ -33,49 +34,48 @@ module.exports = {
     }),
   ],
   module: {
-    rules: [
-      {
-        test: /\.s[ac]ss$/i,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader', // translates CSS into CommonJS modules
-          {
-            loader: 'postcss-loader', // Run postcss actions
-            options: {
-              plugins: function () { // postcss plugins, can be exported to postcss.config.js
-                return [
-                  require('autoprefixer')
-                ];
-              }
-            }
-          },
-          'sass-loader', // compiles Sass to CSS
-        ],
-      },
-      {
-        test: /\.m?js$/,
-        exclude: /(node_modules|bower_components)/,
-        use: {
-          loader: 'babel-loader',
+    rules: [{
+      test: /\.s[ac]ss$/i,
+      use: [
+        MiniCssExtractPlugin.loader,
+        'css-loader', // translates CSS into CommonJS modules
+        {
+          loader: 'postcss-loader', // Run postcss actions
           options: {
-            presets: [
-              [
-                '@babel/preset-env',
-                {
-                  'corejs': '3.6',
-                  'useBuiltIns': 'usage',
-                },
-              ],
-            ],
-            plugins: [
-                '@babel/plugin-proposal-class-properties',
-            ],
+            plugins: function() { // postcss plugins, can be exported to postcss.config.js
+              return [
+                require('autoprefixer'),
+              ];
+            },
           },
         },
+        'sass-loader', // compiles Sass to CSS
+      ],
+    },
+    {
+      test: /\.m?js$/,
+      exclude: /(node_modules|bower_components)/,
+      use: {
+        loader: 'babel-loader',
+        options: {
+          presets: [
+            [
+              '@babel/preset-env',
+              {
+                'corejs': '3.6',
+                'useBuiltIns': 'usage',
+              },
+            ],
+          ],
+          plugins: [
+            '@babel/plugin-proposal-class-properties',
+          ],
+        },
       },
+    },
     ],
   },
-  /*experiments: {
+  /* experiments: {
     mjs: true,
   },*/
 };
