@@ -3,17 +3,16 @@ import {$, jQuery} from 'jquery/src/jquery';
 import 'jquery-migrate/src/migrate';
 import 'popper.js';
 import 'bootstrap/js/src/index';
+import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es';
+import {fas} from '@fortawesome/free-solid-svg-icons/index.es';
+import {far} from '@fortawesome/free-regular-svg-icons/index.es';
+library.add(fas, far);
 
 // Old application code
 import './main.mjs';
 
 // New application code
 import Theme from './theme.mjs';
-
-import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es';
-import {fas} from '@fortawesome/free-solid-svg-icons/index.es';
-import {far} from '@fortawesome/free-regular-svg-icons/index.es';
-library.add(fas, far);
 
 document.addEventListener('DOMContentLoaded', () => {
   Theme.init();
