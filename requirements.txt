@@ -8,3 +8,4 @@ mutagen
 requests
 packaging
 pymumble
+pyradios

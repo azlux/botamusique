@@ -108,6 +108,16 @@ class MusicCache(dict):
         self.dir_lock.acquire()
         self.log.info("library: rebuild directory cache")
         files = util.get_recursive_file_list_sorted(var.music_folder)
+
+        # remove deleted files
+        results = self.db.query_music(Condition().or_equal('type', 'file'))
+        for result in results:
+            if result['path'] not in files:
+                self.log.debug("library: music file missed: %s, delete from library." % result['path'])
+                self.db.delete_music(Condition().and_equal('id', result['id']))
+            else:
+                files.remove(result['path'])
+
         for file in files:
             results = self.db.query_music(Condition().and_equal('path', file))
             if not results:
@@ -129,7 +139,10 @@ class CachedItemWrapper:
         self.version = 0
 
     def item(self):
-        return self.lib[self.id]
+        if self.id in self.lib:
+            return self.lib[self.id]
+        else:
+            raise ValueError(f"Uncached item of id {self.id}.")
 
     def to_dict(self):
         dict = self.item().to_dict()

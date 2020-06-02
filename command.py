@@ -11,7 +11,7 @@ import interface
 import media.system
 import util
 import variables as var
-from librb import radiobrowser
+from pyradios import RadioBrowser
 from database import SettingsDatabase, MusicDatabase, Condition
 from media.item import item_id_generators, dict_to_item, dicts_to_items
 from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags, \
@@ -74,8 +74,8 @@ def register_all_commands(bot):
     bot.register_command(constants.commands('change_user_password'), cmd_user_password, no_partial_match=True)
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
-    #bot.register_command('loop', cmd_loop_state, True)
-    #bot.register_command('item', cmd_item, True)
+    # bot.register_command('loop', cmd_loop_state, True)
+    # bot.register_command('item', cmd_item, True)
 
 
 def send_multi_lines(bot, lines, text, linebreak="<br />"):
@@ -86,8 +86,8 @@ def send_multi_lines(bot, lines, text, linebreak="<br />"):
     for newline in lines:
         msg += br
         br = linebreak
-        if bot.mumble.get_max_message_length()\
-                    and (len(msg) + len(newline)) > (bot.mumble.get_max_message_length() - 4):  # 4 == len("<br>")
+        if bot.mumble.get_max_message_length() \
+                and (len(msg) + len(newline)) > (bot.mumble.get_max_message_length() - 4):  # 4 == len("<br>")
             bot.send_msg(msg, text)
             msg = ""
         msg += newline
@@ -227,8 +227,8 @@ def cmd_play_file(bot, user, text, command, parameter, do_not_refresh_cache=Fals
 
     # assume parameter is a folder
     music_wrappers = get_cached_wrappers_from_dicts(var.music_db.query_music(Condition()
-                                                         .and_equal('type', 'file')
-                                                         .and_like('path', parameter + '%')), user)
+                                                                             .and_equal('type', 'file')
+                                                                             .and_like('path', parameter + '%')), user)
     if music_wrappers:
         msgs = [constants.strings('multiple_file_added')]
 
@@ -338,11 +338,10 @@ def cmd_play_playlist(bot, user, text, command, parameter):
         pass
 
     url = util.get_url_from_input(parameter)
-    log.debug("cmd: fetching media info from playlist url %s" % url)
+    log.debug(f"cmd: fetching media info from playlist url {url}")
     items = get_playlist_info(url=url, start_index=offset, user=user)
     if len(items) > 0:
-        items = var.playlist.extend(list(map(
-            lambda item: get_cached_wrapper_from_scrap(**item), items)))
+        items = var.playlist.extend(list(map(lambda item: get_cached_wrapper_from_scrap(**item), items)))
         for music in items:
             log.info("cmd: add to playlist: " + music.format_debug_string())
     else:
@@ -386,24 +385,22 @@ def cmd_rb_query(bot, user, text, command, parameter):
         bot.send_msg(msg, text)
     else:
         log.debug('cmd: Found query parameter: ' + parameter)
-        # bot.send_msg('Searching for stations - this may take some seconds...', text)
-        rb_stations = radiobrowser.getstations_byname(parameter)
+        rb = RadioBrowser()
+        rb_stations = rb.search(name=parameter, name_exact=False)
         msg = constants.strings('rb_query_result')
         msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th></tr>'
         if not rb_stations:
-            log.debug('cmd: No matches found for rbquery ' + parameter)
-            bot.send_msg('Radio-Browser found no matches for ' + parameter, text)
+            log.debug(f"cmd: No matches found for rbquery {parameter}")
+            bot.send_msg(f"Radio-Browser found no matches for {parameter}", text)
         else:
             for s in rb_stations:
-                stationid = s['id']
-                stationname = s['stationname']
-                country = s['country']
+                station_id = s['stationuuid']
+                station_name = s['name']
+                country = s['countrycode']
                 codec = s['codec']
                 bitrate = s['bitrate']
-                genre = s['genre']
-                # msg += f'<tr><td>{stationid}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td></tr>'
-                msg += '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td></tr>' % (
-                    stationid, stationname, genre, codec, bitrate, country)
+                genre = s['tags']
+                msg += f"<tr><td>{station_id}</td><td>{station_name}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td></tr>"
             msg += '</table>'
             # Full message as html table
             if len(msg) <= 5000:
@@ -414,10 +411,9 @@ def cmd_rb_query(bot, user, text, command, parameter):
                 msg = constants.strings('rb_query_result') + ' (shortened L1)'
                 msg += '\n<table><tr><th>!rbplay ID</th><th>Station Name</th></tr>'
                 for s in rb_stations:
-                    stationid = s['id']
-                    stationname = s['stationname']
-                    # msg += f'<tr><td>{stationid}</td><td>{stationname}</td>'
-                    msg += '<tr><td>%s</td><td>%s</td>' % (stationid, stationname)
+                    station_id = s['stationuuid']
+                    station_name = s['name']
+                    msg += f'<tr><td>{station_id}</td><td>{station_name}</td>'
                 msg += '</table>'
                 if len(msg) <= 5000:
                     bot.send_msg(msg, text)
@@ -427,16 +423,14 @@ def cmd_rb_query(bot, user, text, command, parameter):
                     msg = constants.strings('rb_query_result') + ' (shortened L2)'
                     msg += '!rbplay ID - Station Name'
                     for s in rb_stations:
-                        stationid = s['id']
-                        stationname = s['stationname'][:12]
-                        # msg += f'{stationid} - {stationname}'
-                        msg += '%s - %s' % (stationid, stationname)
+                        station_id = s['stationuuid']
+                        station_name = s['name'][:12]
+                        msg += f'{station_id} - {station_name}'
                     if len(msg) <= 5000:
                         bot.send_msg(msg, text)
                     # Message still too long
                     else:
-                        bot.send_msg('Query result too long to post (> 5000 characters), please try another query.',
-                                     text)
+                        bot.send_msg('Query result too long to post (> 5000 characters), please try another query.', text)
 
 
 def cmd_rb_play(bot, user, text, command, parameter):
@@ -449,22 +443,21 @@ def cmd_rb_play(bot, user, text, command, parameter):
         bot.send_msg(msg, text)
     else:
         log.debug('cmd: Retreiving url for station ID ' + parameter)
-        rstation = radiobrowser.getstationname_byid(parameter)
+        rb = RadioBrowser()
+        rstation = rb.station_by_uuid(parameter)
         stationname = rstation[0]['name']
-        country = rstation[0]['country']
+        country = rstation[0]['countrycode']
         codec = rstation[0]['codec']
         bitrate = rstation[0]['bitrate']
         genre = rstation[0]['tags']
         homepage = rstation[0]['homepage']
+        url = rstation[0]['url']
         msg = 'Radio station added to playlist:'
-        # msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
-        #       f'<tr><td>{parameter}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}</td></tr></table>'
+
         msg += '<table><tr><th>ID</th><th>Station Name</th><th>Genre</th><th>Codec/Bitrate</th><th>Country</th><th>Homepage</th></tr>' + \
-               '<tr><td>%s</td><td>%s</td><td>%s</td><td>%s/%s</td><td>%s</td><td>%s</td></tr></table>' \
-               % (parameter, stationname, genre, codec, bitrate, country, homepage)
-        log.debug('cmd: Added station to playlist %s' % stationname)
+               f"<tr><td>{parameter}</td><td>{stationname}</td><td>{genre}</td><td>{codec}/{bitrate}</td><td>{country}</td><td>{homepage}</td></tr></table>"
+        log.debug(f'cmd: Added station to playlist {stationname}')
         bot.send_msg(msg, text)
-        url = radiobrowser.geturl_byid(parameter)
         if url != "-1":
             log.info('cmd: Found url: ' + url)
             music_wrapper = get_cached_wrapper_from_scrap(type='radio', url=url, name=stationname, user=user)
@@ -517,7 +510,7 @@ def cmd_yt_search(bot, user, text, command, parameter):
 
 def _yt_format_result(results, start, count):
     msg = '<table><tr><th width="10%">Index</th><th>Title</th><th width="20%">Uploader</th></tr>'
-    for index, item in enumerate(results[start:start+count]):
+    for index, item in enumerate(results[start:start + count]):
         msg += '<tr><td>{index:d}</td><td>{title}</td><td>{uploader}</td></tr>'.format(
             index=index + 1, title=item[1], uploader=item[2])
     msg += '</table>'
@@ -602,10 +595,9 @@ def cmd_volume(bot, user, text, command, parameter):
     # The volume is a percentage
     if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.volume_set = float(float(parameter) / 100)
-        bot.send_msg(constants.strings('change_volume',
-                     volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']), text)
+        bot.send_msg(constants.strings('change_volume', volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']), text)
         var.db.set('bot', 'volume', str(bot.volume_set))
-        log.info('cmd: volume set to %d' % (bot.volume_set * 100))
+        log.info(f'cmd: volume set to {bot.volume_set * 100}')
     else:
         bot.send_msg(constants.strings('current_volume', volume=int(bot.volume_set * 100)), text)
 
@@ -618,8 +610,7 @@ def cmd_ducking(bot, user, text, command, parameter):
         var.db.set('bot', 'ducking', True)
         bot.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
         bot.ducking_threshold = var.config.getint("bot", "ducking_threshold", fallback=5000)
-        bot.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
-                                          bot.ducking_sound_received)
+        bot.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, bot.ducking_sound_received)
         bot.mumble.set_receive_sound(True)
         log.info('cmd: ducking is on')
         msg = "Ducking on."
@@ -639,10 +630,10 @@ def cmd_ducking_threshold(bot, user, text, command, parameter):
     if parameter and parameter.isdigit():
         bot.ducking_threshold = int(parameter)
         var.db.set('bot', 'ducking_threshold', str(bot.ducking_threshold))
-        msg = "Ducking threshold set to %d." % bot.ducking_threshold
+        msg = f"Ducking threshold set to {bot.ducking_threshold}."
         bot.send_msg(msg, text)
     else:
-        msg = "Current ducking threshold is %d." % bot.ducking_threshold
+        msg = f"Current ducking threshold is {bot.ducking_threshold}."
         bot.send_msg(msg, text)
 
 
@@ -652,11 +643,9 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
     # The volume is a percentage
     if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
         bot.ducking_volume = float(float(parameter) / 100)
-        bot.send_msg(constants.strings('change_ducking_volume',
-                     volume=int(bot.ducking_volume * 100), user=bot.mumble.users[text.actor]['name']), text)
-        # var.db.set('bot', 'volume', str(bot.volume_set))
+        bot.send_msg(constants.strings('change_ducking_volume', volume=int(bot.ducking_volume * 100), user=bot.mumble.users[text.actor]['name']), text)
         var.db.set('bot', 'ducking_volume', str(bot.ducking_volume))
-        log.info('cmd: volume on ducking set to %d' % (bot.ducking_volume * 100))
+        log.info(f'cmd: volume on ducking set to {bot.ducking_volume * 100}')
     else:
         bot.send_msg(constants.strings('current_ducking_volume', volume=int(bot.ducking_volume * 100)), text)
 
@@ -826,7 +815,7 @@ def cmd_mode(bot, user, text, command, parameter):
     else:
         var.db.set('playlist', 'playback_mode', parameter)
         var.playlist = media.playlist.get_playlist(parameter, var.playlist)
-        log.info("command: playback mode changed to %s." % parameter)
+        log.info(f"command: playback mode changed to {parameter}.")
         bot.send_msg(constants.strings("change_mode", mode=var.playlist.mode,
                                        user=bot.mumble.users[text.actor]['name']), text)
         if parameter == "random":
@@ -878,8 +867,7 @@ def cmd_add_tag(bot, user, text, command, parameter):
     if tags[0]:
         if index.isdigit() and 1 <= int(index) <= len(var.playlist):
             var.playlist[int(index) - 1].add_tags(tags)
-            log.info("cmd: add tags %s to song %s" % (", ".join(tags),
-                                                      var.playlist[int(index) - 1].format_debug_string()))
+            log.info(f"cmd: add tags {', '.join(tags)} to song {var.playlist[int(index) - 1].format_debug_string()}")
             bot.send_msg(constants.strings("added_tags",
                                            tags=", ".join(tags),
                                            song=var.playlist[int(index) - 1].format_title()), text)
@@ -888,8 +876,7 @@ def cmd_add_tag(bot, user, text, command, parameter):
         elif index == "*":
             for item in var.playlist:
                 item.add_tags(tags)
-                log.info("cmd: add tags %s to song %s" % (", ".join(tags),
-                                                          item.format_debug_string()))
+                log.info(f"cmd: add tags {', '.join(tags)} to song {item.format_debug_string()}")
             bot.send_msg(constants.strings("added_tags_to_all", tags=", ".join(tags)), text)
             return
 
@@ -917,15 +904,14 @@ def cmd_remove_tag(bot, user, text, command, parameter):
         if index.isdigit() and 1 <= int(index) <= len(var.playlist):
             if tags[0] != "*":
                 var.playlist[int(index) - 1].remove_tags(tags)
-                log.info("cmd: remove tags %s from song %s" % (", ".join(tags),
-                                                               var.playlist[int(index) - 1].format_debug_string()))
+                log.info(f"cmd: remove tags {', '.join(tags)} from song {var.playlist[int(index) - 1].format_debug_string()}")
                 bot.send_msg(constants.strings("removed_tags",
                                                tags=", ".join(tags),
                                                song=var.playlist[int(index) - 1].format_title()), text)
                 return
             else:
                 var.playlist[int(index) - 1].clear_tags()
-                log.info("cmd: clear tags from song %s" % (var.playlist[int(index) - 1].format_debug_string()))
+                log.info(f"cmd: clear tags from song {var.playlist[int(index) - 1].format_debug_string()}")
                 bot.send_msg(constants.strings("cleared_tags",
                                                song=var.playlist[int(index) - 1].format_title()), text)
                 return
@@ -934,14 +920,13 @@ def cmd_remove_tag(bot, user, text, command, parameter):
             if tags[0] != "*":
                 for item in var.playlist:
                     item.remove_tags(tags)
-                    log.info("cmd: remove tags %s from song %s" % (", ".join(tags),
-                                                                   item.format_debug_string()))
+                    log.info(f"cmd: remove tags {', '.join(tags)} from song {item.format_debug_string()}")
                 bot.send_msg(constants.strings("removed_tags_from_all", tags=", ".join(tags)), text)
                 return
             else:
                 for item in var.playlist:
                     item.clear_tags()
-                    log.info("cmd: clear tags from song %s" % (item.format_debug_string()))
+                    log.info(f"cmd: clear tags from song {item.format_debug_string()}")
                 bot.send_msg(constants.strings("cleared_tags_from_all"), text)
                 return
 
@@ -969,7 +954,7 @@ def cmd_find_tagged(bot, user, text, command, parameter):
         count += 1
         if count > ITEMS_PER_PAGE:
             break
-        msgs.append("<li><b>{:d}</b> - <b>{}</b> (<i>{}</i>)</li>".format(i+1, item.title, ", ".join(item.tags)))
+        msgs.append("<li><b>{:d}</b> - <b>{}</b> (<i>{}</i>)</li>".format(i + 1, item.title, ", ".join(item.tags)))
 
     if count != 0:
         msgs.append("</ul>")
@@ -1210,7 +1195,7 @@ def cmd_web_user_add(bot, user, text, command, parameter):
         if parameter not in web_users:
             web_users.append(parameter)
         var.db.set("privilege", "web_access", json.dumps(web_users))
-        bot.send_msg(constants.strings('web_user_list', users=", ". join(web_users)), text)
+        bot.send_msg(constants.strings('web_user_list', users=", ".join(web_users)), text)
     else:
         bot.send_msg(constants.strings('command_disabled', command=command), text)
 
@@ -1227,7 +1212,7 @@ def cmd_web_user_remove(bot, user, text, command, parameter):
         if parameter in web_users:
             web_users.remove(parameter)
         var.db.set("privilege", "web_access", json.dumps(web_users))
-        bot.send_msg(constants.strings('web_user_list', users=", ". join(web_users)), text)
+        bot.send_msg(constants.strings('web_user_list', users=", ".join(web_users)), text)
     else:
         bot.send_msg(constants.strings('command_disabled', command=command), text)
 
@@ -1237,7 +1222,7 @@ def cmd_web_user_list(bot, user, text, command, parameter):
 
     if auth_method == 'password':
         web_users = json.loads(var.db.get("privilege", "web_access", fallback='[]'))
-        bot.send_msg(constants.strings('web_user_list', users=", ". join(web_users)), text)
+        bot.send_msg(constants.strings('web_user_list', users=", ".join(web_users)), text)
     else:
         bot.send_msg(constants.strings('command_disabled', command=command), text)
 
