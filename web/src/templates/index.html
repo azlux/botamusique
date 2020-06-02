@@ -25,10 +25,10 @@
 
     <div id="playlist" class="container mb-5">
         <div class="btn-toolbar mb-2" role="toolbar" aria-label="Playlist controls">
-            <button type="button" id="play-pause-btn" class="btn btn-info mb-2 btn-space" onclick="togglePlayPause()">
+            <button type="button" id="play-pause-btn" class="btn btn-info mb-2 btn-space">
                 <i class="fas fa-play"></i>
             </button>
-            <button type="button" id="fast-forward-btn" class="btn btn-info mb-2" onclick="request('post', {action : 'next'})">
+            <button type="button" id="fast-forward-btn" class="btn btn-info mb-2">
                 <i class="fas fa-fast-forward"></i>
             </button>
             <div class="ml-auto">
@@ -37,37 +37,36 @@
                         <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="play-mode">
-                        <a class="dropdown-item" href="#" id="one-shot-mode-btn" onclick="changePlayMode('one-shot')">
+                        <a class="dropdown-item" href="#" id="one-shot-mode-btn">
                             <i class="fas fa-tasks mr-2" aria-hidden="true"></i>One-shot
                         </a>
-                        <a class="dropdown-item" href="#" id="random-mode-btn" onclick="changePlayMode('randomize')">
+                        <a class="dropdown-item" href="#" id="random-mode-btn">
                             <i class="fas fa-random mr-2" aria-hidden="true"></i>Random
                         </a>
-                        <a class="dropdown-item" href="#" id="repeat-mode-btn" onclick="changePlayMode('repeat')">
+                        <a class="dropdown-item" href="#" id="repeat-mode-btn">
                             <i class="fas fa-redo mr-2" aria-hidden="true"></i>Repeat
                         </a>
-                        <a class="dropdown-item" href="#" id="autoplay-mode-btn" onclick="changePlayMode('autoplay')">
+                        <a class="dropdown-item" href="#" id="autoplay-mode-btn">
                             <i class="fas fa-robot mr-2" aria-hidden="true"></i>Autoplay
                         </a>
                     </div>
                 </div>
-                <button type="button" id="volume-popover-btn" class="btn btn-warning ml-1" onclick="toggleVolumePopover()">
+                <button type="button" id="volume-popover-btn" class="btn btn-warning ml-1">
                     <i class="fa fa-volume-up" aria-hidden="true"></i>
                 </button>
 
                 <div id="volume-popover">
-                    <a onclick="request('post', {action : 'volume_down'})">
+                    <a id="volume-down-btn">
                         <i class="fa fa-volume-down" aria-hidden="true"></i>
                     </a>
 
-                    <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01" value="0.5" onchange="setVolumeDelayed(this.value)" />
+                    <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01" value="0.5" />
 
-                    <a onclick="request('post', {action : 'volume_up'})">
+                    <a id="volume-up-btn">
                         <i class="fa fa-volume-up" aria-hidden="true"></i>
                     </a>
                     <div id="volume-popover-arrow"></div>
                 </div>
-
             </div>
         </div>
 
@@ -137,7 +136,7 @@
         </div>
 
         <div class="btn-group">
-            <button type="button" class="btn btn-danger mr-1" onclick="request('post', {action : 'clear'})">
+            <button type="button" id="clear-playlist-btn" class="btn btn-danger mr-1">
                 <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
             </button>
         </div>
@@ -155,13 +154,13 @@
                         <label>Type</label>
                         <div id="filter-type" class="input-group mb-2">
                             <div class="btn-group btn-group-sm btn-group-toggle">
-                                <label id="filter-type-file" class="btn btn-secondary" onclick="setFilterType(event, 'file')">
+                                <label id="filter-type-file" class="btn btn-secondary">
                                     <input type="checkbox" name="options"> File
                                 </label>
-                                <label id="filter-type-url" class="btn btn-secondary" onclick="setFilterType(event, 'url')">
+                                <label id="filter-type-url" class="btn btn-secondary">
                                     <input type="checkbox" name="options"> URL
                                 </label>
-                                <label id="filter-type-radio" class="btn btn-secondary" onclick="setFilterType(event, 'radio')">
+                                <label id="filter-type-radio" class="btn btn-secondary">
                                     <input type="checkbox" name="options"> Radio
                                 </label>
                             </div>

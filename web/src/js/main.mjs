@@ -1,4 +1,8 @@
-import {isOverflown, setProgressBar, secondsToStr} from './util';
+import {
+  isOverflown,
+  setProgressBar,
+  secondsToStr,
+} from './util';
 
 $('#uploadSelectFile').on('change', function() {
   // get the file name
@@ -47,6 +51,7 @@ let playing = false;
 
 const playPauseBtn = $('#play-pause-btn');
 const fastForwardBtn = $('#fast-forward-btn');
+const volumeSlider = document.getElementById('volume-slider');
 
 const playModeBtns = {
   'one-shot': $('#one-shot-mode-btn'),
@@ -60,6 +65,25 @@ const playModeIcon = {
   'repeat': 'fa-redo',
   'autoplay': 'fa-robot',
 };
+
+playPauseBtn.on('click', togglePlayPause);
+
+fastForwardBtn.on('click', () => {
+  request('post', {
+    action: 'next',
+  });
+});
+
+document.getElementById('clear-playlist-btn').addEventListener('click', () => {
+  request('post', {action: 'clear'});
+});
+
+// eslint-disable-next-line guard-for-in
+for (const playMode in playModeBtns) {
+  playModeBtns[playMode].on('click', () => {
+    changePlayMode(playMode);
+  });
+}
 
 function request(_url, _data, refresh = false) {
   console.log(_data);
@@ -123,7 +147,9 @@ function addPlaylistItem(item) {
 }
 
 function displayPlaylist(data) {
-  playlist_table.animate({opacity: 0}, 200, function() {
+  playlist_table.animate({
+    opacity: 0,
+  }, 200, function() {
     playlist_loading.hide();
     $('.playlist-item').remove();
     const items = data.items;
@@ -163,7 +189,9 @@ function displayPlaylist(data) {
     displayActiveItem(data.current_index);
     updatePlayerInfo(playlist_items[data.current_index]);
     bindPlaylistEvent();
-    playlist_table.animate({opacity: 1}, 200);
+    playlist_table.animate({
+      opacity: 1,
+    }, 200);
   });
 }
 
@@ -178,7 +206,7 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to, total_
   expand_copy.removeClass('d-none');
   if (display_from !== display_to) {
     expand_copy.find('.playlist-expand-item-range').html((display_from + 1) + '~' + (display_to + 1) +
-          ' of ' + (total_length) + ' items');
+      ' of ' + (total_length) + ' items');
   } else {
     expand_copy.find('.playlist-expand-item-range').html(display_from + ' of ' + (total_length) + ' items');
   }
@@ -193,7 +221,9 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to, total_
 }
 
 function updatePlaylist() {
-  playlist_table.animate({opacity: 0}, 200, function() {
+  playlist_table.animate({
+    opacity: 0,
+  }, 200, function() {
     playlist_empty.addClass('d-none');
     playlist_loading.show();
     playlist_table.find('.playlist-item').css('opacity', 0);
@@ -217,7 +247,9 @@ function updatePlaylist() {
         },
       },
     });
-    playlist_table.animate({opacity: 1}, 200);
+    playlist_table.animate({
+      opacity: 1,
+    }, 200);
   });
 }
 
@@ -303,25 +335,31 @@ function updateControls(empty, play, mode, volume) {
   if (volume !== last_volume) {
     last_volume = volume;
     if (volume > 1) {
-      document.getElementById('volume-slider').value = 1;
+      volumeSlider.value = 1;
     } else if (volume < 0) {
-      document.getElementById('volume-slider').value = 0;
+      volumeSlider.value = 0;
     } else {
-      document.getElementById('volume-slider').value = volume;
+      volumeSlider.value = volume;
     }
   }
 }
 
 function togglePlayPause() {
   if (playing) {
-    request('post', {action: 'pause'});
+    request('post', {
+      action: 'pause',
+    });
   } else {
-    request('post', {action: 'resume'});
+    request('post', {
+      action: 'resume',
+    });
   }
 }
 
 function changePlayMode(mode) {
-  request('post', {action: mode});
+  request('post', {
+    action: mode,
+  });
 }
 
 
@@ -336,6 +374,13 @@ const filters = {
 };
 const filter_dir = $('#filter-dir');
 const filter_keywords = $('#filter-keywords');
+
+// eslint-disable-next-line guard-for-in
+for (const filter in filters) {
+  filters[filter].on('click', (e) => {
+    setFilterType(e, filter);
+  });
+}
 
 function setFilterType(event, type) {
   event.preventDefault();
@@ -522,7 +567,9 @@ function updateResults(dest_page = 1) {
   const data = getFilters(dest_page);
   data.action = 'query';
 
-  lib_group.animate({opacity: 0}, 200, function() {
+  lib_group.animate({
+    opacity: 0,
+  }, 200, function() {
     $.ajax({
       type: 'POST',
       url: 'library',
@@ -543,7 +590,9 @@ function updateResults(dest_page = 1) {
     $('.library-item-active').remove();
     lib_empty.hide();
     lib_loading.show();
-    lib_group.animate({opacity: 1}, 200);
+    lib_group.animate({
+      opacity: 1,
+    }, 200);
   });
 }
 
@@ -609,7 +658,9 @@ const page_li = $('.library-page-li');
 const page_no = $('.library-page-no');
 
 function processResults(data) {
-  lib_group.animate({opacity: 0}, 200, function() {
+  lib_group.animate({
+    opacity: 0,
+  }, 200, function() {
     lib_loading.hide();
     const total_pages = data.total_pages;
     const active_page = data.active_page;
@@ -674,7 +725,9 @@ function processResults(data) {
       page_li_copy.appendTo(page_ul);
     }
 
-    lib_group.animate({opacity: 1}, 200);
+    lib_group.animate({
+      opacity: 1,
+    }, 200);
   });
 }
 
@@ -750,30 +803,27 @@ function addTagModalSubmit() {
 // ------- Volume ------
 // ---------------------
 
-const volume_popover_btn = document.querySelector('#volume-popover-btn');
-const volume_popover_div = document.querySelector('#volume-popover');
+const volumePopoverBtn = document.querySelector('#volume-popover-btn');
+const volumePopoverDiv = document.querySelector('#volume-popover');
 let volume_popover_instance = null;
 let volume_popover_show = false;
+let volume_update_timer;
 
-volume_popover_btn.addEventListener('click', function(e) {
+volumePopoverBtn.addEventListener('click', function(e) {
   e.stopPropagation();
-});
 
-volume_popover_div.addEventListener('click', function(e) {
-  e.stopPropagation();
-});
-
-function toggleVolumePopover() {
   if (!volume_popover_show) {
-    volume_popover_instance = new Popper(volume_popover_btn, volume_popover_div, {
+    volume_popover_instance = new Popper(volumePopoverBtn, volumePopoverDiv, {
       placement: 'top',
       modifiers: {
-        offset: {offset: '0, 8'},
+        offset: {
+          offset: '0, 8',
+        },
       },
-    } );
-    volume_popover_div.setAttribute('data-show', '');
+    });
+    volumePopoverDiv.setAttribute('data-show', '');
   } else {
-    volume_popover_div.removeAttribute('data-show');
+    volumePopoverDiv.removeAttribute('data-show');
     if (volume_popover_instance) {
       volume_popover_instance.destroy();
       volume_popover_instance = null;
@@ -782,22 +832,39 @@ function toggleVolumePopover() {
   volume_popover_show = !volume_popover_show;
 
   document.addEventListener('click', function() {
-    volume_popover_div.removeAttribute('data-show');
+    volumePopoverDiv.removeAttribute('data-show');
     if (volume_popover_instance) {
       volume_popover_instance.destroy();
       volume_popover_instance = null;
       volume_popover_show = !volume_popover_show;
     }
-  }, {once: true} );
-}
+  }, {
+    once: true,
+  });
+});
 
-let volume_update_timer;
-function setVolumeDelayed(new_volume_value) {
+volumePopoverBtn.addEventListener('click', function(e) {
+  e.stopPropagation();
+});
+
+volumeSlider.addEventListener('change', (e) => {
   window.clearTimeout(volume_update_timer);
-  volume_update_timer = window.setTimeout(function() {
-    request('post', {action: 'volume_set_value', new_volume: new_volume_value});
+
+  volume_update_timer = window.setTimeout(() => {
+    request('post', {
+      action: 'volume_set_value',
+      new_volume: volumePopoverDiv.value,
+    });
   }, 500); // delay in milliseconds
-}
+});
+
+document.getElementById('volume-down-btn').addEventListener('click', () => {
+  request('post', {action: 'volume_down'});
+});
+
+document.getElementById('volume-up-btn').addEventListener('click', () => {
+  request('post', {action: 'volume_up'});
+});
 
 // ---------------------
 // ------- Upload ------
@@ -872,7 +939,11 @@ function generateUploadProgressItem(file) {
   const progress = item_clone.querySelector('.uploadProgress');
   item_clone.style.display = 'block';
 
-  const item = {title: title, error: error, progress: progress};
+  const item = {
+    title: title,
+    error: error,
+    progress: progress,
+  };
   filesProgressItem[file.name] = item;
   uploadModalList.appendChild(item_clone);
 
@@ -913,7 +984,9 @@ function uploadNextFile() {
       uploadCancelBtn.style.display = 'none';
       uploadCloseBtn.style.display = 'block';
 
-      request('post', {action: 'rescan'});
+      request('post', {
+        action: 'rescan',
+      });
       updateResults();
     }
   });
@@ -921,7 +994,7 @@ function uploadNextFile() {
   req.upload.addEventListener('progress', function(e) {
     if (e.lengthComputable) {
       const percent = e.loaded / e.total;
-      setProgressBar(file_progress_item.progress, percent, Math.floor(percent*100) + '%');
+      setProgressBar(file_progress_item.progress, percent, Math.floor(percent * 100) + '%');
     }
   });
 
@@ -948,7 +1021,9 @@ function uploadCancel() {
     runningXHR.abort();
     filesToProceed = [];
     uploadFileInput.value = '';
-    request('post', {action: 'rescan'});
+    request('post', {
+      action: 'rescan',
+    });
     updateResults();
   }
 
@@ -977,8 +1052,8 @@ function togglePlayer() {
 }
 
 function playerSetIdle() {
-  playerArtwork.style.display ='none';
-  playerArtworkIdle.style.display ='block';
+  playerArtwork.style.display = 'none';
+  playerArtworkIdle.style.display = 'block';
   playerTitle.textContent = '-- IDLE --';
   playerArtist.textContent = '';
   setProgressBar(playerBar, 0);
@@ -988,8 +1063,8 @@ function updatePlayerInfo(item) {
   if (!item) {
     playerSetIdle();
   }
-  playerArtwork.style.display ='block';
-  playerArtworkIdle.style.display ='none';
+  playerArtwork.style.display = 'block';
+  playerArtworkIdle.style.display = 'none';
   currentPlayingItem = item;
   playerTitle.textContent = item.title;
   playerArtist.textContent = item.artist;
@@ -1020,7 +1095,7 @@ function updatePlayerControls(play, empty) {
     playerSkipBtn.removeAttribute('disabled');
   }
   if (play) {
-    playerPlayBtn.style.display ='none';
+    playerPlayBtn.style.display = 'none';
     playerPauseBtn.style.display = 'block';
   } else {
     playerPlayBtn.style.display = 'block';
@@ -1031,6 +1106,7 @@ function updatePlayerControls(play, empty) {
 let playhead_timer;
 let player_playhead_position;
 let playhead_dragging = false;
+
 function updatePlayerPlayhead(playhead) {
   if (!currentPlayingItem || playhead_dragging) {
     return;
@@ -1067,7 +1143,9 @@ playerBarBox.addEventListener('mousedown', function() {
 playerBarBox.addEventListener('mouseup', function(event) {
   playerBarBox.removeEventListener('mousemove', playheadDragged);
   const percent = event.offsetX / playerBarBox.clientWidth;
-  request('post', {move_playhead: percent * currentPlayingItem.duration});
+  request('post', {
+    move_playhead: percent * currentPlayingItem.duration,
+  });
   playhead_dragging = false;
 });
 
