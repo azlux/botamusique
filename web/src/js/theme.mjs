@@ -1,7 +1,6 @@
 export default class {
     /**
-     * Internal state for dark theme activation.
-     * @property {boolean}
+     * @property {boolean} #dark Interal state for dark theme activation.
      * @private
      */
     static #dark = false;
@@ -10,33 +9,34 @@ export default class {
      * Inialize the theme class.
      */
     static init() {
-        // Check LocalStorage for dark theme selection
-        if (localStorage.getItem('darkTheme') === 'true') {
-            // Update page theme
-            this.set(true);
-        }
+      // Check LocalStorage for dark theme selection
+      if (localStorage.getItem('darkTheme') === 'true') {
+        // Update page theme
+        this.set(true);
+      }
     }
 
     /**
      * Set page theme and update local storage variable.
+     *
      * @param {boolean} dark Whether to activate dark theme.
      */
     static set(dark = false) {
-        // Swap CSS to selected theme
-        document.getElementById('pagestyle')
-                .setAttribute('href', 'static/css/' + (dark ? 'dark' : 'main') + '.css');
+      // Swap CSS to selected theme
+      document.getElementById('pagestyle')
+          .setAttribute('href', 'static/css/' + (dark ? 'dark' : 'main') + '.css');
 
-        // Update local storage
-        localStorage.setItem('darkTheme', dark);
+      // Update local storage
+      localStorage.setItem('darkTheme', dark);
 
-        // Update internal state
-        this.#dark = dark;
+      // Update internal state
+      this.#dark = dark;
     }
 
     /**
      * Swap page theme.
      */
     static swap() {
-        this.set(!this.#dark);
+      this.set(!this.#dark);
     }
 }

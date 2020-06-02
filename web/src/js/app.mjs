@@ -1,17 +1,29 @@
-// jQuery 3.x
+// eslint-disable-next-line no-unused-vars
 import {$, jQuery} from 'jquery/src/jquery';
-
-// jQuery Migrate 3.x
 import 'jquery-migrate/src/migrate';
-
-// Popper 1.x
 import 'popper.js';
-
-// Boostrap 4.x
 import 'bootstrap/js/src/index';
 
 // Old application code
-import './main';
+import './main.mjs';
 
 // New application code
-import './index';
+import Theme from './theme.mjs';
+
+import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es';
+import {fas} from '@fortawesome/free-solid-svg-icons/index.es';
+import {far} from '@fortawesome/free-regular-svg-icons/index.es';
+import {fab} from '@fortawesome/free-brands-svg-icons/index.es';
+library.add(fas, far, fab);
+
+document.addEventListener('DOMContentLoaded', () => {
+  Theme.init();
+
+  // This is required to seach DOM and convert i tags to SVG
+  dom.i2svg();
+
+  document.getElementById('theme-switch-btn').addEventListener('click', () => {
+    Theme.swap();
+  });
+});
+
