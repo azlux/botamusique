@@ -1049,9 +1049,9 @@ function updatePlayerPlayhead(playhead){
         setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
         if (playing) {
             playhead_timer = setInterval(function () {
-                player_playhead_position += 0.1;
+                player_playhead_position += 0.3;
                 setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
-            }, 100); // delay in milliseconds
+            }, 300); // delay in milliseconds
         }
     } else {
         if (playing) {
@@ -1092,9 +1092,10 @@ function isOverflown(element) {
 }
 
 function setProgressBar(bar, progress, text="") {
+    let prog_pos = (-1 * (1 - progress)*bar.scrollWidth).toString();
     let prog_str = (progress*100).toString();
     bar.setAttribute("aria-valuenow", prog_str);
-    bar.style.width = prog_str + "%";
+    bar.style.transform = "translateX(" + prog_pos + "px)";
     bar.textContent = text;
 }
 
