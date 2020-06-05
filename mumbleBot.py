@@ -38,11 +38,12 @@ class MumbleBot:
         self.log.info(f"bot: botamusique version {self.version}, starting...")
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
-        self.volume_set = var.config.getfloat('bot', 'volume')
+        self.volume_set = var.config.getfloat('bot', 'volume', fallback=0.1)
         if var.db.has_option('bot', 'volume'):
             self.volume_set = var.db.getfloat('bot', 'volume')
-
         self.volume = self.volume_set
+
+        self.stereo = var.config.getboolean('bot', 'stereo', fallback=True)
 
         if args.channel:
             self.channel = args.channel
@@ -62,6 +63,7 @@ class MumbleBot:
         self.song_start_at = -1
         self.last_ffmpeg_err = ""
         self.read_pcm_size = 0
+        self.pcm_buffer_size = 0
         # self.download_threads = []
         self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
         self.on_killing = threading.Lock()  # lock to acquire when killing ffmpeg thread is asked but ffmpeg is not
@@ -104,7 +106,9 @@ class MumbleBot:
             self.username = var.config.get("bot", "username")
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
-                                      debug=var.config.getboolean('debug', 'mumbleConnection'), certfile=certificate)
+                                      stereo=self.stereo,
+                                      debug=var.config.getboolean('debug', 'mumbleConnection'),
+                                      certfile=certificate)
         self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_TEXTMESSAGERECEIVED, self.message_received)
 
         self.mumble.set_codec_profile("audio")
@@ -369,8 +373,11 @@ class MumbleBot:
         else:
             ffmpeg_debug = "warning"
 
+        channels = 2 if self.stereo else 1
+        self.pcm_buffer_size = 960*channels
+
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
-                   uri, '-ss', f"{start_from:f}", '-ac', '1', '-f', 's16le', '-ar', '48000', '-')
+                   uri, '-ss', f"{start_from:f}", '-ac', str(channels), '-f', 's16le', '-ar', '48000', '-')
         self.log.debug("bot: execute ffmpeg command: " + " ".join(command))
 
         # The ffmpeg process is a thread
@@ -381,7 +388,7 @@ class MumbleBot:
         else:
             pipe_rd, pipe_wd = None, None
 
-        self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=480)
+        self.thread = sp.Popen(command, stdout=sp.PIPE, stderr=pipe_wd, bufsize=self.pcm_buffer_size)
 
     def async_download_next(self):
         # Function start if the next music isn't ready
@@ -452,8 +459,8 @@ class MumbleBot:
                     self.song_start_at = time.time() - self.playhead
                 self.playhead = time.time() - self.song_start_at
 
-                raw_music = self.thread.stdout.read(480)
-                self.read_pcm_size += 480
+                raw_music = self.thread.stdout.read(self.pcm_buffer_size)
+                self.read_pcm_size += self.pcm_buffer_size
 
                 if self.redirect_ffmpeg_log:
                     try:
@@ -476,7 +483,8 @@ class MumbleBot:
             if not self.is_pause and (self.thread is None or self.thread.poll() is not None):
                 # bot is not paused, but ffmpeg thread has gone.
                 # indicate that last song has finished, or the bot just resumed from pause, or something is wrong.
-                if self.read_pcm_size < 481 and len(var.playlist) > 0 and var.playlist.current_index != -1 \
+                if self.read_pcm_size < self.pcm_buffer_size and len(var.playlist) > 0 \
+                        and var.playlist.current_index != -1 \
                         and self.last_ffmpeg_err:
                     current = var.playlist.current_item()
                     self.log.error("bot: cannot play music %s", current.format_debug_string())
