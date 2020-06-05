@@ -1072,13 +1072,13 @@ playerBarBox.addEventListener('mousedown', function () {
 });
 playerBarBox.addEventListener('mouseup', function (event) {
     playerBarBox.removeEventListener('mousemove', playheadDragged);
-    let percent = event.offsetX / playerBarBox.clientWidth;
+    let percent = (event.clientX -  playerBarBox.getBoundingClientRect().x)  / playerBarBox.clientWidth;
     request('post', {move_playhead: percent * currentPlayingItem.duration});
     playhead_dragging = false;
 });
 
 function playheadDragged(event){
-    let percent = event.offsetX / playerBarBox.clientWidth;
+    let percent = (event.clientX -  playerBarBox.getBoundingClientRect().x)  / playerBarBox.clientWidth;
     setProgressBar(playerBar, percent, secondsToStr(percent * currentPlayingItem.duration));
 }
 
