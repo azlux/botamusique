@@ -594,12 +594,12 @@ def cmd_volume(bot, user, text, command, parameter):
 
     # The volume is a percentage
     if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
-        bot.volume_set = float(float(parameter) / 100)
-        bot.send_msg(constants.strings('change_volume', volume=int(bot.volume_set * 100), user=bot.mumble.users[text.actor]['name']), text)
-        var.db.set('bot', 'volume', str(bot.volume_set))
-        log.info(f'cmd: volume set to {bot.volume_set * 100}')
+        bot.convert_set_volume(float(parameter) / 100.0)
+        bot.send_msg(constants.strings('change_volume', volume=parameter, user=bot.mumble.users[text.actor]['name']), text)
+        var.db.set('bot', 'volume', str(float(parameter) / 100.0))
+        log.info(f'cmd: volume set to {float(parameter) / 100.0}')
     else:
-        bot.send_msg(constants.strings('current_volume', volume=int(bot.volume_set * 100)), text)
+        bot.send_msg(constants.strings('current_volume', volume=int(bot.get_displayed_volume() * 100)), text)
 
 
 def cmd_ducking(bot, user, text, command, parameter):
@@ -608,7 +608,7 @@ def cmd_ducking(bot, user, text, command, parameter):
     if parameter == "" or parameter == "on":
         bot.is_ducking = True
         var.db.set('bot', 'ducking', True)
-        bot.ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
+        bot.convert_set_ducking_volume(var.config.getfloat("bot", "ducking_volume", fallback=0.05))
         bot.ducking_threshold = var.config.getint("bot", "ducking_threshold", fallback=5000)
         bot.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED, bot.ducking_sound_received)
         bot.mumble.set_receive_sound(True)
@@ -642,12 +642,12 @@ def cmd_ducking_volume(bot, user, text, command, parameter):
 
     # The volume is a percentage
     if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
-        bot.ducking_volume = float(float(parameter) / 100)
-        bot.send_msg(constants.strings('change_ducking_volume', volume=int(bot.ducking_volume * 100), user=bot.mumble.users[text.actor]['name']), text)
-        var.db.set('bot', 'ducking_volume', str(bot.ducking_volume))
-        log.info(f'cmd: volume on ducking set to {bot.ducking_volume * 100}')
+        bot.convert_set_ducking_volume(float(parameter) / 100.0)
+        bot.send_msg(constants.strings('change_ducking_volume', volume=parameter, user=bot.mumble.users[text.actor]['name']), text)
+        var.db.set('bot', 'ducking_volume', parameter)
+        log.info(f'cmd: volume on ducking set to {parameter}')
     else:
-        bot.send_msg(constants.strings('current_ducking_volume', volume=int(bot.ducking_volume * 100)), text)
+        bot.send_msg(constants.strings('current_ducking_volume', volume=int(bot.get_displayed_ducking_volume() * 100)), text)
 
 
 def cmd_current_music(bot, user, text, command, parameter):
