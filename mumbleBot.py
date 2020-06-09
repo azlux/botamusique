@@ -778,7 +778,7 @@ if __name__ == '__main__':
     var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
     var.cache = MusicCache(var.music_db)
 
-    if var.config.get("bot", "refresh_cache_on_startup", fallback=True):
+    if var.config.getboolean("bot", "refresh_cache_on_startup", fallback=True):
         var.cache.build_dir_cache()
 
     # ======================
