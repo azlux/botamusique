@@ -603,7 +603,7 @@ const download_dir = download_form.find('input[name=\'dir\']');
 const download_tags = download_form.find('input[name=\'tags\']');
 const download_keywords = download_form.find('input[name=\'keywords\']');
 
-function addAllResults() {
+document.getElementById('add-to-playlist-btn').addEventListener('click', () => {
   const data = getFilters();
   data.action = 'add';
 
@@ -616,9 +616,9 @@ function addAllResults() {
   });
 
   checkForPlaylistUpdate();
-}
+});
 
-function deleteAllResults() {
+document.getElementById('library-delete-btn').addEventListener('click', () => {
   const data = getFilters();
   data.action = 'delete';
 
@@ -632,9 +632,9 @@ function deleteAllResults() {
 
   checkForPlaylistUpdate();
   updateResults();
-}
+});
 
-function downloadAllResults() {
+document.getElementById('library-download-btn').addEventListener('click', () => {
   const cond = getFilters();
   download_id.val();
   download_type.val(cond.type);
@@ -642,7 +642,12 @@ function downloadAllResults() {
   download_tags.val(cond.tags);
   download_keywords.val(cond.keywords);
   download_form.submit();
-}
+});
+
+document.getElementById('library-rescan-btn').addEventListener('click', () => {
+  request('post', {action: 'rescan'});
+  updateResults();
+});
 
 function downloadId(id) {
   download_id.attr('value', id);
@@ -760,7 +765,7 @@ function addTagModalShow(_id, _title, _tag_tuples) {
   add_tag_modal.modal('show');
 }
 
-function addTagModalAdd() {
+document.getElementById('addTagModalAddBtn').addEventListener('click', () => {
   const new_tags = add_tag_modal_input.val().split(',').map(function(str) {
     return str.trim();
   });
@@ -776,9 +781,9 @@ function addTagModalAdd() {
     modal_tag_text.html('');
   });
   add_tag_modal_input.val('');
-}
+});
 
-function addTagModalSubmit() {
+document.getElementById('addTagModalSubmit').addEventListener('click', () => {
   const all_tags = $('.modal-tag-text');
   const tags = [];
   all_tags.each(function(i, element) {
@@ -797,7 +802,7 @@ function addTagModalSubmit() {
     },
   });
   updateResults(active_page);
-}
+});
 
 // ---------------------
 // ------- Volume ------
@@ -1030,6 +1035,23 @@ function uploadCancel() {
   areYouSureToCancelUploading = !areYouSureToCancelUploading;
 }
 
+//
+// URLS & Radio
+//
+
+const musicUrlInput = document.getElementById('music-url-input');
+const radioUrlInput = document.getElementById('radio-url-input');
+
+document.getElementById('add-music-url').querySelector('button').addEventListener('click', () => {
+  request('post', {add_url: musicUrlInput.value});
+  musicUrlInput.value = '';
+});
+
+document.getElementById('add-radio-url').querySelector('button').addEventListener('click', () => {
+  request('post', {add_radio: radioUrlInput.value});
+  radioUrlInput.value = '';
+});
+
 // ---------------------
 // ------  Player ------
 // ---------------------
@@ -1047,9 +1069,21 @@ const playerSkipBtn = document.getElementById('playerSkipBtn');
 
 let currentPlayingItem = null;
 
-function togglePlayer() {
+playerPlayBtn.addEventListener('click', () => {
+  request('post', {action: 'resume'});
+});
+
+playerPauseBtn.addEventListener('click', () => {
+  request('post', {action: 'pause'});
+});
+
+playerSkipBtn.addEventListener('click', () => {
+  request('post', {action: 'next'});
+});
+
+document.getElementById('player-toast').addEventListener('click', () => {
   $(player).toast('show');
-}
+});
 
 function playerSetIdle() {
   playerArtwork.style.display = 'none';

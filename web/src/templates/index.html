@@ -237,13 +237,11 @@
                                     <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z"></path>
                                     <path d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z"></path>
                                 </svg>
-
                             </button>
                             <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space" type="button" title="Add to bottom">
                                 <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="2 2 20 20">
                                     <path d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z"></path>
                                 </svg>
-
                             </button>
                             <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
                                 <i class="fas fa-download" aria-hidden="true"></i>
@@ -257,48 +255,50 @@
                 </div>
 
                 <div class="list-group">
-                    <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
-                        <ul id="library-page-ul" class="pagination pagination">
-                            <li class="library-page-li page-item active">
-                                <a class="library-page-no page-link">1</a>
-                            </li>
-                        </ul>
-                    </div>
+                  <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
+                    <ul id="library-page-ul" class="pagination pagination">
+                      <li class="library-page-li page-item active">
+                        <a class="library-page-no page-link">1</a>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
 
                 <div class="btn-group mb-2" role="group">
-                    <button type="submit" class="btn btn-secondary mr-1" onclick="addAllResults()"><i class="fas fa-plus" aria-hidden="true"></i> Add All
-                    </button>
-                    <button type="submit" class="btn btn-secondary mr-1" onclick="request('post', {action : 'rescan'}); updateResults()">
-                        <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
-                    </button>
-                    <button type="submit" class="btn btn-secondary mr-1" onclick="downloadAllResults()"><i class="fas fa-download" aria-hidden="true"></i> Download All
-                    </button>
-                    <button type="button" class="btn btn-danger mr-1" data-toggle="modal" data-target="#deleteWarningModal"><i class="fas fa-trash-alt" aria-hidden="true"></i>
-                        Delete All
-                    </button>
+                  <button id="add-to-playlist-btn" type="button" class="btn btn-secondary mr-1">
+                    <i class="fas fa-plus" aria-hidden="true"></i> Add All
+                  </button>
+                  <button id="library-rescan-btn" type="button" class="btn btn-secondary mr-1">
+                    <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
+                  </button>
+                  <button id="library-download-btn" type="button" class="btn btn-secondary mr-1">
+                    <i class="fas fa-download" aria-hidden="true"></i> Download All
+                  </button>
+                  <button type="button" class="btn btn-danger mr-1" data-toggle="modal" data-target="#deleteWarningModal">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i> Delete All
+                  </button>
                 </div>
 
                 <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog" aria-labelledby="Warning-Delete-File" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                All files listed here, include files on other pages, will be deleted from your
-                                hard-drive.
-                                Is that what you want?
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="deleteAllResults()">Delete All Listed Files</button>
-                            </div>
-                        </div>
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        All files listed here, include files on other pages, will be deleted from your
+                        hard-drive.
+                        Is that what you want?
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button id="library-delete-btn" type="button" class="btn btn-danger" data-dismiss="modal">Delete All Listed Files</button>
+                      </div>
                     </div>
+                  </div>
                 </div>
             </div>
         </div>
@@ -357,38 +357,38 @@
 
     <div class="container mb-5">
         <div class="card-deck">
-            <div class="card">
+            <div id="add-music-url" class="card">
                 <div class="card-header">
                     <h5 class="card-title">Add URL</h5>
                 </div>
                 <div class="card-body">
-                    <label for="add_url_input">Add Youtube or Soundcloud URL</label>
+                    <label for="music-url-input">Add Youtube or Soundcloud URL</label>
                     <div class="input-group mb-2">
-                        <input class="form-control" type="text" id="add_url_input" placeholder="URL...">
+                        <input class="form-control" type="text" id="music-url-input" placeholder="URL...">
                     </div>
-                    <button type="submit" class="btn btn-primary" onclick="var $i = $('#add_url_input')[0]; request('post', {add_url :  $i.value }); $i.value = ''; ">Add
-                        URL
+                    <button type="submit" class="btn btn-primary">
+                      Add URL
                     </button>
                 </div>
             </div>
-            <div class="card">
+            <div id="add-radio-url" class="card">
                 <div class="card-header">
                     <h5 class="card-title">Add Radio</h5>
                 </div>
                 <div class="card-body">
-                    <label for="add_radio_input">Add Radio URL</label>
+                    <label for="radio-url-input">Add Radio URL</label>
                     <div class="input-group mb-2">
-                        <input class="form-control" type="text" id="add_radio_input" placeholder="Radio Address...">
+                        <input id="radio-url-input" class="form-control" type="text" placeholder="Radio Address...">
                     </div>
-                    <button type="submit" class="btn btn-primary" onclick="var $i = $('#add_radio_input')[0]; request('post', {add_radio : $i.value }); $i.value = '';">Add
-                        Radio
+                    <button type="submit" class="btn btn-primary">
+                      Add Radio
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="floating-button" style="bottom: 120px;" onclick="togglePlayer()">
+    <div id="player-toast" class="floating-button" style="bottom: 120px;">
         <i class="fas fa-play" aria-hidden="true"></i>
     </div>
 
@@ -409,13 +409,13 @@
             <img id="playerArtwork" src="static/img/unknown-album.png" style="display: none;" />
             <div id="playerInfo">
                 <div id="playerActionBox">
-                    <button id="playerPlayBtn" class="btn btn-primary btn-sm btn-space" style="display: none" onclick="request('post', {action: 'resume'})">
+                    <button id="playerPlayBtn" class="btn btn-primary btn-sm btn-space" style="display: none">
                         <i class="fas fa-play"></i>
                     </button>
-                    <button id="playerPauseBtn" class="btn btn-primary btn-sm btn-space" style="display: none" onclick="request('post', {action: 'pause'})">
+                    <button id="playerPauseBtn" class="btn btn-primary btn-sm btn-space" style="display: none">
                         <i class="fas fa-pause"></i>
                     </button>
-                    <button id="playerSkipBtn" class="btn btn-primary btn-sm" onclick="request('post', {action : 'next'})">
+                    <button id="playerSkipBtn" class="btn btn-primary btn-sm">
                         <i class="fas fa-fast-forward"></i>
                     </button>
                 </div>
@@ -461,7 +461,7 @@
                     </div>
                     <div class="input-group">
                         <input class="form-control form-control-sm btn-space" type="text" id="addTagModalInput" placeholder="tag1,tag2,...">
-                        <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm" onclick="addTagModalAdd()">
+                        <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus" aria-hidden="true"></i>
                             Add
                         </button>
@@ -469,7 +469,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button id="addTagModalSubmit" type="button" class="btn btn-success" data-dismiss="modal" onclick="addTagModalSubmit()">Edit!</button>
+                    <button id="addTagModalSubmit" type="button" class="btn btn-success" data-dismiss="modal">Edit!</button>
                 </div>
             </div>
         </div>
