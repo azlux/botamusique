@@ -1,5 +1,3 @@
-opuslib==2.0.0
-protobuf==3.4.0
 flask
 youtube-dl
 python-magic
@@ -7,5 +5,5 @@ Pillow
 mutagen
 requests
 packaging
-pymumble
+pymumble>=1.2
 pyradios

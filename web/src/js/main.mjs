@@ -1057,6 +1057,7 @@ function playerSetIdle() {
   playerTitle.textContent = '-- IDLE --';
   playerArtist.textContent = '';
   setProgressBar(playerBar, 0);
+  clearInterval(playhead_timer);
 }
 
 function updatePlayerInfo(item) {
@@ -1118,9 +1119,9 @@ function updatePlayerPlayhead(playhead) {
     setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
     if (playing) {
       playhead_timer = setInterval(function() {
-        player_playhead_position += 0.1;
+        player_playhead_position += 0.3;
         setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
-      }, 100); // delay in milliseconds
+      }, 300); // delay in milliseconds
     }
   } else {
     if (playing) {
@@ -1142,7 +1143,7 @@ playerBarBox.addEventListener('mousedown', function() {
 
 playerBarBox.addEventListener('mouseup', function(event) {
   playerBarBox.removeEventListener('mousemove', playheadDragged);
-  const percent = event.offsetX / playerBarBox.clientWidth;
+  const percent = (event.clientX -  playerBarBox.getBoundingClientRect().x)  / playerBarBox.clientWidth;
   request('post', {
     move_playhead: percent * currentPlayingItem.duration,
   });
@@ -1150,7 +1151,7 @@ playerBarBox.addEventListener('mouseup', function(event) {
 });
 
 function playheadDragged(event) {
-  const percent = event.offsetX / playerBarBox.clientWidth;
+  const percent = (event.clientX -  playerBarBox.getBoundingClientRect().x)  / playerBarBox.clientWidth;
   setProgressBar(playerBar, percent, secondsToStr(percent * currentPlayingItem.duration));
 }
 

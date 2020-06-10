@@ -64,7 +64,7 @@ class ReverseProxied(object):
 
 
 web = Flask(__name__)
-web.config['TEMPLATES_AUTO_RELOAD'] = True
+#web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
 
