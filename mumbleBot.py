@@ -18,6 +18,7 @@ import variables as var
 import logging
 import logging.handlers
 import traceback
+import struct
 from packaging import version
 
 import util
@@ -53,21 +54,27 @@ class MumbleBot:
         var.user = args.user
         var.is_proxified = var.config.getboolean(
             "webinterface", "is_web_proxified")
+
+        # Flags to indicate the bot is exiting (Ctrl-C, or !kill)
         self.exit = False
         self.nb_exit = 0
+
+        # Related to ffmpeg thread
         self.thread = None
         self.thread_stderr = None
-        self.is_pause = False
-        self.pause_at_id = ""
-        self.playhead = -1
-        self.song_start_at = -1
-        self.last_ffmpeg_err = ""
         self.read_pcm_size = 0
         self.pcm_buffer_size = 0
-        # self.download_threads = []
+        self.last_ffmpeg_err = ""
+
+        # Play/pause status
+        self.is_pause = False
+        self.pause_at_id = ""
+        self.playhead = -1  # current position in a song.
+        self.song_start_at = -1
         self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
-        self.on_killing = threading.Lock()  # lock to acquire when killing ffmpeg thread is asked but ffmpeg is not
-        # killed yet
+
+        #
+        self.on_interrupting = False
 
         if args.host:
             host = args.host
@@ -356,9 +363,6 @@ class MumbleBot:
     # =======================
 
     def launch_music(self, music_wrapper, start_from=0):
-        self.on_killing.acquire()
-        self.on_killing.release()
-
         assert music_wrapper.is_ready()
 
         uri = music_wrapper.uri()
@@ -473,8 +477,16 @@ class MumbleBot:
                 if raw_music:
                     # Adjust the volume and send it to mumble
                     self.volume_cycle()
-                    self.mumble.sound_output.add_sound(
-                        audioop.mul(raw_music, 2, self.volume))
+
+                    if not self.on_interrupting:
+                        self.mumble.sound_output.add_sound(
+                            audioop.mul(raw_music, 2, self.volume))
+                    else:
+                        self.mumble.sound_output.add_sound(
+                            audioop.mul(self._fadeout(raw_music, self.stereo), 2, self.volume))
+                        self.thread.kill()
+                        time.sleep(0.1)
+                        self.on_interrupting = False
                 else:
                     time.sleep(0.1)
             else:
@@ -555,8 +567,6 @@ class MumbleBot:
         if delta > 0.001:
             if self.is_ducking and self.on_ducking:
                 self.volume = (self.volume - self.ducking_volume) * math.exp(- delta / 0.2) + self.ducking_volume
-            elif self.on_killing.locked():
-                self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.05)
             else:
                 self.volume = self.volume_set - (self.volume_set - self.volume) * math.exp(- delta / 0.5)
 
@@ -577,6 +587,23 @@ class MumbleBot:
                 self.log.debug("bot: ducking triggered")
                 self.on_ducking = True
             self.ducking_release = time.time() + 1  # ducking release after 1s
+
+    def _fadeout(self, _pcm_data, stereo=False):
+        pcm_data = bytearray(_pcm_data)
+        if stereo:
+            mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 4))]
+            for i in range(int(len(pcm_data) / 4)):
+                pcm_data[4 * i:4 * i + 2] = struct.pack("<h",
+                                                        round(struct.unpack("<h", pcm_data[4 * i:4 * i + 2])[0] * mask[i]))
+                pcm_data[4 * i + 2:4 * i + 4] = struct.pack("<h", round(
+                    struct.unpack("<h", pcm_data[4 * i + 2:4 * i + 4])[0] * mask[i]))
+        else:
+            mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 2))]
+            for i in range(int(len(pcm_data) / 2)):
+                pcm_data[2 * i:2 * i + 2] = struct.pack("<h",
+                                                        round(struct.unpack("<h", pcm_data[2 * i:2 * i + 2])[0] * mask[i]))
+
+        return bytes(pcm_data) + bytes(len(pcm_data))
 
     # =======================
     #      Play Control
@@ -615,18 +642,8 @@ class MumbleBot:
 
     def interrupt(self):
         # Kill the ffmpeg thread
-        if not self.on_killing.locked():
-            self.on_killing.acquire()
-            if self.is_ffmpeg_running():
-                volume_set = self.volume_set
-                self.volume_set = 0
-
-                while self.volume > 0.01 and self.is_ffmpeg_running():  # Waiting for volume_cycle to gradually tune volume to 0.
-                    time.sleep(0.01)
-
-                self.thread.kill()
-                self.volume_set = volume_set
-            self.on_killing.release()
+        if self.is_ffmpeg_running():
+            self.on_interrupting = True
 
             self.song_start_at = -1
             self.read_pcm_size = 0
