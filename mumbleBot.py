@@ -39,13 +39,6 @@ class MumbleBot:
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
 
-        self._volume_set = 0
-        self._volume = 0
-        self.unconverted_volume = var.config.getfloat('bot', 'volume', fallback=0.1)
-        if var.db.has_option('bot', 'volume'):
-            self.unconverted_volume = var.db.getfloat('bot', 'volume')
-        self.convert_set_volume(self.unconverted_volume)
-
         self.stereo = var.config.getboolean('bot', 'stereo', fallback=True)
 
         if args.channel:
@@ -126,21 +119,30 @@ class MumbleBot:
         self.join_channel()
         self.mumble.set_bandwidth(200000)
 
+        # ====== Volume ======
+        self.volume_helper = util.VolumeHelper()
+
+        _volume = var.config.getfloat('bot', 'volume', fallback=0.1)
+        if var.db.has_option('bot', 'volume'):
+            _volume = var.db.getfloat('bot', 'volume')
+        self.volume_helper.set_volume(_volume)
+
         self.is_ducking = False
         self.on_ducking = False
         self.ducking_release = time.time()
         self.last_volume_cycle_time = time.time()
 
         self._ducking_volume = 0
+        _ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
+        _ducking_volume = var.db.getfloat("bot", "ducking_volume", fallback=_ducking_volume)
+        self.volume_helper.set_ducking_volume(_ducking_volume)
+
+        self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
+        self.ducking_threshold = var.db.getfloat("bot", "ducking_threshold", fallback=self.ducking_threshold)
+
         if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking", fallback=False) \
                 or var.config.getboolean("bot", "ducking"):
             self.is_ducking = True
-            self.unconverted_ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
-            self.unconverted_ducking_volume = var.db.getfloat("bot", "ducking_volume",
-                                                              fallback=self.unconverted_ducking_volume)
-            self.convert_set_ducking_volume(self.unconverted_ducking_volume)
-            self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
-            self.ducking_threshold = var.db.getfloat("bot", "ducking_threshold", fallback=self.ducking_threshold)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
                                                self.ducking_sound_received)
             self.mumble.set_receive_sound(True)
@@ -479,7 +481,8 @@ class MumbleBot:
                 if raw_music:
                     # Adjust the volume and send it to mumble
                     self.volume_cycle()
-                    self.mumble.sound_output.add_sound(audioop.mul(raw_music, 2, self._volume))
+                    self.mumble.sound_output.add_sound(
+                        audioop.mul(raw_music, 2, self.volume_helper.real_volume))
                 else:
                     time.sleep(0.1)
             else:
@@ -558,11 +561,12 @@ class MumbleBot:
 
         if delta > 0.001:
             if self.is_ducking and self.on_ducking:
-                self._volume = (self._volume - self._ducking_volume) * math.exp(- delta / 0.2) + self._ducking_volume
-            elif self.on_killing.locked():
-                self._volume = self._volume_set - (self._volume_set - self._volume) * math.exp(- delta / 0.05)
+                self.volume_helper.real_volume = \
+                    (self.volume_helper.real_volume - self.volume_helper.ducking_volume_set) * math.exp(- delta / 0.2) \
+                    + self.volume_helper.ducking_volume_set
             else:
-                self._volume = self._volume_set - (self._volume_set - self._volume) * math.exp(- delta / 0.5)
+                self.volume_helper.real_volume = self.volume_helper.volume_set - \
+                      (self.volume_helper.volume_set - self.volume_helper.real_volume) * math.exp(- delta / 0.5)
 
             self.last_volume_cycle_time = time.time()
 
@@ -619,15 +623,15 @@ class MumbleBot:
         if not self.on_killing.locked():
             self.on_killing.acquire()
             if self.thread:
-                volume_set = self._volume_set
-                self._volume_set = 0
+                volume_set = self.volume_helper.plain_volume_set
+                self.volume_helper.plain_volume_set = 0
 
-                while self._volume > 0.01 and self.thread:  # Waiting for volume_cycle to gradually tune volume to 0.
+                while self.volume_helper.real_volume > 0.01 and self.thread:  # Waiting for volume_cycle to gradually tune volume to 0.
                     time.sleep(0.01)
 
                 self.thread.kill()
                 self.thread = None
-                self._volume_set = volume_set
+                self.volume_helper.plain_volume_set = volume_set
             self.on_killing.release()
 
             self.song_start_at = -1
@@ -657,23 +661,6 @@ class MumbleBot:
 
         self.wait_for_ready = True
         self.pause_at_id = ""
-
-    # map the volume_before_converting(0~1) into -60~0 dB, convert dB into a factor between 0~1.
-    def convert_set_volume(self, volume_before_converting):
-        self.unconverted_volume = volume_before_converting
-        dB = -60 + volume_before_converting * 60
-        self._volume_set = 10 ** (dB / 20)
-
-    def get_displayed_volume(self):
-        return self.unconverted_volume
-
-    def convert_set_ducking_volume(self, volume_before_converting):
-        self.unconverted_ducking_volume = volume_before_converting
-        dB = -60 + volume_before_converting * 60
-        self._ducking_volume = 10**(dB/20)
-
-    def get_displayed_duck_volume(self):
-        return self.unconverted_ducking_volume
 
 
 def start_web_interface(addr, port):
