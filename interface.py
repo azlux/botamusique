@@ -319,7 +319,7 @@ def status():
                         'empty': False,
                         'play': not var.bot.is_pause,
                         'mode': var.playlist.mode,
-                        'volume': var.bot.volume_set,
+                        'volume': var.bot.volume_helper.plain_volume_set,
                         'playhead': var.bot.playhead
                         })
 
@@ -329,7 +329,7 @@ def status():
                         'empty': True,
                         'play': not var.bot.is_pause,
                         'mode': var.playlist.mode,
-                        'volume': var.bot.volume_set,
+                        'volume': var.bot.volume_helper.plain_volume_set,
                         'playhead': 0
                         })
 
@@ -486,31 +486,31 @@ def post():
             elif action == "clear":
                 var.bot.clear()
             elif action == "volume_up":
-                if var.bot.volume_set + 0.03 < 1.0:
-                    var.bot.volume_set = var.bot.volume_set + 0.03
+                if var.bot.volume_helper.plain_volume_set + 0.03 < 1.0:
+                    var.bot.volume_helper.set_volume(var.bot.volume_helper.plain_volume_set + 0.03)
                 else:
-                    var.bot.volume_set = 1.0
-                var.db.set('bot', 'volume', str(var.bot.volume_set))
-                log.info("web: volume up to %d" % (var.bot.volume_set * 100))
+                    var.bot.volume_helper.set_volume(1.0)
+                var.db.set('bot', 'volume', str(var.bot.volume_helper.plain_volume_set))
+                log.info("web: volume up to %d" % (var.bot.volume_helper.plain_volume_set * 100))
             elif action == "volume_down":
-                if var.bot.volume_set - 0.03 > 0:
-                    var.bot.volume_set = var.bot.volume_set - 0.03
+                if var.bot.volume_helper.plain_volume_set - 0.03 > 0:
+                    var.bot.volume_helper.set_volume(var.bot.unconverted_volume - 0.03)
                 else:
-                    var.bot.volume_set = 0
-                var.db.set('bot', 'volume', str(var.bot.volume_set))
-                log.info("web: volume up to %d" % (var.bot.volume_set * 100))
+                    var.bot.volume_helper.set_volume(1.0)
+                var.db.set('bot', 'volume', str(var.bot.volume_helper.plain_volume_set))
+                log.info("web: volume down to %d" % (var.bot.volume_helper.plain_volume_set * 100))
             elif action == "volume_set_value":
                 if 'new_volume' in request.form:
                     if float(request.form['new_volume']) > 1:
-                        var.bot.volume_set = 1
+                        var.bot.volume_helper.set_volume(1.0)
                     elif float(request.form['new_volume']) < 0:
-                        var.bot.volume_set = 0
+                        var.bot.volume_helper.set_volume(0)
                     else:
                         # value for new volume is between 0 and 1, round to two decimal digits
-                        var.bot.volume_set = round(float(request.form['new_volume']), 2)
+                        var.bot.volume_helper.set_volume(round(float(request.form['new_volume']), 2))
 
-                    var.db.set('bot', 'volume', str(var.bot.volume_set))
-                    log.info("web: volume set to %d" % (var.bot.volume_set * 100))
+                    var.db.set('bot', 'volume', str(var.bot.volume_helper.plain_volume_set))
+                    log.info("web: volume set to %d" % (var.bot.volume_helper.plain_volume_set * 100))
 
     return status()
 

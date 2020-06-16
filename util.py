@@ -414,3 +414,34 @@ class LoggerIOWrapper(io.TextIOWrapper):
         else:
             self.logger.log(self.logging_level, text.rstrip())
             super().write(text + "\n")
+
+
+class VolumeHelper:
+    def __init__(self, plain_volume = 0, ducking_plain_volume = 0):
+        self.plain_volume_set = 0
+        self.plain_ducking_volume_set = 0
+        self.volume_set = 0
+        self.ducking_volume_set = 0
+
+        self.real_volume = 0
+
+        self.set_volume(plain_volume)
+        self.set_ducking_volume(ducking_plain_volume)
+
+    def set_volume(self, plain_volume):
+        self.volume_set = self._convert_volume(plain_volume)
+        self.plain_volume_set = plain_volume
+
+    def set_ducking_volume(self, plain_volume):
+        self.ducking_volume_set = self._convert_volume(plain_volume)
+        self.plain_ducking_volume_set = plain_volume
+
+    def _convert_volume(self, volume):
+        if volume == 0:
+            return 0
+
+        # convert input of 0~1 into -35~5 dB
+        dB = -35 + volume * 40
+
+        # Some dirty trick to stretch the function, to make to be 0 when input is -35 dB
+        return (10 ** (dB / 20) - 10 ** (-35 / 20)) / (1 - 10 ** (-35 / 20))
