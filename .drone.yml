@@ -21,4 +21,4 @@ steps:
 volumes:
 - name: repo
   host:
-    path:/media/raid5/data/packages/repos/apt/botamusique/
+    path: /media/raid5/data/packages/repos/apt/botamusique/
