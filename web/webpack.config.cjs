@@ -3,6 +3,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
+  mode: 'production',
   entry: {
     main: [
       './src/js/app.mjs',
@@ -13,6 +14,11 @@ module.exports = {
     ],
   },
   devtool: 'source-map',
+  /*optimization: {
+    splitChunks: {
+      chunks: 'all',
+    },
+  },*/
   output: {
     filename: 'static/js/[name].js',
     path: path.resolve(__dirname, '../'),
@@ -40,9 +46,9 @@ module.exports = {
         MiniCssExtractPlugin.loader,
         'css-loader', // translates CSS into CommonJS modules
         {
-          loader: 'postcss-loader', // Run postcss actions
+          loader: 'postcss-loader',
           options: {
-            plugins: function() { // postcss plugins, can be exported to postcss.config.js
+            plugins: function() {
               return [
                 require('autoprefixer'),
               ];

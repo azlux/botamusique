@@ -3,12 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npm run development",
-    "development": "webpack --mode=development --config webpack.config.cjs --progress",
     "lint": "eslint --config .eslintrc.json src/js/ --ext .mjs",
     "lint:fix": "npm run lint -- --fix",
-    "prod": "npm run production",
-    "production": "webpack --mode=production --config webpack.config.cjs --progress",
+    "build": "webpack --config webpack.config.cjs --progress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,11 +26,11 @@
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
     "core-js": "^3.6.5",
-    "css-loader": "^3.5.3",
+    "css-loader": "^3.6.0",
     "eslint": "^7.2.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-import": "^2.21.1",
-    "eslint-plugin-jsdoc": "^27.0.5",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-jsdoc": "^27.0.7",
     "eslint-plugin-node": "^11.1.0",
     "html-webpack-plugin": "^4.3.0",
     "mini-css-extract-plugin": "^0.9.0",

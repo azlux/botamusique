@@ -1,3 +1,10 @@
+import 'jquery/src/jquery';
+import 'jquery-migrate/src/migrate';
+import Popper from 'popper.js/dist/esm/popper';
+import {
+  Modal,
+  Toast,
+} from 'bootstrap/js/src/index';
 import {
   isOverflown,
   setProgressBar,
@@ -30,7 +37,7 @@ const pl_tag_edit_element = $('.playlist-item-edit');
 const notag_element = $('.library-item-notag'); // these elements are shared with library
 const tag_element = $('.library-item-tag');
 
-const add_tag_modal = $('#addTagModal');
+const addTagModal = new Modal(document.getElementById('addTagModal'));
 
 const playlist_loading = $('#playlist-loading');
 const playlist_table = $('#playlist-table');
@@ -497,8 +504,6 @@ const tag_edit_element = $('.library-item-edit');
 // var notag_element = $(".library-item-notag");
 // var tag_element = $(".library-item-tag");
 
-// var add_tag_modal = $("#addTagModal");
-
 function addResultItem(item) {
   id_element.val(item.id);
   title_element.html(item.title);
@@ -762,7 +767,7 @@ function addTagModalShow(_id, _title, _tag_tuples) {
     tag_copy.appendTo(add_tag_modal_tags);
     modal_tag_text.html('');
   });
-  add_tag_modal.modal('show');
+  addTagModal.show();
 }
 
 document.getElementById('addTagModalAddBtn').addEventListener('click', () => {
@@ -875,7 +880,7 @@ document.getElementById('volume-up-btn').addEventListener('click', () => {
 // ------- Upload ------
 // ---------------------
 
-const uploadModal = $('#uploadModal');
+const uploadModal = new Modal(document.getElementById('uploadModal'));
 
 const uploadFileInput = document.getElementById('uploadSelectFile');
 const uploadModalItem = document.getElementsByClassName('uploadItem')[0];
@@ -921,7 +926,7 @@ function uploadStart() {
     }
 
     uploadFileInput.value = '';
-    uploadModal.modal('show');
+    uploadModal.show();
     uploadNextFile();
   }
 }
@@ -1022,7 +1027,7 @@ function uploadCancel() {
     $(uploadCancelBtn).tooltip('show');
   } else {
     $(uploadCancelBtn).tooltip('hide');
-    uploadModal.modal('hide');
+    uploadModal.hide();
     runningXHR.abort();
     filesToProceed = [];
     uploadFileInput.value = '';
@@ -1056,7 +1061,7 @@ document.getElementById('add-radio-url').querySelector('button').addEventListene
 // ------  Player ------
 // ---------------------
 
-const player = document.getElementById('playerToast');
+const player = new Toast(document.getElementById('playerToast'));
 const playerArtwork = document.getElementById('playerArtwork');
 const playerArtworkIdle = document.getElementById('playerArtworkIdle');
 const playerTitle = document.getElementById('playerTitle');
@@ -1082,7 +1087,7 @@ playerSkipBtn.addEventListener('click', () => {
 });
 
 document.getElementById('player-toast').addEventListener('click', () => {
-  $(player).toast('show');
+  player.show();
 });
 
 function playerSetIdle() {
