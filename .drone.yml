@@ -6,14 +6,19 @@ steps:
   - name: build
     image: node
     commands:
-        - npm install
-        - npm run build
+      - npm install
+      - npm run build
 
   - name: deploy
     image: debian
     commands:
-        - tar -czf botamusique.tar.gz .
-        - mv botamusique.tar.gz /tmp/botamusique/sources-test.tar.gz
-        
+      - tar -czf botamusique.tar.gz .
+      - mv botamusique.tar.gz /tmp/botamusique/sources-test.tar.gz
     volumes:
-        - /media/raid5/data/packages/repos/apt/botamusique/:/tmp/botamusique/
+      - name: repo
+        path: /tmp/botamusique/
+
+volumes:
+- name: repo
+  host:
+    path:/media/raid5/data/packages/repos/apt/botamusique/
