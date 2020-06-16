@@ -989,6 +989,7 @@ function playerSetIdle(){
     playerTitle.textContent = '-- IDLE --';
     playerArtist.textContent = '';
     setProgressBar(playerBar, 0);
+    clearInterval(playhead_timer);
 }
 
 function updatePlayerInfo(item){

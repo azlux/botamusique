@@ -1,5 +1,3 @@
-opuslib==2.0.0
-protobuf==3.4.0
 flask
 youtube-dl
 python-magic

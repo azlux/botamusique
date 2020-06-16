@@ -18,6 +18,7 @@ import variables as var
 import logging
 import logging.handlers
 import traceback
+import struct
 from packaging import version
 
 import util
@@ -49,21 +50,27 @@ class MumbleBot:
         var.user = args.user
         var.is_proxified = var.config.getboolean(
             "webinterface", "is_web_proxified")
+
+        # Flags to indicate the bot is exiting (Ctrl-C, or !kill)
         self.exit = False
         self.nb_exit = 0
+
+        # Related to ffmpeg thread
         self.thread = None
         self.thread_stderr = None
-        self.is_pause = False
-        self.pause_at_id = ""
-        self.playhead = -1
-        self.song_start_at = -1
-        self.last_ffmpeg_err = ""
         self.read_pcm_size = 0
         self.pcm_buffer_size = 0
-        # self.download_threads = []
+        self.last_ffmpeg_err = ""
+
+        # Play/pause status
+        self.is_pause = False
+        self.pause_at_id = ""
+        self.playhead = -1  # current position in a song.
+        self.song_start_at = -1
         self.wait_for_ready = False  # flag for the loop are waiting for download to complete in the other thread
-        self.on_killing = threading.Lock()  # lock to acquire when killing ffmpeg thread is asked but ffmpeg is not
-        # killed yet
+
+        #
+        self.on_interrupting = False
 
         if args.host:
             host = args.host
@@ -364,9 +371,6 @@ class MumbleBot:
     # =======================
 
     def launch_music(self, music_wrapper, start_from=0):
-        self.on_killing.acquire()
-        self.on_killing.release()
-
         assert music_wrapper.is_ready()
 
         uri = music_wrapper.uri()
@@ -454,12 +458,12 @@ class MumbleBot:
         raw_music = ""
         while not self.exit and self.mumble.is_alive():
 
-            while self.thread and self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
+            while self.is_ffmpeg_running() and self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 # If the buffer isn't empty, I cannot send new music part, so I wait
                 self._loop_status = f'Wait for buffer {self.mumble.sound_output.get_buffer_size():.3f}'
                 time.sleep(0.01)
 
-            if self.thread:
+            if self.is_ffmpeg_running():
                 # I get raw from ffmpeg thread
                 # move playhead forward
                 self._loop_status = 'Reading raw'
@@ -481,14 +485,22 @@ class MumbleBot:
                 if raw_music:
                     # Adjust the volume and send it to mumble
                     self.volume_cycle()
-                    self.mumble.sound_output.add_sound(
-                        audioop.mul(raw_music, 2, self.volume_helper.real_volume))
+
+                    if not self.on_interrupting:
+                        self.mumble.sound_output.add_sound(
+                            audioop.mul(raw_music, 2, self.volume_helper.real_volume))
+                    else:
+                        self.mumble.sound_output.add_sound(
+                            audioop.mul(self._fadeout(raw_music, self.stereo), 2, self.volume_helper.real_volume))
+                        self.thread.kill()
+                        time.sleep(0.1)
+                        self.on_interrupting = False
                 else:
                     time.sleep(0.1)
             else:
                 time.sleep(0.1)
 
-            if not self.is_pause and (self.thread is None or self.thread.poll() is not None):
+            if not self.is_pause and not self.is_ffmpeg_running():
                 # bot is not paused, but ffmpeg thread has gone.
                 # indicate that last song has finished, or the bot just resumed from pause, or something is wrong.
                 if self.read_pcm_size < self.pcm_buffer_size and len(var.playlist) > 0 \
@@ -507,6 +519,7 @@ class MumbleBot:
                 if not self.wait_for_ready:  # if wait_for_ready flag is not true, move to the next song.
                     if var.playlist.next():
                         current = var.playlist.current_item()
+                        self.log.debug(f"bot: next into the song: {current.format_debug_string()}")
                         try:
                             self.validate_and_start_download(current)
                             self.wait_for_ready = True
@@ -586,9 +599,29 @@ class MumbleBot:
                 self.on_ducking = True
             self.ducking_release = time.time() + 1  # ducking release after 1s
 
+    def _fadeout(self, _pcm_data, stereo=False):
+        pcm_data = bytearray(_pcm_data)
+        if stereo:
+            mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 4))]
+            for i in range(int(len(pcm_data) / 4)):
+                pcm_data[4 * i:4 * i + 2] = struct.pack("<h",
+                                                        round(struct.unpack("<h", pcm_data[4 * i:4 * i + 2])[0] * mask[i]))
+                pcm_data[4 * i + 2:4 * i + 4] = struct.pack("<h", round(
+                    struct.unpack("<h", pcm_data[4 * i + 2:4 * i + 4])[0] * mask[i]))
+        else:
+            mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 2))]
+            for i in range(int(len(pcm_data) / 2)):
+                pcm_data[2 * i:2 * i + 2] = struct.pack("<h",
+                                                        round(struct.unpack("<h", pcm_data[2 * i:2 * i + 2])[0] * mask[i]))
+
+        return bytes(pcm_data) + bytes(len(pcm_data))
+
     # =======================
     #      Play Control
     # =======================
+
+    def is_ffmpeg_running(self):
+        return self.thread and self.thread.poll() is None
 
     def play(self, index=-1, start_at=0):
         if not self.is_pause:
@@ -620,19 +653,8 @@ class MumbleBot:
 
     def interrupt(self):
         # Kill the ffmpeg thread
-        if not self.on_killing.locked():
-            self.on_killing.acquire()
-            if self.thread:
-                volume_set = self.volume_helper.plain_volume_set
-                self.volume_helper.plain_volume_set = 0
-
-                while self.volume_helper.real_volume > 0.01 and self.thread:  # Waiting for volume_cycle to gradually tune volume to 0.
-                    time.sleep(0.01)
-
-                self.thread.kill()
-                self.thread = None
-                self.volume_helper.plain_volume_set = volume_set
-            self.on_killing.release()
+        if self.is_ffmpeg_running():
+            self.on_interrupting = True
 
             self.song_start_at = -1
             self.read_pcm_size = 0
@@ -787,7 +809,7 @@ if __name__ == '__main__':
     var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
     var.cache = MusicCache(var.music_db)
 
-    if var.config.get("bot", "refresh_cache_on_startup", fallback=True):
+    if var.config.getboolean("bot", "refresh_cache_on_startup", fallback=True):
         var.cache.build_dir_cache()
 
     # ======================
