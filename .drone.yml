@@ -6,17 +6,43 @@ steps:
   - name: build
     image: node
     commands:
+      - cd web
       - npm install
       - npm run build
+      - cd ..
+    when:
+      branch:
+        - master
+      event:
+        - push
 
-  - name: deploy
+  - name: deploy-testing
     image: debian
     commands:
       - tar -czf botamusique.tar.gz .
-      - mv botamusique.tar.gz /tmp/botamusique/sources-test.tar.gz
+      - mv botamusique.tar.gz /tmp/botamusique/sources.tar.gz
     volumes:
       - name: repo
         path: /tmp/botamusique/
+    when:
+      branch:
+        - master
+      event:
+        - push
+
+  - name: deploy-stable
+    image: debian
+    commands:
+      - tar -czf botamusique.tar.gz .
+      - mv botamusique.tar.gz /tmp/botamusique/sources.tar.gz
+    volumes:
+      - name: repo
+        path: /tmp/botamusique/
+    when:
+      branch:
+        - master
+      event:
+        - tag
 
 volumes:
 - name: repo
