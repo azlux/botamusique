@@ -29,6 +29,16 @@ steps:
         - master
       event:
         - push
+  
+  - name: docker
+    image: plugins/docker
+    settings:
+      repo: azlux/botamusique
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags: testing
 
   - name: deploy-stable
     image: debian
@@ -43,6 +53,17 @@ steps:
         - master
       event:
         - tag
+        
+   - name: docker
+    image: plugins/docker
+    settings:
+      repo: azlux/botamusique
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags: latest
+
 
 volumes:
 - name: repo
