@@ -19,8 +19,8 @@ steps:
   - name: deploy-testing
     image: debian
     commands:
-      - tar -czf botamusique.tar.gz .
-      - mv botamusique.tar.gz /tmp/botamusique/sources.tar.gz
+      - rm -rf .git*
+      - tar -czf /tmp/botamusique/sources-testing.tar.gz .
     volumes:
       - name: repo
         path: /tmp/botamusique/
@@ -48,8 +48,8 @@ steps:
   - name: deploy-stable
     image: debian
     commands:
-      - tar -czf botamusique.tar.gz .
-      - mv botamusique.tar.gz /tmp/botamusique/sources.tar.gz
+      - rm -rf .git*
+      - tar -czf /tmp/botamusique/sources-stable.tar.gz .
     volumes:
       - name: repo
         path: /tmp/botamusique/
