@@ -4,6 +4,7 @@ import Popper from 'popper.js/dist/esm/popper';
 import {
   Modal,
   Toast,
+  Tooltip
 } from 'bootstrap/js/src/index';
 import {
   isOverflown,
@@ -813,8 +814,8 @@ document.getElementById('addTagModalSubmit').addEventListener('click', () => {
 // ------- Volume ------
 // ---------------------
 
-const volumePopoverBtn = document.querySelector('#volume-popover-btn');
-const volumePopoverDiv = document.querySelector('#volume-popover');
+const volumePopoverBtn = document.getElementById('volume-popover-btn');
+const volumePopoverDiv = document.getElementById('volume-popover');
 let volume_popover_instance = null;
 let volume_popover_show = false;
 let volume_update_timer;
@@ -863,7 +864,7 @@ volumeSlider.addEventListener('change', (e) => {
   volume_update_timer = window.setTimeout(() => {
     request('post', {
       action: 'volume_set_value',
-      new_volume: volumePopoverDiv.value,
+      new_volume: volumeSlider.value,
     });
   }, 500); // delay in milliseconds
 });
@@ -889,6 +890,7 @@ const uploadTargetDir = document.getElementById('uploadTargetDir');
 const uploadSuccessAlert = document.getElementById('uploadSuccessAlert');
 const uploadSubmitBtn = document.getElementById('uploadSubmit');
 const uploadCancelBtn = document.getElementById('uploadCancel');
+const uploadCancelTooltip = new Tooltip(uploadCancelBtn);
 const uploadCloseBtn = document.getElementById('uploadClose');
 
 const maxFileSize = parseInt(document.getElementById('maxUploadFileSize').value);
@@ -908,7 +910,7 @@ function uploadStart() {
   uploadCancelBtn.style.display = 'none';
   uploadCloseBtn.style.display = 'block';
   areYouSureToCancelUploading = false;
-  $(uploadCancelBtn).tooltip('hide');
+  uploadCancelTooltip.hide();
   const file_list = uploadFileInput.files;
 
   if (file_list.length) {
@@ -1024,9 +1026,9 @@ function uploadNextFile() {
 
 function uploadCancel() {
   if (!areYouSureToCancelUploading) {
-    $(uploadCancelBtn).tooltip('show');
+    uploadCancelTooltip.show();
   } else {
-    $(uploadCancelBtn).tooltip('hide');
+    uploadCancelTooltip.hide();
     uploadModal.hide();
     runningXHR.abort();
     filesToProceed = [];
