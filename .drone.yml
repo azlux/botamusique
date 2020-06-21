@@ -39,6 +39,11 @@ steps:
       password:
         from_secret: docker_password
       tags: testing
+    when:
+      branch:
+        - master
+      event:
+        - push
 
   - name: deploy-stable
     image: debian
@@ -63,6 +68,11 @@ steps:
       password:
         from_secret: docker_password
       tags: latest
+    when:
+      branch:
+        - master
+      event:
+        - tag
 
 
 volumes:
