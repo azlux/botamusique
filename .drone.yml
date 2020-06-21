@@ -59,7 +59,7 @@ steps:
       event:
         - tag
 
-   - name: docker
+  - name: docker
     image: plugins/docker
     settings:
       repo: azlux/botamusique
