@@ -30,7 +30,7 @@ steps:
       event:
         - push
   
-  - name: docker
+  - name: docker-testing
     image: plugins/docker
     settings:
       repo: azlux/botamusique
@@ -59,7 +59,7 @@ steps:
       event:
         - tag
 
-  - name: docker
+  - name: docker-stable
     image: plugins/docker
     settings:
       repo: azlux/botamusique
