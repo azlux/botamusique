@@ -20,6 +20,7 @@ steps:
     image: debian
     commands:
       - rm -rf .git*
+      - rm -rf web
       - tar -czf /tmp/botamusique/sources-testing.tar.gz .
     volumes:
       - name: repo
@@ -49,6 +50,7 @@ steps:
     image: debian
     commands:
       - rm -rf .git*
+      - rm -rf web
       - tar -czf /tmp/botamusique/sources-stable.tar.gz .
     volumes:
       - name: repo
