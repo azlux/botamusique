@@ -1,0 +1,38 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "es2017": true,
+    "es2020": true,
+    "jquery": true
+  },
+  "plugins": [
+    "node",
+    "import",
+    "jsdoc"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "google",
+    "plugin:node/recommended-module",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:jsdoc/recommended"
+  ],
+  "globals": {
+    "Atomics": "readonly",
+    "SharedArrayBuffer": "readonly"
+  },
+  "parser": "babel-eslint",
+  "rules": {
+    "require-jsdoc": "off",
+    "valid-jsdoc": "off",
+    "jsdoc/require-jsdoc": "off",
+    "max-len": ["warn", {
+      "code": 120
+    }],
+    "import/no-commonjs": "error",
+    "import/no-amd": "error",
+    "linebreak-style": "off"
+  }
+}
