@@ -58,7 +58,7 @@ steps:
         - master
       event:
         - tag
-        
+
    - name: docker
     image: plugins/docker
     settings:
@@ -73,7 +73,6 @@ steps:
         - master
       event:
         - tag
-
 
 volumes:
 - name: repo
