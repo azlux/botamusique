@@ -6,7 +6,7 @@ export function setProgressBar(bar, progress, text = '') {
   const progPos = (-1 * (1 - progress) * bar.scrollWidth).toString();
   const progStr = (progress * 100).toString();
   bar.setAttribute('aria-valuenow', progStr);
-  bar.style.transform = "translateX(" + progPos + "px)";
+  bar.style.transform = 'translateX(' + progPos + 'px)';
   bar.textContent = text;
 }
 

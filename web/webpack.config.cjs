@@ -6,11 +6,11 @@ module.exports = {
   mode: 'production',
   entry: {
     main: [
-      './src/js/app.mjs',
-      './src/sass/app.scss',
+      './js/app.mjs',
+      './sass/app.scss',
     ],
     dark: [
-      './src/sass/app-dark.scss',
+      './sass/app-dark.scss',
     ],
   },
   devtool: 'source-map',
@@ -30,12 +30,12 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       filename: 'templates/index.html',
-      template: './src/templates/index.html',
+      template: './templates/index.html',
       inject: false,
     }),
     new HtmlWebpackPlugin({
       filename: 'templates/need_token.html',
-      template: './src/templates/need_token.html',
+      template: './templates/need_token.html',
       inject: false,
     }),
   ],

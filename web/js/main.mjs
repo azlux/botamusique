@@ -4,7 +4,7 @@ import Popper from 'popper.js/dist/esm/popper';
 import {
   Modal,
   Toast,
-  Tooltip
+  Tooltip,
 } from 'bootstrap/js/src/index';
 import {
   isOverflown,
@@ -1184,7 +1184,7 @@ playerBarBox.addEventListener('mousedown', function() {
 
 playerBarBox.addEventListener('mouseup', function(event) {
   playerBarBox.removeEventListener('mousemove', playheadDragged);
-  const percent = (event.clientX -  playerBarBox.getBoundingClientRect().x)  / playerBarBox.clientWidth;
+  const percent = (event.clientX - playerBarBox.getBoundingClientRect().x) / playerBarBox.clientWidth;
   request('post', {
     move_playhead: percent * currentPlayingItem.duration,
   });
@@ -1192,7 +1192,7 @@ playerBarBox.addEventListener('mouseup', function(event) {
 });
 
 function playheadDragged(event) {
-  const percent = (event.clientX -  playerBarBox.getBoundingClientRect().x)  / playerBarBox.clientWidth;
+  const percent = (event.clientX - playerBarBox.getBoundingClientRect().x) / playerBarBox.clientWidth;
   setProgressBar(playerBar, percent, secondsToStr(percent * currentPlayingItem.duration));
 }
 
