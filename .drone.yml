@@ -19,6 +19,7 @@ steps:
   - name: deploy-testing
     image: debian
     commands:
+      - apt -qq update && apt -q -y install git
       - rm -rf .git*
       - rm -rf web
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
@@ -51,30 +52,21 @@ steps:
       event:
         - push
 
-  - name: fetch
-    image: alpine/git
-    commands:
-      - git fetch --tags
-    when:
-      branch:
-        - master
-      event:
-        - tag
 
   - name: deploy-stable
     image: debian
     commands:
-      - apt -qq update && apt -q -y install jq curl
+      - apt -qq update && apt -q -y install jq curl git
       - rm -rf .git*
       - rm -rf web
       - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
+      - git fetch --tags
       - version=$(git describe --abbrev=0 --tags)
       - echo "version is $version"
       - echo $version > /tmp/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
       - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest") | jq -r '.body' > /tmp/botamusique/changelog
       - tar -czf /tmp/botamusique/sources-stable.tar.gz .
-
     volumes:
       - name: repo
         path: /tmp/botamusique/
