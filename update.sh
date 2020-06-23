@@ -9,8 +9,11 @@ case "$1" in
         rm -r /tmp/botamusique.tar.gz
         ;;
     testing)
-        git fetch
-        git pull --all
+        curl -Lo /tmp/botamusique.tar.gz https://packages.azlux.fr/botamusique/sources-testing.tar.gz
+        tar -xzf /tmp/botamusique.tar.gz -C /tmp/
+        cp -r /tmp/botamusique/* .
+        rm -r /tmp/botamusique
+        rm -r /tmp/botamusique.tar.gz
         ;;
     *)
         ;;

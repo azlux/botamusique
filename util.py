@@ -100,8 +100,11 @@ def get_user_ban():
     return res
 
 
-def new_release_version():
-    r = requests.get("https://packages.azlux.fr/botamusique/version")
+def new_release_version(target):
+    if target == "testing":
+        r = requests.get("https://packages.azlux.fr/botamusique/testing-version")
+    else:
+        r = requests.get("https://packages.azlux.fr/botamusique/version")
     v = r.text
     return v.rstrip()
 
@@ -115,26 +118,28 @@ def fetch_changelog():
 def update(current_version):
     global log
 
-    new_version = new_release_version()
     target = var.config.get('bot', 'target_version')
-    if version.parse(new_version) > version.parse(current_version) or target == "testing":
+    new_version = new_release_version(target)
+    msg = ""
+    if target == "git":
+        msg = "git install, I do nothing"
+
+    elif (target == "stable" and version.parse(new_version) > version.parse(current_version)) or \
+            (target == "testing" and version.parse(new_version) != version.parse(current_version)):
         log.info('update: new version, start updating...')
         tp = sp.check_output(['/usr/bin/env', 'bash', 'update.sh', target]).decode()
         log.debug(tp)
         log.info('update: update pip libraries dependencies')
         sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
         msg = "New version installed, please restart the bot."
-        if target == "testing":
-            msg += tp.replace('\n', '<br/>')
 
+    log.info('update: starting update youtube-dl via pip3')
+    tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
+    if "Requirement already up-to-date" in tp:
+        msg += "Youtube-dl is up-to-date"
     else:
-        log.info('update: starting update youtube-dl via pip3')
-        tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
-        msg = ""
-        if "Requirement already up-to-date" in tp:
-            msg += "Youtube-dl is up-to-date"
-        else:
-            msg += "Update done: " + tp.split('Successfully installed')[1]
+        msg += "Update done: " + tp.split('Successfully installed')[1]
+
     reload(youtube_dl)
     msg += "<br/> Youtube-dl reloaded"
     return msg
@@ -374,8 +379,8 @@ def parse_time(human):
 
 
 def parse_file_size(human):
-    units = {"B": 1, "KB": 1024, "MB": 1024*1024, "GB": 1024*1024*1024, "TB": 1024*1024*1024*1024,
-             "K": 1024, "M": 1024*1024, "G": 1024*1024*1024, "T": 1024*1024*1024*1024}
+    units = {"B": 1, "KB": 1024, "MB": 1024 * 1024, "GB": 1024 * 1024 * 1024, "TB": 1024 * 1024 * 1024 * 1024,
+             "K": 1024, "M": 1024 * 1024, "G": 1024 * 1024 * 1024, "T": 1024 * 1024 * 1024 * 1024}
     match = re.search("(\d+(?:\.\d*)?)\s*([A-Za-z]+)", human, flags=re.IGNORECASE)
     if match:
         num = float(match[1])
@@ -417,7 +422,7 @@ class LoggerIOWrapper(io.TextIOWrapper):
 
 
 class VolumeHelper:
-    def __init__(self, plain_volume = 0, ducking_plain_volume = 0):
+    def __init__(self, plain_volume=0, ducking_plain_volume=0):
         self.plain_volume_set = 0
         self.plain_ducking_volume_set = 0
         self.volume_set = 0
