@@ -19,14 +19,14 @@ steps:
   - name: deploy-testing
     image: debian
     commands:
-      - apt -qq update && apt -q -y install git
-      - rm -rf .git*
-      - rm -rf web
+      - apt-get -qq update && apt-get -qq install git > /dev/null
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
       - version=$(git rev-parse HEAD)
       - echo "current git commit is $version"
       - echo $version > /tmp/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
+      - rm -rf .git*
+      - rm -rf web
       - tar -czf /tmp/botamusique/sources-testing.tar.gz .
     volumes:
       - name: repo
@@ -56,7 +56,7 @@ steps:
   - name: deploy-stable
     image: debian
     commands:
-      - apt -qq update && apt -q -y install jq curl git
+      - apt -qq update && apt -qq install jq curl git
       - rm -rf .git*
       - rm -rf web
       - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
