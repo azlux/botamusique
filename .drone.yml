@@ -21,14 +21,11 @@ steps:
     commands:
       - rm -rf .git*
       - rm -rf web
-      - echo '#### REPLACE TARGET ####'
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
-      - echo '#### REPLACE VERSION ####'
       - version=$(git rev-parse HEAD)
       - echo "current git commit is $version"
       - echo $version > /tmp/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - echo '#### DEPLOY SOURCES ####'
       - tar -czf /tmp/botamusique/sources-testing.tar.gz .
     volumes:
       - name: repo
@@ -70,16 +67,12 @@ steps:
       - apt -qq update && apt -q -y install jq curl
       - rm -rf .git*
       - rm -rf web
-      - echo '#### REPLACE TARGET ####'
       - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
-      - echo '#### REPLACE VERSION ####'
       - version=$(git describe --abbrev=0 --tags)
       - echo "version is $version"
       - echo $version > /tmp/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - echo '#### REPLACE CHANGELOG ####'
       - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest") | jq -r '.body' > /tmp/botamusique/changelog
-      - echo '#### DEPLOY SOURCES ####'
       - tar -czf /tmp/botamusique/sources-stable.tar.gz .
 
     volumes:
