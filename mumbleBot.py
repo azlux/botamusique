@@ -200,8 +200,8 @@ class MumbleBot:
 
     def check_update(self):
         self.log.debug("update: checking for updates...")
-        new_version = util.new_release_version()
-        if version.parse(new_version) > version.parse(self.version):
+        new_version = util.new_release_version(var.config.get('bot', 'target_version'))
+        if version.parse(new_version) > version.parse(self.version) and var.config.get('bot', 'target_version') == "stable":
             changelog = util.fetch_changelog()
             self.log.info(f"update: new version {new_version} found, current installed version {self.version}.")
             self.log.info(f"update: changelog: {changelog}")
