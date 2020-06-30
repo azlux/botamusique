@@ -919,7 +919,7 @@ function uploadStart() {
       if (file.size > maxFileSize) {
         setUploadError(file.name, 'File too large!');
         continue;
-      } else if (!file.type.includes('audio')) {
+      } else if (!(file.type.includes('audio') || file.type.includes('video'))) {
         setUploadError(file.name, 'Unsupported media format!');
         continue;
       }

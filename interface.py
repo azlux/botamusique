@@ -681,7 +681,7 @@ def upload():
     log.info('web: - targetdir: ' + targetdir)
     log.info('web: - mimetype: ' + file.mimetype)
 
-    if "audio" in file.mimetype:
+    if "audio" in file.mimetype or "video" in file.mimetype:
         storagepath = os.path.abspath(os.path.join(var.music_folder, targetdir))
         if not storagepath.startswith(os.path.abspath(var.music_folder)):
             abort(403)
