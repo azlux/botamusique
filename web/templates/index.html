@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html lang="en">
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -15,7 +15,8 @@
     <div class="container page-header mb-5" id="banner">
         <div class="row">
             <div class="col-auto">
-                <img src="static/image/logo.png" height="200px">
+                <img src="static/image/logo.png" height="200px"
+                    alt="Botamusique Logo: a person with two headphones, enjoying the music">
             </div>
             <div class="col my-auto">
                 <h1>botamusique Web Interface</h1>
@@ -33,7 +34,8 @@
             </button>
             <div class="ml-auto">
                 <div class="dropdown mr-2">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="play-mode">
@@ -60,7 +62,8 @@
                         <i class="fa fa-volume-down" aria-hidden="true"></i>
                     </a>
 
-                    <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01" value="0.5" />
+                    <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01"
+                        value="0.5" />
 
                     <a id="volume-up-btn">
                         <i class="fa fa-volume-up" aria-hidden="true"></i>
@@ -83,17 +86,20 @@
                 <tbody id="playlist-table" class="playlist-table">
                     <tr id="playlist-loading">
                         <td colspan="4" class="text-center">
-                            <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                            <img style="margin: auto; width: 35px;" src="static/image/loading.svg"
+                                alt="A loading spinner" />
                         </td>
                     </tr>
                     <tr id="playlist-empty" class="d-none">
                         <td colspan="4" class="text-center">
-                            <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                            <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg"
+                                alt="A drawing of an empty box." />
                         </td>
                     </tr>
                     <tr class="playlist-expand table-dark d-none">
                         <td colspan="4" class="text-center">
-                            <a class="text-muted" href="javascript:">See item <span class="playlist-expand-item-range"></span> on the playlist.</a>
+                            <a class="text-muted" href="javascript:">See item <span
+                                    class="playlist-expand-item-range"></span> on the playlist.</a>
                         </td>
                     </tr>
                     <tr class="playlist-item-template d-none">
@@ -101,7 +107,8 @@
                         <td>
                             <input hidden type="text" class="playlist-item-id" value="" />
                             <div class="float-left">
-                                <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png" />
+                                <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png"
+                                    alt="A black square with two eight notes beamed together." />
                             </div>
                             <div class="playlist-artwork">
                                 <b class="playlist-item-title"></b>
@@ -178,7 +185,8 @@
 
                         <label for="filter-keywords">Keywords</label>
                         <div id="filter-path" class="input-group mb-2">
-                            <input class="form-control form-control-sm" id="filter-keywords" name="keywords" placeholder="Keywords..." style="margin-top:5px;" />
+                            <input class="form-control form-control-sm" id="filter-keywords" name="keywords"
+                                placeholder="Keywords..." style="margin-top:5px;" />
                         </div>
                     </div>
 
@@ -186,7 +194,8 @@
                         <label for="filter-tag">Tags</label>
                         <div id="filter-type mb-2">
                             {% for tag in tags_color_lookup.keys() %}
-                            <span id="filter-tag" class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
+                            <span id="filter-tag"
+                                class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
                             {% endfor %}
                         </div>
                     </div>
@@ -195,17 +204,20 @@
             <div class="card-body">
                 <div id="library-group" class="list-group library-group" style="overflow: auto;">
                     <div id="library-item-loading" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="static/image/loading.svg" />
+                        <img style="margin: auto; width: 35px;" src="static/image/loading.svg"
+                            alt="A loading spinner" />
                     </div>
                     <div id="library-item-empty" style="display: none" class="list-group-item library-item">
-                        <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg" />
+                        <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg"
+                            alt="A drawing of an empty box." />
                     </div>
                     <div id="library-item" style="display: none;" class="list-group-item library-item">
                         <input hidden type="text" class="library-item-id" value="" />
 
                         <div class="library-thumb-col">
                             <div class="library-thumb-img">
-                                <img class="library-item-thumb library-thumb-img" src="static/image/unknown-album.png" />
+                                <img class="library-item-thumb library-thumb-img" src="static/image/unknown-album.png"
+                                    alt="A black square with two eight notes beamed together." />
                             </div>
                             <div class="btn-group-vertical library-thumb-grp">
                                 <div class="library-item-play btn btn-secondary library-thumb-btn-up" title="Play">
@@ -225,22 +237,32 @@
                         <div class="library-info-col col-4 d-none d-md-flex" style="padding: 3px;">
                             <span class="library-item-path text-muted path">Path/to/the/file</span>
                             <div class="library-item-tags">
-                                <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit" style="color: #AAAAAA"></i></a>
+                                <a class="tag-space tag-click library-item-edit"><i class="fas fa-edit"
+                                        style="color: #AAAAAA"></i></a>
                                 <span class="library-item-notag badge badge-light text-muted font-italic">No tag</span>
                                 <span class="library-item-tag tag-space badge">Tag</span>
                             </div>
                         </div>
 
                         <div class="btn-group library-action">
-                            <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button" title="Next to play">
-                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="5 5 17 17">
-                                    <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z"></path>
-                                    <path d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z"></path>
+                            <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button"
+                                title="Next to play">
+                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
+                                    viewBox="5 5 17 17">
+                                    <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z">
+                                    </path>
+                                    <path
+                                        d="m20.942859,18.221072l-3.323292,0l0,3.323292l-1.107764,0l0,-3.323292l-3.323292,0l0,-1.107764l3.323292,0l0,-3.323292l1.107764,0l0,3.323292l3.323292,0l0,1.107764z">
+                                    </path>
                                 </svg>
                             </button>
-                            <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space" type="button" title="Add to bottom">
-                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;" viewBox="2 2 20 20">
-                                    <path d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z"></path>
+                            <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space"
+                                type="button" title="Add to bottom">
+                                <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
+                                    viewBox="2 2 20 20">
+                                    <path
+                                        d="M2,16H10V14H2M18,14V10H16V14H12V16H16V20H18V16H22V14M14,6H2V8H14M14,10H2V12H14V10Z">
+                                    </path>
                                 </svg>
                             </button>
                             <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
@@ -255,50 +277,53 @@
                 </div>
 
                 <div class="list-group">
-                  <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
-                    <ul id="library-page-ul" class="pagination pagination">
-                      <li class="library-page-li page-item active">
-                        <a class="library-page-no page-link">1</a>
-                      </li>
-                    </ul>
-                  </div>
+                    <div id="library-pagination" style="margin-left: auto; margin-top: 10px;">
+                        <ul id="library-page-ul" class="pagination pagination">
+                            <li class="library-page-li page-item active">
+                                <a class="library-page-no page-link">1</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="btn-group mb-2" role="group">
-                  <button id="add-to-playlist-btn" type="button" class="btn btn-secondary mr-1">
-                    <i class="fas fa-plus" aria-hidden="true"></i> Add All
-                  </button>
-                  <button id="library-rescan-btn" type="button" class="btn btn-secondary mr-1">
-                    <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
-                  </button>
-                  <button id="library-download-btn" type="button" class="btn btn-secondary mr-1">
-                    <i class="fas fa-download" aria-hidden="true"></i> Download All
-                  </button>
-                  <button type="button" class="btn btn-danger mr-1" data-toggle="modal" data-target="#deleteWarningModal">
-                    <i class="fas fa-trash-alt" aria-hidden="true"></i> Delete All
-                  </button>
+                    <button id="add-to-playlist-btn" type="button" class="btn btn-secondary mr-1">
+                        <i class="fas fa-plus" aria-hidden="true"></i> Add All
+                    </button>
+                    <button id="library-rescan-btn" type="button" class="btn btn-secondary mr-1">
+                        <i class="fas fa-sync-alt" aria-hidden="true"></i> Rescan Files
+                    </button>
+                    <button id="library-download-btn" type="button" class="btn btn-secondary mr-1">
+                        <i class="fas fa-download" aria-hidden="true"></i> Download All
+                    </button>
+                    <button type="button" class="btn btn-danger mr-1" data-toggle="modal"
+                        data-target="#deleteWarningModal">
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i> Delete All
+                    </button>
                 </div>
 
-                <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog" aria-labelledby="Warning-Delete-File" aria-hidden="true">
-                  <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>
-                      <div class="modal-body">
-                        All files listed here, include files on other pages, will be deleted from your
-                        hard-drive.
-                        Is that what you want?
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button id="library-delete-btn" type="button" class="btn btn-danger" data-dismiss="modal">Delete All Listed Files</button>
-                      </div>
+                <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog"
+                    aria-labelledby="Warning-Delete-File" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteWarningModalLabel">Are you really sure?</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                All files listed here, include files on other pages, will be deleted from your
+                                hard-drive.
+                                Is that what you want?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button id="library-delete-btn" type="button" class="btn btn-danger"
+                                    data-dismiss="modal">Delete All Listed Files</button>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 </div>
             </div>
         </div>
@@ -367,7 +392,7 @@
                         <input class="form-control" type="text" id="music-url-input" placeholder="URL...">
                     </div>
                     <button type="submit" class="btn btn-primary">
-                      Add URL
+                        Add URL
                     </button>
                 </div>
             </div>
@@ -381,7 +406,7 @@
                         <input id="radio-url-input" class="form-control" type="text" placeholder="Radio Address...">
                     </div>
                     <button type="submit" class="btn btn-primary">
-                      Add Radio
+                        Add Radio
                     </button>
                 </div>
             </div>
@@ -405,8 +430,9 @@
             </button>
         </div>
         <div class="toast-body" id="playerContainer">
-            <img id="playerArtworkIdle" src="static/image/empty_box.svg" />
-            <img id="playerArtwork" src="static/image/unknown-album.png" style="display: none;" />
+            <img id="playerArtworkIdle" src="static/image/empty_box.svg" alt="A drawing of an empty box." />
+            <img id="playerArtwork" src="static/image/unknown-album.png" style="display: none;"
+                alt="A black square with two eight notes beamed together." />
             <div id="playerInfo">
                 <div id="playerActionBox">
                     <button id="playerPlayBtn" class="btn btn-primary btn-sm btn-space" style="display: none">
@@ -425,7 +451,9 @@
                 </div>
                 <span id="playerArtist">Artist</span>
                 <div id="playerBarBox" class="progress">
-                    <div id="playerBar" class="progress-bar pr-2" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 100%; text-align: right; transform: translateX(-100%);"></div>
+                    <div id="playerBar" class="progress-bar pr-2" role="progressbar" aria-valuenow="50"
+                        aria-valuemin="0" aria-valuemax="100"
+                        style="width: 100%; text-align: right; transform: translateX(-100%);"></div>
                 </div>
             </div>
         </div>
@@ -455,12 +483,14 @@
                     <input hidden type="text" id="addTagModalItemId" name="id" value="">
                     <div class="modal-tag" style="display: none; width: 100%;">
                         <span class="modal-tag-text tag-space badge badge-pill badge-dark">Tag</span>
-                        <a class="modal-tag-remove tag-click small"><i class="fas fa-times-circle btn-outline-danger"></i></a>
+                        <a class="modal-tag-remove tag-click small"><i
+                                class="fas fa-times-circle btn-outline-danger"></i></a>
                     </div>
                     <div id="addTagModalTags" style="margin-left: 5px; margin-bottom: 10px;">
                     </div>
                     <div class="input-group">
-                        <input class="form-control form-control-sm btn-space" type="text" id="addTagModalInput" placeholder="tag1,tag2,...">
+                        <input class="form-control form-control-sm btn-space" type="text" id="addTagModalInput"
+                            placeholder="tag1,tag2,...">
                         <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus" aria-hidden="true"></i>
                             Add
@@ -469,7 +499,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button id="addTagModalSubmit" type="button" class="btn btn-success" data-dismiss="modal">Edit!</button>
+                    <button id="addTagModalSubmit" type="button" class="btn btn-success"
+                        data-dismiss="modal">Edit!</button>
                 </div>
             </div>
         </div>
@@ -493,7 +524,9 @@
                             <span class="uploadItemTitle mr-3"></span>
                             <span class="uploadItemError text-danger"></span>
                             <div class="progress" style="margin-top: 5px; height: 10px;">
-                                <div class="uploadProgress progress-bar pr-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 100%; text-align: right; transform: translateX(-100%);"></div>
+                                <div class="uploadProgress progress-bar pr-2" role="progressbar" aria-valuenow="0"
+                                    aria-valuemin="0" aria-valuemax="100"
+                                    style="width: 100%; text-align: right; transform: translateX(-100%);"></div>
                             </div>
                         </div>
                     </div>
@@ -501,7 +534,9 @@
                 <div class="modal-footer">
                     <button type="button" id="uploadClose" class="btn btn-success" data-dismiss="modal">
                         <i class="fas fa-times mr-1"></i> Close</button>
-                    <button type="button" id="uploadCancel" class="btn btn-danger" data-toggle="tooltip" data-html="true" title="<strong>Are you really sure?</strong> <br /> Click again to abort uploading.">
+                    <button type="button" id="uploadCancel" class="btn btn-danger" data-toggle="tooltip"
+                        data-html="true"
+                        title="<strong>Are you really sure?</strong> <br /> Click again to abort uploading.">
                         <i class="fas fa-trash-alt mr-1" aria-hidden="true"></i> Cancel</button>
                 </div>
             </div>
