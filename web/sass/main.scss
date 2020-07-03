@@ -254,6 +254,12 @@
     }
 }
 
+// Allows us to have H3 with the size of an H5
 h3 {
     font-size: 1.25rem;
+}
+
+// Makes legend match the size of other labels
+legend {
+    font-size: 1rem;
 }
