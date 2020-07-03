@@ -12,7 +12,7 @@ import {
   secondsToStr,
 } from './util';
 
-$('#uploadSelectFile').on('change', function() {
+$('#uploadSelectFile').on('change', function () {
   // get the file name
   const fileName = $(this).val().replace('C:\\fakepath\\', ' ');
   // replace the "Choose a file" label
@@ -83,7 +83,7 @@ fastForwardBtn.on('click', () => {
 });
 
 document.getElementById('clear-playlist-btn').addEventListener('click', () => {
-  request('post', {action: 'clear'});
+  request('post', { action: 'clear' });
 });
 
 // eslint-disable-next-line guard-for-in
@@ -100,14 +100,14 @@ function request(_url, _data, refresh = false) {
     url: _url,
     data: _data,
     statusCode: {
-      200: function(data) {
+      200: function (data) {
         if (data.ver !== playlist_ver) {
           checkForPlaylistUpdate();
         }
         updateControls(data.empty, data.play, data.mode, data.volume);
         updatePlayerPlayhead(data.playhead);
       },
-      403: function() {
+      403: function () {
         location.reload(true);
       },
     },
@@ -134,13 +134,13 @@ function addPlaylistItem(item) {
   tags.empty();
 
   const tag_edit_copy = pl_tag_edit_element.clone();
-  tag_edit_copy.click(function() {
+  tag_edit_copy.click(function () {
     addTagModalShow(item.id, item.title, item.tags);
   });
   tag_edit_copy.appendTo(tags);
 
   if (item.tags.length > 0) {
-    item.tags.forEach(function(tag_tuple) {
+    item.tags.forEach(function (tag_tuple) {
       const tag_copy = tag_element.clone();
       tag_copy.html(tag_tuple[0]);
       tag_copy.addClass('badge-' + tag_tuple[1]);
@@ -157,7 +157,7 @@ function addPlaylistItem(item) {
 function displayPlaylist(data) {
   playlist_table.animate({
     opacity: 0,
-  }, 200, function() {
+  }, 200, function () {
     playlist_loading.hide();
     $('.playlist-item').remove();
     const items = data.items;
@@ -180,9 +180,9 @@ function displayPlaylist(data) {
     }
 
     items.forEach(
-        function(item) {
-          addPlaylistItem(item);
-        },
+      function (item) {
+        addPlaylistItem(item);
+      },
     );
 
     if (items.length < length && start_from + items.length < length) {
@@ -221,7 +221,7 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to, total_
 
   expand_copy.addClass('playlist-item');
   expand_copy.appendTo(playlist_table);
-  expand_copy.click(function() {
+  expand_copy.click(function () {
     playlist_range_from = real_from;
     playlist_range_to = real_to;
     updatePlaylist();
@@ -231,7 +231,7 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to, total_
 function updatePlaylist() {
   playlist_table.animate({
     opacity: 0,
-  }, 200, function() {
+  }, 200, function () {
     playlist_empty.addClass('d-none');
     playlist_loading.show();
     playlist_table.find('.playlist-item').css('opacity', 0);
@@ -248,7 +248,7 @@ function updatePlaylist() {
       data: data,
       statusCode: {
         200: displayPlaylist,
-        204: function() {
+        204: function () {
           playlist_loading.hide();
           playlist_empty.removeClass('d-none');
           $('.playlist-item').remove();
@@ -266,7 +266,7 @@ function checkForPlaylistUpdate() {
     type: 'POST',
     url: 'post',
     statusCode: {
-      200: function(data) {
+      200: function (data) {
         if (data.ver !== playlist_ver) {
           playlist_ver = data.ver;
           playlist_range_from = 0;
@@ -297,18 +297,18 @@ function checkForPlaylistUpdate() {
 
 function bindPlaylistEvent() {
   $('.playlist-item-play').unbind().click(
-      function(e) {
-        request('post', {
-          'play_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
-        });
-      },
+    function (e) {
+      request('post', {
+        'play_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
+      });
+    },
   );
   $('.playlist-item-trash').unbind().click(
-      function(e) {
-        request('post', {
-          'delete_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
-        });
-      },
+    function (e) {
+      request('post', {
+        'delete_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
+      });
+    },
   );
 }
 
@@ -323,9 +323,15 @@ function updateControls(empty, play, mode, volume) {
     if (play) {
       playing = true;
       playPauseBtn.find('[data-fa-i2svg]').removeClass('fa-play').addClass('fa-pause');
+      // PR #180: Since this button changes behavior dynamically, we change its
+      // ARIA labels in JS instead of only adding them statically in the HTML
+      playPauseBtn.attr('aria-label', 'Pause');
     } else {
       playing = false;
       playPauseBtn.find('[data-fa-i2svg]').removeClass('fa-pause').addClass('fa-play');
+      // PR #180: Since this button changes behavior dynamically, we change its
+      // ARIA labels in JS instead of only adding them statically in the HTML
+      playPauseBtn.attr('aria-label', 'Play');
     }
   }
 
@@ -409,7 +415,7 @@ function setFilterType(event, type) {
 }
 
 // Bind Event
-$('.filter-tag').click(function(e) {
+$('.filter-tag').click(function (e) {
   const tag = $(e.currentTarget);
   if (!tag.hasClass('tag-clicked')) {
     tag.addClass('tag-clicked');
@@ -421,10 +427,10 @@ $('.filter-tag').click(function(e) {
   updateResults();
 });
 
-filter_dir.change(function() {
+filter_dir.change(function () {
   updateResults();
 });
-filter_keywords.change(function() {
+filter_keywords.change(function () {
   updateResults();
 });
 
@@ -432,64 +438,64 @@ const item_template = $('#library-item');
 
 function bindLibraryResultEvent() {
   $('.library-thumb-col').unbind().hover(
-      function(e) {
-        $(e.currentTarget).find('.library-thumb-grp').addClass('library-thumb-grp-hover');
-      },
-      function(e) {
-        $(e.currentTarget).find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
-      },
+    function (e) {
+      $(e.currentTarget).find('.library-thumb-grp').addClass('library-thumb-grp-hover');
+    },
+    function (e) {
+      $(e.currentTarget).find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
+    },
   );
 
   $('.library-info-title').unbind().hover(
-      function(e) {
-        $(e.currentTarget).parent().find('.library-thumb-grp').addClass('library-thumb-grp-hover');
-      },
-      function(e) {
-        $(e.currentTarget).parent().find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
-      },
+    function (e) {
+      $(e.currentTarget).parent().find('.library-thumb-grp').addClass('library-thumb-grp-hover');
+    },
+    function (e) {
+      $(e.currentTarget).parent().find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
+    },
   );
 
   $('.library-item-play').unbind().click(
-      function(e) {
-        request('post', {
-          'add_item_at_once': $(e.currentTarget).parent().parent().parent().find('.library-item-id').val(),
-        });
-      },
+    function (e) {
+      request('post', {
+        'add_item_at_once': $(e.currentTarget).parent().parent().parent().find('.library-item-id').val(),
+      });
+    },
   );
 
   $('.library-item-trash').unbind().click(
-      function(e) {
-        request('post', {
-          'delete_item_from_library': $(e.currentTarget).parent().parent().find('.library-item-id').val(),
-        });
-        updateResults(active_page);
-      },
+    function (e) {
+      request('post', {
+        'delete_item_from_library': $(e.currentTarget).parent().parent().find('.library-item-id').val(),
+      });
+      updateResults(active_page);
+    },
   );
 
   $('.library-item-download').unbind().click(
-      function(e) {
-        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-        // window.open('/download?id=' + id);
-        downloadId(id);
-      },
+    function (e) {
+      const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
+      // window.open('/download?id=' + id);
+      downloadId(id);
+    },
   );
 
   $('.library-item-add-next').unbind().click(
-      function(e) {
-        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-        request('post', {
-          'add_item_next': id,
-        });
-      },
+    function (e) {
+      const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
+      request('post', {
+        'add_item_next': id,
+      });
+    },
   );
 
   $('.library-item-add-bottom').unbind().click(
-      function(e) {
-        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-        request('post', {
-          'add_item_bottom': id,
-        });
-      },
+    function (e) {
+      const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
+      request('post', {
+        'add_item_bottom': id,
+      });
+    },
   );
 }
 
@@ -520,13 +526,13 @@ function addResultItem(item) {
   tags.empty();
 
   const tag_edit_copy = tag_edit_element.clone();
-  tag_edit_copy.click(function() {
+  tag_edit_copy.click(function () {
     addTagModalShow(item.id, item.title, item.tags);
   });
   tag_edit_copy.appendTo(tags);
 
   if (item.tags.length > 0) {
-    item.tags.forEach(function(tag_tuple) {
+    item.tags.forEach(function (tag_tuple) {
       const tag_copy = tag_element.clone();
       tag_copy.html(tag_tuple[0]);
       tag_copy.addClass('badge-' + tag_tuple[1]);
@@ -544,7 +550,7 @@ function addResultItem(item) {
 function getFilters(dest_page = 1) {
   const tags = $('.tag-clicked');
   const tags_list = [];
-  tags.each(function(index, tag) {
+  tags.each(function (index, tag) {
     tags_list.push(tag.innerHTML);
   });
 
@@ -575,19 +581,19 @@ function updateResults(dest_page = 1) {
 
   lib_group.animate({
     opacity: 0,
-  }, 200, function() {
+  }, 200, function () {
     $.ajax({
       type: 'POST',
       url: 'library',
       data: data,
       statusCode: {
         200: processResults,
-        204: function() {
+        204: function () {
           lib_loading.hide();
           lib_empty.show();
           page_ul.empty();
         },
-        403: function() {
+        403: function () {
           location.reload(true);
         },
       },
@@ -651,7 +657,7 @@ document.getElementById('library-download-btn').addEventListener('click', () => 
 });
 
 document.getElementById('library-rescan-btn').addEventListener('click', () => {
-  request('post', {action: 'rescan'});
+  request('post', { action: 'rescan' });
   updateResults();
 });
 
@@ -671,16 +677,16 @@ const page_no = $('.library-page-no');
 function processResults(data) {
   lib_group.animate({
     opacity: 0,
-  }, 200, function() {
+  }, 200, function () {
     lib_loading.hide();
     const total_pages = data.total_pages;
     const active_page = data.active_page;
     const items = data.items;
     items.forEach(
-        function(item) {
-          addResultItem(item);
-          bindLibraryResultEvent();
-        },
+      function (item) {
+        addResultItem(item);
+        bindLibraryResultEvent();
+      },
     );
 
     page_ul.empty();
@@ -698,7 +704,7 @@ function processResults(data) {
       page_no_copy = page_no.clone();
       page_no_copy.html('&laquo;');
 
-      page_no_copy.click(function(e) {
+      page_no_copy.click(function (e) {
         updateResults(1);
       });
 
@@ -714,7 +720,7 @@ function processResults(data) {
       if (active_page === i) {
         page_li_copy.addClass('active');
       } else {
-        page_no_copy.click(function(e) {
+        page_no_copy.click(function (e) {
           const _page_no = $(e.currentTarget).html();
           updateResults(_page_no);
         });
@@ -728,7 +734,7 @@ function processResults(data) {
       page_no_copy = page_no.clone();
       page_no_copy.html('&raquo;');
 
-      page_no_copy.click(function(e) {
+      page_no_copy.click(function (e) {
         updateResults(total_pages);
       });
 
@@ -757,11 +763,11 @@ function addTagModalShow(_id, _title, _tag_tuples) {
   add_tag_modal_title.html('Edit tags for ' + _title);
   add_tag_modal_item_id.val(_id);
   add_tag_modal_tags.empty();
-  _tag_tuples.forEach(function(tag_tuple) {
+  _tag_tuples.forEach(function (tag_tuple) {
     modal_tag_text.html(tag_tuple[0]);
     const tag_copy = modal_tag.clone();
     const modal_tag_remove = tag_copy.find('.modal-tag-remove');
-    modal_tag_remove.click(function(e) {
+    modal_tag_remove.click(function (e) {
       $(e.currentTarget).parent().remove();
     });
     tag_copy.show();
@@ -772,14 +778,14 @@ function addTagModalShow(_id, _title, _tag_tuples) {
 }
 
 document.getElementById('addTagModalAddBtn').addEventListener('click', () => {
-  const new_tags = add_tag_modal_input.val().split(',').map(function(str) {
+  const new_tags = add_tag_modal_input.val().split(',').map(function (str) {
     return str.trim();
   });
-  new_tags.forEach(function(tag) {
+  new_tags.forEach(function (tag) {
     modal_tag_text.html(tag);
     const tag_copy = modal_tag.clone();
     const modal_tag_remove = tag_copy.find('.modal-tag-remove');
-    modal_tag_remove.click(function(e) {
+    modal_tag_remove.click(function (e) {
       $(e.currentTarget).parent().remove();
     });
     tag_copy.show();
@@ -792,7 +798,7 @@ document.getElementById('addTagModalAddBtn').addEventListener('click', () => {
 document.getElementById('addTagModalSubmit').addEventListener('click', () => {
   const all_tags = $('.modal-tag-text');
   const tags = [];
-  all_tags.each(function(i, element) {
+  all_tags.each(function (i, element) {
     if (element.innerHTML) {
       tags.push(element.innerHTML);
     }
@@ -820,7 +826,7 @@ let volume_popover_instance = null;
 let volume_popover_show = false;
 let volume_update_timer;
 
-volumePopoverBtn.addEventListener('click', function(e) {
+volumePopoverBtn.addEventListener('click', function (e) {
   e.stopPropagation();
 
   if (!volume_popover_show) {
@@ -842,7 +848,7 @@ volumePopoverBtn.addEventListener('click', function(e) {
   }
   volume_popover_show = !volume_popover_show;
 
-  document.addEventListener('click', function() {
+  document.addEventListener('click', function () {
     volumePopoverDiv.removeAttribute('data-show');
     if (volume_popover_instance) {
       volume_popover_instance.destroy();
@@ -854,7 +860,7 @@ volumePopoverBtn.addEventListener('click', function(e) {
   });
 });
 
-volumePopoverBtn.addEventListener('click', function(e) {
+volumePopoverBtn.addEventListener('click', function (e) {
   e.stopPropagation();
 });
 
@@ -870,11 +876,11 @@ volumeSlider.addEventListener('change', (e) => {
 });
 
 document.getElementById('volume-down-btn').addEventListener('click', () => {
-  request('post', {action: 'volume_down'});
+  request('post', { action: 'volume_down' });
 });
 
 document.getElementById('volume-up-btn').addEventListener('click', () => {
-  request('post', {action: 'volume_up'});
+  request('post', { action: 'volume_up' });
 });
 
 // ---------------------
@@ -970,7 +976,7 @@ function uploadNextFile() {
   const file = filesToProceed.shift();
   const file_progress_item = filesProgressItem[file.name];
 
-  req.addEventListener('load', function() {
+  req.addEventListener('load', function () {
     if (this.status === 200) {
       setProgressBar(file_progress_item.progress, 1);
       file_progress_item.progress.classList.add('bg-success');
@@ -1003,7 +1009,7 @@ function uploadNextFile() {
     }
   });
 
-  req.upload.addEventListener('progress', function(e) {
+  req.upload.addEventListener('progress', function (e) {
     if (e.lengthComputable) {
       const percent = e.loaded / e.total;
       setProgressBar(file_progress_item.progress, percent, Math.floor(percent * 100) + '%');
@@ -1050,12 +1056,12 @@ const musicUrlInput = document.getElementById('music-url-input');
 const radioUrlInput = document.getElementById('radio-url-input');
 
 document.getElementById('add-music-url').querySelector('button').addEventListener('click', () => {
-  request('post', {add_url: musicUrlInput.value});
+  request('post', { add_url: musicUrlInput.value });
   musicUrlInput.value = '';
 });
 
 document.getElementById('add-radio-url').querySelector('button').addEventListener('click', () => {
-  request('post', {add_radio: radioUrlInput.value});
+  request('post', { add_radio: radioUrlInput.value });
   radioUrlInput.value = '';
 });
 
@@ -1077,15 +1083,15 @@ const playerSkipBtn = document.getElementById('playerSkipBtn');
 let currentPlayingItem = null;
 
 playerPlayBtn.addEventListener('click', () => {
-  request('post', {action: 'resume'});
+  request('post', { action: 'resume' });
 });
 
 playerPauseBtn.addEventListener('click', () => {
-  request('post', {action: 'pause'});
+  request('post', { action: 'pause' });
 });
 
 playerSkipBtn.addEventListener('click', () => {
-  request('post', {action: 'next'});
+  request('post', { action: 'next' });
 });
 
 document.getElementById('player-toast').addEventListener('click', () => {
@@ -1159,7 +1165,7 @@ function updatePlayerPlayhead(playhead) {
     player_playhead_position = playhead;
     setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
     if (playing) {
-      playhead_timer = setInterval(function() {
+      playhead_timer = setInterval(function () {
         player_playhead_position += 0.3;
         setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
       }, 300); // delay in milliseconds
@@ -1174,7 +1180,7 @@ function updatePlayerPlayhead(playhead) {
   }
 }
 
-playerBarBox.addEventListener('mousedown', function() {
+playerBarBox.addEventListener('mousedown', function () {
   if (currentPlayingItem && currentPlayingItem.duration > 0) {
     playerBarBox.addEventListener('mousemove', playheadDragged);
     clearInterval(playhead_timer);
@@ -1182,7 +1188,7 @@ playerBarBox.addEventListener('mousedown', function() {
   }
 });
 
-playerBarBox.addEventListener('mouseup', function(event) {
+playerBarBox.addEventListener('mouseup', function (event) {
   playerBarBox.removeEventListener('mousemove', playheadDragged);
   const percent = (event.clientX - playerBarBox.getBoundingClientRect().x) / playerBarBox.clientWidth;
   request('post', {
