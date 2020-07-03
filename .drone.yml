@@ -15,6 +15,7 @@ steps:
         - master
       event:
         - push
+        - pull_request
 
   - name: deploy-testing
     image: debian
