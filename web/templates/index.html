@@ -1,4 +1,6 @@
-<!DOCTYPE html lang="en">
+<!DOCTYPE html>
+
+<html lang="en">
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -26,16 +28,18 @@
 
     <div id="playlist" class="container mb-5">
         <div class="btn-toolbar mb-2" role="toolbar" aria-label="Playlist controls">
-            <button type="button" id="play-pause-btn" class="btn btn-info mb-2 btn-space">
+            <!-- FIXME: The aria-label for this button should change as the button icon itself changes -->
+            <button type="button" id="play-pause-btn" class="btn btn-info mb-2 btn-space" aria-label="Play/Pause">
                 <i class="fas fa-play"></i>
             </button>
-            <button type="button" id="fast-forward-btn" class="btn btn-info mb-2">
+            <button type="button" id="fast-forward-btn" class="btn btn-info mb-2" aria-label="Skip Track">
                 <i class="fas fa-fast-forward"></i>
             </button>
             <div class="ml-auto">
                 <div class="dropdown mr-2">
                     <button class="btn btn-secondary dropdown-toggle" type="button" id="play-mode"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Change Playback Mode">
                         <i class="fas fa-tasks mr-2" aria-hidden="true" id="modeIndicator"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="play-mode">
@@ -53,7 +57,8 @@
                         </a>
                     </div>
                 </div>
-                <button type="button" id="volume-popover-btn" class="btn btn-warning ml-1">
+                <button type="button" id="volume-popover-btn" class="btn btn-warning ml-1"
+                    aria-label="Open Volume Controls">
                     <i class="fa fa-volume-up" aria-hidden="true"></i>
                 </button>
 
@@ -129,10 +134,12 @@
                         </td>
                         <td>
                             <div class="btn-group">
-                                <button type="button" class="playlist-item-play btn btn-info btn-sm">
+                                <button type="button" class="playlist-item-play btn btn-info btn-sm"
+                                    aria-label="Skip current song and play this song right now">
                                     <i class="fas fa-play" aria-hidden="true"></i>
                                 </button>
-                                <button type="button" class="playlist-item-trash btn btn-danger btn-sm ml-1">
+                                <button type="button" class="playlist-item-trash btn btn-danger btn-sm ml-1"
+                                    aria-label="Remove this song from the current playlist">
                                     <i class="fas fa-trash-alt" aria-hidden="true"></i>
                                 </button>
                             </div>
