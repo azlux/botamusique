@@ -253,7 +253,7 @@
 
                         <div class="btn-group library-action">
                             <button class="library-item-add-next btn btn-info btn-sm btn-space" type="button"
-                                title="Next to play">
+                                title="Next to play" aria-label="Add to playlist right after current song">
                                 <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
                                     viewBox="5 5 17 17">
                                     <path d="m5.700245,3.92964l0,14.150376l11.451127,-7.075188l-11.451127,-7.075188z">
@@ -264,7 +264,7 @@
                                 </svg>
                             </button>
                             <button class="library-item-add-bottom library-btn btn btn-info btn-sm btn-space"
-                                type="button" title="Add to bottom">
+                                type="button" title="Add to bottom" aria-label="Add to bottom of current playlist">
                                 <svg class="library-btn-svg" style="width: 1rem; fill: currentColor;"
                                     viewBox="2 2 20 20">
                                     <path
@@ -272,10 +272,12 @@
                                     </path>
                                 </svg>
                             </button>
-                            <button class="library-item-download btn btn-primary btn-sm btn-space" type="button">
+                            <button class="library-item-download btn btn-primary btn-sm btn-space" type="button"
+                                aria-label="Download song from library">
                                 <i class="fas fa-download" aria-hidden="true"></i>
                             </button>
-                            <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button">
+                            <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button"
+                                aria-label="Remove song from library">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </div>
@@ -442,13 +444,15 @@
                 alt="A black square with two eight notes beamed together." />
             <div id="playerInfo">
                 <div id="playerActionBox">
-                    <button id="playerPlayBtn" class="btn btn-primary btn-sm btn-space" style="display: none">
+                    <button id="playerPlayBtn" class="btn btn-primary btn-sm btn-space" style="display: none"
+                        aria-label="Play">
                         <i class="fas fa-play"></i>
                     </button>
-                    <button id="playerPauseBtn" class="btn btn-primary btn-sm btn-space" style="display: none">
+                    <button id="playerPauseBtn" class="btn btn-primary btn-sm btn-space" style="display: none"
+                        aria-label="Pause">
                         <i class="fas fa-pause"></i>
                     </button>
-                    <button id="playerSkipBtn" class="btn btn-primary btn-sm">
+                    <button id="playerSkipBtn" class="btn btn-primary btn-sm" aria-label="Skip to next track">
                         <i class="fas fa-fast-forward"></i>
                     </button>
                 </div>
