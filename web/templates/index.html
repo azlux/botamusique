@@ -199,13 +199,13 @@
                     </div>
 
                     <div class="col">
-                        <label for="filter-tag">Tags</label>
-                        <div id="filter-type mb-2">
+                        <fieldset id="filter-type mb-2">
+                            <legend>Tags</legend>
                             {% for tag in tags_color_lookup.keys() %}
                             <span id="filter-tag"
                                 class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
                             {% endfor %}
-                        </div>
+                        </fieldset>
                     </div>
                 </div>
             </div>
