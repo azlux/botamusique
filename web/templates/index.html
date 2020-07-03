@@ -68,7 +68,7 @@
                     </a>
 
                     <input type="range" class="custom-range ml-1" id="volume-slider" min="0" max="1" step="0.01"
-                        value="0.5" />
+                        value="0.5" aria-label="Volume Slider" />
 
                     <a id="volume-up-btn">
                         <i class="fa fa-volume-up" aria-hidden="true"></i>
@@ -110,7 +110,7 @@
                     <tr class="playlist-item-template d-none">
                         <th scope="row" class="playlist-item-index d-none d-md-table-cell"></th>
                         <td>
-                            <input hidden type="text" class="playlist-item-id" value="" />
+                            <input hidden type="text" class="playlist-item-id" value="" aria-hidden="true" />
                             <div class="float-left">
                                 <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png"
                                     alt="A black square with two eight notes beamed together." />
@@ -219,7 +219,7 @@
                             alt="A drawing of an empty box." />
                     </div>
                     <div id="library-item" style="display: none;" class="list-group-item library-item">
-                        <input hidden type="text" class="library-item-id" value="" />
+                        <input hidden type="text" class="library-item-id" value="" aria-hidden="true" />
 
                         <div class="library-thumb-col">
                             <div class="library-thumb-img">
@@ -311,6 +311,7 @@
                     </button>
                 </div>
 
+                <!-- QUESTION: should this div have aria-hidden as true?? -->
                 <div class="modal fade" id="deleteWarningModal" tabindex="-1" role="dialog"
                     aria-labelledby="Warning-Delete-File" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -367,7 +368,7 @@
                                 <div class="col">
                                     <div class="input-group mb-3">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text">Upload To</span>
+                                            <label for="uploadTargetDir" class="input-group-text">Upload To</label>
                                         </div>
                                         <input class="form-control" list="targetdirs" id="uploadTargetDir" name="targetdir" placeholder="uploads" />
                                         <datalist id="targetdirs">
@@ -473,13 +474,14 @@
     <div id="footer" style="height:50px; width: 100%; margin-top: 100px;"></div>
 
     <form id="download-form" action="download" method="GET" target="_blank">
-        <input hidden type="text" name="id" value="">
-        <input hidden type="text" name="type" value="">
-        <input hidden type="text" name="dir" value="">
-        <input hidden type="text" name="tags" value="">
-        <input hidden type="text" name="keywords" value="">
+        <input hidden type="text" name="id" value="" aria-hidden="true">
+        <input hidden type="text" name="type" value="" aria-hidden="true">
+        <input hidden type="text" name="dir" value="" aria-hidden="true">
+        <input hidden type="text" name="tags" value="" aria-hidden="true">
+        <input hidden type="text" name="keywords" value="" aria-hidden="true">
     </form>
 
+    <!-- QUESTION: should this div have aria-hidden=true? -->
     <!-- Add tags modal -->
     <div class="modal fade" id="addTagModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -491,7 +493,7 @@
                     </button>
                 </div>
                 <div id="addTagModalBody" class="modal-body">
-                    <input hidden type="text" id="addTagModalItemId" name="id" value="">
+                    <input hidden type="text" id="addTagModalItemId" name="id" value="" aria-hidden="true">
                     <div class="modal-tag" style="display: none; width: 100%;">
                         <span class="modal-tag-text tag-space badge badge-pill badge-dark">Tag</span>
                         <a class="modal-tag-remove tag-click small"><i
@@ -501,7 +503,7 @@
                     </div>
                     <div class="input-group">
                         <input class="form-control form-control-sm btn-space" type="text" id="addTagModalInput"
-                            placeholder="tag1,tag2,...">
+                            placeholder="tag1,tag2,..." aria-label="Tags to add">
                         <button id="addTagModalAddBtn" type="button" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus" aria-hidden="true"></i>
                             Add
@@ -517,6 +519,7 @@
         </div>
     </div>
 
+    <!-- QUESTION: should this div have aria-hidden=true? -->
     <!-- Upload files modal -->
     <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
