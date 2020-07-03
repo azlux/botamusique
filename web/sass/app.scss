@@ -1,13 +1,3 @@
 @import '~bootstrap/scss/bootstrap';
 
 @import './main';
-
-// PR #180: this fixes low color contrast problems in buttons
-.btn-primary {
-    background-color: #0056B3;
-    border-color: #0056B3;
-
-    &:hover {
-        background-color: #002d5e;
-    }
-}
