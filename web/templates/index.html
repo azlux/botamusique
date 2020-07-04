@@ -14,7 +14,7 @@
 </head>
 
 <body>
-    <div class="container page-header mb-5" id="banner">
+    <header class="container page-header mb-5" id="banner">
         <div class="row">
             <div class="col-auto">
                 <img src="static/image/logo.png" height="200px"
@@ -24,9 +24,9 @@
                 <h1>botamusique Web Interface</h1>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div id="playlist" class="container mb-5">
+    <main id="playlist" class="container mb-5">
         <div class="btn-toolbar mb-2" role="toolbar" aria-label="Playlist controls">
             <button type="button" id="play-pause-btn" class="btn btn-info mb-2 btn-space" aria-label="Play">
                 <i class="fas fa-play"></i>
@@ -153,7 +153,7 @@
                 <i class="fas fa-trash-alt" aria-hidden="true"></i> Clear Playlist
             </button>
         </div>
-    </div>
+    </main>
 
     <div class="container mb-3">
         <h2 id="forms">Music Library</h2>
@@ -222,6 +222,7 @@
 
                         <div class="library-thumb-col">
                             <div class="library-thumb-img">
+                                <!-- FIXME: this image's alt text doesn't change when there is actual song artwork. -->
                                 <img class="library-item-thumb library-thumb-img" src="static/image/unknown-album.png"
                                     alt="A black square with two eight notes beamed together." />
                             </div>
