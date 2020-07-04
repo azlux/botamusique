@@ -123,6 +123,7 @@ function addPlaylistItem(item) {
   pl_title_element.html(item.title);
   pl_artist_element.html(item.artist);
   pl_thumb_element.attr('src', item.thumbnail);
+  pl_thumb_element.attr('alt', 'Cover art for ' + item.title);
   pl_type_element.html(item.type);
   pl_path_element.html(item.path);
 
