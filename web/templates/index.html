@@ -109,7 +109,7 @@
                     <tr class="playlist-item-template d-none">
                         <th scope="row" class="playlist-item-index d-none d-md-table-cell">1</th>
                         <td>
-                            <input hidden type="text" class="playlist-item-id" value="" aria-hidden="true" />
+                            <input hidden type="hidden" class="playlist-item-id" value="" />
                             <div class="float-left">
                                 <img width="80" class="playlist-item-thumbnail" src="static/image/unknown-album.png"
                                     alt="A black square with two eight notes beamed together." />
@@ -218,7 +218,7 @@
                             alt="A drawing of an empty box." />
                     </div>
                     <div id="library-item" style="display: none;" class="list-group-item library-item">
-                        <input hidden type="text" class="library-item-id" value="" aria-hidden="true" />
+                        <input hidden type="hidden" class="library-item-id" value="" />
 
                         <div class="library-thumb-col">
                             <div class="library-thumb-img">
@@ -473,11 +473,11 @@
     <div id="footer" style="height:50px; width: 100%; margin-top: 100px;"></div>
 
     <form id="download-form" action="download" method="GET" target="_blank">
-        <input hidden type="text" name="id" value="" aria-hidden="true">
-        <input hidden type="text" name="type" value="" aria-hidden="true">
-        <input hidden type="text" name="dir" value="" aria-hidden="true">
-        <input hidden type="text" name="tags" value="" aria-hidden="true">
-        <input hidden type="text" name="keywords" value="" aria-hidden="true">
+        <input hidden type="hidden" name="id" value="">
+        <input hidden type="hidden" name="type" value="">
+        <input hidden type="hidden" name="dir" value="">
+        <input hidden type="hidden" name="tags" value="">
+        <input hidden type="hidden" name="keywords" value="">
     </form>
 
     <!-- QUESTION: should this div have aria-hidden=true? -->
@@ -492,7 +492,7 @@
                     </button>
                 </div>
                 <div id="addTagModalBody" class="modal-body">
-                    <input hidden type="text" id="addTagModalItemId" name="id" value="" aria-hidden="true">
+                    <input hidden type="hidden" id="addTagModalItemId" name="id" value="">
                     <div class="modal-tag" style="display: none; width: 100%;">
                         <span class="modal-tag-text tag-space badge badge-pill badge-dark">Tag</span>
                         <a class="modal-tag-remove tag-click small"><i
