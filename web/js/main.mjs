@@ -10,6 +10,7 @@ import {
   isOverflown,
   setProgressBar,
   secondsToStr,
+  coverArtString,
 } from './util';
 
 $('#uploadSelectFile').on('change', function () {
@@ -123,7 +124,7 @@ function addPlaylistItem(item) {
   pl_title_element.html(item.title);
   pl_artist_element.html(item.artist);
   pl_thumb_element.attr('src', item.thumbnail);
-  pl_thumb_element.attr('alt', 'Cover art for ' + item.title);
+  pl_thumb_element.attr('alt', coverArtString(item.title));
   pl_type_element.html(item.type);
   pl_path_element.html(item.path);
 
@@ -517,6 +518,7 @@ function addResultItem(item) {
   title_element.html(item.title);
   artist_element.html(item.artist ? ('- ' + item.artist) : '');
   thumb_element.attr('src', item.thumb);
+  thumb_element.attr('alt', coverArtString(item.title));
   type_element.html('[' + item.type + ']');
   path_element.html(item.path);
 
@@ -1118,6 +1120,7 @@ function updatePlayerInfo(item) {
   playerTitle.textContent = item.title;
   playerArtist.textContent = item.artist;
   playerArtwork.setAttribute('src', item.thumbnail);
+  playerArtwork.setAttribute('alt', coverArtString(item.title));
 
   if (isOverflown(playerTitle)) {
     playerTitle.classList.add('scrolling');
