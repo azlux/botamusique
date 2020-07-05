@@ -164,7 +164,7 @@
                 <hr>
                 <div class="row">
                     <div class="col">
-                        <fieldset id="filter-type" class="input-group mb-2">
+                        <fieldset id="filter-type" class="mb-2">
                             <legend>Type</legend>
                             <div class="btn-group btn-group-sm btn-group-toggle">
                                 <label id="filter-type-file" class="btn btn-secondary">
@@ -338,7 +338,6 @@
         </div>
     </div>
 
-    <!-- beautify ignore:start -->
     {% if upload_enabled %}
     <div id="upload" class="container mb-3">
     {% else %}
@@ -387,7 +386,6 @@
             </div>
         </div>
     </div>
-    <!-- beautify ignore:end -->
 
     <div class="container mb-5">
         <div class="card-deck">
@@ -480,9 +478,8 @@
         <input hidden type="hidden" name="keywords" value="">
     </form>
 
-    <!-- QUESTION: should this div have aria-hidden=true? -->
     <!-- Add tags modal -->
-    <div class="modal fade" id="addTagModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade" id="addTagModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -518,9 +515,8 @@
         </div>
     </div>
 
-    <!-- QUESTION: should this div have aria-hidden=true? -->
     <!-- Upload files modal -->
-    <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
