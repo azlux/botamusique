@@ -1,117 +1,141 @@
-.btn-space {margin-right: 5px;}
+.btn-space {
+    margin-right: 5px;
+}
 
 /* Playlist */
-.playlist-item {transition: all 0.2s ease-in-out;}
-.playlist-artwork {
-   float: left;
-   margin-left: 10px;
-   white-space: nowrap;
-   overflow: hidden;
+.playlist-item {
+    transition: all 0.2s ease-in-out;
 }
+
+.playlist-artwork {
+    float: left;
+    margin-left: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 .tag-space {
     margin-right: 3px;
 }
+
 .tag-click {
-   cursor: pointer;
-   transition: 400ms;
+    cursor: pointer;
+    transition: 400ms;
 }
+
 .tag-unclicked {
-   opacity: 0.6;
+    opacity: 0.6;
 }
+
 .tag-clicked {
-   box-shadow: 2px 4px 10px #777777;
-   transform: scale(1.2);
-   opacity: 1;
-   margin: 5px;
+    box-shadow: 2px 4px 10px #777777;
+    transform: scale(1.2);
+    opacity: 1;
+    margin: 5px;
 }
+
 .library-item {
-   display: flex;
-   padding: .5rem .5rem .5rem 0;
-   height: 72px;
-   transition: ease-in-out 200ms;
+    display: flex;
+    padding: .5rem .5rem .5rem 0;
+    height: 72px;
+    transition: ease-in-out 200ms;
 }
+
 .library-thumb-img {
-   width: 70px;
-   height: 70px;
-   border-radius: 5px;
+    width: 70px;
+    height: 70px;
+    border-radius: 5px;
 }
+
 .library-thumb-col {
-   position: relative;
-   padding-left: 0;
-   overflow: hidden;
-   margin: -0.5rem 1rem -0.5rem 0;
+    position: relative;
+    padding-left: 0;
+    overflow: hidden;
+    margin: -0.5rem 1rem -0.5rem 0;
 }
+
 .library-thumb-grp {
-   position: absolute;
-   top: 0;
-   left: -95px;
-   width: 70px;
-   margin-left: 15px;
-   transition: left 300ms;
-   border-radius: 5px;
-   opacity: 0.7;
-   font-weight: 300;
+    position: absolute;
+    top: 0;
+    left: -95px;
+    width: 70px;
+    margin-left: 15px;
+    transition: left 300ms;
+    border-radius: 5px;
+    opacity: 0.7;
+    font-weight: 300;
 }
+
 .library-thumb-grp-hover {
-   left: -15px;
+    left: -15px;
 }
+
 .library-thumb-btn-up {
-   position: absolute !important;
-   top: 0;
-   height: 70px;
-   font-size: 2em;
-   padding-top: 10px;
+    position: absolute !important;
+    top: 0;
+    height: 70px;
+    font-size: 2em;
+    padding-top: 10px;
 }
+
 .library-btn-svg {
-   width: 1rem;
-   fill: currentColor;
+    width: 1rem;
+    fill: currentColor;
 }
+
 .library-info-col {
-   margin-right: 1rem;
-   padding: 3px 0;
-   display: flex;
-   flex-direction: column;
-   justify-content: center;
-   white-space: nowrap;
-   overflow: hidden;
+    margin-right: 1rem;
+    padding: 3px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
 }
+
 .library-info-col .small {
     font-weight: 300;
 }
+
 .library-action {
     margin-left: auto;
 }
+
 .library-info-col .path {
-   font-style: italic !important;
-   font-weight: 300;
+    font-style: italic !important;
+    font-weight: 300;
 }
 
 /* Theme changer and player button */
 .floating-button {
-   width: 50px;
-   height: 50px;
-   background-color: #aaaaaa40;
-   border-radius: 50%;
-   box-shadow: 0 6px 10px 0 #66666647;
-   transition: all 0.1s ease-in-out;
-   font-size: 25px;
-   color: #9896967a;
-   text-align: center;
-   line-height: 52px;
-   position: fixed;
-   right: 50px;
+    width: 50px;
+    height: 50px;
+    background-color: #aaaaaa40;
+    border-radius: 50%;
+    box-shadow: 0 6px 10px 0 #66666647;
+    transition: all 0.1s ease-in-out;
+    font-size: 25px;
+    color: #9896967a;
+    text-align: center;
+    line-height: 52px;
+    position: fixed;
+    right: 50px;
 }
+
 .floating-button:hover {
     background-color: hsl(0, 0%, 43%);
     color: white;
 }
+
 #volume-slider {
     margin-top: 4px;
     margin-right: 5px;
 }
+
 .dropdown {
     display: inline-block;
 }
+
 #volume-popover {
     position: relative;
     background: #333;
@@ -122,45 +146,53 @@
     border-radius: 4px;
     display: none;
 }
+
 #volume-popover[data-show] {
     display: flex;
 }
+
 #volume-popover a {
     cursor: pointer;
 }
+
 #volume-popover-arrow,
 #volume-popover-arrow::before {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  z-index: -1;
-  top: 16px;
-  left: 46px;
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    z-index: -1;
+    top: 16px;
+    left: 46px;
 }
 
 #volume-popover-arrow::before {
-  content: '';
-  transform: rotate(45deg);
-  background: #333;
+    content: '';
+    transform: rotate(45deg);
+    background: #333;
 }
-#volume-popover[data-popper-placement^='top'] > #volume-popover-arrow {
-  bottom: -4px;
+
+#volume-popover[data-popper-placement^='top']>#volume-popover-arrow {
+    bottom: -4px;
 }
+
 #playerToast {
     position: fixed;
     right: 20px;
     top: 20px;
     max-width: 800px;
 }
+
 #playerContainer {
     display: flex;
     height: 105px;
 }
+
 #playerArtwork {
     width: 80px;
     height: 80px;
     border-radius: 5px;
 }
+
 #playerArtworkIdle {
     width: 80px;
     height: 80px;
@@ -168,6 +200,7 @@
     margin: auto;
     padding: 15px;
 }
+
 #playerInfo {
     position: relative;
     padding-top: 6px;
@@ -175,40 +208,58 @@
     height: 80px;
     font-size: 15px;
 }
+
 #playerTitle {
     display: block;
     white-space: nowrap;
 }
+
 #playerArtist {
     display: block;
     white-space: nowrap;
     min-height: 20px;
 }
+
 #playerActionBox {
     margin-top: 5px;
     display: flex;
     float: right;
 }
+
 #playerBarBox {
     margin-top: 5px;
     height: 15px;
     width: 400px;
     cursor: pointer;
 }
+
 .scrolling {
     animation: scrolling 8s linear infinite;
 }
+
 @keyframes scrolling {
     0% {
         transform: translateX(100%);
         opacity: 1;
     }
-    95%{
+
+    95% {
         transform: translateX(-90%);
         opacity: 1;
     }
+
     100% {
         transform: translateX(-100%);
         opacity: 0;
     }
+}
+
+// Allows us to have H3 with the size of an H5
+h3 {
+    font-size: 1.25rem;
+}
+
+// Makes legend match the size of other labels
+legend {
+    font-size: 1rem;
 }
