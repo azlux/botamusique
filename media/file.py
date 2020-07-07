@@ -126,6 +126,33 @@ class FileItem(BaseItem):
                     if "covr" in tags:
                         im = Image.open(BytesIO(tags["covr"][0]))
 
+            elif ext == "opus":
+                # title: 'title'
+                # artist: 'artist'
+                # album: 'album'
+                # cover artwork: 'metadata_block_picture', and then:
+                ##                          |
+                ##                          |
+                ##                          v
+                ##            Decode string as base64 binary
+                ##                          |
+                ##                          v
+                ##      Open that binary as a mutagen.flac.Picture
+                ##                          |
+                ##                          v
+                ##              Extract binary image data
+                tags = mutagen.File(self.uri())
+                if 'title' in tags:
+                    self.title = tags['title'][0]
+                if 'artist' in tags:
+                    self.artist = tags['artist'][0]
+
+                if im is None:
+                    if 'metadata_block_picture' in tags:
+                        pic_as_base64 = tags['metadata_block_picture'][0]
+                        as_flac_picture = mutagen.flac.Picture(base64.b64decode(pic_as_base64))
+                        im = Image.open(BytesIO(as_flac_picture.data))
+
             if im:
                 self.thumbnail = self._prepare_thumbnail(im)
         except:
