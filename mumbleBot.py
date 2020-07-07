@@ -486,12 +486,15 @@ class MumbleBot:
                     # Adjust the volume and send it to mumble
                     self.volume_cycle()
 
-                    if not self.on_interrupting:
+                    if not self.on_interrupting and self.read_pcm_size > 0:
                         self.mumble.sound_output.add_sound(
                             audioop.mul(raw_music, 2, self.volume_helper.real_volume))
+                    elif self.read_pcm_size == 0:
+                        self.mumble.sound_output.add_sound(
+                            audioop.mul(self._fadeout(raw_music, self.stereo, fadein=True), 2, self.volume_helper.real_volume))
                     else:
                         self.mumble.sound_output.add_sound(
-                            audioop.mul(self._fadeout(raw_music, self.stereo), 2, self.volume_helper.real_volume))
+                            audioop.mul(self._fadeout(raw_music, self.stereo, fadein=False), 2, self.volume_helper.real_volume))
                         self.thread.kill()
                         time.sleep(0.1)
                         self.on_interrupting = False
@@ -599,10 +602,14 @@ class MumbleBot:
                 self.on_ducking = True
             self.ducking_release = time.time() + 1  # ducking release after 1s
 
-    def _fadeout(self, _pcm_data, stereo=False):
+    def _fadeout(self, _pcm_data, stereo=False, fadein=False):
         pcm_data = bytearray(_pcm_data)
         if stereo:
-            mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 4))]
+            if not fadein:
+                mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 4))]
+            else:
+                mask = [math.exp(-x / 60) for x in reversed(range(0, int(len(pcm_data) / 4)))]
+
             for i in range(int(len(pcm_data) / 4)):
                 pcm_data[4 * i:4 * i + 2] = struct.pack("<h",
                                                         round(struct.unpack("<h", pcm_data[4 * i:4 * i + 2])[0] * mask[i]))
