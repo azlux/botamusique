@@ -66,7 +66,7 @@ steps:
       - echo "version is $version"
       - echo $version > /tmp/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest") | jq -r '.body' > /tmp/botamusique/changelog
+      - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' > /tmp/botamusique/changelog
       - tar -czf /tmp/botamusique/sources-stable.tar.gz .
     volumes:
       - name: repo
