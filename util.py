@@ -366,14 +366,14 @@ def get_media_duration(path):
 
 
 def parse_time(human):
-    match = re.search("(?:(\d\d):)?(?:(\d\d):)?(\d\d(?:\.\d*)?)", human, flags=re.IGNORECASE)
+    match = re.search("(?:(\d\d):)?(?:(\d\d):)?(\d+(?:\.\d*)?)", human, flags=re.IGNORECASE)
     if match:
         if match[1] is None and match[2] is None:
             return float(match[3])
         elif match[2] is None:
             return float(match[3]) + 60 * int(match[1])
         else:
-            return float(match[3]) + 60 * int(match[2]) + 3600 * int(match[2])
+            return float(match[3]) + 60 * int(match[2]) + 3600 * int(match[1])
     else:
         raise ValueError("Invalid time string given.")
 
