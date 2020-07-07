@@ -10,13 +10,6 @@ steps:
       - npm install
       - npm run build
       - cd ..
-    when:
-      branch:
-        - master
-      event:
-        - push
-        - pull_request
-        - tag
 
   - name: deploy-testing
     image: debian
@@ -73,8 +66,6 @@ steps:
       - name: repo
         path: /tmp/botamusique/
     when:
-      branch:
-        - master
       event:
         - tag
 
@@ -88,8 +79,6 @@ steps:
         from_secret: docker_password
       tags: latest
     when:
-      branch:
-        - master
       event:
         - tag
 
