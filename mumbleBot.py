@@ -178,7 +178,7 @@ class MumbleBot:
         last_startup_version = var.db.get("bot", "version", fallback=None)
         if not last_startup_version or version.parse(last_startup_version) < version.parse(self.version):
             var.db.set("bot", "version", self.version)
-            changelog = util.fetch_changelog().replace("\n", "<br>")
+            changelog = util.fetch_changelog()
             self.send_channel_msg(constants.strings("update_successful", version=self.version, changelog=changelog))
 
     # Set the CTRL+C shortcut

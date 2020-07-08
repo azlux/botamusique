@@ -53,14 +53,14 @@ steps:
   - name: deploy-stable
     image: debian
     commands:
-      - apt-get -qq update && apt-get -qq install jq curl git > /dev/null
+      - apt-get -qq update && apt-get -qq install jq curl git pandoc > /dev/null
       - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
       - git fetch --tags
       - version=$(git describe --abbrev=0 --tags)
       - echo "version is $version"
       - echo $version > /mnt/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' > /mnt/botamusique/changelog
+      - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' | pandoc --from gfm --to html - --output - > /mnt/botamusique/changelog
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
