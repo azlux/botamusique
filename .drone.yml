@@ -18,14 +18,16 @@ steps:
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
       - version=$(git rev-parse HEAD)
       - echo "current git commit is $version"
-      - echo $version > /tmp/botamusique/testing-version
+      - echo $version > /mnt/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
       - rm -rf .git*
       - rm -rf web
-      - tar -czf /tmp/botamusique/sources-testing.tar.gz .
+      - mkdir /tmp/botamusique
+      - cp -r . /tmp/botamusique/
+      - tar -czf /mnt/botamusique/sources-testing.tar.gz -C /tmp botamusique
     volumes:
       - name: repo
-        path: /tmp/botamusique/
+        path: /mnt/botamusique/
     when:
       branch:
         - master
@@ -56,15 +58,17 @@ steps:
       - git fetch --tags
       - version=$(git describe --abbrev=0 --tags)
       - echo "version is $version"
-      - echo $version > /tmp/botamusique/version
+      - echo $version > /mnt/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' > /tmp/botamusique/changelog
+      - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' > /mnt/botamusique/changelog
       - rm -rf .git*
       - rm -rf web
-      - tar -czf /tmp/botamusique/sources-stable.tar.gz .
+      - mkdir /tmp/botamusique
+      - cp -r . /tmp/botamusique/
+      - tar -czf /mnt/botamusique/sources-stable.tar.gz -C /tmp botamusique
     volumes:
       - name: repo
-        path: /tmp/botamusique/
+        path: /mnt/botamusique/
     when:
       event:
         - tag
