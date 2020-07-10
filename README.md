@@ -45,13 +45,18 @@ Predicted functionalities will be those people would expect from any classic mus
 1. Install ffmpeg. If ffmpeg isn't in your package manager, you may need to find another source. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
 
-#### Install botamusique
+#### Docker
+See https://github.com/azlux/botamusique/wiki/Docker-install
+
+Both stable and testing are available !
+
+#### Manual install
 
 **Stable release (recommended)**
 
 This is the tested stable version, with auto-update support. To install the stable release, run these lines:
 ```
-curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources.tar.gz
+curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources-stable.tar.gz
 tar -xzf botamusique.tar.gz
 cd botamusique
 python3 -m venv venv
@@ -59,7 +64,24 @@ venv/bin/pip install wheel
 venv/bin/pip install -r requirements.txt
 ```
 
-**Work-in-progress version (from the master branch of this repo)**
+**Testing release**
+<details>
+  <summary>Click to expand!</summary>
+
+This is the testing stable version, with auto-update support. This version follow all commits into the master branch.
+```
+curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources-stable.tar.gz
+tar -xzf botamusique.tar.gz
+cd botamusique
+python3 -m venv venv
+venv/bin/pip install wheel
+venv/bin/pip install -r requirements.txt
+```
+</details>
+
+**Git version (from the master branch of this repo)**
+<details>
+  <summary>Click to expand!</summary>
 
 We will test new features in this branch, maybe sometimes post some hotfixes. Please be noted that this version has no auto-update support. If you want to install this version, you need to have Git installed.
 We recommend you to install the stable version above, except you'd like to try out our half-baked features and put up with bugs amid them.
@@ -73,7 +95,7 @@ cd web
 npm install
 npm run build
 ```
-
+</details>
 
 ### Configuration
 Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
