@@ -37,20 +37,20 @@ Predicted functionalities will be those people would expect from any classic mus
 1. [Known issues](#known-issues)
 1. [Contributors](#contributors)
 
-### Installation
+## Installation
 
-#### Dependencies
+### Dependencies
 1. Install python3.
 1. Install [Opus Codec](https://www.opus-codec.org/) (which should be already installed if you installed Mumble or Murmur, or you may try to install `opus-tools` with your package manager).
 1. Install ffmpeg. If ffmpeg isn't in your package manager, you may need to find another source. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
 
-#### Docker
+### Docker
 See https://github.com/azlux/botamusique/wiki/Docker-install
 
 Both stable and testing are available !
 
-#### Manual install
+### Manual install
 
 **Stable release (recommended)**
 
@@ -97,12 +97,12 @@ npm run build
 ```
 </details>
 
-### Configuration
+## Configuration
 Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
 
 We list some basic settings for you to quickly get things working.
 
-#### Basic settings
+### Basic settings
 1. Usually, the first thing is to set the Murmur server you'd like the bot to connect to. You may also specify which channel the bot stays, and tokens used by the bot.
 ```
 [server]
@@ -145,7 +145,7 @@ If you don't have a certificate, you may generate one by:
 `openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout botamusique.pem -out botamusique.pem -subj "/CN=botamusique"`
 
 
-#### Sections explained
+### Sections explained
 - `server`: configuration about the server. Will be overridden by the `./mumbleBot.py` parameters.
 - `bot`: basic configuration of the bot, eg. name, comment, folder, default volume, etc.
 - `webinterface`: basic configuration about the web interface.
@@ -155,7 +155,7 @@ If you don't have a certificate, you may generate one by:
 - `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
 
 
-### Run the bot
+## Run the bot
 If you have set up everything in your `configuration.ini`, you can
 `venv/bin/python mumbleBot.py --config configuration.ini`
 
@@ -166,7 +166,7 @@ If you want information about auto-starting and auto-restarting of the bot, you 
 
 **For the detailed manual of using botamusique, please see the [wiki](https://github.com/azlux/botamusique/wiki).**
 
-### Operate the bot
+## Operate the bot
 
 You can control the bot by both commands sent by text message and the web interface.
 
@@ -174,7 +174,7 @@ By default, all commands start with `!`. You can type `!help` in the text messag
 
 The web interface can be used if you'd like an intuitive way of interacting with the bot. Through it is fairly straightforward, a walk-through can be found on the [wiki page](https://github.com/azlux/botamusique/wiki/Web-interface-walk-through).
 
-### Update
+## Update
 
 If you enable `audo_check_update`, the bot will check for updates every time it starts.
 If you are using the recommended install, you can send `!update` to the bot (command by default).
@@ -187,7 +187,7 @@ venv/bin/pip install --upgrade -r requirements.txt
 ```
 
 
-### Known issues
+## Known issues
 
 1. During installation, you may encounter the following error:
 ```
@@ -213,7 +213,7 @@ python3-dev musl-lib libmagic jpeg-dev zlib-dev gcc
 For more information, see [#122](https://github.com/azlux/botamusique/issues/122).
 
 
-### Contributors
+## Contributors
 If you want to participate, You're welcome to fork and submit pull requests (fixes and new features).
 
 The following people joined the collaborators for a faster development, big thanks to them:
