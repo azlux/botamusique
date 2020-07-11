@@ -215,6 +215,8 @@ For more information, see [#122](https://github.com/azlux/botamusique/issues/122
 
 ## Contributors
 If you want to participate, You're welcome to fork and submit pull requests (fixes and new features).
+For translating, If you want to add a new language, you can requests an access by email or IRC.
+For small translate changes, you can modify the json into `lang/`folder and use a PR.
 
 The following people joined the collaborators for a faster development, big thanks to them:
 - @TerryGeng
