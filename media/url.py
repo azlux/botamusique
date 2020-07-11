@@ -99,7 +99,7 @@ class URLItem(BaseItem):
             # Check the length, useful in case of playlist, it wasn't checked before)
             log.info(
                 "url: " + self.url + " has a duration of " + str(self.duration / 60) + " min -- too long")
-            raise ValidationFailedError(constants.strings('too_long', song=self.title))
+            raise ValidationFailedError(constants.tr('too_long', song=self.title))
         else:
             self.ready = "validated"
             self.version += 1  # notify wrapper to save me
@@ -138,7 +138,7 @@ class URLItem(BaseItem):
         if not succeed:
             self.ready = 'failed'
             self.log.error("url: error while fetching info from the URL")
-            raise ValidationFailedError(constants.strings('unable_download', item=self.format_title()))
+            raise ValidationFailedError(constants.tr('unable_download', item=self.format_title()))
 
     def _download(self):
         media.system.clear_tmp_folder(var.tmp_folder, var.config.getint('bot', 'tmp_folder_max_size'))
@@ -193,7 +193,7 @@ class URLItem(BaseItem):
                     os.remove(f)
                 self.ready = "failed"
                 self.downloading = False
-                raise PreparationFailedError(constants.strings('unable_download', item=self.format_title()))
+                raise PreparationFailedError(constants.tr('unable_download', item=self.format_title()))
 
     def _read_thumbnail_from_file(self, path_thumbnail):
         if os.path.isfile(path_thumbnail):
@@ -226,14 +226,14 @@ class URLItem(BaseItem):
 
     def format_song_string(self, user):
         if self.ready in ['validated', 'yes']:
-            return constants.strings("url_item",
-                                     title=self.title if self.title else "??",
-                                     url=self.url,
-                                     user=user)
+            return constants.tr("url_item",
+                                title=self.title if self.title else "??",
+                                url=self.url,
+                                user=user)
         return self.url
 
     def format_current_playing(self, user):
-        display = constants.strings("now_playing", item=self.format_song_string(user))
+        display = constants.tr("now_playing", item=self.format_song_string(user))
 
         if self.thumbnail:
             thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
@@ -246,4 +246,4 @@ class URLItem(BaseItem):
         return self.title if self.title.strip() else self.url
 
     def display_type(self):
-        return constants.strings("url")
+        return constants.tr("url")
