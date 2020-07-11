@@ -17,7 +17,7 @@ steps:
       - echo "current git commit is $version"
       - echo $version > /mnt/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - (cd lang && ./sync_translation.py --client $TRADUROA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
+      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
@@ -59,7 +59,7 @@ steps:
       - echo $version > /mnt/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
       - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' | pandoc --from gfm --to html - --output - > /mnt/botamusique/changelog
-      - (cd lang && ./sync_translation.py --client $TRADUROA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
+      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
@@ -84,6 +84,25 @@ steps:
     when:
       event:
         - tag
+        
+  - name: fetch-translate
+    image: debian
+    commands:
+      - apt update && apt install -y git python3-requests hub
+      - git branch bot-traduora && git checkout bot-traduora
+      - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
+      - git add lang/* && git status
+      - git config --global user.email "github@azlux.fr" && git config --global user.name "azlux"
+      - git commit -a -m 'Bot: update strings'
+      - git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
+      - git push --set-upstream origin new-translations && git push
+      - GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"
+    when:
+      event:
+        - cron
+      cron:
+        - auto-fetch-lang
+
 
 volumes:
 - name: repo
