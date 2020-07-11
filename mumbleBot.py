@@ -23,7 +23,8 @@ from packaging import version
 
 import util
 import command
-from constants import tr, commands
+import constants
+from constants import tr_cli as tr
 from database import SettingsDatabase, MusicDatabase, DatabaseMigration
 import media.system
 from media.item import ValidationFailedError, PreparationFailedError
@@ -713,6 +714,8 @@ def start_web_interface(addr, port):
 
 
 if __name__ == '__main__':
+    supported_languages = util.get_supported_language()
+
     parser = argparse.ArgumentParser(
         description='Bot for playing music on Mumble')
 
@@ -720,11 +723,11 @@ if __name__ == '__main__':
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini',
                         help='Load configuration from this file. Default: configuration.ini')
     parser.add_argument("--db", dest='db', type=str,
-                        default=None, help='Settings database file. Default: settings-{username_of_the_bot}.db')
+                        default=None, help='Settings database file')
     parser.add_argument("--music-db", dest='music_db', type=str,
-                        default=None, help='Music library database file. Default: music.db')
-    parser.add_argument("--lang", dest='lang', type=str, default='en_US',
-                        help='Preferred language.')
+                        default=None, help='Music library database file')
+    parser.add_argument("--lang", dest='lang', type=str, default=None,
+                        help='Preferred language. Support ' + ", ".join(supported_languages))
 
     parser.add_argument("-q", "--quiet", dest="quiet",
                         action="store_true", help="Only Error logs")
@@ -816,6 +819,20 @@ if __name__ == '__main__':
 
     var.music_folder = util.solve_filepath(var.config.get('bot', 'music_folder'))
     var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
+
+    # ======================
+    #      Translation
+    # ======================
+
+    lang = ""
+    if args.lang:
+        lang = args.lang
+    else:
+        lang = var.config.get('bot', 'language', fallback='en_US')
+
+    if lang not in supported_languages:
+        raise KeyError(f"Unsupported language {lang}")
+    constants.load_lang(lang)
 
     # ======================
     #     Prepare Cache
