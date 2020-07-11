@@ -147,18 +147,18 @@ class RadioItem(BaseItem):
         )
 
     def format_song_string(self, user):
-        return constants.strings("radio_item",
-                                 url=self.url,
-                                 title=get_radio_title(self.url),  # the title of current song
-                                 name=self.title,  # the title of radio station
-                                 user=user
-                                 )
+        return constants.tr("radio_item",
+                            url=self.url,
+                            title=get_radio_title(self.url),  # the title of current song
+                            name=self.title,  # the title of radio station
+                            user=user
+                            )
 
     def format_current_playing(self, user):
-        return constants.strings("now_playing", item=self.format_song_string(user))
+        return constants.tr("now_playing", item=self.format_song_string(user))
 
     def format_title(self):
         return self.title if self.title else self.url
 
     def display_type(self):
-        return constants.strings("radio")
+        return constants.tr("radio")

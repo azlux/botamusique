@@ -1,7 +1,7 @@
 import variables as var
 
 
-def strings(option, *argv, **kwargs):
+def tr(option, *argv, **kwargs):
     try:
         string = var.config.get("strings", option)
     except KeyError:

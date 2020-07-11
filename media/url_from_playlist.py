@@ -96,15 +96,15 @@ class PlaylistURLItem(URLItem):
         )
 
     def format_song_string(self, user):
-        return constants.strings("url_from_playlist_item",
-                                 title=self.title,
-                                 url=self.url,
-                                 playlist_url=self.playlist_url,
-                                 playlist=self.playlist_title,
-                                 user=user)
+        return constants.tr("url_from_playlist_item",
+                            title=self.title,
+                            url=self.url,
+                            playlist_url=self.playlist_url,
+                            playlist=self.playlist_title,
+                            user=user)
 
     def format_current_playing(self, user):
-        display = constants.strings("now_playing", item=self.format_song_string(user))
+        display = constants.tr("now_playing", item=self.format_song_string(user))
 
         if self.thumbnail:
             thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
@@ -114,4 +114,4 @@ class PlaylistURLItem(URLItem):
         return display
 
     def display_type(self):
-        return constants.strings("url_from_playlist")
+        return constants.tr("url_from_playlist")

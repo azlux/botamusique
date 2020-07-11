@@ -23,7 +23,7 @@ from packaging import version
 
 import util
 import command
-import constants
+from constants import tr, commands
 from database import SettingsDatabase, MusicDatabase, DatabaseMigration
 import media.system
 from media.item import ValidationFailedError, PreparationFailedError
@@ -118,7 +118,7 @@ class MumbleBot:
         self.mumble.start()  # start the mumble thread
         self.mumble.is_ready()  # wait for the connection
 
-        if self.mumble.connected >= pymumble_py3.constants.PYMUMBLE_CONN_STATE_FAILED:
+        if self.mumble.connected >= pymumble.constants.PYMUMBLE_CONN_STATE_FAILED:
             exit()
 
         self.set_comment()
@@ -179,7 +179,7 @@ class MumbleBot:
         if not last_startup_version or version.parse(last_startup_version) < version.parse(self.version):
             var.db.set("bot", "version", self.version)
             changelog = util.fetch_changelog()
-            self.send_channel_msg(constants.strings("update_successful", version=self.version, changelog=changelog))
+            self.send_channel_msg(tr("update_successful", version=self.version, changelog=changelog))
 
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
@@ -206,7 +206,7 @@ class MumbleBot:
             self.log.info(f"update: new version {new_version} found, current installed version {self.version}.")
             self.log.info(f"update: changelog: {changelog}")
             changelog = changelog.replace("\n", "<br>")
-            self.send_channel_msg(constants.strings('new_version_found', new_version=new_version, changelog=changelog))
+            self.send_channel_msg(tr('new_version_found', new_version=new_version, changelog=changelog))
         else:
             self.log.debug("update: no new version found.")
 
@@ -263,13 +263,13 @@ class MumbleBot:
             # Anti stupid guy function
             if not self.is_admin(user) and not var.config.getboolean('bot', 'allow_private_message') and text.session:
                 self.mumble.users[text.actor].send_text_message(
-                    constants.strings('pm_not_allowed'))
+                    tr('pm_not_allowed'))
                 return
 
             for i in var.db.items("user_ban"):
                 if user.lower() == i[0]:
                     self.mumble.users[text.actor].send_text_message(
-                        constants.strings('user_ban'))
+                        tr('user_ban'))
                     return
 
             if not self.is_admin(user) and parameter:
@@ -278,7 +278,7 @@ class MumbleBot:
                     for i in var.db.items("url_ban"):
                         if input_url == i[0]:
                             self.mumble.users[text.actor].send_text_message(
-                                constants.strings('url_ban'))
+                                tr('url_ban'))
                             return
 
             command_exc = ""
@@ -299,15 +299,15 @@ class MumbleBot:
 
                     elif len(matches) > 1:
                         self.mumble.users[text.actor].send_text_message(
-                            constants.strings('which_command', commands="<br>".join(matches)))
+                            tr('which_command', commands="<br>".join(matches)))
                         return
                     else:
                         self.mumble.users[text.actor].send_text_message(
-                            constants.strings('bad_command', command=command))
+                            tr('bad_command', command=command))
                         return
 
                 if self.cmd_handle[command_exc]['admin'] and not self.is_admin(user):
-                    self.mumble.users[text.actor].send_text_message(constants.strings('not_admin'))
+                    self.mumble.users[text.actor].send_text_message(tr('not_admin'))
                     return
 
                 if not self.cmd_handle[command_exc]['access_outside_channel'] \
@@ -315,7 +315,7 @@ class MumbleBot:
                         and not var.config.getboolean('bot', 'allow_other_channel_message') \
                         and self.mumble.users[text.actor]['channel_id'] != self.mumble.users.myself['channel_id']:
                     self.mumble.users[text.actor].send_text_message(
-                        constants.strings('not_in_my_channel'))
+                        tr('not_in_my_channel'))
                     return
 
                 self.cmd_handle[command_exc]['handle'](self, user, text, command_exc, parameter)
@@ -323,7 +323,7 @@ class MumbleBot:
                 error_traceback = traceback.format_exc()
                 error = error_traceback.rstrip().split("\n")[-1]
                 self.log.error(f"bot: command {command_exc} failed with error: {error_traceback}\n")
-                self.send_msg(constants.strings('error_executing_command', command=command_exc, error=error), text)
+                self.send_msg(tr('error_executing_command', command=command_exc, error=error), text)
 
     def send_msg(self, msg, text):
         msg = msg.encode('utf-8', 'ignore').decode('utf-8')
@@ -355,7 +355,7 @@ class MumbleBot:
             if var.config.get("bot", "when_nobody_in_channel") == "pause_resume":
                 self.resume()
             elif var.config.get("bot", "when_nobody_in_channel") == "pause":
-                self.send_channel_msg(constants.strings("auto_paused"))
+                self.send_channel_msg(tr("auto_paused"))
 
         elif len(own_channel.get_users()) == 1:
             # if the bot is the only user left in the channel
@@ -436,7 +436,7 @@ class MumbleBot:
             self.log.info("bot: current music isn't ready, start downloading.")
             self.async_download(item)
             self.send_channel_msg(
-                constants.strings('download_in_progress', item=item.format_title()))
+                tr('download_in_progress', item=item.format_title()))
 
     def _download(self, item):
         ver = item.version
@@ -514,7 +514,7 @@ class MumbleBot:
                     self.log.error("bot: with ffmpeg error: %s", self.last_ffmpeg_err)
                     self.last_ffmpeg_err = ""
 
-                    self.send_channel_msg(constants.strings('unable_play', item=current.format_title()))
+                    self.send_channel_msg(tr('unable_play', item=current.format_title()))
                     var.playlist.remove_by_id(current.id)
                     var.cache.free_and_delete(current.id)
 
@@ -720,9 +720,11 @@ if __name__ == '__main__':
     parser.add_argument("--config", dest='config', type=str, default='configuration.ini',
                         help='Load configuration from this file. Default: configuration.ini')
     parser.add_argument("--db", dest='db', type=str,
-                        default=None, help='settings database file. Default: settings-{username_of_the_bot}.db')
+                        default=None, help='Settings database file. Default: settings-{username_of_the_bot}.db')
     parser.add_argument("--music-db", dest='music_db', type=str,
-                        default=None, help='music library database file. Default: music.db')
+                        default=None, help='Music library database file. Default: music.db')
+    parser.add_argument("--lang", dest='lang', type=str, default='en_US',
+                        help='Preferred language.')
 
     parser.add_argument("-q", "--quiet", dest="quiet",
                         action="store_true", help="Only Error logs")
@@ -814,6 +816,10 @@ if __name__ == '__main__':
 
     var.music_folder = util.solve_filepath(var.config.get('bot', 'music_folder'))
     var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
+
+    # ======================
+    #     Prepare Cache
+    # ======================
     var.cache = MusicCache(var.music_db)
 
     if var.config.getboolean("bot", "refresh_cache_on_startup", fallback=True):
