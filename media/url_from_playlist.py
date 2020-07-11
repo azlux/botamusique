@@ -1,5 +1,5 @@
 import youtube_dl
-import constants
+from constants import tr_cli as tr
 import variables as var
 from media.item import item_builders, item_loaders, item_id_generators
 from media.url import URLItem, url_item_id_generator
@@ -96,7 +96,7 @@ class PlaylistURLItem(URLItem):
         )
 
     def format_song_string(self, user):
-        return constants.tr("url_from_playlist_item",
+        return tr("url_from_playlist_item",
                             title=self.title,
                             url=self.url,
                             playlist_url=self.playlist_url,
@@ -104,7 +104,7 @@ class PlaylistURLItem(URLItem):
                             user=user)
 
     def format_current_playing(self, user):
-        display = constants.tr("now_playing", item=self.format_song_string(user))
+        display = tr("now_playing", item=self.format_song_string(user))
 
         if self.thumbnail:
             thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
@@ -114,4 +114,4 @@ class PlaylistURLItem(URLItem):
         return display
 
     def display_type(self):
-        return constants.tr("url_from_playlist")
+        return tr("url_from_playlist")

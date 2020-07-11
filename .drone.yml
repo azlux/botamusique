@@ -20,6 +20,7 @@ steps:
       - echo "current git commit is $version"
       - echo $version > /mnt/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
+      - ./lang/translate.py
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
