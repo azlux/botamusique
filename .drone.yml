@@ -6,10 +6,7 @@ steps:
   - name: build
     image: node
     commands:
-      - cd web
-      - npm install
-      - npm run build
-      - cd ..
+      - (cd web && npm install && npm run build)
 
   - name: deploy-testing
     image: debian
@@ -20,7 +17,7 @@ steps:
       - echo "current git commit is $version"
       - echo $version > /mnt/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - ./lang/translate.py
+      - (cd lang && ./sync_translation.py)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
@@ -62,6 +59,7 @@ steps:
       - echo $version > /mnt/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
       - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' | pandoc --from gfm --to html - --output - > /mnt/botamusique/changelog
+      - (cd lang && ./sync_translation.py)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
