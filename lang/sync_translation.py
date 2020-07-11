@@ -1,27 +1,35 @@
 #!/usr/bin/env python
 
 import os
+import re
+import argparse
 import requests
 
 base_url = "https://translate.azlux.fr/api/v1"
 project_id = "4aafb197-3282-47b3-a197-0ca870cf6ab2"
-r_client = "be8215d4-2417-49db-9355-c418f26dc3f4"
-r_secret = "MIMvdnECLkmTZyCQT4DekONN53EOSsj3"
-w_client = os.environ.get("TRADUORA_W_CLIENT", default=None)
-w_secret = os.environ.get("TRADUORA_W_SECRET", default=None)
 
 
-def fetch_translation():
-    print("Fetching translation from remote host...")
+def get_access_header(client, secret):
     data = {"grant_type": "client_credentials",
-            "client_id": r_client,
-            "client_secret": r_secret}
+            "client_id": client,
+            "client_secret": secret}
 
     r = requests.post(f"{base_url}/auth/token", json=data)
+
+    if r.status_code != 200:
+        print("Access denied! Please check your client ID or secret.")
+        exit(1)
+
     token = r.json()["access_token"]
 
     headers = {"Authorization": "Bearer " + token,
                "Accept": "application/json, text/plain, */*"}
+
+    return headers
+
+
+def fetch_translation(r_client, r_secret):
+    headers = get_access_header(r_client, r_secret)
 
     r = requests.get(f"{base_url}/projects/{project_id}/translations", headers=headers)
     translations = r.json()['data']
@@ -35,30 +43,53 @@ def fetch_translation():
             f.write(r.content)
 
 
-def push_strings():
+def push_strings(w_client, w_secret):
     print("Pushing local en_US file into the remote host...")
-    data = {"grant_type": "client_credentials",
-            "client_id": w_client,
-            "client_secret": w_secret}
+    headers = get_access_header(w_client, w_secret)
 
-    r = requests.post(f"{base_url}/auth/token", json=data)
-    token = r.json()["access_token"]
+    lang_files = os.listdir('.')
+    lang_list = []
+    for lang_file in lang_files:
+        match = re.search("[a-z]{2}_[A-Z]{2}", lang_file)
+        if match:
+            lang_list.append(lang_file)
 
-    headers = {"Authorization": "Bearer " + token,
-               "Accept": "application/json, text/plain, */*"}
+    for lang_file in lang_list:
+        print(f" - Pushing {lang_file}")
 
-    params = {'locale': 'en_US',
-              'format': 'jsonnested'}
+        params = {'locale': lang_file,
+                  'format': 'jsonnested'}
+        files = {'file': open(lang_file, 'r')}
 
-    files = {'file': open('lang/en_US', 'r')}
-    r = requests.post(f"{base_url}/projects/{project_id}/exports", data=params, headers=headers, files=files)
-    assert r.status_code == 200, "Unable to push local en_US file into remote host."
+        r = requests.post(f"{base_url}/projects/{project_id}/imports", params=params, headers=headers, files=files)
+        assert r.status_code == 200, f"Unable to push {lang_file} into remote host. {r.status_code}"
 
 
-if w_client and w_secret:
-    print("Detected writable API keys from environ.")
-    push_strings()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Sync translation files with azlux's traduora server.")
 
-fetch_translation()
+    parser.add_argument("--client", dest="client",
+                        type=str, help="Client ID used to access the server.")
+    parser.add_argument("--secret", dest="secret",
+                        type=str, help="Secret used to access the server.")
 
-print("Done.")
+    parser.add_argument("--fetch", dest='fetch', action="store_true",
+                        help='Fetch translation files from the server.')
+    parser.add_argument("--push", dest='push', action="store_true",
+                        help='Push local translation files into the server.')
+
+    args = parser.parse_args()
+
+    if not args.client or not args.secret:
+        print("Client ID and secret need to be provided!")
+        exit(1)
+
+    if args.push:
+        push_strings(args.client, args.secret)
+
+    if args.fetch:
+        fetch_translation(args.client, args.secret)
+
+    print("Done.")
+

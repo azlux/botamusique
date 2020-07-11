@@ -17,7 +17,7 @@ steps:
       - echo "current git commit is $version"
       - echo $version > /mnt/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - (cd lang && ./sync_translation.py)
+      - (cd lang && ./sync_translation.py --client $TRADUROA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
@@ -59,7 +59,7 @@ steps:
       - echo $version > /mnt/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
       - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' | pandoc --from gfm --to html - --output - > /mnt/botamusique/changelog
-      - (cd lang && ./sync_translation.py)
+      - (cd lang && ./sync_translation.py --client $TRADUROA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
