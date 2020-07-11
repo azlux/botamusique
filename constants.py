@@ -2,18 +2,24 @@ import json
 
 import variables as var
 
+default_lang_dict = {}
 lang_dict = {}
 
 
 def load_lang(lang):
-    global lang_dict
+    global lang_dict, default_lang_dict
+    with open("lang/en_US", "r") as f:
+        default_lang_dict = json.load(f)
     with open(f"lang/{lang}", "r") as f:
         lang_dict = json.load(f)
 
 
 def tr_cli(option, *argv, **kwargs):
     try:
-        string = lang_dict['cli'][option]
+        if option in lang_dict['cli'] and lang_dict['cli'][option]:
+            string = lang_dict['cli'][option]
+        else:
+            string = default_lang_dict['cli'][option]
     except KeyError:
         raise KeyError("Missed strings in language file: '{string}'. ".format(string=option))
     return _tr(string, *argv, **kwargs)
@@ -21,7 +27,10 @@ def tr_cli(option, *argv, **kwargs):
 
 def tr_web(option, *argv, **kwargs):
     try:
-        string = lang_dict['web'][option]
+        if option in lang_dict['web'] and lang_dict['web'][option]:
+            string = lang_dict['web'][option]
+        else:
+            string = default_lang_dict['web'][option]
     except KeyError:
         raise KeyError("Missed strings in language file: '{string}'. ".format(string=option))
     return _tr(string, *argv, **kwargs)
