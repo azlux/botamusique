@@ -32,7 +32,7 @@ if __name__ == "__main__":
         if match is None:
             continue
 
-        print("f"Populating {html_file} with translations...")
+        print(f"Populating {html_file} with translations...")
         basename = match[1]
         with open(html_file, "r") as f:
             html = f.read()
