@@ -8,7 +8,23 @@ steps:
     commands:
       - (cd web && npm install && npm run build)
 
-  - name: translate-web
+  - name: push-translation
+    image: python:3
+    environment:
+      TRADUORA_W_CLIENT:
+        from_secret: TRADUORA_W_CLIENT
+      TRADUORA_W_SECRET:
+        from_secret: TRADUORA_W_SECRET
+    commands:
+      - pip3 install requests
+      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
+    when:
+      branch:
+        - master
+      event:
+        - push
+
+  - name: translate-html
     image: python:3
     commands:
       - pip3 install jinja2
@@ -16,14 +32,8 @@ steps:
 
   - name: deploy-testing
     image: debian
-    environment:
-      TRADUORA_W_CLIENT:
-        from_secret: TRADUORA_W_CLIENT
-      TRADUORA_W_SECRET:
-        from_secret: TRADUORA_W_SECRET
     commands:
-      - apt-get -qq update && apt-get -qq install git python3-requests > /dev/null
-      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
+      - apt-get -qq update && apt-get -qq install git > /dev/null
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
       - version=$(git rev-parse HEAD)
       - echo "current git commit is $version"
