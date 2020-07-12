@@ -16,6 +16,11 @@ steps:
 
   - name: deploy-testing
     image: debian
+    environment:
+      TRADUORA_W_CLIENT:
+        from_secret: TRADUORA_W_CLIENT
+      TRADUORA_W_SECRET:
+        from_secret: TRADUORA_W_SECRET
     commands:
       - apt-get -qq update && apt-get -qq install git python3-requests > /dev/null
       - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
@@ -56,6 +61,11 @@ steps:
 
   - name: deploy-stable
     image: debian
+    environment:
+      TRADUORA_W_CLIENT:
+        from_secret: TRADUORA_W_CLIENT
+      TRADUORA_W_SECRET:
+        from_secret: TRADUORA_W_SECRET
     commands:
       - apt-get -qq update && apt-get -qq install jq curl git pandoc python3-requests > /dev/null
       - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
@@ -93,6 +103,11 @@ steps:
         
   - name: fetch-translate
     image: debian
+    environment:
+      TRADUORA_R_CLIENT:
+        from_secret: TRADUORA_R_CLIENT
+      TRADUORA_R_SECRET:
+        from_secret: TRADUORA_R_SECRET
     commands:
       - apt update && apt install -y git python3-requests hub
       - git branch bot-traduora && git checkout bot-traduora
