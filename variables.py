@@ -23,3 +23,5 @@ bot_logger = None
 
 music_folder = ""
 tmp_folder = ""
+
+language = ""

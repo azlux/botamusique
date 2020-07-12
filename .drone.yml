@@ -3,18 +3,22 @@ type: docker
 name: default
 
 steps:
-  - name: build
+  - name: build-web
     image: node
     commands:
-      - cd web
-      - npm install
-      - npm run build
-      - cd ..
+      - (cd web && npm install && npm run build)
+
+  - name: translate-web
+    image: python:3
+    commands:
+      - pip3 install jinja2
+      - (cd templates/ && ./translate.py)
 
   - name: deploy-testing
     image: debian
     commands:
-      - apt-get -qq update && apt-get -qq install git > /dev/null
+      - apt-get -qq update && apt-get -qq install git python3-requests > /dev/null
+      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
       - version=$(git rev-parse HEAD)
       - echo "current git commit is $version"
@@ -53,7 +57,8 @@ steps:
   - name: deploy-stable
     image: debian
     commands:
-      - apt-get -qq update && apt-get -qq install jq curl git pandoc > /dev/null
+      - apt-get -qq update && apt-get -qq install jq curl git pandoc python3-requests > /dev/null
+      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
       - git fetch --tags
       - version=$(git describe --abbrev=0 --tags)
@@ -85,6 +90,25 @@ steps:
     when:
       event:
         - tag
+        
+  - name: fetch-translate
+    image: debian
+    commands:
+      - apt update && apt install -y git python3-requests hub
+      - git branch bot-traduora && git checkout bot-traduora
+      - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
+      - git add lang/* && git status
+      - git config --global user.email "github@azlux.fr" && git config --global user.name "azlux"
+      - "git commit -a -m 'Bot: update strings'"
+      - git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
+      - git push --set-upstream origin new-translations && git push
+      - "GITHUB_USER=\"azlux\" GITHUB_TOKEN=\"$GITHUB_API\"  hub pull-request -m \"Bot: TRADUORA Update\""
+    when:
+      event:
+        - cron
+      cron:
+        - auto-fetch-lang
+
 
 volumes:
 - name: repo

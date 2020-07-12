@@ -8,7 +8,6 @@ import io
 import sys
 import variables as var
 import zipfile
-import requests
 import re
 import subprocess as sp
 import logging
@@ -414,6 +413,17 @@ def verify_password(password, salted_hash, salt):
     if hashed.hex() == salted_hash:
         return True
     return False
+
+
+def get_supported_language():
+    lang_files = os.listdir('lang')
+    lang_list = []
+    for lang_file in lang_files:
+        match = re.search("([a-z]{2}_[A-Z]{2})\.json", lang_file)
+        if match:
+            lang_list.append(match[1])
+
+    return lang_list
 
 
 class LoggerIOWrapper(io.TextIOWrapper):

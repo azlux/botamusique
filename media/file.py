@@ -9,7 +9,7 @@ from PIL import Image
 import util
 import variables as var
 from media.item import BaseItem, item_builders, item_loaders, item_id_generators, ValidationFailedError
-import constants
+from constants import tr_cli as tr
 
 '''
 type : file
@@ -75,7 +75,7 @@ class FileItem(BaseItem):
         if not os.path.exists(self.uri()):
             self.log.info(
                 "file: music file missed for %s" % self.format_debug_string())
-            raise ValidationFailedError(constants.strings('file_missed', file=self.path))
+            raise ValidationFailedError(tr('file_missed', file=self.path))
 
         if self.duration == 0:
             self.duration = util.get_media_duration(self.uri())
@@ -185,14 +185,14 @@ class FileItem(BaseItem):
         )
 
     def format_song_string(self, user):
-        return constants.strings("file_item",
-                                 title=self.title,
-                                 artist=self.artist if self.artist else '??',
-                                 user=user
-                                 )
+        return tr("file_item",
+                  title=self.title,
+                  artist=self.artist if self.artist else '??',
+                  user=user
+                  )
 
     def format_current_playing(self, user):
-        display = constants.strings("now_playing", item=self.format_song_string(user))
+        display = tr("now_playing", item=self.format_song_string(user))
         if self.thumbnail:
             thumbnail_html = '<img width="80" src="data:image/jpge;base64,' + \
                              self.thumbnail + '"/>'
@@ -208,4 +208,4 @@ class FileItem(BaseItem):
             return title
 
     def display_type(self):
-        return constants.strings("file")
+        return tr("file")
