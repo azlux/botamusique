@@ -183,9 +183,6 @@
                         <div id="filter-path" class="input-group mb-2">
                             <select class="form-control form-control-sm" id="filter-dir" disabled>
                                 <option value="">.</option>
-                                {% for dir in dirs %}
-                                <option value="{{ dir }}">{{ dir }}</option>
-                                {% endfor %}
                             </select>
                         </div>
 
@@ -197,12 +194,9 @@
                     </div>
 
                     <div class="col">
-                        <fieldset id="filter-type mb-2">
+                        <fieldset id="filter-tags">
                             <legend>Tags</legend>
-                            {% for tag in tags_color_lookup.keys() %}
-                            <span id="filter-tag"
-                                class="filter-tag tag-unclicked tag-click badge badge-{{ tags_color_lookup[tag] }}">{{ tag }}</span>
-                            {% endfor %}
+                            <span class="filter-tag tag-unclicked tag-click badge"></span>
                         </fieldset>
                     </div>
                 </div>
@@ -338,12 +332,8 @@
         </div>
     </div>
 
-    {% if upload_enabled %}
     <div id="upload" class="container mb-3">
-    {% else %}
-    <div id="upload" class="container mb-3" style="display: none;">
-        <input type="hidden" id="uploadDisabled" value="true" />
-    {% endif %}
+        <input type="hidden" id="uploadDisabled" value="false" />
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Upload File</h3>
@@ -368,11 +358,8 @@
                                         <div class="input-group-prepend">
                                             <label for="uploadTargetDir" class="input-group-text">Upload To</label>
                                         </div>
-                                        <input class="form-control" list="targetdirs" id="uploadTargetDir" name="targetdir" placeholder="uploads" />
-                                        <datalist id="targetdirs">
-                                            {% for dir in dirs %}
-                                            <option value="{{ dir }}">
-                                            {% endfor %}
+                                        <input class="form-control" list="upload-target-dirs" id="uploadTargetDir" name="upload-target-dirs" placeholder="uploads" />
+                                        <datalist id="upload-target-dirs">
                                         </datalist>
                                     </div>
                                 </div>
@@ -552,7 +539,7 @@
         </div>
     </div>
 
-    <input type="hidden" id="maxUploadFileSize" value="{{ max_upload_file_size }}" />
+    <input type="hidden" id="maxUploadFileSize" value="" />
 
     <script src="static/js/main.js"></script>
 </body>

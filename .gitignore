@@ -116,5 +116,7 @@ tmp/
 
 *.db
 
+templates/*
+
 # Pycharm
 .idea/

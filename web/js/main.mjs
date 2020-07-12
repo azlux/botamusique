@@ -7,6 +7,7 @@ import {
   Tooltip,
 } from 'bootstrap/js/src/index';
 import {
+  getColor,
   isOverflown,
   setProgressBar,
   secondsToStr,
@@ -416,18 +417,6 @@ function setFilterType(event, type) {
   updateResults();
 }
 
-// Bind Event
-$('.filter-tag').click(function (e) {
-  const tag = $(e.currentTarget);
-  if (!tag.hasClass('tag-clicked')) {
-    tag.addClass('tag-clicked');
-    tag.removeClass('tag-unclicked');
-  } else {
-    tag.addClass('tag-unclicked');
-    tag.removeClass('tag-clicked');
-  }
-  updateResults();
-});
 
 filter_dir.change(function () {
   updateResults();
@@ -501,6 +490,9 @@ function bindLibraryResultEvent() {
   );
 }
 
+const lib_filter_tag_group = $("#filter-tags");
+const lib_filter_tag_element = $(".filter-tag");
+
 const lib_group = $('#library-group');
 const id_element = $('.library-item-id');
 const title_element = $('.library-item-title');
@@ -512,6 +504,65 @@ const path_element = $('.library-item-path');
 const tag_edit_element = $('.library-item-edit');
 // var notag_element = $(".library-item-notag");
 // var tag_element = $(".library-item-tag");
+
+function updateLibraryControls(){
+  $.ajax({
+    type: 'GET',
+    url: 'library/info',
+    statusCode: {
+      200: displayLibraryControls,
+      403: function () {
+        location.reload(true);
+      },
+    },
+  });
+}
+
+function displayLibraryControls(data){
+  $("#maxUploadFileSize").val(data.max_upload_file_size);
+  if (data.upload_enabled) {
+    $("#uploadDisabled").val("false");
+    $("#upload").show();
+  } else {
+    $("#uploadDisabled").val("true");
+    $("#upload").hide();
+  }
+
+  let select = $("#filter-dir");
+  let dataList = $("#upload-target-dirs");
+  select.find("option").remove();
+  dataList.find("option").remove();
+  if (data.dirs.length > 0) {
+    console.log(data.dirs);
+    data.dirs.forEach(function (dir) {
+      $("<option value=\"" + dir + "\">" + dir + "</option>").appendTo(select);
+      $("<option value=\"" + dir + "\">").appendTo(dataList);
+    });
+  }
+
+  // ----- Tag filters -----
+  $(".filter-tag").remove();
+  if (data.tags.length > 0) {
+    data.tags.forEach(function (tag) {
+      const tag_copy = lib_filter_tag_element.clone();
+      tag_copy.html(tag);
+      tag_copy.addClass('badge-' + getColor(tag));
+      tag_copy.appendTo(lib_filter_tag_group);
+    });
+  }
+  // Bind Event
+  $('.filter-tag').click(function (e) {
+    const tag = $(e.currentTarget);
+    if (!tag.hasClass('tag-clicked')) {
+      tag.addClass('tag-clicked');
+      tag.removeClass('tag-unclicked');
+    } else {
+      tag.addClass('tag-unclicked');
+      tag.removeClass('tag-clicked');
+    }
+    updateResults();
+  });
+}
 
 function addResultItem(item) {
   id_element.val(item.id);
@@ -609,6 +660,8 @@ function updateResults(dest_page = 1) {
       opacity: 1,
     }, 200);
   });
+
+  updateLibraryControls();
 }
 
 const download_form = $('#download-form');
@@ -1210,10 +1263,10 @@ function playheadDragged(event) {
 // ----- Application -----
 // -----------------------
 
-updateResults();
-
 document.addEventListener('DOMContentLoaded', () => {
+  updateResults();
   updatePlaylist();
+  updateLibraryControls();
 
   // Check the version of playlist to see if update is needed.
   setInterval(checkForPlaylistUpdate, 3000);

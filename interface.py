@@ -207,7 +207,7 @@ def build_tags_color_lookup():
 
 
 def get_all_dirs():
-    dirs = []
+    dirs = ["."]
     paths = var.music_db.query_all_paths()
     for path in paths:
         pos = 0
@@ -225,18 +225,7 @@ def get_all_dirs():
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    while var.cache.dir_lock.locked():
-        time.sleep(0.1)
-
-    tags_color_lookup = build_tags_color_lookup()
-    max_upload_file_size = util.parse_file_size(var.config.get("webinterface", "max_upload_file_size", fallback="30MB"))
-
-    return render_template('index.html',
-                           dirs=get_all_dirs(),
-                           upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True),
-                           tags_color_lookup=tags_color_lookup,
-                           max_upload_file_size=max_upload_file_size
-                           )
+    return open('templates/index.html', "r").read()
 
 
 @web.route("/playlist", methods=['GET'])
@@ -527,6 +516,8 @@ def build_library_query_condition(form):
 
         if form['type'] == 'file':
             folder = form['dir']
+            if folder == ".":
+                folder = ""
             if not folder.endswith('/') and folder:
                 folder += '/'
             condition.and_like('path', folder + '%')
@@ -550,6 +541,26 @@ def build_library_query_condition(form):
         return condition
     except KeyError:
         abort(400)
+
+
+@web.route("/library/info", methods=['GET'])
+@requires_auth
+def library_info():
+    global log
+
+    while var.cache.dir_lock.locked():
+        time.sleep(0.1)
+
+    tags = var.music_db.query_all_tags()
+    max_upload_file_size = util.parse_file_size(var.config.get("webinterface", "max_upload_file_size", fallback="30MB"))
+
+    print(get_all_dirs())
+    return jsonify(dict(
+        dirs=get_all_dirs(),
+        upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True),
+        tags=tags,
+        max_upload_file_size=max_upload_file_size
+    ))
 
 
 @web.route("/library", methods=['POST'])
