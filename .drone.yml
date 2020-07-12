@@ -137,13 +137,15 @@ steps:
         from_secret: GITHUB_API
     commands:
       - apt update && apt install -y git python3-requests hub
-      - git branch bot-traduora && git checkout bot-traduora
+      - |
+        if ! git checkout bot-traduora; then
+          git branch bot-traduora && git checkout bot-traduora
+        fi
       - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
       - git add lang/*
       - git status
-      - git config --global user.email "github@azlux.fr" && git config --global user.name "azlux"
       - |
-        if git commit -a -m 'Bot: Update translation'; then
+        if git commit -m 'Bot: Update translation' --author "Traduora Bot <noreply@azlux.fr>"; then
           git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
           git push origin bot-traduora
           sleep 2
