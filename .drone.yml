@@ -111,7 +111,7 @@ steps:
       event:
         - tag
         
-  - name: fetch-translate
+  - name: fetch-translation
     image: debian
     environment:
       TRADUORA_R_CLIENT:
@@ -122,12 +122,15 @@ steps:
       - apt update && apt install -y git python3-requests hub
       - git branch bot-traduora && git checkout bot-traduora
       - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
-      - git add lang/* && git status
+      - git add lang/*
+      - git status
       - git config --global user.email "github@azlux.fr" && git config --global user.name "azlux"
-      - "git commit -a -m 'Bot: update strings'"
-      - git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
-      - git push --set-upstream origin new-translations && git push
-      - "GITHUB_USER=\"azlux\" GITHUB_TOKEN=\"$GITHUB_API\"  hub pull-request -m \"Bot: TRADUORA Update\""
+      - |
+        if git commit -a -m 'Bot: Update translation'; then
+          git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
+          git push --set-upstream origin new-translations && git push
+          GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"
+        fi
     when:
       event:
         - cron
