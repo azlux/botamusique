@@ -832,6 +832,7 @@ if __name__ == '__main__':
 
     if lang not in supported_languages:
         raise KeyError(f"Unsupported language {lang}")
+    var.language = lang
     constants.load_lang(lang)
 
     # ======================

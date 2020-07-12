@@ -7,17 +7,18 @@ steps:
     image: node
     commands:
       - (cd web && npm install && npm run build)
+      - (cd templates/ && ./translate.py)
 
   - name: deploy-testing
     image: debian
     commands:
+      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - apt-get -qq update && apt-get -qq install git > /dev/null
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
       - version=$(git rev-parse HEAD)
       - echo "current git commit is $version"
       - echo $version > /mnt/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
-      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique
@@ -51,6 +52,7 @@ steps:
   - name: deploy-stable
     image: debian
     commands:
+      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - apt-get -qq update && apt-get -qq install jq curl git pandoc > /dev/null
       - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
       - git fetch --tags
@@ -59,7 +61,6 @@ steps:
       - echo $version > /mnt/botamusique/version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
       - curl --silent "https://api.github.com/repos/azlux/botamusique/releases/latest" | jq -r '.body' | pandoc --from gfm --to html - --output - > /mnt/botamusique/changelog
-      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - rm -rf .git*
       - rm -rf web
       - mkdir /tmp/botamusique

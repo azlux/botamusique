@@ -169,7 +169,7 @@ def requires_auth(f):
                 bad_access_count[request.remote_addr] = 1
                 log.info(f"web: bad token from ip {request.remote_addr}.")
 
-            return render_template('need_token.html',
+            return render_template(f'need_token.{var.language}.html',
                                    name=var.config.get('bot', 'username'),
                                    command=f"{var.config.get('commands', 'command_symbol')[0]}{var.config.get('commands', 'requests_webinterface_access')}")
 
@@ -225,7 +225,7 @@ def get_all_dirs():
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    return open('templates/index.html', "r").read()
+    return open(f"templates/index.{var.language}.html", "r").read()
 
 
 @web.route("/playlist", methods=['GET'])
@@ -554,7 +554,6 @@ def library_info():
     tags = var.music_db.query_all_tags()
     max_upload_file_size = util.parse_file_size(var.config.get("webinterface", "max_upload_file_size", fallback="30MB"))
 
-    print(get_all_dirs())
     return jsonify(dict(
         dirs=get_all_dirs(),
         upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True),

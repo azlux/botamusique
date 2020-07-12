@@ -29,13 +29,13 @@ module.exports = {
       filename: 'static/css/[name].css',
     }),
     new HtmlWebpackPlugin({
-      filename: 'templates/index.html',
-      template: './templates/index.html',
+      filename: 'templates/index.template.html',
+      template: './templates/index.template.html',
       inject: false,
     }),
     new HtmlWebpackPlugin({
-      filename: 'templates/need_token.html',
-      template: './templates/need_token.html',
+      filename: 'templates/need_token.template.html',
+      template: './templates/need_token.template.html',
       inject: false,
     }),
   ],

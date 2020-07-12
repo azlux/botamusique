@@ -816,7 +816,7 @@ const modal_tag = $('.modal-tag');
 const modal_tag_text = $('.modal-tag-text');
 
 function addTagModalShow(_id, _title, _tag_tuples) {
-  add_tag_modal_title.html('Edit tags for ' + _title);
+  add_tag_modal_title.html(_title);
   add_tag_modal_item_id.val(_id);
   add_tag_modal_tags.empty();
   _tag_tuples.forEach(function (tag_tuple) {

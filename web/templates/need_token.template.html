@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta charset="UTF-8">
 
-    <title>botamusique web interface</title>
+    <title>{{ tr('page_title') }}</title>
 
     <link rel="icon" href="static/image/favicon.ico" />
 
@@ -16,19 +16,17 @@
         <div class="col-8" style="margin: auto; padding-top: 50px;">
             <div class="card">
                 <div class="card-header">
-                    Token Required
+                    {{ tr('token_required') }}
                 </div>
                 <div class="card-body">
-                    <h3>Token Required!</h3>
-                    You are accessing the web interface of {{ name }}.
-                    A token is needed to grant you access.<br />
-                    Please send "{{ command }}" to the bot in mumble to acquire one.
+                    <h3>{{ tr('token_required') }}</h3>
+                    {{ tr('token_required_message') }}
                     <form action="." method="get">
                         <div class="form-group mt-3">
-                            <label for="token_input">Token</label>
+                            <label for="token_input">{{ tr('token') }}</label>
                             <div class="input-group">
                                 <input type="password" class="form-control btn-space" id="token_input" name="token" placeholder="xxxxxxx">
-                                <button type="submit" class="btn btn-primary">Submit</button>
+                                <button type="submit" class="btn btn-primary">{{ tr('submit') }}</button>
                             </div>
                         </div>
                     </form>
