@@ -1,6 +1,6 @@
 kind: pipeline
 type: docker
-name: default
+name: deployement
 
 steps:
   - name: build-web
@@ -110,7 +110,22 @@ steps:
     when:
       event:
         - tag
-        
+
+volumes:
+  - name: repo
+    host:
+      path: /media/raid5/data/packages/repos/apt/botamusique/
+      
+trigger:
+  event:
+    exclude:
+      - cron
+
+---
+kind: pipeline
+type: docker
+name: cron
+steps:
   - name: fetch-translation
     image: debian
     environment:
@@ -133,14 +148,9 @@ steps:
           git push --set-upstream origin new-translations && git push
           GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"
         fi
-    when:
-      event:
-        - cron
-      cron:
-        - auto-fetch-lang
 
-
-volumes:
-- name: repo
-  host:
-    path: /media/raid5/data/packages/repos/apt/botamusique/
+trigger:
+  event:
+    - cron
+  cron:
+    - auto-fetch-lang
