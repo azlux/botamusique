@@ -141,6 +141,7 @@ steps:
         if ! git checkout bot-traduora; then
           git branch bot-traduora && git checkout bot-traduora
         fi
+        git fetch
       - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
       - git add lang/*
       - git status
