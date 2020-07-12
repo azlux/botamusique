@@ -118,6 +118,8 @@ steps:
         from_secret: TRADUORA_R_CLIENT
       TRADUORA_R_SECRET:
         from_secret: TRADUORA_R_SECRET
+      GITHUB_API:
+        from_secret: GITHUB_API
     commands:
       - apt update && apt install -y git python3-requests hub
       - git branch bot-traduora && git checkout bot-traduora
