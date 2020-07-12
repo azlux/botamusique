@@ -8,15 +8,11 @@ steps:
     commands:
       - (cd web && npm install && npm run build)
 
-    
   - name: translate-web
     image: python:3
     commands:
       - pip3 install jinja2
       - (cd templates/ && ./translate.py)
-    when:
-      event:
-        - push
 
   - name: deploy-testing
     image: debian
