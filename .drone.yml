@@ -140,8 +140,9 @@ steps:
       - |
         if ! git checkout bot-traduora; then
           git branch bot-traduora && git checkout bot-traduora
+          need_pr=true
         fi
-        git fetch
+        git pull
       - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
       - git add lang/*
       - git status
@@ -150,7 +151,9 @@ steps:
           git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
           git push origin bot-traduora
           sleep 2
-          GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"
+          if [ ! -z $need_pr ]; then
+            GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"
+          fi
         fi
 
 trigger:
