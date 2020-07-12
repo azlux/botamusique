@@ -39,30 +39,30 @@ def fetch_translation(r_client, r_secret):
         params = {'locale': lang_code,
                   'format': 'jsonnested'}
         r = requests.get(f"{base_url}/projects/{project_id}/exports", params=params, headers=headers)
-        with open(lang_code, "wb") as f:
+        with open(lang_code + ".json", "wb") as f:
             f.write(r.content)
 
 
 def push_strings(w_client, w_secret):
-    print("Pushing local en_US file into the remote host...")
+    print("Pushing local translation files into the remote host...")
     headers = get_access_header(w_client, w_secret)
 
     lang_files = os.listdir('.')
     lang_list = []
     for lang_file in lang_files:
-        match = re.search("[a-z]{2}_[A-Z]{2}", lang_file)
+        match = re.search("([a-z]{2}_[A-Z]{2})\.json", lang_file)
         if match:
-            lang_list.append(lang_file)
+            lang_list.append(match[1])
 
-    for lang_file in lang_list:
-        print(f" - Pushing {lang_file}")
+    for lang in lang_list:
+        print(f" - Pushing {lang}")
 
-        params = {'locale': lang_file,
+        params = {'locale': lang,
                   'format': 'jsonnested'}
-        files = {'file': open(lang_file, 'r')}
+        files = {'file': open(lang + ".json", 'r')}
 
         r = requests.post(f"{base_url}/projects/{project_id}/imports", params=params, headers=headers, files=files)
-        assert r.status_code == 200, f"Unable to push {lang_file} into remote host. {r.status_code}"
+        assert r.status_code == 200, f"Unable to push {lang} into remote host. {r.status_code}"
 
 
 if __name__ == "__main__":

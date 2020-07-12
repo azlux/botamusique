@@ -419,9 +419,9 @@ def get_supported_language():
     lang_files = os.listdir('lang')
     lang_list = []
     for lang_file in lang_files:
-        match = re.search("[a-z]{2}_[A-Z]{2}", lang_file)
+        match = re.search("([a-z]{2}_[A-Z]{2})\.json", lang_file)
         if match:
-            lang_list.append(lang_file)
+            lang_list.append(match[1])
 
     return lang_list
 

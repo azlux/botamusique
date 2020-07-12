@@ -8,9 +8,9 @@ lang_dict = {}
 
 def load_lang(lang):
     global lang_dict, default_lang_dict
-    with open("lang/en_US", "r") as f:
+    with open("lang/en_US.json", "r") as f:
         default_lang_dict = json.load(f)
-    with open(f"lang/{lang}", "r") as f:
+    with open(f"lang/{lang}.json", "r") as f:
         lang_dict = json.load(f)
 
 
