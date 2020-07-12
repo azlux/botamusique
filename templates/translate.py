@@ -10,7 +10,7 @@ lang_dict = {}
 
 
 def load_lang(lang):
-    with open("../lang/" + lang + ".json", "r") as f:
+    with open(f"../lang/{lang}.json", "r") as f:
         return json.load(f)
 
 
@@ -32,7 +32,7 @@ if __name__ == "__main__":
         if match is None:
             continue
 
-        print("Populating " + html_file + " with translations...")
+        print("f"Populating {html_file} with translations...")
         basename = match[1]
         with open(html_file, "r") as f:
             html = f.read()
@@ -50,9 +50,9 @@ if __name__ == "__main__":
         template = jinja2.Template(html)
 
         for lang in lang_list:
-            print(" - Populating " + lang + "...")
+            print(f" - Populating {lang}...")
             lang_dict = load_lang(lang)
 
-            with open(basename + "." + lang + ".html", "w") as f:
+            with open(f"{basename}.{lang}.html", "w") as f:
                 f.write(template.render(tr=tr))
     print("Done.")
