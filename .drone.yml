@@ -145,7 +145,8 @@ steps:
       - |
         if git commit -a -m 'Bot: Update translation'; then
           git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
-          git push --set-upstream origin new-translations && git push
+          git push origin bot-traduora
+          sleep 2
           GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"
         fi
 
