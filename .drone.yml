@@ -25,7 +25,7 @@ steps:
         from_secret: TRADUORA_W_SECRET
     commands:
       - pip3 install requests
-      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
+      - ./scripts/sync_translation.py --lang_dir lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
     when:
       branch:
         - master
@@ -36,7 +36,7 @@ steps:
     image: python:3
     commands:
       - pip3 install jinja2
-      - (cd templates/ && ./translate.py)
+      - ./scripts/translate_templates.py --lang-dir lang/ --template-dir templates/
     when:
       event:
         - push
@@ -82,14 +82,8 @@ steps:
 
   - name: deploy-stable
     image: debian
-    environment:
-      TRADUORA_W_CLIENT:
-        from_secret: TRADUORA_W_CLIENT
-      TRADUORA_W_SECRET:
-        from_secret: TRADUORA_W_SECRET
     commands:
       - apt-get -qq update && apt-get -qq install jq curl git pandoc python3-requests > /dev/null
-      - (cd lang && ./sync_translation.py --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push)
       - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
       - git fetch --tags
       - version=$(git describe --abbrev=0 --tags)
@@ -143,27 +137,26 @@ steps:
         from_secret: GITHUB_API
     commands:
       - apt update && apt install -y git python3-requests hub
-      - git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
-      - |
-        if git fetch origin bot-traduora; then
-          git branch bot-traduora FETCH_HEAD
-          CREATE_PR=false
-        else
-          git branch bot-traduora
-          CREATE_PR=true
-        fi
-      - git checkout bot-traduora
-      - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
-      - git add lang/*
-      - git status
-      - |
-        if GIT_COMMITTER_NAME='Traduora Bot' GIT_COMMITTER_EMAIL='noreply@azlux.fr' git commit -m 'Bot: Update translation' --author "Traduora Bot <noreply@azlux.fr>"; then
-          git push origin bot-traduora
-          sleep 2
-          if $CREATE_PR; then GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"; fi
-        fi
+      - SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
+    when:
+      event:
+        include:
+          - push
 
-trigger:
-  event:
-    include:
-      - push
+  - name: fetch-translation-cron
+    image: debian
+    environment:
+      TRADUORA_R_CLIENT:
+        from_secret: TRADUORA_R_CLIENT
+      TRADUORA_R_SECRET:
+        from_secret: TRADUORA_R_SECRET
+      GITHUB_API:
+        from_secret: GITHUB_API
+    commands:
+      - apt update && apt install -y git python3-requests hub
+      - SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
+    when:
+      event:
+        - cron
+      cron:
+        - auto-fetch-lang
