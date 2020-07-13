@@ -2,11 +2,19 @@ kind: pipeline
 type: docker
 name: deployement
 
+volumes:
+  - name: repo
+    host:
+      path: /media/raid5/data/packages/repos/apt/botamusique/
+
 steps:
   - name: build-web
     image: node
     commands:
       - (cd web && npm install && npm run build)
+    when:
+      event:
+        - push
 
   - name: push-translation
     image: python:3
@@ -29,6 +37,9 @@ steps:
     commands:
       - pip3 install jinja2
       - (cd templates/ && ./translate.py)
+    when:
+      event:
+        - push
 
   - name: deploy-testing
     image: debian
@@ -111,11 +122,6 @@ steps:
       event:
         - tag
 
-volumes:
-  - name: repo
-    host:
-      path: /media/raid5/data/packages/repos/apt/botamusique/
-      
 trigger:
   event:
     exclude:
@@ -124,7 +130,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: cron
+name: translation
 steps:
   - name: fetch-translation
     image: debian
@@ -141,23 +147,23 @@ steps:
       - |
         if git fetch origin bot-traduora; then
           git branch bot-traduora FETCH_HEAD
+          CREATE_PR=false
         else
           git branch bot-traduora
+          CREATE_PR=true
         fi
       - git checkout bot-traduora
       - (cd lang/ && ./sync_translation.py --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch)
       - git add lang/*
       - git status
       - |
-        if (GIT_COMMITTER_NAME='Traduora Bot' GIT_COMMITTER_EMAIL='noreply@azlux.fr' git commit -m 'Bot: Update translation' --author "Traduora Bot <noreply@azlux.fr>"); then
-          git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
+        if GIT_COMMITTER_NAME='Traduora Bot' GIT_COMMITTER_EMAIL='noreply@azlux.fr' git commit -m 'Bot: Update translation' --author "Traduora Bot <noreply@azlux.fr>"; then
           git push origin bot-traduora
           sleep 2
-          GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"
+          if $CREATE_PR; then GITHUB_USER="azlux" GITHUB_TOKEN="$GITHUB_API"  hub pull-request -m "Bot: TRADUORA Update"; fi
         fi
 
 trigger:
   event:
-    - cron
-  cron:
-    - auto-fetch-lang
+    include:
+      - push
