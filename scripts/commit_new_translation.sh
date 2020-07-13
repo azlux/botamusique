@@ -10,7 +10,7 @@ else
   CREATE_PR=true
 fi
 git checkout bot-traduora
-$SOURCE_DIR/scripts/sync_translation.py --lang_dir $SOURCE_DIR/lang/ --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch
+$SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch
 git add lang/*
 git status
 

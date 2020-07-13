@@ -25,7 +25,7 @@ steps:
         from_secret: TRADUORA_W_SECRET
     commands:
       - pip3 install requests
-      - ./scripts/sync_translation.py --lang_dir lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
+      - ./scripts/sync_translation.py --lang-dir lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
     when:
       branch:
         - master
