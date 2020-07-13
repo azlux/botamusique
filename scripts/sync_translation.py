@@ -8,6 +8,8 @@ import requests
 base_url = "https://translate.azlux.fr/api/v1"
 project_id = "4aafb197-3282-47b3-a197-0ca870cf6ab2"
 
+lang_dir = ""
+
 
 def get_access_header(client, secret):
     data = {"grant_type": "client_credentials",
@@ -39,7 +41,7 @@ def fetch_translation(r_client, r_secret):
         params = {'locale': lang_code,
                   'format': 'jsonnested'}
         r = requests.get(f"{base_url}/projects/{project_id}/exports", params=params, headers=headers)
-        with open(lang_code + ".json", "wb") as f:
+        with open(os.path.join(lang_dir, f"{lang_code}.json"), "wb") as f:
             f.write(r.content)
 
 
@@ -47,7 +49,7 @@ def push_strings(w_client, w_secret):
     print("Pushing local translation files into the remote host...")
     headers = get_access_header(w_client, w_secret)
 
-    lang_files = os.listdir('.')
+    lang_files = os.listdir(lang_dir)
     lang_list = []
     for lang_file in lang_files:
         match = re.search("([a-z]{2}_[A-Z]{2})\.json", lang_file)
@@ -59,7 +61,7 @@ def push_strings(w_client, w_secret):
 
         params = {'locale': lang,
                   'format': 'jsonnested'}
-        files = {'file': open(lang + ".json", 'r')}
+        files = {'file': open(os.path.join(lang_dir, f"{lang}.json"), 'r')}
 
         r = requests.post(f"{base_url}/projects/{project_id}/imports", params=params, headers=headers, files=files)
         assert r.status_code == 200, f"Unable to push {lang} into remote host. {r.status_code}"
@@ -69,6 +71,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Sync translation files with azlux's traduora server.")
 
+    parser.add_argument("--lang-dir", dest="lang_dir",
+                        type=str, help="Directory of the lang files.")
     parser.add_argument("--client", dest="client",
                         type=str, help="Client ID used to access the server.")
     parser.add_argument("--secret", dest="secret",
@@ -80,6 +84,8 @@ if __name__ == "__main__":
                         help='Push local translation files into the server.')
 
     args = parser.parse_args()
+
+    lang_dir = args.lang_dir
 
     if not args.client or not args.secret:
         print("Client ID and secret need to be provided!")
