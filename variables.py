@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import database
 
 bot: 'mumbleBot.MumbleBot' = None
-playlist: Type['media.playlist.BasePlaylist']  = None
+playlist: 'media.playlist.BasePlaylist' = None
 cache: 'media.cache.MusicCache' = None
 
 user = ""
