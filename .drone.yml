@@ -31,6 +31,9 @@ steps:
         - master
       event:
         - push
+      instance:
+        exclude:
+          - drone_runner_outside
 
   - name: translate-html
     image: python:3
@@ -40,6 +43,9 @@ steps:
     when:
       event:
         - push
+      instance:
+        exclude:
+          - drone_runner_outside
 
   - name: deploy-testing
     image: debian
@@ -63,6 +69,9 @@ steps:
         - master
       event:
         - push
+      instance:
+        exclude:
+          - drone_runner_outside
   
   - name: docker-testing
     image: plugins/docker
@@ -78,6 +87,9 @@ steps:
         - master
       event:
         - push
+      instance:
+        exclude:
+          - drone_runner_outside
 
 
   - name: deploy-stable
@@ -102,6 +114,9 @@ steps:
     when:
       event:
         - tag
+      instance:
+        exclude:
+          - drone_runner_outside
 
   - name: docker-stable
     image: plugins/docker
@@ -115,6 +130,9 @@ steps:
     when:
       event:
         - tag
+      instance:
+        exclude:
+          - drone_runner_outside
 
 trigger:
   event:
@@ -142,6 +160,8 @@ steps:
       event:
         include:
           - push
+      instance:
+          - drone_runner_outside
 
   - name: fetch-translation-cron
     image: debian
@@ -160,3 +180,5 @@ steps:
         - cron
       cron:
         - auto-fetch-lang
+      instance:
+          - drone_runner_outside
