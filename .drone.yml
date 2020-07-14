@@ -32,8 +32,7 @@ steps:
       event:
         - push
       instance:
-        exclude:
-          - drone_runner_outside
+        - drone_runner_outside
 
   - name: translate-html
     image: python:3
