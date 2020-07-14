@@ -232,7 +232,12 @@ def index():
 @requires_auth
 def playlist():
     if len(var.playlist) == 0:
-        return ('', 204)
+        return jsonify({
+            'items': [],
+            'current_index': -1,
+            'length': 0,
+            'start_from': 0
+        })
 
     DEFAULT_DISPLAY_COUNT = 11
     _from = 0
@@ -581,7 +586,11 @@ def library():
                 pass
 
             if not total_count:
-                return '', 204
+                return jsonify({
+                    'items': [],
+                    'total_pages': 0,
+                    'active_page': 0
+                })
 
             if request.form['action'] == 'add':
                 items = dicts_to_items(var.music_db.query_music(condition))

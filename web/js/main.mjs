@@ -164,11 +164,16 @@ function displayPlaylist(data) {
     playlist_loading.hide();
     $('.playlist-item').remove();
     const items = data.items;
+    const length = data.length;
+    if (items.length === 0){
+      playlist_empty.removeClass('d-none');
+      playlist_table.animate({ opacity: 1 }, 200);
+      return;
+    }
     playlist_items = {};
     for (const i in items) {
       playlist_items[items[i].index] = items[i];
     }
-    const length = data.length;
     const start_from = data.start_from;
     playlist_range_from = start_from;
     playlist_range_to = start_from + items.length - 1;
@@ -200,9 +205,7 @@ function displayPlaylist(data) {
     displayActiveItem(data.current_index);
     updatePlayerInfo(playlist_items[data.current_index]);
     bindPlaylistEvent();
-    playlist_table.animate({
-      opacity: 1,
-    }, 200);
+    playlist_table.animate({ opacity: 1 }, 200);
   });
 }
 
@@ -251,11 +254,6 @@ function updatePlaylist() {
       data: data,
       statusCode: {
         200: displayPlaylist,
-        204: function () {
-          playlist_loading.hide();
-          playlist_empty.removeClass('d-none');
-          $('.playlist-item').remove();
-        },
       },
     });
     playlist_table.animate({
@@ -642,11 +640,6 @@ function updateResults(dest_page = 1) {
       data: data,
       statusCode: {
         200: processResults,
-        204: function () {
-          lib_loading.hide();
-          lib_empty.show();
-          page_ul.empty();
-        },
         403: function () {
           location.reload(true);
         },
@@ -738,6 +731,13 @@ function processResults(data) {
     const total_pages = data.total_pages;
     const active_page = data.active_page;
     const items = data.items;
+    if (items.length === 0) {
+      lib_loading.hide();
+      lib_empty.show();
+      page_ul.empty();
+      lib_group.animate({ opacity: 1 }, 200);
+      return;
+    }
     items.forEach(
       function (item) {
         addResultItem(item);
@@ -797,10 +797,7 @@ function processResults(data) {
       page_no_copy.appendTo(page_li_copy);
       page_li_copy.appendTo(page_ul);
     }
-
-    lib_group.animate({
-      opacity: 1,
-    }, 200);
+    lib_group.animate({ opacity: 1 }, 200);
   });
 }
 
@@ -1166,6 +1163,7 @@ function playerSetIdle() {
 function updatePlayerInfo(item) {
   if (!item) {
     playerSetIdle();
+    return;
   }
   playerArtwork.style.display = 'block';
   playerArtworkIdle.style.display = 'none';
