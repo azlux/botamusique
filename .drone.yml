@@ -16,24 +16,6 @@ steps:
       event:
         - push
 
-  - name: push-translation
-    image: python:3
-    environment:
-      TRADUORA_W_CLIENT:
-        from_secret: TRADUORA_W_CLIENT
-      TRADUORA_W_SECRET:
-        from_secret: TRADUORA_W_SECRET
-    commands:
-      - pip3 install requests
-      - ./scripts/sync_translation.py --lang-dir lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
-    when:
-      branch:
-        - master
-      event:
-        - push
-      instance:
-        - drone_runner_outside
-
   - name: translate-html
     image: python:3
     commands:
@@ -157,27 +139,16 @@ steps:
       - SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
     when:
       event:
-        include:
-          - push
-      instance:
-          - drone_runner_outside
-
-  - name: fetch-translation-cron
-    image: debian
-    environment:
-      TRADUORA_R_CLIENT:
-        from_secret: TRADUORA_R_CLIENT
-      TRADUORA_R_SECRET:
-        from_secret: TRADUORA_R_SECRET
-      GITHUB_API:
-        from_secret: GITHUB_API
-    commands:
-      - apt update && apt install -y git python3-requests hub
-      - SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
-    when:
-      event:
         - cron
       cron:
         - auto-fetch-lang
       instance:
           - drone_runner_outside
+          
+trigger:
+  event:
+    include:
+      - cron
+      - push
+  cron:
+    - auto-fetch-lang
