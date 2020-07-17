@@ -138,10 +138,6 @@ steps:
       - apt update && apt install -y git python3-requests hub
       - SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
     when:
-      event:
-        - cron
-      cron:
-        - auto-fetch-lang
       instance:
           - drone_runner_outside
           
