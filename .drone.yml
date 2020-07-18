@@ -124,6 +124,7 @@ trigger:
 kind: pipeline
 type: docker
 name: translation
+
 steps:
   - name: fetch-translation
     image: debian
@@ -140,8 +141,7 @@ steps:
     when:
       instance:
           - drone_runner_outside
-          
+
 trigger:
   event:
-    include:
-      - cron
+    - cron
