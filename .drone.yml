@@ -145,3 +145,5 @@ steps:
 trigger:
   event:
     - cron
+  cron:
+    -auto-fetch-lang
