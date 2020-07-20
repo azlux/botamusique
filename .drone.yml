@@ -24,9 +24,6 @@ steps:
     when:
       event:
         - push
-      instance:
-        exclude:
-          - drone_runner_outside
 
   - name: deploy-testing
     image: debian
@@ -50,9 +47,6 @@ steps:
         - master
       event:
         - push
-      instance:
-        exclude:
-          - drone_runner_outside
   
   - name: docker-testing
     image: plugins/docker
@@ -68,10 +62,6 @@ steps:
         - master
       event:
         - push
-      instance:
-        exclude:
-          - drone_runner_outside
-
 
   - name: deploy-stable
     image: debian
@@ -95,9 +85,6 @@ steps:
     when:
       event:
         - tag
-      instance:
-        exclude:
-          - drone_runner_outside
 
   - name: docker-stable
     image: plugins/docker
@@ -111,9 +98,9 @@ steps:
     when:
       event:
         - tag
-      instance:
-        exclude:
-          - drone_runner_outside
+
+node:
+  location: local
 
 trigger:
   event:
@@ -124,7 +111,7 @@ trigger:
 kind: pipeline
 type: docker
 name: translation
-
+    
 steps:
   - name: fetch-translation
     image: debian
@@ -138,10 +125,10 @@ steps:
     commands:
       - apt update && apt install -y git python3-requests hub
       - SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
-    when:
-      instance:
-          - drone_runner_outside
 
+node:
+  location: external
+    
 trigger:
   event:
     - cron
