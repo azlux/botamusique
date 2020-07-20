@@ -146,4 +146,4 @@ trigger:
   event:
     - cron
   cron:
-    -auto-fetch-lang
+    - auto-fetch-lang
