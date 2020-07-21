@@ -503,6 +503,8 @@ const tag_edit_element = $('.library-item-edit');
 // var notag_element = $(".library-item-notag");
 // var tag_element = $(".library-item-tag");
 
+let library_tags = [];
+
 function updateLibraryControls(){
   $.ajax({
     type: 'GET',
@@ -539,27 +541,42 @@ function displayLibraryControls(data){
   }
 
   // ----- Tag filters -----
-  $(".filter-tag").remove();
-  if (data.tags.length > 0) {
-    data.tags.forEach(function (tag) {
-      const tag_copy = lib_filter_tag_element.clone();
-      tag_copy.html(tag);
-      tag_copy.addClass('badge-' + getColor(tag));
-      tag_copy.appendTo(lib_filter_tag_group);
-    });
-  }
-  // Bind Event
-  $('.filter-tag').click(function (e) {
-    const tag = $(e.currentTarget);
-    if (!tag.hasClass('tag-clicked')) {
-      tag.addClass('tag-clicked');
-      tag.removeClass('tag-unclicked');
-    } else {
-      tag.addClass('tag-unclicked');
-      tag.removeClass('tag-clicked');
-    }
-    updateResults();
+  let tags = [];
+  let tags_dict = {};
+  $(".filter-tag").each(function(i, tag_element){
+    tags_dict[tag_element.innerHTML] = tag_element;
+    tags.push(tag_element.innerHTML);
   });
+  if (data.tags.length > 0) {
+    for (const tag of data.tags){
+      if (tags.includes(tag)){
+        let index = tags.indexOf(tag);
+        tags.splice(index, 1);
+      } else {
+        const tag_copy = lib_filter_tag_element.clone();
+        tag_copy.html(tag);
+        tag_copy.addClass('badge-' + getColor(tag));
+        tag_copy.appendTo(lib_filter_tag_group);
+        // Bind Event
+        tag_copy.click(function (e) {
+          const tag = $(e.currentTarget);
+          if (!tag.hasClass('tag-clicked')) {
+            tag.addClass('tag-clicked');
+            tag.removeClass('tag-unclicked');
+          } else {
+            tag.addClass('tag-unclicked');
+            tag.removeClass('tag-clicked');
+          }
+          updateResults();
+        });
+      }
+    }
+    for (const tag of tags) {
+      tags_dict[tag].remove();
+    }
+  } else {
+    $(".filter-tag").remove();
+  }
 }
 
 function addResultItem(item) {
@@ -865,8 +882,8 @@ document.getElementById('addTagModalSubmit').addEventListener('click', () => {
       id: add_tag_modal_item_id.val(),
       tags: tags.join(','),
     },
+    complete: function () { updateResults(active_page); },
   });
-  updateResults(active_page);
 });
 
 // ---------------------
