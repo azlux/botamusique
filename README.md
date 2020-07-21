@@ -92,7 +92,7 @@ python3 -m venv venv
 venv/bin/pip install wheel
 venv/bin/pip install -r requirements.txt
 (cd web && npm install && npm run build)
-(cd templates/ && ./translate.py)
+./scripts/translate_templates.py --lang-dir lang/ --template-dir templates/
 ```
 </details>
 
