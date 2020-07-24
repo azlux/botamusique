@@ -338,10 +338,11 @@ def youtube_search(query):
     try:
         results = None
         r = requests.get("https://www.youtube.com/results", params={'search_query': query}, timeout=5)
-        results = re.findall(r"(watch\?v=(?P<videoid>[^\"\r\n]*)\".*?title=\"(?P<title>[^\r\n\"]*)\".*?(?:user|channel)[^>]*"
-                             r">(?P<uploader>[^<\"\n\r]*)<)|(\"videoId\":\"(?P<videoid2>[^\"]*)\").*?\"title\":{\"runs\":\[{"
-                             r"\"text\":\"(?P<title2>[^\"]*)\".*?\"ownerText\":{\"runs\":\[{\"text\":\"(?P<uploader2>[^\"]*)"
-                             r"\"", r.text)  # (catch1, id1, title1, uploader1, catch2, id2, title2, uploader2,)
+        results = re.findall(
+            r"(watch\?v=(?P<videoid>[^\"\r\n]*)\".*?title=\"(?P<title>[^\r\n\"]*)\".*?(?:user|channel)[^>]*"
+            r">(?P<uploader>[^<\"\n\r]*)<)|(\"videoId\":\"(?P<videoid2>[^\"]*)\").*?\"title\":{\"runs\":\[{"
+            r"\"text\":\"(?P<title2>[^\"]*)\".*?\"ownerText\":{\"runs\":\[{\"text\":\"(?P<uploader2>[^\"]*)"
+            r"\"", r.text)  # (catch1, id1, title1, uploader1, catch2, id2, title2, uploader2,)
 
         if len(results) > 0:
             finalResults = None
@@ -424,6 +425,19 @@ def get_supported_language():
             lang_list.append(match[1])
 
     return lang_list
+
+
+def set_logging_formatter(handler: logging.Handler, logging_level):
+    if logging_level == logging.DEBUG:
+        formatter = logging.Formatter(
+            "[%(asctime)s] > [%(threadName)s] > "
+            "[%(filename)s:%(lineno)d] %(message)s"
+        )
+    else:
+        formatter = logging.Formatter(
+            '[%(asctime)s %(levelname)s] %(message)s', "%b %d %H:%M:%S")
+
+    handler.setFormatter(formatter)
 
 
 class LoggerIOWrapper(io.TextIOWrapper):

@@ -769,7 +769,6 @@ if __name__ == '__main__':
     # ======================
 
     bot_logger = logging.getLogger("bot")
-    formatter = logging.Formatter('[%(asctime)s %(levelname)s %(threadName)s] %(message)s', "%b %d %H:%M:%S")
     bot_logger.setLevel(logging.INFO)
 
     if args.verbose:
@@ -789,7 +788,7 @@ if __name__ == '__main__':
     else:
         handler = logging.StreamHandler()
 
-    handler.setFormatter(formatter)
+    util.set_logging_formatter(handler, bot_logger.level)
     bot_logger.addHandler(handler)
     logging.getLogger("root").addHandler(handler)
     var.bot_logger = bot_logger
