@@ -456,15 +456,14 @@ class MumbleBot:
 
     # Main loop of the Bot
     def loop(self):
-        raw_music = ""
         while not self.exit and self.mumble.is_alive():
 
-            while self.is_ffmpeg_running() and self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
+            while self.thread and self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 # If the buffer isn't empty, I cannot send new music part, so I wait
                 self._loop_status = f'Wait for buffer {self.mumble.sound_output.get_buffer_size():.3f}'
                 time.sleep(0.01)
 
-            if self.is_ffmpeg_running():
+            if self.thread:
                 # I get raw from ffmpeg thread
                 # move playhead forward
                 self._loop_status = 'Reading raw'
@@ -487,16 +486,17 @@ class MumbleBot:
                     # Adjust the volume and send it to mumble
                     self.volume_cycle()
 
-                    if not self.on_interrupting and self.read_pcm_size > 0:
+                    if not self.on_interrupting and len(raw_music) == self.pcm_buffer_size:
                         self.mumble.sound_output.add_sound(
                             audioop.mul(raw_music, 2, self.volume_helper.real_volume))
                     elif self.read_pcm_size == 0:
                         self.mumble.sound_output.add_sound(
                             audioop.mul(self._fadeout(raw_music, self.stereo, fadein=True), 2, self.volume_helper.real_volume))
-                    else:
+                    elif self.on_interrupting or len(raw_music) < self.pcm_buffer_size:
                         self.mumble.sound_output.add_sound(
                             audioop.mul(self._fadeout(raw_music, self.stereo, fadein=False), 2, self.volume_helper.real_volume))
                         self.thread.kill()
+                        self.thread = None
                         time.sleep(0.1)
                         self.on_interrupting = False
                 else:
@@ -504,7 +504,7 @@ class MumbleBot:
             else:
                 time.sleep(0.1)
 
-            if not self.is_pause and not self.is_ffmpeg_running():
+            if not self.is_pause and self.thread is None:
                 # bot is not paused, but ffmpeg thread has gone.
                 # indicate that last song has finished, or the bot just resumed from pause, or something is wrong.
                 if self.read_pcm_size < self.pcm_buffer_size and len(var.playlist) > 0 \
@@ -628,9 +628,6 @@ class MumbleBot:
     #      Play Control
     # =======================
 
-    def is_ffmpeg_running(self):
-        return self.thread and self.thread.poll() is None
-
     def play(self, index=-1, start_at=0):
         if not self.is_pause:
             self.interrupt()
@@ -661,9 +658,10 @@ class MumbleBot:
 
     def interrupt(self):
         # Kill the ffmpeg thread
-        if self.is_ffmpeg_running():
+        if self.thread:
             self.on_interrupting = True
 
+            time.sleep(0.1)
             self.song_start_at = -1
             self.read_pcm_size = 0
 
