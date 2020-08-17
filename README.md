@@ -132,7 +132,21 @@ You can access the web interface through http://127.0.0.1:8181 if you keep it un
 
 Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would like to connect from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to the bot.
 
-4. Generate a certificate (Optional, but recommended)
+4. The default language is English, but you can change it in `[bot]` section:
+```
+[bot]
+language=en_US
+```
+
+Available translations can be found inside `lang/` folder. Currently, options are
+
+ - `en_US`, English
+ - `es_ES`, Spanish
+ - `fr_FR`, French
+ - `ja_JP`, Japanese
+ - `zh_CN`, Chinese
+
+5. Generate a certificate (Optional, but recommended)
 
 By default, murmur server uses certificates to identify users. Without a valid certificate, you wouldn't able to register the bot into your Murmur server. Some server even refused users without a certificate. Therefore, it is recommended to generate a certificate for the bot. If you have a certificate (for say, `botmusique.pem` in the folder of the bot), you can specify its location in
 ```
@@ -211,13 +225,19 @@ python3-dev musl-lib libmagic jpeg-dev zlib-dev gcc
 ```
 For more information, see [#122](https://github.com/azlux/botamusique/issues/122).
 
+## _I need help!_
+
+If you ran into some problems in using the bot, or discovered bugs and want to talk to us, you may
+
+ - Start a new issue,
+ - Ask in #mumble at freenode.net (we are usually there to help)
 
 ## Contributors
-If you want to participate, You're welcome to fork and submit pull requests (fixes and new features).
-For translating, If you want to add a new language, you can requests an access by email or IRC.
-For small translate changes, you can modify the json into `lang/`folder and use a PR.
+If you want to help us develop, you're welcome to fork and submit pull requests (fixes and new features).
+We are looking for people helping us translating the bot. If you'd like to add a new language or fix errors in existed translations,
+feel free to catch us in the IRC channel #mumble, or just email us!
 
-The following people joined the collaborators for a faster development, big thanks to them:
+The following people joined as collaborators for a faster development, big thanks to them:
 - @TerryGeng
 - @mertkutay
 
