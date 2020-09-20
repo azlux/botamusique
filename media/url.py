@@ -45,7 +45,7 @@ class URLItem(BaseItem):
             self.title = ""
             self.duration = 0
             self.id = hashlib.md5(url.encode()).hexdigest()
-            self.path = var.tmp_folder + self.id + ".mp3"
+            self.path = var.tmp_folder + self.id
             self.thumbnail = ""
             self.keywords = ""
         else:
@@ -145,8 +145,7 @@ class URLItem(BaseItem):
 
         self.downloading = True
         base_path = var.tmp_folder + self.id
-        save_path = base_path + ".%(ext)s"
-        mp3_path = base_path + ".mp3"
+        save_path = base_path
 
         # Download only if music is not existed
         self.ready = "preparing"
@@ -154,15 +153,10 @@ class URLItem(BaseItem):
         self.log.info("bot: downloading url (%s) %s " % (self.title, self.url))
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': save_path,
+            'outtmpl': base_path,
             'noplaylist': True,
             'writethumbnail': True,
-            'updatetime': False,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192'},
-                {'key': 'FFmpegMetadata'}]
+            'updatetime': False
         }
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -180,7 +174,7 @@ class URLItem(BaseItem):
                     self.log.error("bot: download failed with error:\n %s" % error)
 
             if download_succeed:
-                self.path = mp3_path
+                self.path = save_path
                 self.ready = "yes"
                 self.log.info(
                     "bot: finished downloading url (%s) %s, saved to %s." % (self.title, self.url, self.path))
