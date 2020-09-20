@@ -647,13 +647,16 @@ class MumbleBot:
         # Kill the ffmpeg thread and empty the playlist
         self.interrupt()
         var.playlist.clear()
+        self.wait_for_ready = False
         self.log.info("bot: music stopped. playlist trashed.")
 
     def stop(self):
         self.interrupt()
         self.is_pause = True
-        var.playlist.next()
-        self.wait_for_ready = True
+        if len(var.playlist) > 0:
+            self.wait_for_ready = True
+        else:
+            self.wait_for_ready = False
         self.log.info("bot: music stopped.")
 
     def interrupt(self):
