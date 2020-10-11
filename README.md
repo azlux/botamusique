@@ -97,7 +97,9 @@ venv/bin/pip install -r requirements.txt
 </details>
 
 ## Configuration
-Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
+Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. You don't need all sections, you can copy only wanted parts. For example, if you only need `host` you also need the section entry `[server]` into your file... and that all, it's enought.
+
+Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
 
 We list some basic settings for you to quickly get things working.
 
@@ -143,6 +145,7 @@ Available translations can be found inside `lang/` folder. Currently, options ar
  - `en_US`, English
  - `es_ES`, Spanish
  - `fr_FR`, French
+ - `it_IT`, Italien
  - `ja_JP`, Japanese
  - `zh_CN`, Chinese
 
