@@ -68,9 +68,9 @@ venv/bin/pip install -r requirements.txt
 <details>
   <summary>Click to expand!</summary>
 
-This is the testing stable version, with auto-update support. This version follow all commits into the master branch.
+This is the testing version, with auto-update support. This version follow all commits into the master branch.
 ```
-curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources-stable.tar.gz
+curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources-testing.tar.gz
 tar -xzf botamusique.tar.gz
 cd botamusique
 python3 -m venv venv
@@ -145,7 +145,7 @@ Available translations can be found inside `lang/` folder. Currently, options ar
  - `en_US`, English
  - `es_ES`, Spanish
  - `fr_FR`, French
- - `it_IT`, Italien
+ - `it_IT`, Italian
  - `ja_JP`, Japanese
  - `zh_CN`, Chinese
 
