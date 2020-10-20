@@ -2,7 +2,7 @@
     "cli": {
         "added_tags": "Tag <i>{tags}</i> aggiunti a <b>{song}</b>.",
         "added_tags_to_all": "I tag <i>{tags}</i> sono stati aggiunti ai brani nella playlist.",
-        "admin_help": "<h3>Comandi amministratore</h3>\n<b>Bot</b>\n<ul>\n<li><b>!<u>k</u>ill </b> - Termina il bot.</li>\n<li><b>!update </b> - Aggiorna il bot.</li>\n<li><b>!userban </b> {user}  - Banna utente.</li>\n<li><b>!userunban </b> {user}  - Sbanna utente.</li>\n<li><b>!urlbanlist </b>  - Elenco URL vietati.</li>\n<li><b>!urlban </b> [{url}]  - Banna {url} (o URL dell'elemento corrente come impostazione predefinita) e rimuovi questo URL dalla libreria.</li>\n<li><b>!urlunban </b> {url}  - Sbanna {url}.</li>\n<li><b>!rescan </b> {url}  - Ricostruisce la cache dei file musicali locali.</li>\n<li><b>!dropdatabase</b> - Cancella l'intero database, perderai tutte le impostazioni e la libreria musicale.</li>\n</ul>\n<b>Interfaccia Web</b>\n<ul>\n<li><b>!<u>webuserlist</u></b> - Elenca tutti gli utenti che hanno il permesso di accedere all'interfaccia web, se la modalità di autenticazione è 'password'.</li>\n<li><b>!<u>webuseradd</u> {nick name}</b> - Concedi all'utente con {nick name} l'accesso all'interfaccia web, se la modalità di autenticazione è 'password'.</li>\n<li><b>!<u>webuserdel</u> {nick name}</b> - Revoca l'accesso all'interfaccia web di {nickname}, se la modalità di autenticazione è 'password'.</li>\n</ul>\"",
+        "admin_help": "<h3>Comandi amministratore</h3>\n<b>Bot</b>\n<ul>\n<li><b>!<u>k</u>ill </b> - Termina il bot.</li>\n<li><b>!update </b> - Aggiorna il bot.</li>\n<li><b>!userban </b> {user}  - Banna utente.</li>\n<li><b>!userunban </b> {user}  - Sbanna utente.</li>\n<li><b>!urlbanlist </b>  - Elenco URL vietati.</li>\n<li><b>!urlban </b> [{url}]  - Banna {url} (o URL dell'elemento corrente come impostazione predefinita) e rimuovi questo URL dalla libreria.</li>\n<li><b>!urlunban </b> {url}  - Sbanna {url}.</li>\n<li><b>!rescan </b> {url}  - Ricostruisce la cache dei file musicali locali.</li>\n<li><b>!dropdatabase</b> - Cancella l'intero database, perderai tutte le impostazioni e la libreria musicale.</li>\n</ul>\n<b>Interfaccia Web</b>\n<ul>\n<li><b>!<u>webuserlist</u></b> - Elenca tutti gli utenti che hanno il permesso di accedere all'interfaccia web, se la modalità di autenticazione è 'password'.</li>\n<li><b>!<u>webuseradd</u> {nick name}</b> - Concedi all'utente con {nick name} l'accesso all'interfaccia web, se la modalità di autenticazione è 'password'.</li>\n<li><b>!<u>webuserdel</u> {nick name}</b> - Revoca l'accesso all'interfaccia web di {nick name}, se la modalità di autenticazione è 'password'.</li>\n</ul>\"",
         "auto_paused": "Usa <i>!play</i> per riprendere la musica!",
         "bad_command": "<i>{command}</i>: comando non trovato.",
         "bad_parameter": "<i>{command}</i>: parametro non valido.",
@@ -39,7 +39,7 @@
         "not_admin": "Non sei un amministratore!",
         "not_in_my_channel": "Non sei nel mio canale!",
         "not_playing": "Niente in riproduzione in questo momento.",
-        "now_playing": "{Item} in riproduzione",
+        "now_playing": "{item} in riproduzione",
         "page_instruction": "Pagina {corrente}/{totale}. Usa <i>!{command} {{page}}</i> per navigare.",
         "paused": "Musica in pausa.",
         "playlist_fetching_failed": "Impossibile recuperare la playlist!",
