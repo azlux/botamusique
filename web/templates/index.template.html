@@ -201,6 +201,7 @@
             </div>
             <div class="card-body">
                 <div id="library-group" class="list-group library-group" style="overflow: auto;">
+                    <input type="hidden" id="deleteAllowed" value="true" />
                     <div id="library-item-loading" class="list-group-item library-item">
                         <img style="margin: auto; width: 35px;" src="static/image/loading.svg"
                                                                 alt="{{ tr('aria_spinner') }}" />
@@ -267,7 +268,7 @@
                                                                                                    aria-label="{{ tr('download_song_from_library') }}">
                                 <i class="fas fa-download" aria-hidden="true"></i>
                             </button>
-                            <button class="library-item-trash btn btn-danger btn-sm btn-space" type="button"
+                            <button class="library-item-trash btn btn-danger btn-sm btn-space library-delete" type="button"
                                                                                                aria-label="{{ tr('remove_song_from_library') }}">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
@@ -296,7 +297,7 @@
                     <button id="library-download-btn" type="button" class="btn btn-secondary mr-1">
                         <i class="fas fa-download" aria-hidden="true"></i>{{ tr('download_all') }}
                     </button>
-                    <button type="button" class="btn btn-danger mr-1" data-toggle="modal"
+                    <button type="button" class="btn btn-danger mr-1 library-delete" data-toggle="modal"
                         data-target="#deleteWarningModal">
                         <i class="fas fa-trash-alt" aria-hidden="true"></i>{{ tr('delete_all') }}
                     </button>
