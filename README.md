@@ -40,7 +40,7 @@ Predicted functionalities will be those people would expect from any classic mus
 ## Installation
 
 ### Dependencies
-1. Install python3.
+1. Install python. We require a python version of 3.6 or higher.
 1. Install [Opus Codec](https://www.opus-codec.org/) (which should be already installed if you installed Mumble or Murmur, or you may try to install `opus-tools` with your package manager).
 1. Install ffmpeg. If ffmpeg isn't in your package manager, you may need to find another source. I personally use [this repository](http://repozytorium.mati75.eu/) on my raspberry.
 
