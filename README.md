@@ -11,7 +11,7 @@ Predicted functionalities will be those people would expect from any classic mus
 ## Features
 
 1. **Support multiple music sources:**
-    - Music in local folders (which can be uploaded through the web interface).
+    - Music files in local folders (which can be uploaded through the web interface).
     - Youtube/Soundcloud URLs and playlists (everything supported by youtube-dl).
     - Radio stations from URL and http://www.radio-browser.info API.
 2. **Modern and powerful web remote control interface.** Powered by Flask. Which supports:
@@ -19,6 +19,8 @@ Predicted functionalities will be those people would expect from any classic mus
     - Music library management, including uploading, browsing all files and edit tags, etc.
 3. **Powerful command system.** Commands and words the bot says are fully customizable. Support partial-match for commands.
 4. **Ducking.** The bot would automatically lower its volume if people are talking.
+5. **Stereo sound.** After Mumble 1.4.0, stereo output support has been added. Our bot is designed to work nicely with it naturally.
+6. **Multilingual support.** A list of supported languages can be found below.
 
 
 ## Screenshots
@@ -48,13 +50,13 @@ Predicted functionalities will be those people would expect from any classic mus
 ### Docker
 See https://github.com/azlux/botamusique/wiki/Docker-install
 
-Both stable and testing are available !
+Both stable and nightly (developing) build are available!
 
 ### Manual install
 
 **Stable release (recommended)**
 
-This is the tested stable version, with auto-update support. To install the stable release, run these lines:
+This is current stable version, with auto-update support. To install the stable release, run these lines in your terminal:
 ```
 curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources-stable.tar.gz
 tar -xzf botamusique.tar.gz
@@ -64,11 +66,11 @@ venv/bin/pip install wheel
 venv/bin/pip install -r requirements.txt
 ```
 
-**Testing release**
+**Nightly build (developing version)**
 <details>
   <summary>Click to expand!</summary>
 
-This is the testing version, with auto-update support. This version follow all commits into the master branch.
+This build reflects any newest change in the master branch, with auto-update support baked in. This version follow all commits into the master branch.
 ```
 curl -Lo botamusique.tar.gz http://packages.azlux.fr/botamusique/sources-testing.tar.gz
 tar -xzf botamusique.tar.gz
@@ -79,12 +81,14 @@ venv/bin/pip install -r requirements.txt
 ```
 </details>
 
-**Git version (from the master branch of this repo)**
+**Build from source code**
 <details>
   <summary>Click to expand!</summary>
 
-We will test new features in this branch, maybe sometimes post some hotfixes. Please be noted that this version has no auto-update support. If you want to install this version, you need to have Git installed.
-We recommend you to install the stable version above, except you'd like to try out our half-baked features and put up with bugs amid them.
+You can checkout the master branch of our repo and compile everything by yourself.
+We will test new features in the master branch, maybe sometimes post some hotfixes.
+Please be noted that the builtin auto-update support doesn't track this version.
+If you have no idea what these descriptions mean to you, we recommend you install the stable version above.
 ```
 git clone https://github.com/azlux/botamusique.git
 cd botamusique
@@ -97,9 +101,14 @@ venv/bin/pip install -r requirements.txt
 </details>
 
 ## Configuration
-Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in the file and uncomment options you would like to modify. You don't need all sections, you can copy only wanted parts. For example, if you only need `host` you also need the section entry `[server]` into your file... and that all, it's enought.
+Please copy `configuration.example.ini` into `configuration.ini`, follow the instructions in that file and uncomment options you would like to modify. Not all sections are needed. You may just keep the options that matter to you. For example, if you only would like to set `host`, all you need you is keep 
+```
+[server]
+host=xxxxxx
+```
+in your `configuration.ini`.
 
-Please DO NOT MODIFY `configuration.default.ini`, since options undefined in `configuration.ini` will fall back into `configuration.default.ini`. This file will be constantly overridden in each update.
+Please DO NOT MODIFY `configuration.default.ini`, since if the bot realizes one option is undefined in `configuration.ini`, it will look into `configuration.default.ini` for the default value of that option. This file will be constantly overridden in each update.
 
 We list some basic settings for you to quickly get things working.
 
@@ -118,7 +127,7 @@ music_folder = music_folder/
 tmp_folder = /tmp/
 ```
 
-3. **Web interface is disabled by default** for performance and security reasons. But it is extremely powerful, so we encourage you to have a try. To enable it, set
+3. **Web interface is disabled by default** for performance and security reasons. It is extremely powerful, so we encourage you to have a try. To enable it, set
 ```
 [webinterface]
 enabled = True
@@ -132,7 +141,7 @@ listening_port = 8181
 
 You can access the web interface through http://127.0.0.1:8181 if you keep it unchanged.
 
-Note: Listening to address `127.0.0.1` will only accept requests from localhost. If you would like to connect from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control. In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to the bot.
+Note: Listening to address `127.0.0.1` will only accept requests from localhost. _If you would like to connect from the public internet, you need to set it to `0.0.0.0`, and set up username and password to impose access control._ In addition, if the bot is behind a router, you should also properly set forwarding rules in you NAT configuration to forward requests to the bot.
 
 4. The default language is English, but you can change it in `[bot]` section:
 ```
@@ -167,8 +176,7 @@ If you don't have a certificate, you may generate one by:
 - `webinterface`: basic configuration about the web interface.
 - `commands`: you can customize the command you want for each action (eg. put `help = helpme` , the bot will respond to `!helpme`)
 - `radio`: a list of default radio (eg. play a jazz radio with the command `!radio jazz`)
-- `strings`: you can customize all words the bot can say.
-- `debug`: option to activate ffmpeg or pymumble debug. (Can be very verbose)
+- `debug`: option to activate ffmpeg or pymumble debug output.
 
 
 ## Run the bot
