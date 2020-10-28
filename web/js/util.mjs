@@ -3,13 +3,13 @@ export function isOverflown(element) {
 }
 
 export function hash(string) {
-  if (typeof string != "string") return 0;
+  if (typeof string != 'string') return 0;
   let hash = 0;
   if (string.length === 0) {
     return hash;
   }
   for (let i = 0; i < string.length; i++) {
-    let char = string.charCodeAt(i);
+    const char = string.charCodeAt(i);
     hash = ((hash<<5)-hash)+char;
     hash = hash & hash; // Convert to 32bit integer
   }
@@ -17,24 +17,25 @@ export function hash(string) {
 }
 
 export function getColor(string) {
-  let num = hash(string) % 8;
-  switch(num) {
+  const num = hash(string) % 8;
+
+  switch (num) {
     case 0:
-      return "primary";
+      return 'primary';
     case 1:
-      return "secondary";
+      return 'secondary';
     case 2:
-      return "success";
+      return 'success';
     case 3:
-      return "danger";
+      return 'danger';
     case 4:
-      return "warning";
+      return 'warning';
     case 5:
-      return "info";
+      return 'info';
     case 6:
-      return "light";
+      return 'light';
     case 7:
-      return "dark";
+      return 'dark';
   }
 }
 
@@ -54,14 +55,14 @@ export function secondsToStr(seconds) {
 }
 
 export function coverArtString(title) {
+  let nameOfSong = '';
 
-  let nameOfSong = "";
   // The maximum length before we start truncating
   const maxLength = 50;
 
   if (title.length > maxLength) {
     // Name = longTitleTooLongToBeAGoodAltTex...
-    nameOfSong = title.substr(0, maxLength) + "\u2026";
+    nameOfSong = title.substr(0, maxLength) + '\u2026';
   } else {
     // Name = shortTitle
     nameOfSong = title;

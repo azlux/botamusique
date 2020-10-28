@@ -1,20 +1,20 @@
-import 'jquery/src/jquery';
-import 'jquery-migrate/src/migrate';
-import Popper from 'popper.js/dist/esm/popper';
+import 'jquery/src/jquery.js';
+import 'jquery-migrate/src/migrate.js';
+import Popper from 'popper.js/dist/esm/popper.js';
 import {
   Modal,
   Toast,
   Tooltip,
-} from 'bootstrap/js/src/index';
+} from 'bootstrap/js/src/index.js';
 import {
   getColor,
   isOverflown,
   setProgressBar,
   secondsToStr,
   coverArtString,
-} from './util';
+} from './util.mjs';
 
-$('#uploadSelectFile').on('change', function () {
+$('#uploadSelectFile').on('change', function() {
   // get the file name
   const fileName = $(this).val().replace('C:\\fakepath\\', ' ');
   // replace the "Choose a file" label
@@ -85,7 +85,7 @@ fastForwardBtn.on('click', () => {
 });
 
 document.getElementById('clear-playlist-btn').addEventListener('click', () => {
-  request('post', { action: 'clear' });
+  request('post', {action: 'clear'});
 });
 
 // eslint-disable-next-line guard-for-in
@@ -102,14 +102,14 @@ function request(_url, _data, refresh = false) {
     url: _url,
     data: _data,
     statusCode: {
-      200: function (data) {
+      200: function(data) {
         if (data.ver !== playlist_ver) {
           checkForPlaylistUpdate();
         }
         updateControls(data.empty, data.play, data.mode, data.volume);
         updatePlayerPlayhead(data.playhead);
       },
-      403: function () {
+      403: function() {
         location.reload(true);
       },
     },
@@ -137,13 +137,13 @@ function addPlaylistItem(item) {
   tags.empty();
 
   const tag_edit_copy = pl_tag_edit_element.clone();
-  tag_edit_copy.click(function () {
+  tag_edit_copy.click(function() {
     addTagModalShow(item.id, item.title, item.tags);
   });
   tag_edit_copy.appendTo(tags);
 
   if (item.tags.length > 0) {
-    item.tags.forEach(function (tag_tuple) {
+    item.tags.forEach(function(tag_tuple) {
       const tag_copy = tag_element.clone();
       tag_copy.html(tag_tuple[0]);
       tag_copy.addClass('badge-' + tag_tuple[1]);
@@ -160,14 +160,14 @@ function addPlaylistItem(item) {
 function displayPlaylist(data) {
   playlist_table.animate({
     opacity: 0,
-  }, 200, function () {
+  }, 200, function() {
     playlist_loading.hide();
     $('.playlist-item').remove();
     const items = data.items;
     const length = data.length;
-    if (items.length === 0){
+    if (items.length === 0) {
       playlist_empty.removeClass('d-none');
-      playlist_table.animate({ opacity: 1 }, 200);
+      playlist_table.animate({opacity: 1}, 200);
       return;
     }
     playlist_items = {};
@@ -188,9 +188,9 @@ function displayPlaylist(data) {
     }
 
     items.forEach(
-      function (item) {
-        addPlaylistItem(item);
-      },
+        function(item) {
+          addPlaylistItem(item);
+        },
     );
 
     if (items.length < length && start_from + items.length < length) {
@@ -205,7 +205,7 @@ function displayPlaylist(data) {
     displayActiveItem(data.current_index);
     updatePlayerInfo(playlist_items[data.current_index]);
     bindPlaylistEvent();
-    playlist_table.animate({ opacity: 1 }, 200);
+    playlist_table.animate({opacity: 1}, 200);
   });
 }
 
@@ -227,7 +227,7 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to, total_
 
   expand_copy.addClass('playlist-item');
   expand_copy.appendTo(playlist_table);
-  expand_copy.click(function () {
+  expand_copy.click(function() {
     playlist_range_from = real_from;
     playlist_range_to = real_to;
     updatePlaylist();
@@ -237,7 +237,7 @@ function insertExpandPrompt(real_from, real_to, display_from, display_to, total_
 function updatePlaylist() {
   playlist_table.animate({
     opacity: 0,
-  }, 200, function () {
+  }, 200, function() {
     playlist_empty.addClass('d-none');
     playlist_loading.show();
     playlist_table.find('.playlist-item').css('opacity', 0);
@@ -267,7 +267,7 @@ function checkForPlaylistUpdate() {
     type: 'POST',
     url: 'post',
     statusCode: {
-      200: function (data) {
+      200: function(data) {
         if (data.ver !== playlist_ver) {
           playlist_ver = data.ver;
           playlist_range_from = 0;
@@ -298,18 +298,18 @@ function checkForPlaylistUpdate() {
 
 function bindPlaylistEvent() {
   $('.playlist-item-play').unbind().click(
-    function (e) {
-      request('post', {
-        'play_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
-      });
-    },
+      function(e) {
+        request('post', {
+          'play_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
+        });
+      },
   );
   $('.playlist-item-trash').unbind().click(
-    function (e) {
-      request('post', {
-        'delete_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
-      });
-    },
+      function(e) {
+        request('post', {
+          'delete_music': ($(e.currentTarget).parent().parent().parent().find('.playlist-item-index').html() - 1),
+        });
+      },
   );
 }
 
@@ -416,10 +416,10 @@ function setFilterType(event, type) {
 }
 
 
-filter_dir.change(function () {
+filter_dir.change(function() {
   updateResults();
 });
-filter_keywords.change(function () {
+filter_keywords.change(function() {
   updateResults();
 });
 
@@ -427,69 +427,69 @@ const item_template = $('#library-item');
 
 function bindLibraryResultEvent() {
   $('.library-thumb-col').unbind().hover(
-    function (e) {
-      $(e.currentTarget).find('.library-thumb-grp').addClass('library-thumb-grp-hover');
-    },
-    function (e) {
-      $(e.currentTarget).find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
-    },
+      function(e) {
+        $(e.currentTarget).find('.library-thumb-grp').addClass('library-thumb-grp-hover');
+      },
+      function(e) {
+        $(e.currentTarget).find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
+      },
   );
 
   $('.library-info-title').unbind().hover(
-    function (e) {
-      $(e.currentTarget).parent().find('.library-thumb-grp').addClass('library-thumb-grp-hover');
-    },
-    function (e) {
-      $(e.currentTarget).parent().find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
-    },
+      function(e) {
+        $(e.currentTarget).parent().find('.library-thumb-grp').addClass('library-thumb-grp-hover');
+      },
+      function(e) {
+        $(e.currentTarget).parent().find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
+      },
   );
 
   $('.library-item-play').unbind().click(
-    function (e) {
-      request('post', {
-        'add_item_at_once': $(e.currentTarget).parent().parent().parent().find('.library-item-id').val(),
-      });
-    },
+      function(e) {
+        request('post', {
+          'add_item_at_once': $(e.currentTarget).parent().parent().parent().find('.library-item-id').val(),
+        });
+      },
   );
 
   $('.library-item-trash').unbind().click(
-    function (e) {
-      request('post', {
-        'delete_item_from_library': $(e.currentTarget).parent().parent().find('.library-item-id').val(),
-      });
-      updateResults(active_page);
-    },
+      function(e) {
+        request('post', {
+          'delete_item_from_library': $(e.currentTarget).parent().parent().find('.library-item-id').val(),
+        });
+        updateResults(active_page);
+      },
   );
 
   $('.library-item-download').unbind().click(
-    function (e) {
-      const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-      // window.open('/download?id=' + id);
-      downloadId(id);
-    },
+      function(e) {
+        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
+        // window.open('/download?id=' + id);
+        downloadId(id);
+      },
   );
 
   $('.library-item-add-next').unbind().click(
-    function (e) {
-      const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-      request('post', {
-        'add_item_next': id,
-      });
-    },
+      function(e) {
+        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
+        request('post', {
+          'add_item_next': id,
+        });
+      },
   );
 
   $('.library-item-add-bottom').unbind().click(
-    function (e) {
-      const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-      request('post', {
-        'add_item_bottom': id,
-      });
-    },
+      function(e) {
+        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
+        request('post', {
+          'add_item_bottom': id,
+        });
+      },
   );
 }
 
-const lib_filter_tag_group = $("#filter-tags");
-const lib_filter_tag_element = $(".filter-tag");
+const lib_filter_tag_group = $('#filter-tags');
+const lib_filter_tag_element = $('.filter-tag');
 
 const lib_group = $('#library-group');
 const id_element = $('.library-item-id');
@@ -503,62 +503,62 @@ const tag_edit_element = $('.library-item-edit');
 // var notag_element = $(".library-item-notag");
 // var tag_element = $(".library-item-tag");
 
-let library_tags = [];
+const library_tags = [];
 
-function updateLibraryControls(){
+function updateLibraryControls() {
   $.ajax({
     type: 'GET',
     url: 'library/info',
     statusCode: {
       200: displayLibraryControls,
-      403: function () {
+      403: function() {
         location.reload(true);
       },
     },
   });
 }
 
-function displayLibraryControls(data){
-  $("#maxUploadFileSize").val(data.max_upload_file_size);
+function displayLibraryControls(data) {
+  $('#maxUploadFileSize').val(data.max_upload_file_size);
   if (data.upload_enabled) {
-    $("#uploadDisabled").val("false");
-    $("#upload").show();
+    $('#uploadDisabled').val('false');
+    $('#upload').show();
   } else {
-    $("#uploadDisabled").val("true");
-    $("#upload").hide();
+    $('#uploadDisabled').val('true');
+    $('#upload').hide();
   }
 
   if (data.delete_allowed) {
-    $("#deleteAllowed").val("true");
-    $(".library-delete").show();
+    $('#deleteAllowed').val('true');
+    $('.library-delete').show();
   } else {
-    $("#uploadDisabled").val("false");
-    $(".library-delete").hide();
+    $('#uploadDisabled').val('false');
+    $('.library-delete').hide();
   }
 
-  let select = $("#filter-dir");
-  let dataList = $("#upload-target-dirs");
-  select.find("option").remove();
-  dataList.find("option").remove();
+  const select = $('#filter-dir');
+  const dataList = $('#upload-target-dirs');
+  select.find('option').remove();
+  dataList.find('option').remove();
   if (data.dirs.length > 0) {
     console.log(data.dirs);
-    data.dirs.forEach(function (dir) {
-      $("<option value=\"" + dir + "\">" + dir + "</option>").appendTo(select);
-      $("<option value=\"" + dir + "\">").appendTo(dataList);
+    data.dirs.forEach(function(dir) {
+      $('<option value="' + dir + '">' + dir + '</option>').appendTo(select);
+      $('<option value="' + dir + '">').appendTo(dataList);
     });
   }
 
   // ----- Tag filters -----
-  let tags = [];
-  let tags_dict = {};
-  $(".filter-tag").each(function(i, tag_element){
+  const tags = [];
+  const tags_dict = {};
+  $('.filter-tag').each(function(i, tag_element) {
     tags_dict[tag_element.innerHTML] = tag_element;
     tags.push(tag_element.innerHTML);
   });
   if (data.tags.length > 0) {
-    for (const tag of data.tags){
-      if (tags.includes(tag)){
-        let index = tags.indexOf(tag);
+    for (const tag of data.tags) {
+      if (tags.includes(tag)) {
+        const index = tags.indexOf(tag);
         tags.splice(index, 1);
       } else {
         const tag_copy = lib_filter_tag_element.clone();
@@ -566,7 +566,7 @@ function displayLibraryControls(data){
         tag_copy.addClass('badge-' + getColor(tag));
         tag_copy.appendTo(lib_filter_tag_group);
         // Bind Event
-        tag_copy.click(function (e) {
+        tag_copy.click(function(e) {
           const tag = $(e.currentTarget);
           if (!tag.hasClass('tag-clicked')) {
             tag.addClass('tag-clicked');
@@ -583,7 +583,7 @@ function displayLibraryControls(data){
       tags_dict[tag].remove();
     }
   } else {
-    $(".filter-tag").remove();
+    $('.filter-tag').remove();
   }
 }
 
@@ -603,13 +603,13 @@ function addResultItem(item) {
   tags.empty();
 
   const tag_edit_copy = tag_edit_element.clone();
-  tag_edit_copy.click(function () {
+  tag_edit_copy.click(function() {
     addTagModalShow(item.id, item.title, item.tags);
   });
   tag_edit_copy.appendTo(tags);
 
   if (item.tags.length > 0) {
-    item.tags.forEach(function (tag_tuple) {
+    item.tags.forEach(function(tag_tuple) {
       const tag_copy = tag_element.clone();
       tag_copy.html(tag_tuple[0]);
       tag_copy.addClass('badge-' + tag_tuple[1]);
@@ -627,7 +627,7 @@ function addResultItem(item) {
 function getFilters(dest_page = 1) {
   const tags = $('.tag-clicked');
   const tags_list = [];
-  tags.each(function (index, tag) {
+  tags.each(function(index, tag) {
     tags_list.push(tag.innerHTML);
   });
 
@@ -658,14 +658,14 @@ function updateResults(dest_page = 1) {
 
   lib_group.animate({
     opacity: 0,
-  }, 200, function () {
+  }, 200, function() {
     $.ajax({
       type: 'POST',
       url: 'library',
       data: data,
       statusCode: {
         200: processResults,
-        403: function () {
+        403: function() {
           location.reload(true);
         },
       },
@@ -731,7 +731,7 @@ document.getElementById('library-download-btn').addEventListener('click', () => 
 });
 
 document.getElementById('library-rescan-btn').addEventListener('click', () => {
-  request('post', { action: 'rescan' });
+  request('post', {action: 'rescan'});
   updateResults();
 });
 
@@ -751,7 +751,7 @@ const page_no = $('.library-page-no');
 function processResults(data) {
   lib_group.animate({
     opacity: 0,
-  }, 200, function () {
+  }, 200, function() {
     lib_loading.hide();
     const total_pages = data.total_pages;
     const active_page = data.active_page;
@@ -760,14 +760,14 @@ function processResults(data) {
       lib_loading.hide();
       lib_empty.show();
       page_ul.empty();
-      lib_group.animate({ opacity: 1 }, 200);
+      lib_group.animate({opacity: 1}, 200);
       return;
     }
     items.forEach(
-      function (item) {
-        addResultItem(item);
-        bindLibraryResultEvent();
-      },
+        function(item) {
+          addResultItem(item);
+          bindLibraryResultEvent();
+        },
     );
 
     page_ul.empty();
@@ -785,7 +785,7 @@ function processResults(data) {
       page_no_copy = page_no.clone();
       page_no_copy.html('&laquo;');
 
-      page_no_copy.click(function (e) {
+      page_no_copy.click(function(e) {
         updateResults(1);
       });
 
@@ -801,7 +801,7 @@ function processResults(data) {
       if (active_page === i) {
         page_li_copy.addClass('active');
       } else {
-        page_no_copy.click(function (e) {
+        page_no_copy.click(function(e) {
           const _page_no = $(e.currentTarget).html();
           updateResults(_page_no);
         });
@@ -815,14 +815,14 @@ function processResults(data) {
       page_no_copy = page_no.clone();
       page_no_copy.html('&raquo;');
 
-      page_no_copy.click(function (e) {
+      page_no_copy.click(function(e) {
         updateResults(total_pages);
       });
 
       page_no_copy.appendTo(page_li_copy);
       page_li_copy.appendTo(page_ul);
     }
-    lib_group.animate({ opacity: 1 }, 200);
+    lib_group.animate({opacity: 1}, 200);
   });
 }
 
@@ -841,11 +841,11 @@ function addTagModalShow(_id, _title, _tag_tuples) {
   add_tag_modal_title.html(_title);
   add_tag_modal_item_id.val(_id);
   add_tag_modal_tags.empty();
-  _tag_tuples.forEach(function (tag_tuple) {
+  _tag_tuples.forEach(function(tag_tuple) {
     modal_tag_text.html(tag_tuple[0]);
     const tag_copy = modal_tag.clone();
     const modal_tag_remove = tag_copy.find('.modal-tag-remove');
-    modal_tag_remove.click(function (e) {
+    modal_tag_remove.click(function(e) {
       $(e.currentTarget).parent().remove();
     });
     tag_copy.show();
@@ -856,14 +856,14 @@ function addTagModalShow(_id, _title, _tag_tuples) {
 }
 
 document.getElementById('addTagModalAddBtn').addEventListener('click', () => {
-  const new_tags = add_tag_modal_input.val().split(',').map(function (str) {
+  const new_tags = add_tag_modal_input.val().split(',').map(function(str) {
     return str.trim();
   });
-  new_tags.forEach(function (tag) {
+  new_tags.forEach(function(tag) {
     modal_tag_text.html(tag);
     const tag_copy = modal_tag.clone();
     const modal_tag_remove = tag_copy.find('.modal-tag-remove');
-    modal_tag_remove.click(function (e) {
+    modal_tag_remove.click(function(e) {
       $(e.currentTarget).parent().remove();
     });
     tag_copy.show();
@@ -876,7 +876,7 @@ document.getElementById('addTagModalAddBtn').addEventListener('click', () => {
 document.getElementById('addTagModalSubmit').addEventListener('click', () => {
   const all_tags = $('.modal-tag-text');
   const tags = [];
-  all_tags.each(function (i, element) {
+  all_tags.each(function(i, element) {
     if (element.innerHTML) {
       tags.push(element.innerHTML);
     }
@@ -890,7 +890,9 @@ document.getElementById('addTagModalSubmit').addEventListener('click', () => {
       id: add_tag_modal_item_id.val(),
       tags: tags.join(','),
     },
-    complete: function () { updateResults(active_page); },
+    complete: function() {
+      updateResults(active_page);
+    },
   });
 });
 
@@ -904,7 +906,7 @@ let volume_popover_instance = null;
 let volume_popover_show = false;
 let volume_update_timer;
 
-volumePopoverBtn.addEventListener('click', function (e) {
+volumePopoverBtn.addEventListener('click', function(e) {
   e.stopPropagation();
 
   if (!volume_popover_show) {
@@ -926,7 +928,7 @@ volumePopoverBtn.addEventListener('click', function (e) {
   }
   volume_popover_show = !volume_popover_show;
 
-  document.addEventListener('click', function () {
+  document.addEventListener('click', function() {
     volumePopoverDiv.removeAttribute('data-show');
     if (volume_popover_instance) {
       volume_popover_instance.destroy();
@@ -938,7 +940,7 @@ volumePopoverBtn.addEventListener('click', function (e) {
   });
 });
 
-volumePopoverBtn.addEventListener('click', function (e) {
+volumePopoverBtn.addEventListener('click', function(e) {
   e.stopPropagation();
 });
 
@@ -954,11 +956,11 @@ volumeSlider.addEventListener('change', (e) => {
 });
 
 document.getElementById('volume-down-btn').addEventListener('click', () => {
-  request('post', { action: 'volume_down' });
+  request('post', {action: 'volume_down'});
 });
 
 document.getElementById('volume-up-btn').addEventListener('click', () => {
-  request('post', { action: 'volume_up' });
+  request('post', {action: 'volume_up'});
 });
 
 // ---------------------
@@ -1054,7 +1056,7 @@ function uploadNextFile() {
   const file = filesToProceed.shift();
   const file_progress_item = filesProgressItem[file.name];
 
-  req.addEventListener('load', function () {
+  req.addEventListener('load', function() {
     if (this.status === 200) {
       setProgressBar(file_progress_item.progress, 1);
       file_progress_item.progress.classList.add('bg-success');
@@ -1087,7 +1089,7 @@ function uploadNextFile() {
     }
   });
 
-  req.upload.addEventListener('progress', function (e) {
+  req.upload.addEventListener('progress', function(e) {
     if (e.lengthComputable) {
       const percent = e.loaded / e.total;
       setProgressBar(file_progress_item.progress, percent, Math.floor(percent * 100) + '%');
@@ -1134,12 +1136,12 @@ const musicUrlInput = document.getElementById('music-url-input');
 const radioUrlInput = document.getElementById('radio-url-input');
 
 document.getElementById('add-music-url').querySelector('button').addEventListener('click', () => {
-  request('post', { add_url: musicUrlInput.value });
+  request('post', {add_url: musicUrlInput.value});
   musicUrlInput.value = '';
 });
 
 document.getElementById('add-radio-url').querySelector('button').addEventListener('click', () => {
-  request('post', { add_radio: radioUrlInput.value });
+  request('post', {add_radio: radioUrlInput.value});
   radioUrlInput.value = '';
 });
 
@@ -1161,15 +1163,15 @@ const playerSkipBtn = document.getElementById('playerSkipBtn');
 let currentPlayingItem = null;
 
 playerPlayBtn.addEventListener('click', () => {
-  request('post', { action: 'resume' });
+  request('post', {action: 'resume'});
 });
 
 playerPauseBtn.addEventListener('click', () => {
-  request('post', { action: 'pause' });
+  request('post', {action: 'pause'});
 });
 
 playerSkipBtn.addEventListener('click', () => {
-  request('post', { action: 'next' });
+  request('post', {action: 'next'});
 });
 
 document.getElementById('player-toast').addEventListener('click', () => {
@@ -1245,7 +1247,7 @@ function updatePlayerPlayhead(playhead) {
     player_playhead_position = playhead;
     setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
     if (playing) {
-      playhead_timer = setInterval(function () {
+      playhead_timer = setInterval(function() {
         player_playhead_position += 0.3;
         setProgressBar(playerBar, player_playhead_position / currentPlayingItem.duration, secondsToStr(player_playhead_position));
       }, 300); // delay in milliseconds
@@ -1260,7 +1262,7 @@ function updatePlayerPlayhead(playhead) {
   }
 }
 
-playerBarBox.addEventListener('mousedown', function () {
+playerBarBox.addEventListener('mousedown', function() {
   if (currentPlayingItem && currentPlayingItem.duration > 0) {
     playerBarBox.addEventListener('mousemove', playheadDragged);
     clearInterval(playhead_timer);
@@ -1268,7 +1270,7 @@ playerBarBox.addEventListener('mousedown', function () {
   }
 });
 
-playerBarBox.addEventListener('mouseup', function (event) {
+playerBarBox.addEventListener('mouseup', function(event) {
   playerBarBox.removeEventListener('mousemove', playheadDragged);
   const percent = (event.clientX - playerBarBox.getBoundingClientRect().x) / playerBarBox.clientWidth;
   request('post', {

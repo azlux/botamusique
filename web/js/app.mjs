@@ -1,6 +1,6 @@
-import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es';
-import {fas} from '@fortawesome/free-solid-svg-icons/index.es';
-import {far} from '@fortawesome/free-regular-svg-icons/index.es';
+import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es.js';
+import {fas} from '@fortawesome/free-solid-svg-icons/index.es.js';
+import {far} from '@fortawesome/free-regular-svg-icons/index.es.js';
 library.add(fas, far);
 
 // Old application code
