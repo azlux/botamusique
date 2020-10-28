@@ -4,7 +4,6 @@
   "type": "module",
   "scripts": {
     "lint": "eslint --config .eslintrc.json js/ --ext .mjs",
-    "lint:fix": "npm run lint -- --fix",
     "build": "webpack --config webpack.config.cjs --progress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

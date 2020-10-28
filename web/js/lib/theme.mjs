@@ -1,6 +1,6 @@
 export default class {
     /**
-     * @property {boolean} #dark Interal state for dark theme activation.
+     * @property {boolean} dark Interal state for dark theme activation.
      * @private
      */
     static #dark = false;

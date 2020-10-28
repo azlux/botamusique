@@ -34,7 +34,7 @@
       "code": 120
     }],
     "linebreak-style": "off",
-    "jsdoc/require-jsdoc": "warn",
+    "jsdoc/require-jsdoc": "off",
     "import/unambiguous": "error",
     "import/no-commonjs": "error",
     "import/no-amd": "error",
@@ -44,20 +44,5 @@
     "import/no-unresolved": ["error", {
       "commonjs": true
     }]
-  },
-  "settings": {
-    "import/extensions": [
-      ".js",
-      ".cjs",
-      ".mjs"
-    ],
-    "import/ignore": [
-      "node_modules"
-    ],
-    "import/resolver": {
-      "webpack": {
-        "config": "webpack.config.cjs"
-      }
-    }
   }
 }
