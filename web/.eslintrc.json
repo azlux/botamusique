@@ -7,32 +7,57 @@
     "jquery": true
   },
   "plugins": [
-    "node",
+    "@babel",
     "import",
-    "jsdoc"
+    "jsdoc",
+    "jquery"
   ],
   "extends": [
     "eslint:recommended",
-    "google",
-    "plugin:node/recommended-module",
     "plugin:import/errors",
     "plugin:import/warnings",
-    "plugin:jsdoc/recommended"
+    "plugin:jsdoc/recommended",
+    "plugin:jquery/deprecated"
   ],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
   },
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "babelOptions": {
+      "configFile": "./.babelrc.json"
+    }
+  },
   "rules": {
-    "require-jsdoc": "off",
-    "valid-jsdoc": "off",
-    "jsdoc/require-jsdoc": "off",
     "max-len": ["warn", {
       "code": 120
     }],
+    "linebreak-style": "off",
+    "jsdoc/require-jsdoc": "warn",
+    "import/unambiguous": "error",
     "import/no-commonjs": "error",
     "import/no-amd": "error",
-    "linebreak-style": "off"
+    "import/no-nodejs-modules": "error",
+    "import/no-deprecated": "error",
+    "import/extensions": ["error", "always"],
+    "import/no-unresolved": ["error", {
+      "commonjs": true
+    }]
+  },
+  "settings": {
+    "import/extensions": [
+      ".js",
+      ".cjs",
+      ".mjs"
+    ],
+    "import/ignore": [
+      "node_modules"
+    ],
+    "import/resolver": {
+      "webpack": {
+        "config": "webpack.config.cjs"
+      }
+    }
   }
 }

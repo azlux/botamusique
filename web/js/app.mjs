@@ -7,7 +7,7 @@ library.add(fas, far);
 import './main.mjs';
 
 // New application code
-import Theme from './theme.mjs';
+import Theme from './lib/theme.mjs';
 
 document.addEventListener('DOMContentLoaded', () => {
   Theme.init();
