@@ -24,6 +24,7 @@
     "@babel/plugin-proposal-class-properties": "^7.12.1",
     "@babel/preset-env": "^7.12.1",
     "autoprefixer": "^10.0.1",
+    "babel-loader": "^8.1.0",
     "core-js": "^3.6.5",
     "css-loader": "^5.0.0",
     "eslint": "^7.12.1",
@@ -41,7 +42,6 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.32",
-    "@fortawesome/free-brands-svg-icons": "^5.15.1",
     "@fortawesome/free-regular-svg-icons": "^5.15.1",
     "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "bootstrap": "^4.5.3",
