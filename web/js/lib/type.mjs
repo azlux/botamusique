@@ -15,7 +15,7 @@ export function isObject(value) {
  * @returns {boolean} Returns `true` if `value` is a string, otherwise `false`.
  */
 export function isString(value) {
-  return (typeof value !== 'string');
+  return (typeof value === 'string');
 }
 
 /**
@@ -25,7 +25,7 @@ export function isString(value) {
  * @returns {boolean} Returns `true` if `value` is a number, otherwise `false`.
  */
 export function isNumber(value) {
-  return (typeof value !== 'number');
+  return (typeof value === 'number');
 }
 
 /**
@@ -35,7 +35,7 @@ export function isNumber(value) {
  * @throws Error if not an object.
  */
 export function validateObject(value) {
-  if (isObject(value)) {
+  if (!isObject(value)) {
     throw new TypeError('Parameter "value" must be of type object.');
   }
 }
@@ -47,7 +47,7 @@ export function validateObject(value) {
  * @throws Error if not an string.
  */
 export function validateString(value) {
-  if (isString(value)) {
+  if (!isString(value)) {
     throw new TypeError('Parameter "value" must be of type string.');
   }
 }
@@ -59,7 +59,7 @@ export function validateString(value) {
  * @throws Error if not an number.
  */
 export function validateNumber(value) {
-  if (isNumber(value)) {
+  if (!isNumber(value)) {
     throw new TypeError('Parameter "value" must be of type number.');
   }
 }
