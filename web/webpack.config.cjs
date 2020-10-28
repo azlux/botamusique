@@ -4,6 +4,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: 'production',
+  devtool: 'source-map',
+  amd: false,
   entry: {
     main: [
       './js/app.mjs',
@@ -13,7 +15,6 @@ module.exports = {
       './sass/app-dark.scss',
     ],
   },
-  devtool: 'source-map',
   output: {
     filename: 'static/js/[name].js',
     path: path.resolve(__dirname, '../'),

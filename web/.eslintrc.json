@@ -24,11 +24,6 @@
     "SharedArrayBuffer": "readonly"
   },
   "parser": "@babel/eslint-parser",
-  "parserOptions": {
-    "babelOptions": {
-      "configFile": "./.babelrc.json"
-    }
-  },
   "rules": {
     "max-len": ["warn", {
       "code": 120

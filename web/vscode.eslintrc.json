@@ -1,0 +1,7 @@
+{
+  "parserOptions": {
+    "babelOptions": {
+      "configFile": "./web/babel.config.json"
+    }
+  }
+}
