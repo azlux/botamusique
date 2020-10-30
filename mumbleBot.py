@@ -37,7 +37,7 @@ class MumbleBot:
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
-        self.log.info(f"bot: botamusique version {self.version}, starting...")
+        self.log.info(f"bot: botamusique version {self.get_version()}, starting...")
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
 
@@ -160,7 +160,8 @@ class MumbleBot:
 
         if var.config.get("bot", "when_nobody_in_channel", fallback='') in ['pause', 'pause_resume', 'stop']:
             user_change_callback = \
-                lambda user, action: threading.Thread(target=self.users_changed, args=(user, action), daemon=True).start()
+                lambda user, action: threading.Thread(target=self.users_changed,
+                                                      args=(user, action), daemon=True).start()
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, user_change_callback)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, user_change_callback)
 
@@ -172,7 +173,13 @@ class MumbleBot:
         self.redirect_ffmpeg_log = var.config.getboolean('debug', 'redirect_ffmpeg_log', fallback=True)
 
         if var.config.getboolean("bot", "auto_check_update"):
-            th = threading.Thread(target=self.check_update, name="UpdateThread")
+            def check_update():
+                nonlocal self
+                new_version, changelog = util.check_update(self.get_version())
+                if new_version:
+                    self.send_channel_msg(tr('new_version_found', new_version=new_version, changelog=changelog))
+
+            th = threading.Thread(target=check_update, name="UpdateThread")
             th.daemon = True
             th.start()
 
@@ -199,17 +206,11 @@ class MumbleBot:
 
         self.exit = True
 
-    def check_update(self):
-        self.log.debug("update: checking for updates...")
-        new_version = util.new_release_version(var.config.get('bot', 'target_version'))
-        if version.parse(new_version) > version.parse(self.version) and var.config.get('bot', 'target_version') == "stable":
-            changelog = util.fetch_changelog()
-            self.log.info(f"update: new version {new_version} found, current installed version {self.version}.")
-            self.log.info(f"update: changelog: {changelog}")
-            changelog = changelog.replace("\n", "<br>")
-            self.send_channel_msg(tr('new_version_found', new_version=new_version, changelog=changelog))
+    def get_version(self):
+        if self.version != "git":
+            return self.version
         else:
-            self.log.debug("update: no new version found.")
+            return util.get_snapshot_version()
 
     def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False, admin=False):
         cmds = cmd.split(",")

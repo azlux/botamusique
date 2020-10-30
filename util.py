@@ -114,6 +114,22 @@ def fetch_changelog():
     return c
 
 
+def check_update(current_version):
+    global log
+    log.debug("update: checking for updates...")
+    new_version = new_release_version(var.config.get('bot', 'target_version'))
+    if version.parse(new_version) > version.parse(current_version) \
+            and var.config.get('bot', 'target_version') == "stable":
+        changelog = fetch_changelog()
+        log.info(f"update: new version {new_version} found, current installed version {current_version}.")
+        log.info(f"update: changelog: {changelog}")
+        changelog = changelog.replace("\n", "<br>")
+        return new_version, changelog
+    else:
+        log.debug("update: no new version found.")
+        return None, None
+
+
 def update(current_version):
     global log
 
@@ -438,6 +454,26 @@ def set_logging_formatter(handler: logging.Handler, logging_level):
             '[%(asctime)s %(levelname)s] %(message)s', "%b %d %H:%M:%S")
 
     handler.setFormatter(formatter)
+
+
+def get_snapshot_version():
+    import subprocess
+    root_dir = os.path.dirname(__file__)
+    if os.path.exists(os.path.join(root_dir, ".git")):
+        try:
+            ret = subprocess.check_output(["git", "describe"]).strip()
+            return ret.decode("utf-8")
+        except FileNotFoundError:
+            pass
+
+        try:
+            with open(os.path.join(root_dir,".git/refs/heads/master")) as f:
+                ret = "g" + f.read()[:7]
+                return ret
+        except FileNotFoundError:
+            pass
+
+    return "unknown"
 
 
 class LoggerIOWrapper(io.TextIOWrapper):
