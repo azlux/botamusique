@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -e
-PYTHON=$SOURCE_DIR/venv/bin/python
 
 git remote set-url origin https://azlux:$GITHUB_API@github.com/azlux/botamusique/
 git pull origin master
@@ -10,7 +9,7 @@ echo "=> Checking if translations in this commit differ from the server..."
 
 git branch testing-translation master
 git checkout testing-translation
-$PYTHON $SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch
+$SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch
 
 if [ -z "$(git diff)" ]; then
   echo "==> No difference found."
@@ -44,5 +43,5 @@ fi
 echo "==> master~$n ($(git show --oneline --quiet master~$n)) shares the same translations with the server."
 
 echo "=> Preparing to push local translation updates to the server..."
-$PYTHON $SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
+$SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
 exit 0
