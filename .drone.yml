@@ -112,7 +112,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: translation
+name: translation-traduora
     
 steps:
   - name: fetch-translation
@@ -140,7 +140,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: translation
+name: translation-git
     
 steps:
   - name: push-translation
