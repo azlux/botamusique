@@ -17,23 +17,6 @@ steps:
         - push
         - tag
 
-  - name: push-translation
-    image: debian
-    environment:
-      TRADUORA_R_CLIENT:
-        from_secret: TRADUORA_R_CLIENT
-      TRADUORA_R_SECRET:
-        from_secret: TRADUORA_R_SECRET
-      TRADUORA_W_CLIENT:
-        from_secret: TRADUORA_W_CLIENT
-      TRADUORA_W_SECRET:
-        from_secret: TRADUORA_W_SECRET
-      GITHUB_API:
-        from_secret: GITHUB_API
-    commands:
-      - apt update && apt install -y git python3-requests hub
-      - SOURCE_DIR=$(pwd) ./scripts/update_translation_to_server.sh
-
   - name: translate-html
     image: python:3
     commands:
@@ -153,3 +136,39 @@ trigger:
     - cron
   cron:
     - auto-fetch-lang
+
+---
+kind: pipeline
+type: docker
+name: translation
+    
+steps:
+  - name: push-translation
+    image: debian
+    environment:
+      TRADUORA_R_CLIENT:
+        from_secret: TRADUORA_R_CLIENT
+      TRADUORA_R_SECRET:
+        from_secret: TRADUORA_R_SECRET
+      TRADUORA_W_CLIENT:
+        from_secret: TRADUORA_W_CLIENT
+      TRADUORA_W_SECRET:
+        from_secret: TRADUORA_W_SECRET
+      GITHUB_API:
+        from_secret: GITHUB_API
+    commands:
+      - apt update && apt install -y git python3-requests hub
+      - SOURCE_DIR=$(pwd) ./scripts/update_translation_to_server.sh
+    when:
+      branch:
+        - master
+      event:
+        - push
+
+node:
+  location: external
+    
+trigger:
+  event:
+    exclude:
+      - cron
