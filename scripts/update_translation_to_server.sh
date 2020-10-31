@@ -43,5 +43,6 @@ fi
 echo "==> master~$n ($(git show --oneline --quiet master~$n)) shares the same translations with the server."
 
 echo "=> Preparing to push local translation updates to the server..."
+git checkout -f master
 $SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
 exit 0
