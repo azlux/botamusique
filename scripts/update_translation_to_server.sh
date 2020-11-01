@@ -22,7 +22,7 @@ echo "=> Check if the modifications are based on the translations on the server.
 n=1
 COMMON_FOUND=false
 
-while [ $n -le 10 ]; do
+while [ $n -le 20 ]; do
   echo "==> Comparing server's translations with master~$n ($(git show --oneline --quiet master~$n))"
   CHANGED_LANG_FILE=$(git diff --name-only master~$n | grep "lang/" || true)
   if [ -z "$CHANGED_LANG_FILE" ]; then
@@ -31,10 +31,10 @@ while [ $n -le 10 ]; do
   else
     echo "==> Modified lang files: $CHANGED_LANG_FILE"
   fi
-  let n++
+  (( n++ ))
 done
 
-if [ ! $COMMON_FOUND ]; then
+if (! $COMMON_FOUND); then
   echo "==> CONFLICTS: Previous commits doesn't share the same translations with the server."
   echo "    There are unmerged translation updates on the server."
   echo "    Please manually update these changes or wait for the pull request"
