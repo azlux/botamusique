@@ -28,6 +28,8 @@ while [ $n -le 10 ]; do
   if [ -z "$CHANGED_LANG_FILE" ]; then
     COMMON_FOUND=true
     break
+  else
+    echo "==> Modified lang files: $CHANGED_LANG_FILE"
   fi
   let n++
 done
@@ -45,4 +47,13 @@ echo "==> master~$n ($(git show --oneline --quiet master~$n)) shares the same tr
 echo "=> Preparing to push local translation updates to the server..."
 git checkout -f master
 $SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_W_CLIENT --secret $TRADUORA_W_SECRET --push
+
+echo "=> Fix translation format..."
+$SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $TRADUORA_R_CLIENT --secret $TRADUORA_R_SECRET --fetch
+git add lang/*
+git status
+if GIT_COMMITTER_NAME='Traduora Bot' GIT_COMMITTER_EMAIL='noreply@azlux.fr' git commit -m 'Bot: Reformat translation'; then
+  git push origin master
+fi
+
 exit 0
