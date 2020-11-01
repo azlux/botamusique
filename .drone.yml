@@ -126,7 +126,7 @@ steps:
         from_secret: GITHUB_API
     commands:
       - apt update && apt install -y git python3-requests hub
-      - PUSH=1 SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
+      - PUSH=true SOURCE_DIR=$(pwd) ./scripts/commit_new_translation.sh
 
 node:
   location: external

@@ -20,7 +20,7 @@ $SOURCE_DIR/scripts/sync_translation.py --lang-dir $SOURCE_DIR/lang/ --client $T
 git add lang/*
 git status
 
-if $PUSH; then
+if [ "$PUSH" = "true" ]; then
    echo "=> Pushing updates to bot-traduora branch..."
   if GIT_COMMITTER_NAME='Traduora Bot' GIT_COMMITTER_EMAIL='noreply@azlux.fr' git commit -m 'Bot: Update translation' --author "Traduora Bot <noreply@azlux.fr>"; then
     git push origin bot-traduora
