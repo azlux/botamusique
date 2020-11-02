@@ -1,9 +1,11 @@
 {
+  "parser": "@babel/eslint-parser",
   "env": {
     "browser": true,
     "es6": true,
     "es2017": true,
     "es2020": true,
+    "es2021": true,
     "jquery": true
   },
   "plugins": [
@@ -19,11 +21,6 @@
     "plugin:jsdoc/recommended",
     "plugin:jquery/deprecated"
   ],
-  "globals": {
-    "Atomics": "readonly",
-    "SharedArrayBuffer": "readonly"
-  },
-  "parser": "@babel/eslint-parser",
   "rules": {
     "max-len": ["warn", {
       "code": 120
