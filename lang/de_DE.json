@@ -1,8 +1,8 @@
 {
     "cli": {
-        "added_tags": "Der Tag <i>{tags}</i> wurde zu <b>{song}</b> hinzugefügt.",
-        "added_tags_to_all": "Der Tag <i>{tags}</i> wurde zu den Liedern in der Playlist hinzugefügt.",
-        "admin_help": "",
+        "added_tags": "<b>{song}</b> wurde mit <i>{tags}</i> verschlagwortet.",
+        "added_tags_to_all": "Alle Lieder in der Playlist wurden mit <i>{tags}</i> verschlagwortet.",
+        "admin_help": "<h3>Adminbefehle</h3>\n<b>Bot</b>\n<ul>\n<li><b>!<u>k</u>ill </b> - Bot stoppen</li>\n<li><b>!update </b> - Bot update</li>\n<li><b>!userban </b> {user}  - Nutzer bannen</li>\n<li><b>!userunban </b> {user}  - Nutzer entbannen</li>\n<li><b>!urlbanlist </b>  - Zeige alle gebannten URLs an</li>\n<li><b>!urlban </b> [{url}]  - Banne {url} (oder das aktuelle Lied, wenn leer) and lösche diese URL aus der Bibliothek.</li>\n<li><b>!urlunban </b> {url}  - Entbanne {url}</li>\n<li><b>!rescan </b> {url}  - Erneuere den lokalen Cache der Musikdateien</li>\n<li><b>!dropdatabase</b> - Lösche die aktuelle Datenbank. Dadurch gehen alle Einstellungen und die Bibliothek verloren.</li>\n</ul>\n<b>Webinterface</b>\n<ul>\n<li><b>!<u>webuserlist</u></b> - Zeige alle Nutzer, die auf das Webinterface zugreifen dürfen (wenn die Authentifizierung auf 'password' gestellt ist).</li>\n<li><b>!<u>webuseradd</u> {nick name}</b> - Erlaube {nick name} den Zugriff auf das Webinterface (wenn die Authentifizierung auf 'password' gestellt ist).</li>\n<li><b>!<u>webuserdel</u> {nick name}</b> - Lösche den Zugriff von {nick name} auf das Webinterface (wenn die Authentifizierung auf 'password' gestellt ist).</li>\n</ul>",
         "auto_paused": "Sende <i>!play</i>, um die Wiedergabe fortzusetzen!",
         "bad_command": "<i>{command}</i>: Befehl nicht verfügbar. Sende <i>!help</i>, um dir alle möglichen Befehle anzuzeigen.",
         "bad_parameter": "<i>{command}</i>: Ungültiges Argument.",
