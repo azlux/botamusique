@@ -7,16 +7,16 @@ RUN apt update && \
     apt install -y opus-tools ffmpeg libmagic-dev curl tar && \
     rm -rf /var/lib/apt/lists/*
 
-COPY . /botamusique
-
+RUN mkdir /botamusique
+COPY requirements.txt /botamusique
 WORKDIR /botamusique
-
 RUN rm -rf .git*
 
 RUN python3 -m venv venv && \
     venv/bin/pip install wheel && \
     venv/bin/pip install -r requirements.txt
 
+COPY . /botamusique
 RUN chmod +x entrypoint.sh
 
 ENTRYPOINT [ "/botamusique/entrypoint.sh" ]
