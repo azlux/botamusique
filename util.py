@@ -17,6 +17,7 @@ from sys import platform
 import traceback
 import requests
 from packaging import version
+from enum import Enum
 
 log = logging.getLogger("bot")
 
@@ -521,3 +522,21 @@ class VolumeHelper:
 
         # Some dirty trick to stretch the function, to make to be 0 when input is -35 dB
         return (10 ** (dB / 20) - 10 ** (-35 / 20)) / (1 - 10 ** (-35 / 20))
+
+
+class TaskState(Enum):
+    added = 0
+    started = 1
+    released = 2
+    paused = 3
+    stopped = 4
+    
+    
+class TaskHandle:
+    def __init__(self, name, state, handle):
+        self.name = name
+        self.state = [TaskState.added] # using list as mutable wrapper
+        self.handle = handle
+        self.thread = None
+        
+

@@ -562,7 +562,6 @@ def library_info():
     return jsonify(dict(
         dirs=get_all_dirs(),
         upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True),
-        delete_allowed=var.config.getboolean("webinterface", "delete_allowed", fallback=True),
         tags=tags,
         max_upload_file_size=max_upload_file_size
     ))
@@ -606,25 +605,22 @@ def library():
 
                 return redirect("./", code=302)
             elif request.form['action'] == 'delete':
-                if var.config.getboolean("webinterface", "delete_allowed", fallback=True):
-                    items = dicts_to_items(var.music_db.query_music(condition))
-                    for item in items:
-                        var.playlist.remove_by_id(item.id)
-                        item = var.cache.get_item_by_id(item.id)
+                items = dicts_to_items(var.music_db.query_music(condition))
+                for item in items:
+                    var.playlist.remove_by_id(item.id)
+                    item = var.cache.get_item_by_id(item.id)
 
-                        if os.path.isfile(item.uri()):
-                            log.info("web: delete file " + item.uri())
-                            os.remove(item.uri())
+                    if os.path.isfile(item.uri()):
+                        log.info("web: delete file " + item.uri())
+                        os.remove(item.uri())
 
-                        var.cache.free_and_delete(item.id)
+                    var.cache.free_and_delete(item.id)
 
-                    if len(os.listdir(var.music_folder + request.form['dir'])) == 0:
-                        os.rmdir(var.music_folder + request.form['dir'])
+                if len(os.listdir(var.music_folder + request.form['dir'])) == 0:
+                    os.rmdir(var.music_folder + request.form['dir'])
 
-                    time.sleep(0.1)
-                    return redirect("./", code=302)
-                else:
-                    abort(403)
+                time.sleep(0.1)
+                return redirect("./", code=302)
             else:
                 page_count = math.ceil(total_count / ITEM_PER_PAGE)
 

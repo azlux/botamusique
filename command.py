@@ -1,4 +1,5 @@
 # coding=utf-8
+
 import logging
 import secrets
 import datetime
@@ -73,6 +74,7 @@ def register_all_commands(bot):
     bot.register_command(commands('remove_webinterface_user'), cmd_web_user_remove, admin=True)
     bot.register_command(commands('list_webinterface_user'), cmd_web_user_list, admin=True)
     bot.register_command(commands('change_user_password'), cmd_user_password, no_partial_match=True)
+    
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
     # bot.register_command('loop', cmd_loop_state, True)
@@ -549,6 +551,7 @@ def cmd_yt_play(bot, user, text, command, parameter):
 
 def cmd_help(bot, user, text, command, parameter):
     global log
+    #for loop mudule help strig append
     bot.send_msg(tr('help'), text)
     if bot.is_admin(user):
         bot.send_msg(tr('admin_help'), text)
@@ -831,6 +834,7 @@ def cmd_mode(bot, user, text, command, parameter):
                                   user=bot.mumble.users[text.actor]['name']), text)
         if parameter == "random":
             bot.interrupt()
+            bot.launch_music()
 
 
 def cmd_play_tags(bot, user, text, command, parameter):
@@ -1248,3 +1252,5 @@ def cmd_loop_state(bot, user, text, command, parameter):
 
 def cmd_item(bot, user, text, command, parameter):
     var.playlist._debug_print()
+
+
