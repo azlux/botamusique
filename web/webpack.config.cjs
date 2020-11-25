@@ -5,7 +5,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   mode: 'production',
   devtool: 'source-map',
-  amd: false,
   entry: {
     main: [
       './js/app.mjs',
