@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   mode: 'production',
+  devtool: 'source-map',
   entry: {
     main: [
       './js/app.mjs',
@@ -13,16 +14,9 @@ module.exports = {
       './sass/app-dark.scss',
     ],
   },
-  devtool: 'source-map',
-  /*optimization: {
-    splitChunks: {
-      chunks: 'all',
-    },
-  },*/
   output: {
     filename: 'static/js/[name].js',
     path: path.resolve(__dirname, '../'),
-    // ecmaVersion: 5,
   },
   plugins: [
     new MiniCssExtractPlugin({
@@ -48,10 +42,15 @@ module.exports = {
         {
           loader: 'postcss-loader',
           options: {
-            plugins: function() {
-              return [
-                require('autoprefixer'),
-              ];
+            postcssOptions: {
+              plugins: [
+                [
+                  'autoprefixer',
+                  {
+                    // Options
+                  },
+                ],
+              ],
             },
           },
         },
@@ -61,6 +60,9 @@ module.exports = {
     {
       test: /\.m?js$/,
       exclude: /(node_modules|bower_components)/,
+      resolve: {
+        fullySpecified: false,
+      },
       use: {
         loader: 'babel-loader',
         options: {
@@ -73,15 +75,9 @@ module.exports = {
               },
             ],
           ],
-          plugins: [
-            '@babel/plugin-proposal-class-properties',
-          ],
         },
       },
     },
     ],
   },
-  /* experiments: {
-    mjs: true,
-  },*/
 };
