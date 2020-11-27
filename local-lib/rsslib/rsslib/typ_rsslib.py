@@ -30,15 +30,18 @@ def command(trig, no_partial_match=True, admin=True, methods=['handle']):
     return inner_decorator
 
 
-class RSSLib():
+class Rss():
     def __init__(self, bot):
         self.bot = bot
         self.load_config()
         self.result = trl('no_result', 'rsslib')
+        self.new_entries = {}
+        self.queued_entries = []
+        self.prev_hash = ''
 
     @command('getrss', no_partial_match=False, admin=False)
-    def cmd_showrss(self, bot, user, text, command, parameter):
-        self.get_feeds()
+    def cmd_getrss(self, bot, user, text, command, parameter):
+        self.get_latest(skip_prev=True)
         self.send_feed(text.actor)
 
     @command('subrss', no_partial_match=False, admin=False)
@@ -128,7 +131,7 @@ class RSSLib():
 
     def send_feed(self, text_actor=None):
         # Send to rss channel and subsribed users or specified user
-        rss_channel = self.bot.mumble.channels[self.rss_channel_id]       
+        rss_channel = self.bot.mumble.channels[self.rss_channel_id]
         if text_actor == None:
             # To subbed users
             for user_id in self.subbed_users:
@@ -146,56 +149,100 @@ class RSSLib():
         else:
             # To specific user
             self.bot.mumble.users[text_actor].send_text_message(self.result)
-   
-    def get_feeds(self):
-        NewsFeed = feedparser.parse(self.rss_url)
-        self.bot.log.debug(f'get_feeds: Number of RSS entries : {len(NewsFeed.entries)}')
-        if len(NewsFeed.entries) > 0:
-            title = NewsFeed.entries[1]['title']
-            summary = NewsFeed.entries[1]['summary']
-            link = NewsFeed.entries[1]['link']
-            domain = urlparse(self.rss_url).netloc
-            rm = trl('read_more', 'rsslib' )
-            self.result = f'<br><b>{title}</b><br><br>{summary}<br><br>{rm} <a href="{link}">{domain}</a>'
 
-            sha1_title = hashlib.sha1(title.encode('utf-8')).hexdigest()
-            if sha1_title == self.previous_entry:
-                self.bot.log.debug(f'get_feeds: RSS nothing new')
-                return False
-            else:
-                self.bot.log.debug(f'get_feeds: RSS entry : {self.result}')
-                self.previous_entry = sha1_title
-                self.config.set('feeds','previous_entry', self.previous_entry)
-                self.save_config()
+    def get_latest(self, skip_prev=True):
+        len_entries = len(self.queued_entries)
+        self.get_feeds()
+        self.bot.log.debug(f'get_latest: queue/entries: {len(self.queued_entries)}/{len_entries}')
+        for i in self.queued_entries:
+            self.bot.log.debug(f"\t{i[1]['updated']}")
+            self.bot.log.debug(f"\t{i[1]['title']}")
+            self.bot.log.debug(f"\t{i[0]}\n")
+
+        # Prepare first entry on list as self.result
+        if not len_entries == 0:
+            if skip_prev:
+                entry = self.queued_entries.reverse()
+
+            entry = self.queued_entries[len_entries-1]
+            title = entry[1]['title']
+            updated = entry[1]['updated']
+            summary = entry[1]['summary']
+            link = entry[1]['link']
+            domain = urlparse(self.rss_url).netloc
+            read_more = trl('read_more', 'rsslib' )
+
+            # Save entry result and remove from queue
+            self.result = f'<br><i>{updated}</i><br><b>{title}</b><br><br>{summary}<br><br>{read_more} <a href="{link}">{domain}</a>'
+            self.bot.log.debug(f'get_latest: RSS entry : {self.result}')
+
+            self.prev_hash = entry[0]
+            self.previous_entry = self.prev_hash
+            self.config.set('feeds','previous_entry', self.previous_entry)
+            self.save_config()
+
+            # Just walk list, until skip_prev*(a way to get rid of long list spam at first initial run of feed)
+            self.queued_entries.remove(entry)
+            if skip_prev:
+                self.queued_entries = []
                 return True
 
-    def track_channel(self):
+            if len(self.queued_entries) >= 1:
+                return True
+            else:
+                return False
+        else:
+            self.bot.log.debug(f'get_latest: RSS nothing new')
+            return False
+
+    def get_feeds(self):
+        if len(self.queued_entries) == 0:
+            new_entries = {}
+            self.bot.log.debug(f'get_feeds: obtain new RSS entry list...')
+            NewsFeed = feedparser.parse(self.rss_url)
+            if NewsFeed.status == 200:
+                for entry in NewsFeed.entries:
+                    title = entry['title']
+                    sha1_title = hashlib.sha1(title.encode('utf-8')).hexdigest()
+                    new_entries[sha1_title] = entry
+                # Filter entries up to known last item sha1
+                for entry in new_entries:
+                    if entry == self.previous_entry:
+                        # skip the rest
+                        self.bot.log.debug(f'get_feeds: skipping all the left over entries at entry : {entry}')
+                        break
+                    elif entry not in self.queued_entries:
+                        self.queued_entries.append([entry, new_entries[entry]])
+                # Make entry list old to new.
+                self.queued_entries.reverse()
+                return True
+            else:
+                self.bot.log.debug(f'get_feeds: Some connection error {NewsFeed.status}')
+            return False
+
+    def track_channel(self): # *mv => class util TrackChannelIdent()
         # Keep track of channel name changes, deletion, creation
-        def channel_resolver(channels, channel, ident):            
+        def channel_resolver(channels, channel, ident):
             def name_exist(channels, name):
                 if name == '':
                     return False
-                
                 if name == False:
                     return False
-    
                 for obj in channels:
                     if channels[obj]['name'] == name:
                         return channels[obj]
                 return False
-    
+
             def id_exist(channels, ident):
                 if ident == '':
                     return False
-    
                 if ident == False:
                     return False
-    
                 if ident in channels:
                     return channels[ident]
                 else:
                     return False
-                
+
             cname, cid = name_exist(channels, channel), id_exist(channels, ident)
             if cname and not cid:
                 return 'resolved_id', cname['name'], cname['channel_id']
@@ -204,7 +251,10 @@ class RSSLib():
             elif cname and cid:
                 if (cname['name'] == cid['name']) and (cname['channel_id'] == cid['channel_id']):
                     return 'ok', cname['name'], cname['channel_id']
-            elif not cname and not cid:               
+                else:
+                    self.bot.log.debug(f'channel_resolver: param_err cname/cid\n{cname}\n / \n{cid}')
+                    return 'param_err', False, False
+            elif not cname and not cid:
                 return 'removed', False, False
 
         status, channel, channel_id = channel_resolver(self.bot.mumble.channels, self.rss_channel, self.rss_channel_id)
@@ -226,35 +276,6 @@ class RSSLib():
             return False
         elif status == 'ok':
             return True
-
-    def task_rss(self, state):
-        self.bot.log.debug(f'task_rss: initialized...')
-
-        while True:
-            try:
-                if state[0] == util.TaskState.started:
-                    self.bot.log.debug(f'task_rss: idle, waiting for release...')
-                elif state[0] == util.TaskState.released:
-                    if self.checkrss:
-                        if self.track_channel():
-                            if self.get_feeds():                                
-                                self.send_feed()
-                    else:
-                        state[0] = util.TaskState.paused
-                elif state[0] == util.TaskState.paused:
-                    self.bot.log.debug(f'task_rss: idle/paused, waiting for release')
-                    # Resume requests by command
-                    if self.checkrss:
-                        state[0] = util.TaskState.released
-                else:
-                    self.bot.log.debug(f'task_rss: ending...')
-                    state[0] = util.TaskState.stopped
-                    break
-            except Exception as loop_error:
-                self.bot.log.debug(f'task_rss: exception:\n {loop_error}')
-                state[0] = util.TaskState.stopped
-                break
-            time.sleep(self.interval*60)
 
     def load_config(self):
         cfgdef = 'local-lib/rsslib/libconfiguration.default.ini'
@@ -287,16 +308,43 @@ class RSSLib():
         with open(self.cfg, 'w') as configfile:
             self.config.write(configfile)
 
+    def task_rss(self, state):
+        self.bot.log.debug(f'task_rss: initialized...')
+        while True:
+            try:
+                if state[0] == util.TaskState.started:
+                    self.bot.log.debug(f'task_rss: idle, waiting for release...')
+                elif state[0] == util.TaskState.released:
+                    if self.checkrss:
+                        if self.track_channel():
+                            if self.get_latest(skip_prev=False):
+                                self.send_feed()
+                    else:
+                        state[0] = util.TaskState.paused
+                elif state[0] == util.TaskState.paused:
+                    self.bot.log.debug(f'task_rss: idle/paused, waiting for release')
+                    # Resume requests by command
+                    if self.checkrss:
+                        state[0] = util.TaskState.released
+                else:
+                    self.bot.log.debug(f'task_rss: ending...')
+                    state[0] = util.TaskState.stopped
+                    break
+            except Exception as loop_error:
+                self.bot.log.debug(f'task_rss: exception:\n {loop_error}')
+                state[0] = util.TaskState.stopped
+                break
+            time.sleep(self.interval*60)
+
 
 def load_mod(bot):
     if feedparser is None:
         raise NameError(f'rsslib.typical.loadmod: feedparser required, `venv/bin/python -m pip install feedparser`')
-    lib = RSSLib(bot)
+    lib = Rss(bot)
     lib_name=type(lib).__name__
     bot.register_lib(lib_name=lib_name, handle=lib, route_map=route_map)
 
     # Create rss task
     task_name=lib.task_rss.__name__
     bot.create_task(task_name, lib.task_rss)
-
 
