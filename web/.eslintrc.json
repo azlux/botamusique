@@ -21,6 +21,9 @@
     "plugin:jsdoc/recommended",
     "plugin:jquery/deprecated"
   ],
+  "overrides": [{
+    "files": ["*.js", "*.mjs"]
+  }],
   "rules": {
     "max-len": ["warn", {
       "code": 120
