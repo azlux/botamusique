@@ -118,8 +118,7 @@ def check_update(current_version):
     global log
     log.debug("update: checking for updates...")
     new_version = new_release_version(var.config.get('bot', 'target_version'))
-    if version.parse(new_version) > version.parse(current_version) \
-            and var.config.get('bot', 'target_version') == "stable":
+    if version.parse(new_version) > version.parse(current_version):
         changelog = fetch_changelog()
         log.info(f"update: new version {new_version} found, current installed version {current_version}.")
         log.info(f"update: changelog: {changelog}")

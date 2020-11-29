@@ -32,7 +32,8 @@ steps:
     commands:
       - apt-get -qq update && apt-get -qq install git > /dev/null
       - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
-      - version=$(git rev-parse HEAD)
+      - git fetch --tags
+      - version=$(git describe --tags)
       - echo "current git commit is $version"
       - echo $version > /mnt/botamusique/testing-version
       - sed -i "s/version = 'git'/version = '$version'/" mumbleBot.py
