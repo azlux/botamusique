@@ -831,7 +831,6 @@ def cmd_mode(bot, user, text, command, parameter):
                                   user=bot.mumble.users[text.actor]['name']), text)
         if parameter == "random":
             bot.interrupt()
-            bot.launch_music()
 
 
 def cmd_play_tags(bot, user, text, command, parameter):
