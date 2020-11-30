@@ -11,9 +11,14 @@ import util
 from constants import tr_lib as trl, tr_cli as tr
 #import variables as var
 
-
 # TODO:
-# commands(**kwargs) since __init__ self.bot
+# In order to get rid of another bot as being the argument at commands, a suggestion is to migrate old commands.
+# pack at mumbleBot.py.message_received / command_exc
+#    self.cmd_handle[command_exc]['handle'](self, user, text, command_exc, parameter)
+#                                       v
+#    self.cmd_handle[command_exc]['handle'](bot=self, user=user, text=text, command_exc=command_exc, parameter=parameter)
+#       - Requires modification typ_rssplugin.py commands for *args (to ignore it's bot object, since __init__ self.bot) *Example below @command('kwargs')
+#       - Requires modification of all existing command.py commands for dealing with *args (to still obtain that bot object)
 
 
 # Index module
@@ -38,7 +43,18 @@ class Rss():
         self.new_entries = {}
         self.queued_entries = []
         self.prev_hash = ''
-        
+
+    '''
+    @command('kwargs')
+    def cmd_test(self, **exhan):
+        # from commented self,bot.message_received
+        # (bot=self, user=user, text=text, command_exc=command_exc, parameter=parameter)
+        # Printing dictionary items
+        for key in exhan:
+            print("> %s = %s" % (key, exhan[key]))
+        self.bot.mumble.users[exhan['text'].actor].send_text_message(f'Kuwarug..')
+    '''
+
     @command('getrss', no_partial_match=False, admin=False)
     def cmd_getrss(self, bot, user, text, command, parameter):
         self.get_latest(skip_prev=True)
@@ -306,15 +322,16 @@ class Rss():
         with open(self.cfg, 'w') as configfile:
             self.config.write(configfile)
 
-    def task_rss(self):        
+    def task_rss(self):
         self.bot.log.debug(f'task_rss: initialized... ')
         time.sleep(2) # be patient
-        while True:            
-            try:                    
+        while True:
+            try:
                 if self.checkrss:
-                    if self.track_channel():
-                        if self.get_latest(skip_prev=False):
-                            self.send_feed()
+                    print('RSS ESCAPED')
+                    #if self.track_channel():
+                    #    if self.get_latest(skip_prev=False):
+                    #        self.send_feed()
                 else:
                     self.bot.log.debug(f'task_rss: paused...')
             except Exception as loop_error:
