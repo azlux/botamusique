@@ -360,6 +360,7 @@ class MumbleBot:
                     return
 
                 self.cmd_handle[command_exc]['handle'](self, user, text, command_exc, parameter)
+                #self.cmd_handle[command_exc]['handle'](bot=self, user=user, text=text, command_exc=command_exc, parameter=parameter)
             except:
                 error_traceback = traceback.format_exc()
                 error = error_traceback.rstrip().split("\n")[-1]
