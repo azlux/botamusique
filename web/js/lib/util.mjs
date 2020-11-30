@@ -1,9 +1,11 @@
+import {isString} from "./type.mjs";
+
 export function isOverflown(element) {
   return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
 }
 
 export function hash(string) {
-  if (typeof string != 'string') return 0;
+  if (!isString(string)) return 0;
   let hash = 0;
   if (string.length === 0) {
     return hash;
