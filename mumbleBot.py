@@ -44,7 +44,6 @@ class MumbleBot:
         self.cmd_handle = {}
         self.lib_handle = {}
         self.task_handle = {}
-        self.tasks_started = False
 
         self.stereo = var.config.getboolean('bot', 'stereo', fallback=True)
 
@@ -217,18 +216,18 @@ class MumbleBot:
         else:
             return util.get_snapshot_version()
 
-    def register_lib(self, lib_name, handle, route_map):
+    def register_plugin(self, lib_name, handle, route_map):
         cmdl = {}
         if handle:
             # Index provided commands by the lib.
-            self.log.debug(f'bot.register_lib: lib added: {lib_name}')
+            self.log.debug(f'bot.register_plugin: lib added: {lib_name}')
             for fnamekey in route_map:
                 fn = route_map[fnamekey]['handle'].__name__
                 cmdl[fn] = {'command': fnamekey,
                                'function': fn,
                                'no_partial_match': route_map[fnamekey]['no_partial_match'],
                                'admin': route_map[fnamekey]['admin']}
-            self.log.debug(f'bot.register_lib: {lib_name} has the following commands: {json.dumps(cmdl, indent = 1)}')
+            self.log.debug(f'bot.register_plugin: {lib_name} has the following commands: {json.dumps(cmdl, indent = 1)}')
 
         # Register bot commands.
         for attribute in dir(handle):
@@ -239,38 +238,22 @@ class MumbleBot:
                     fcmd, fname, fpmatch, fadmin = cmdl[key]['command'], cmdl[key]['function'], cmdl[key]['no_partial_match'], cmdl[key]['admin']
                     if callable(attribute_value):
                         if attribute == fname:
-                            self.log.debug(f'bot.register_lib: attribute as function name : {attribute}')
+                            self.log.debug(f'bot.register_plugin: attribute as function name : {attribute}')
                             # NOTE: pypassing commands list from configuration.ini
                             var.bot.register_command(fcmd, attribute_value, no_partial_match=fpmatch, admin=fadmin)
                         else:
-                            self.log.debug(f'bot.register_lib: error importing lib. attribute : {attribute}')
+                            self.log.debug(f'bot.register_plugin: error importing lib. attribute : {attribute}')
 
     def create_task(self, task_name, handle):
         self.log.debug(f'bot.create_task: taskname : {task_name}, TaskHandle : {handle}')
         if handle:
-            self.task_handle[task_name] = util.TaskHandle
-            self.task_handle[task_name].name = task_name
-            self.task_handle[task_name].state = [util.TaskState.added] # using list as mutable wrapper
-            self.task_handle[task_name].handle = handle
-            thnm = f"Task{task_name.replace('task_', '').capitalize()}Thread"
-            self.task_handle[task_name].thread = threading.Thread(
-                    target=self.task_handle[task_name].handle, name=thnm, args=(self.task_handle[task_name].state,))
-            
-            self.task_handle[task_name].thread.daemon = True
+            # Setup Thread within TaskHandle
+            self.task_handle[task_name] = util.TaskHandle(name=task_name, handle=handle)
             self.log.debug(f'bot.create_task: task added: {repr(self.task_handle[task_name].name)}')
-            if self.task_handle[task_name].state[0] == util.TaskState.added:
-                self.task_handle[task_name].thread.start()
-                if self.task_handle[task_name].thread.is_alive():
-                    self.task_handle[task_name].state[0] = util.TaskState.started
-                    tsk = self.task_handle[task_name]
-                    self.log.debug(f'bot.create_task: Started thread : {tsk.name} state : {repr(tsk.state[0].name)}')
-                else:
-                    self.log.debug(f'bot.create_task: Thread stopped : {task_name}')
-                    self.task_handle[task_name].state = util.TaskState.stopped
 
     def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False, admin=False):
         cmds = cmd.split(",")
-
+        command = 'dd'
         for command in cmds:
             command = command.strip()
             if command:
@@ -514,21 +497,18 @@ class MumbleBot:
 
     # Main loop of the Bot
     def loop(self):
+        # Release tasks if any
+        for task_name in self.task_handle:
+            # Start thread
+            self.task_handle[task_name].thread.start()
+
+            if self.task_handle[task_name].thread.is_alive():
+                tsk = self.task_handle[task_name]
+                self.log.debug(f'bot.loop release tasks, Started thread : {tsk.name}')
+            else:
+                self.log.debug(f'bot.loop release tasks, Thread stopped : {task_name}')
+
         while not self.exit and self.mumble.is_alive():
-
-            # Release started tasks if any
-            if not self.tasks_started:
-                for task in self.task_handle:
-                    self.log.debug(f'bot.loop: about to release task: {task}')
-                    try:
-                        if self.task_handle[task].state[0] == util.TaskState.started:
-                            self.task_handle[task].state[0] = util.TaskState.released
-                            self.log.debug(f'bot.loop: task_handle state {repr(self.task_handle[task].state[0].name)}')
-                    except (TypeError, Exception) as e:
-                        self.log.debug(f'bot.loop: TypeError, task not released, stopping..\n{e}')
-                        self.task_handle[task].state[0] = util.TaskState.stopped
-                self.tasks_started = True
-
             # Sound buffer
             while self.thread and self.mumble.sound_output.get_buffer_size() > 0.5 and not self.exit:
                 # If the buffer isn't empty, I cannot send new music part, so I wait
