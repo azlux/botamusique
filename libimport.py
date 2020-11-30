@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import pymumble_py3 as pymumble
 import os
 import sys
 import importlib
 import json
-from enum import Enum
 
 #import interface
-import media.system
 #import util
 import variables as var
 
@@ -52,19 +49,20 @@ def load_lib(bot, libname):
         # Execute the module in its own namespace when a module is imported or reloaded.
         log.debug(f'load_lib: try loading {lib}')
         spec.loader.exec_module(lib)
-    except Exception:
+    except Exception as e:
         del sys.modules[lm]
+        log.debug(f'{e}')
         raise ExtensionFailed()
 
-    # load lib
+    # load plugin
     try:
-        load_mod = getattr(lib, 'load_mod')
-        load_mod(bot)
+        load_plugin = getattr(lib, 'load_plugin')
+        load_plugin(bot)
     except AttributeError:
         del sys.modules[lm]
         raise NoEntryPointError()
     else:
-        log.debug(f'load_lib: self.__extensions[{load_mod}]')
+        log.debug(f'load_lib: self.__extensions[{load_plugin}]')
 
 
 def import_all_local_libs(bot):
@@ -87,5 +85,4 @@ def import_all_local_libs(bot):
         else:
             log.info(f'lib import: skipping source: {flib} (disabled or not installed)')
             log.info(f'lib import: to Install local lib use pip:\tvenv/bin/python -m pip install -e local-lib/mylib')
-
 
