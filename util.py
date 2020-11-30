@@ -17,7 +17,8 @@ from sys import platform
 import traceback
 import requests
 from packaging import version
-from enum import Enum
+import threading
+
 
 log = logging.getLogger("bot")
 
@@ -524,19 +525,13 @@ class VolumeHelper:
         return (10 ** (dB / 20) - 10 ** (-35 / 20)) / (1 - 10 ** (-35 / 20))
 
 
-class TaskState(Enum):
-    added = 0
-    started = 1
-    released = 2
-    paused = 3
-    stopped = 4
-    
-    
 class TaskHandle:
-    def __init__(self, name, state, handle):
+    def __init__(self, name, handle):
         self.name = name
-        self.state = [TaskState.added] # using list as mutable wrapper
         self.handle = handle
-        self.thread = None
-        
+        thnm = f"Task{name.replace('task_', '').capitalize()}Thread"
+        self.thread = threading.Thread(
+                    target=handle, name=thnm)
+        self.thread.daemon = True
+
 
