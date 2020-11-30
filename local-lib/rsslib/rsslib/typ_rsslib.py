@@ -13,7 +13,7 @@ from constants import tr_lib as trl, tr_cli as tr
 
 
 # TODO:
-# commands(**kargs) since __init__ self.bot
+# commands(**kwargs) since __init__ self.bot
 
 
 # Index module
@@ -38,7 +38,7 @@ class Rss():
         self.new_entries = {}
         self.queued_entries = []
         self.prev_hash = ''
-
+        
     @command('getrss', no_partial_match=False, admin=False)
     def cmd_getrss(self, bot, user, text, command, parameter):
         self.get_latest(skip_prev=True)
@@ -129,10 +129,10 @@ class Rss():
                 continue
         return False
 
-    def send_feed(self, text_actor=None):
+    def send_feed(self, text_actor=False):
         # Send to rss channel and subsribed users or specified user
         rss_channel = self.bot.mumble.channels[self.rss_channel_id]
-        if text_actor == None:
+        if not text_actor:
             # To subbed users
             for user_id in self.subbed_users:
                 text_actor = self.resolve_registered_user(user_id)
@@ -213,8 +213,6 @@ class Rss():
                         break
                     elif entry not in self.queued_entries:
                         self.queued_entries.append([entry, new_entries[entry]])
-                # Make entry list old to new.
-                self.queued_entries.reverse()
                 return True
             else:
                 self.bot.log.debug(f'get_feeds: Some connection error {NewsFeed.status}')
@@ -308,43 +306,33 @@ class Rss():
         with open(self.cfg, 'w') as configfile:
             self.config.write(configfile)
 
-    def task_rss(self, state):
-        self.bot.log.debug(f'task_rss: initialized...')
-        while True:
-            try:
-                if state[0] == util.TaskState.started:
-                    self.bot.log.debug(f'task_rss: idle, waiting for release...')
-                elif state[0] == util.TaskState.released:
-                    if self.checkrss:
-                        if self.track_channel():
-                            if self.get_latest(skip_prev=False):
-                                self.send_feed()
-                    else:
-                        state[0] = util.TaskState.paused
-                elif state[0] == util.TaskState.paused:
-                    self.bot.log.debug(f'task_rss: idle/paused, waiting for release')
-                    # Resume requests by command
-                    if self.checkrss:
-                        state[0] = util.TaskState.released
+    def task_rss(self):        
+        self.bot.log.debug(f'task_rss: initialized... ')
+        time.sleep(2) # be patient
+        while True:            
+            try:                    
+                if self.checkrss:
+                    if self.track_channel():
+                        if self.get_latest(skip_prev=False):
+                            self.send_feed()
                 else:
-                    self.bot.log.debug(f'task_rss: ending...')
-                    state[0] = util.TaskState.stopped
-                    break
+                    self.bot.log.debug(f'task_rss: paused...')
             except Exception as loop_error:
                 self.bot.log.debug(f'task_rss: exception:\n {loop_error}')
-                state[0] = util.TaskState.stopped
                 break
             time.sleep(self.interval*60)
 
 
-def load_mod(bot):
+def load_plugin(bot):
     if feedparser is None:
         raise NameError(f'rsslib.typical.loadmod: feedparser required, `venv/bin/python -m pip install feedparser`')
-    lib = Rss(bot)
-    lib_name=type(lib).__name__
-    bot.register_lib(lib_name=lib_name, handle=lib, route_map=route_map)
-
-    # Create rss task
-    task_name=lib.task_rss.__name__
-    bot.create_task(task_name, lib.task_rss)
+    plugin = Rss(bot)
+    plugin_name=type(plugin).__name__
+    bot.register_plugin(lib_name=plugin_name, handle=plugin, route_map=route_map)
+    try:
+        # Create rss task
+        task_name=plugin.task_rss.__name__
+        bot.create_task(task_name, plugin.task_rss)
+    except Exception as create_task:
+        bot.log.debug(f'create_task: exception:\n {create_task}')
 
