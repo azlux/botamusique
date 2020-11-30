@@ -253,15 +253,14 @@ class MumbleBot:
 
     def register_command(self, cmd, handle, no_partial_match=False, access_outside_channel=False, admin=False):
         cmds = cmd.split(",")
-        command = 'dd'
-        for command in cmds:
-            command = command.strip()
-            if command:
-                self.cmd_handle[command] = {'handle': handle,
+        for cmd in cmds:
+            cmd = cmd.strip()
+            if cmd:
+                self.cmd_handle[cmd] = {'handle': handle,
                                             'partial_match': not no_partial_match,
                                             'access_outside_channel': access_outside_channel,
                                             'admin': admin}
-                self.log.debug(f'bot: command added: {command}')
+                self.log.debug(f'bot: command added: {cmd}')
 
     def set_comment(self):
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
