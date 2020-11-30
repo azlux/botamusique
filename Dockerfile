@@ -1,51 +1,23 @@
-ARG ARCH=
+FROM python:slim
+ENV DEBIAN_FRONTEND noninteractive
 
-FROM ${ARCH}python:3-slim-buster AS source
-ARG VERSION=7.1
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /botamusique
-RUN apt-get update && apt-get install -y git 
-RUN git clone --recurse-submodules https://github.com/azlux/botamusique.git . && git checkout $VERSION
-
-
-FROM ${ARCH}python:3-slim-buster AS python-builder
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /botamusique
-RUN apt-get update \
-    && apt-get install -y gcc ffmpeg libjpeg-dev libmagic-dev opus-tools zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
-COPY --from=source /botamusique .
-RUN python3 -m venv venv \
-    && venv/bin/pip install wheel \
-    && venv/bin/pip install -r requirements.txt
-
-
-FROM ${ARCH}node:14-buster-slim AS node-builder
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /botamusique/web
-COPY --from=source /botamusique/web .
-RUN npm install
-RUN npm run build
-
-
-FROM ${ARCH}python:3-slim-buster AS template-builder
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /botamusique
-COPY --from=python-builder /botamusique .
-COPY --from=node-builder /botamusique/templates templates
-RUN venv/bin/python scripts/translate_templates.py --lang-dir /botamusique/lang --template-dir /botamusique/templates
-
-
-FROM ${ARCH}python:3-slim-buster
-ENV DEBIAN_FRONTEND=noninteractive
 EXPOSE 8181
+
+RUN apt update && \
+    apt install -y opus-tools ffmpeg libmagic-dev curl tar && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . /botamusique
+
 WORKDIR /botamusique
-RUN apt-get update \
-    && apt-get install -y ffmpeg libmagic-dev opus-tools zlib1g \
-    && rm -rf /var/lib/apt/lists/*
-COPY --from=python-builder /botamusique .
-COPY --from=node-builder /botamusique/static static
-COPY --from=template-builder /botamusique/templates templates
+
+RUN rm -rf .git*
+
+RUN python3 -m venv venv && \
+    venv/bin/pip install wheel && \
+    venv/bin/pip install -r requirements.txt
+
 RUN chmod +x entrypoint.sh
+
 ENTRYPOINT [ "/botamusique/entrypoint.sh" ]
-CMD ["/botamusique/venv/bin/python", "/botamusique/mumbleBot.py"]
+CMD ["venv/bin/python", "mumbleBot.py"]
