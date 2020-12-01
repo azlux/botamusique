@@ -19,7 +19,7 @@ export default class {
    * @param {string} dir
    * @param {Array} tags
    * @param {string} keywords
-   * @returns {object} Axios response object.
+   * @returns {Promise} Axios promise.
    */
   async getItems(page = 1, type = [], dir = '', tags = [], keywords = '') {
     return this.#axios.post('library', {

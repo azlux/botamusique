@@ -12,6 +12,14 @@ export default class {
    */
   version = 0;
 
+  /**
+   * @member {boolean} playing Current playing state.
+   */
+  playing = false;
+
+  /**
+   * @param {object} axios Axios instance.
+   */
   constructor(axios) {
     this.#axios = axios;
   }
@@ -39,7 +47,7 @@ export default class {
    *
    * @param {number} range_from Index of beginning item.
    * @param {number} range_to Index of ending item.
-   * @returns {object} Axios response object.
+   * @returns {Promise} Axios promise.
    */
   async getItems(range_from = 0, range_to = 0) {
     let data = {};
@@ -52,5 +60,22 @@ export default class {
     }
 
     return this.#axios.get('playlist', data);
+  }
+
+  /**
+   * Toggle play state (play/pause).
+   *
+   * @returns {Promise} Axios promise.
+   */
+  async playPause() {
+    if (this.playing) {
+      this.#axios.post('post', {
+        action: 'pause',
+      });
+    } else {
+      this.#axios.post('post', {
+        action: 'resume',
+      });
+    }
   }
 }

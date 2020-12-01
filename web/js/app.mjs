@@ -61,13 +61,14 @@ var playlistItemTemplate;
 var libraryGroup;
 var libraryItemTemplate;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   playlistTable = document.getElementById('playlist-table');
   playlistItemTemplate = document.querySelector('.playlist-item-template');
   libraryGroup = document.getElementById('library-group');
   libraryItemTemplate = document.getElementById('library-item');
   const musicUrlInput = document.getElementById('music-url-input');
   const radioUrlInput = document.getElementById('radio-url-input');
+  const playPauseBtn = document.getElementById('play-pause-btn');
 
   /**
    * Initialize components
@@ -89,6 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   document.getElementById('theme-switch-btn').addEventListener('click', () => {
     Theme.swap();
+  });
+
+  playPauseBtn.addEventListener('click', () => {
+    musicPlaylist.playPause();
   });
 
   document.getElementById('add-music-url').querySelector('button').addEventListener('click', () => {
