@@ -17,8 +17,7 @@
     <header class="container page-header mb-5" id="banner">
         <div class="row">
             <div class="col-auto">
-                <img src="static/image/logo.png" height="200px"
-                                                 alt="{{ tr('aria_botamusique_logo') }}">
+                <img src="static/image/logo.png" height="200px" alt="{{ tr('aria_botamusique_logo') }}">
             </div>
             <div class="col my-auto">
                 <h1>{{ tr('page_title') }}</h1>
@@ -88,7 +87,7 @@
                     </tr>
                 </thead>
                 <tbody id="playlist-table" class="playlist-table">
-                    <tr id="playlist-loading">
+                    <!--<tr id="playlist-loading">
                         <td colspan="4" class="text-center">
                             <img style="margin: auto; width: 35px;" src="static/image/loading.svg"
                                                                     alt="{{ tr('aria_spinner') }}" />
@@ -104,7 +103,7 @@
                         <td colspan="4" class="text-center">
                             <a class="text-muted" href="javascript:">{{ tr('expand_playlist') }}</a>
                         </td>
-                    </tr>
+                    </tr>-->
                     <tr class="playlist-item-template d-none" aria-hidden="true">
                         <th scope="row" class="playlist-item-index d-none d-md-table-cell">1</th>
                         <td>
@@ -202,14 +201,14 @@
             <div class="card-body">
                 <div id="library-group" class="list-group library-group" style="overflow: auto;">
                     <input type="hidden" id="deleteAllowed" value="true" />
-                    <div id="library-item-loading" class="list-group-item library-item">
+                    <!--<div id="library-item-loading" class="list-group-item library-item">
                         <img style="margin: auto; width: 35px;" src="static/image/loading.svg"
                                                                 alt="{{ tr('aria_spinner') }}" />
                     </div>
                     <div id="library-item-empty" style="display: none" class="list-group-item library-item">
                         <img style="margin: auto; width: 35px;" src="static/image/empty_box.svg"
                                                                 alt="{{ tr('aria_empty_box') }}" />
-                    </div>
+                    </div>-->
                     <div id="library-item" style="display: none;" class="list-group-item library-item">
                         <input hidden type="hidden" class="library-item-id" value="" />
 

@@ -13,21 +13,149 @@ library.add(
   faFileAlt
 );
 
-// Old application code
-import './main.mjs';
+import NProgress from 'nprogress/nprogress.js';
+import axios from 'axios/lib/axios.js';
+
+axios.defaults.onDownloadProgress = (e) => {
+  NProgress.set(Math.floor(e.loaded * 1.0) / e.total);
+};
+
+// Add a request interceptor
+axios.interceptors.request.use((config) => {
+  NProgress.start();
+
+  return config;
+}, (error) => {
+  console.error(error);
+
+  return Promise.reject(error);
+});
+
+// Add a response interceptor
+axios.interceptors.response.use((response) => {
+  NProgress.done();
+
+  return response;
+}, (error) => {
+  console.error(error);
+
+  return Promise.reject(error);
+});
+
+// Old Application Code
+//import './main.mjs';
 
 // New application code
-import Theme from './lib/theme.mjs';
+import Theme from './components/theme.mjs';
+import MusicPlaylist from './components/playlist.mjs';
+import MusicLibrary from './components/library.mjs';
+
+const musicPlaylist = new MusicPlaylist(axios);
+const musicLibrary = new MusicLibrary(axios);
+
+var playlistTable;
+var playlistItemTemplate;
+var libraryGroup;
+var libraryItemTemplate;
 
 document.addEventListener('DOMContentLoaded', () => {
+  playlistTable = document.getElementById('#playlist-table');
+  playlistItemTemplate = document.querySelector('.playlist-item-template');
+  libraryGroup = document.getElementById('#library-group');
+  libraryItemTemplate = document.getElementById('#library-item');
+  const musicUrlInput = document.getElementById('music-url-input');
+  const radioUrlInput = document.getElementById('radio-url-input');
+
+  /**
+   * Initialize components
+   */
   Theme.init();
 
   // Replace any existing <i> tags with <svg> and set up a MutationObserver to
   // continue doing this as the DOM changes.
   dom.watch();
 
+  /**
+   * Run component startups
+   */
+  updatePlaylist();
+  updateLibrary();
+
+  /**
+   * Catch user events
+   */
   document.getElementById('theme-switch-btn').addEventListener('click', () => {
     Theme.swap();
   });
+
+  document.getElementById('add-music-url').querySelector('button').addEventListener('click', () => {
+    musicLibrary.addMusicByURL(musicUrlInput.value).then(() => {
+      musicUrlInput.value = '';
+    });
+  });
+
+  document.getElementById('add-radio-url').querySelector('button').addEventListener('click', () => {
+    musicLibrary.addRadioByURL(radioUrlInput.value).then(() => {
+      radioUrlInput.value = '';
+    });
+  });
+
+  /**
+   * Recurring events (reduce as much as possible)
+   */
+  // Todo: configurable delay
+  setInterval(() => {
+    // See if server has been updated by another client
+    if (musicPlaylist.checkForUpdate()) {
+      updatePlaylist();
+    }
+  }, 5000);
 });
 
+/**
+ * Load playlist state and items.
+ */
+async function updatePlaylist() {
+  musicPlaylist.getItems().then(response => {
+    response.data.items.forEach(item => {
+      // Clone playlist item template
+      const playlistItem = playlistItemTemplate.cloneNode();
+
+      // Set new element's ID
+      playlistItem.id = 'playlist-item-' + item.index;
+
+      // Update item class
+      playlistItem.classList.add('playlist-item');
+
+      // Remove Bootstrap display:none class
+      playlistItem.classList.remove('d-none');
+
+      // Create DocumentFragment
+      const fragment = document.createDocumentFragment();
+      fragment.appendChild(playlistItem);
+
+      // Append item to DOM
+      playlistTable.appendChild(fragment);
+    });
+  });
+}
+
+/**
+ * Load library state and items.
+ */
+async function updateLibrary() {
+  musicLibrary.getItems().then(response => {
+    response.data.items.forEach(item => {
+      const libraryItem = libraryItemTemplate.cloneNode();
+
+      libraryItem.classList.add('library-active-item');
+
+      // Create DocumentFragment
+      const fragment = document.createDocumentFragment();
+      fragment.appendChild(libraryItem);
+
+      // Append item to DOM
+      libraryGroup.appendChild(fragment);
+    });
+  });
+}

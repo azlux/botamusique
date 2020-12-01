@@ -656,6 +656,8 @@ function updateResults(dest_page = 1) {
   const data = getFilters(dest_page);
   data.action = 'query';
 
+  console.debug(data);
+
   lib_group.animate({
     opacity: 0,
   }, 200, function() {
