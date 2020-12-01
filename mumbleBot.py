@@ -560,7 +560,7 @@ class MumbleBot:
                     else:
                         self.wait_for_ready = False
 
-        while self.mumble.sound_output.get_buffer_size() > 0:
+        while self.mumble.sound_output.get_buffer_size() > 0 and self.mumble.is_alive():
             # Empty the buffer before exit
             time.sleep(0.01)
         time.sleep(0.5)
