@@ -35,6 +35,8 @@ axios.interceptors.request.use((config) => {
 axios.interceptors.response.use((response) => {
   NProgress.done();
 
+  console.debug(response.data);
+
   return response;
 }, (error) => {
   console.error(error);
@@ -49,6 +51,7 @@ axios.interceptors.response.use((response) => {
 import Theme from './components/theme.mjs';
 import MusicPlaylist from './components/playlist.mjs';
 import MusicLibrary from './components/library.mjs';
+import {limitChars} from './lib/text.mjs';
 
 const musicPlaylist = new MusicPlaylist(axios);
 const musicLibrary = new MusicLibrary(axios);
@@ -59,10 +62,10 @@ var libraryGroup;
 var libraryItemTemplate;
 
 document.addEventListener('DOMContentLoaded', () => {
-  playlistTable = document.getElementById('#playlist-table');
+  playlistTable = document.getElementById('playlist-table');
   playlistItemTemplate = document.querySelector('.playlist-item-template');
-  libraryGroup = document.getElementById('#library-group');
-  libraryItemTemplate = document.getElementById('#library-item');
+  libraryGroup = document.getElementById('library-group');
+  libraryItemTemplate = document.getElementById('library-item');
   const musicUrlInput = document.getElementById('music-url-input');
   const radioUrlInput = document.getElementById('radio-url-input');
 
@@ -104,12 +107,12 @@ document.addEventListener('DOMContentLoaded', () => {
    * Recurring events (reduce as much as possible)
    */
   // Todo: configurable delay
-  setInterval(() => {
+  /*setInterval(() => {
     // See if server has been updated by another client
     if (musicPlaylist.checkForUpdate()) {
       updatePlaylist();
     }
-  }, 5000);
+  }, 5000);*/
 });
 
 /**
@@ -119,7 +122,7 @@ async function updatePlaylist() {
   musicPlaylist.getItems().then(response => {
     response.data.items.forEach(item => {
       // Clone playlist item template
-      const playlistItem = playlistItemTemplate.cloneNode();
+      const playlistItem = playlistItemTemplate.cloneNode(true);
 
       // Set new element's ID
       playlistItem.id = 'playlist-item-' + item.index;
@@ -144,11 +147,22 @@ async function updatePlaylist() {
  * Load library state and items.
  */
 async function updateLibrary() {
-  musicLibrary.getItems().then(response => {
+  musicLibrary.getItems(1, ['file', 'url', 'radio']).then(response => {
     response.data.items.forEach(item => {
-      const libraryItem = libraryItemTemplate.cloneNode();
+      const libraryItem = libraryItemTemplate.cloneNode(true);
 
+      // Update item attributes
+      libraryItem.querySelector('.library-item-id').value = item.id;
+      libraryItem.querySelector('.library-item-title').innerHTML = item.artist;
+      libraryItem.querySelector('.library-item-artist').innerHTML = (item.artist ? '- ' + item.artist : '');
+      libraryItem.querySelector('.library-item-thumb').setAttribute('src', item.thumb);
+      libraryItem.querySelector('.library-item-thumb').setAttribute('alt', limitChars(item.title));
+      libraryItem.querySelector('.library-item-type').innerHTML = '[' + item.type + ']';
+      libraryItem.querySelector('.library-item-path').innerHTML = item.path;
+
+      // Update item styling
       libraryItem.classList.add('library-active-item');
+      libraryItem.style.removeProperty('display');
 
       // Create DocumentFragment
       const fragment = document.createDocumentFragment();
