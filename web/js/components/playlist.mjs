@@ -69,13 +69,91 @@ export default class {
    */
   async playPause() {
     if (this.playing) {
-      this.#axios.post('post', {
+      return this.#axios.post('post', {
         action: 'pause',
       });
     } else {
-      this.#axios.post('post', {
+      return this.#axios.post('post', {
         action: 'resume',
       });
     }
+  }
+
+  /**
+   * Skip to next song.
+   *
+   * @returns {Promise} Axios promise.
+   */
+  async next() {
+    return this.#axios.post('post', {
+      action: 'next',
+    });
+  }
+
+  /**
+   *
+   * @param mode
+   * @returns {Promise} Axios promise.
+   */
+  async changePlayMode(mode) {
+    return this.#axios.post('post', {
+      action: mode,
+    });
+  }
+
+  /**
+   * Set volume to specific value.
+   *
+   * @param {number} value Volume percentage valume (i think).
+   * @returns {Promise} Axios promise.
+   */
+  async setVolume(value) {
+    return this.#axios.post('post', {
+      action: 'volume_set_value',
+      new_volume: value,
+    });
+  }
+
+  /**
+   * Turn volume down one step.
+   *
+   * @returns {Promise} Axios promise.
+   */
+  async volumeDown() {
+    return this.#axios.post('post', {
+      action: 'volume_down',
+    });
+  }
+
+  /**
+   * Turn volume up one step.
+   *
+   * @returns {Promise} Axios promise.
+   */
+  async volumeUp() {
+    return this.#axios.post('post', {
+      action: 'volume_up',
+    });
+  }
+
+  /**
+   * Clears current playlist items.
+   *
+   * @returns {Promise} Axios promise.
+   */
+  async clear() {
+    return this.#axios.post('post', {
+      action: 'clear',
+    });
+  }
+
+  /**
+   * Add library item to playlist.
+   *
+   * @param {object} data Library item data.
+   * @returns {Promise} Axios promise.
+   */
+  async addItem(data) {
+    return this.#axios.post('library', data);
   }
 }

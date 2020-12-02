@@ -59,41 +59,19 @@ let last_volume = 0;
 
 let playing = false;
 
-const playPauseBtn = $('#play-pause-btn');
-const fastForwardBtn = $('#fast-forward-btn');
-const volumeSlider = document.getElementById('volume-slider');
-
 const playModeBtns = {
   'one-shot': $('#one-shot-mode-btn'),
   'random': $('#random-mode-btn'),
   'repeat': $('#repeat-mode-btn'),
   'autoplay': $('#autoplay-mode-btn'),
 };
+
 const playModeIcon = {
   'one-shot': 'fa-tasks',
   'random': 'fa-random',
   'repeat': 'fa-redo',
   'autoplay': 'fa-robot',
 };
-
-playPauseBtn.on('click', togglePlayPause);
-
-fastForwardBtn.on('click', () => {
-  request('post', {
-    action: 'next',
-  });
-});
-
-document.getElementById('clear-playlist-btn').addEventListener('click', () => {
-  request('post', {action: 'clear'});
-});
-
-// eslint-disable-next-line guard-for-in
-for (const playMode in playModeBtns) {
-  playModeBtns[playMode].on('click', () => {
-    changePlayMode(playMode);
-  });
-}
 
 function request(_url, _data, refresh = false) {
   console.log(_data);
@@ -358,23 +336,6 @@ function updateControls(empty, play, mode, volume) {
     }
   }
 }
-
-function togglePlayPause() {
-  if (playing) {
-    request('post', {
-      action: 'pause',
-    });
-  } else {
-    request('post', {
-      action: 'resume',
-    });
-  }
-}
-
-function changePlayMode(mode) {
-  request('post', {
-    action: mode,
-  });
 }
 
 
@@ -382,11 +343,6 @@ function changePlayMode(mode) {
 // ------ Browser ------
 // ---------------------
 
-const filters = {
-  file: $('#filter-type-file'),
-  url: $('#filter-type-url'),
-  radio: $('#filter-type-radio'),
-};
 const filter_dir = $('#filter-dir');
 const filter_keywords = $('#filter-keywords');
 
@@ -624,29 +580,6 @@ function addResultItem(item) {
   item_copy.show();
 }
 
-function getFilters(dest_page = 1) {
-  const tags = $('.tag-clicked');
-  const tags_list = [];
-  tags.each(function(index, tag) {
-    tags_list.push(tag.innerHTML);
-  });
-
-  const filter_types = [];
-  for (const filter in filters) {
-    if (filters[filter].hasClass('active')) {
-      filter_types.push(filter);
-    }
-  }
-
-  return {
-    type: filter_types.join(','),
-    dir: filter_dir.val(),
-    tags: tags_list.join(','),
-    keywords: filter_keywords.val(),
-    page: dest_page,
-  };
-}
-
 const lib_loading = $('#library-item-loading');
 const lib_empty = $('#library-item-empty');
 let active_page = 1;
@@ -690,21 +623,6 @@ const download_type = download_form.find('input[name=\'type\']');
 const download_dir = download_form.find('input[name=\'dir\']');
 const download_tags = download_form.find('input[name=\'tags\']');
 const download_keywords = download_form.find('input[name=\'keywords\']');
-
-document.getElementById('add-to-playlist-btn').addEventListener('click', () => {
-  const data = getFilters();
-  data.action = 'add';
-
-  console.log(data);
-
-  $.ajax({
-    type: 'POST',
-    url: 'library',
-    data: data,
-  });
-
-  checkForPlaylistUpdate();
-});
 
 document.getElementById('library-delete-btn').addEventListener('click', () => {
   const data = getFilters();
@@ -896,73 +814,6 @@ document.getElementById('addTagModalSubmit').addEventListener('click', () => {
       updateResults(active_page);
     },
   });
-});
-
-// ---------------------
-// ------- Volume ------
-// ---------------------
-
-const volumePopoverBtn = document.getElementById('volume-popover-btn');
-const volumePopoverDiv = document.getElementById('volume-popover');
-let volume_popover_instance = null;
-let volume_popover_show = false;
-let volume_update_timer;
-
-volumePopoverBtn.addEventListener('click', function(e) {
-  e.stopPropagation();
-
-  if (!volume_popover_show) {
-    volume_popover_instance = new Popper(volumePopoverBtn, volumePopoverDiv, {
-      placement: 'top',
-      modifiers: {
-        offset: {
-          offset: '0, 8',
-        },
-      },
-    });
-    volumePopoverDiv.setAttribute('data-show', '');
-  } else {
-    volumePopoverDiv.removeAttribute('data-show');
-    if (volume_popover_instance) {
-      volume_popover_instance.destroy();
-      volume_popover_instance = null;
-    }
-  }
-  volume_popover_show = !volume_popover_show;
-
-  document.addEventListener('click', function() {
-    volumePopoverDiv.removeAttribute('data-show');
-    if (volume_popover_instance) {
-      volume_popover_instance.destroy();
-      volume_popover_instance = null;
-      volume_popover_show = !volume_popover_show;
-    }
-  }, {
-    once: true,
-  });
-});
-
-volumePopoverBtn.addEventListener('click', function(e) {
-  e.stopPropagation();
-});
-
-volumeSlider.addEventListener('change', (e) => {
-  window.clearTimeout(volume_update_timer);
-
-  volume_update_timer = window.setTimeout(() => {
-    request('post', {
-      action: 'volume_set_value',
-      new_volume: volumeSlider.value,
-    });
-  }, 500); // delay in milliseconds
-});
-
-document.getElementById('volume-down-btn').addEventListener('click', () => {
-  request('post', {action: 'volume_down'});
-});
-
-document.getElementById('volume-up-btn').addEventListener('click', () => {
-  request('post', {action: 'volume_up'});
 });
 
 // ---------------------

@@ -1,3 +1,12 @@
+import 'jquery/src/jquery.js';
+import 'jquery-migrate/src/migrate.js';
+import Popper from 'popper.js/dist/esm/popper.js';
+import {
+  Modal,
+  Toast,
+  Tooltip,
+} from 'bootstrap/js/src/index.js';
+
 import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es.js';
 import {
   faTimesCircle, faPlus, faCheck, faUpload, faTimes, faTrash, faPlay, faPause, faFastForward, faPlayCircle, faLightbulb,
@@ -56,6 +65,19 @@ import {limitChars} from './lib/text.mjs';
 const musicPlaylist = new MusicPlaylist(axios);
 const musicLibrary = new MusicLibrary(axios);
 
+const playModeBtns = {
+  'one-shot': document.getElementById('one-shot-mode-btn'),
+  'random': document.getElementById('random-mode-btn'),
+  'repeat': document.getElementById('repeat-mode-btn'),
+  'autoplay': document.getElementById('autoplay-mode-btn'),
+};
+
+const filters = {
+  file: document.getElementById('filter-type-file'),
+  url: document.getElementById('filter-type-url'),
+  radio: document.getElementById('filter-type-radio'),
+};
+
 var playlistTable;
 var playlistItemTemplate;
 var libraryGroup;
@@ -69,6 +91,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const musicUrlInput = document.getElementById('music-url-input');
   const radioUrlInput = document.getElementById('radio-url-input');
   const playPauseBtn = document.getElementById('play-pause-btn');
+  const fastForwardBtn = document.getElementById('fast-forward-btn');
+  const volumePopoverBtn = document.getElementById('volume-popover-btn');
+  const volumePopoverDiv = document.getElementById('volume-popover');
+  const volumeSlider = document.getElementById('volume-slider');
+
+  let volume_popover_instance = null;
+  let volume_popover_show = false;
+  let volume_update_timer;
 
   /**
    * Initialize components
@@ -79,30 +109,123 @@ document.addEventListener('DOMContentLoaded', async () => {
   // continue doing this as the DOM changes.
   dom.watch();
 
-  /**
-   * Run component startups
-   */
   updatePlaylist();
   updateLibrary();
 
   /**
    * Catch user events
    */
-  document.getElementById('theme-switch-btn').addEventListener('click', () => {
+  // Swap theme
+  document.getElementById('theme-switch-btn').addEventListener('click', async () => {
     Theme.swap();
   });
 
-  playPauseBtn.addEventListener('click', () => {
+  // Play/pause
+  playPauseBtn.addEventListener('click', async () => {
     musicPlaylist.playPause();
   });
 
-  document.getElementById('add-music-url').querySelector('button').addEventListener('click', () => {
+  // Fast-forward
+  fastForwardBtn.addEventListener('click', async () => {
+    musicPlaylist.next();
+  });
+
+  // Playlist modes
+  for (const playMode in playModeBtns) {
+    playModeBtns[playMode].addEventListener('click', async () => {
+      musicPlaylist.changePlayMode(playMode);
+    });
+  }
+
+  // Add to playlist
+  document.getElementById('add-to-playlist-btn').addEventListener('click', async () => {
+    const data = await getFilters();
+    data.action = 'add';
+
+    console.debug(data);
+
+    musicPlaylist.addItem(data);
+
+    updatePlaylist();
+  });
+
+  // Volume popover
+  volumePopoverBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+
+    // Show/hide popover
+    if (!volume_popover_show) {
+      volume_popover_instance = new Popper(volumePopoverBtn, volumePopoverDiv, {
+        placement: 'top',
+        modifiers: {
+          offset: {
+            offset: '0, 8',
+          },
+        },
+      });
+
+      volumePopoverDiv.setAttribute('data-show', '');
+    } else {
+      volumePopoverDiv.removeAttribute('data-show');
+
+      if (volume_popover_instance) {
+        volume_popover_instance.destroy();
+        volume_popover_instance = null;
+      }
+    }
+
+    // Change internal popover state
+    volume_popover_show = !volume_popover_show;
+
+    document.addEventListener('click', async () => {
+      volumePopoverDiv.removeAttribute('data-show');
+
+      if (volume_popover_instance) {
+        volume_popover_instance.destroy();
+        volume_popover_instance = null;
+        volume_popover_show = !volume_popover_show;
+      }
+    }, { once: true });
+  });
+
+  // ?
+  volumePopoverBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+  });
+
+  // Send volume request update
+  volumeSlider.addEventListener('change', async () => {
+    window.clearTimeout(volume_update_timer);
+
+    volume_update_timer = window.setTimeout(() => {
+      musicPlaylist.setVolume(volumeSlider.value);
+    }, 500); // delay in milliseconds
+  });
+
+  // Turn volume down one level
+  document.getElementById('volume-down-btn').addEventListener('click', async () => {
+    musicPlaylist.volumeDown();
+  });
+
+  // Turn volume up one level
+  document.getElementById('volume-up-btn').addEventListener('click', async () => {
+    musicPlaylist.volumeUp();
+  });
+
+  // Clear playlist
+  document.getElementById('clear-playlist-btn').addEventListener('click', async () => {
+    musicPlaylist.clear();
+  });
+
+  // Add music URL
+  document.getElementById('add-music-url').querySelector('button').addEventListener('click', async () => {
     musicLibrary.addMusicByURL(musicUrlInput.value).then(() => {
       musicUrlInput.value = '';
     });
   });
 
-  document.getElementById('add-radio-url').querySelector('button').addEventListener('click', () => {
+  // Add music Radio
+  document.getElementById('add-radio-url').querySelector('button').addEventListener('click', async () => {
     musicLibrary.addRadioByURL(radioUrlInput.value).then(() => {
       radioUrlInput.value = '';
     });
@@ -177,4 +300,34 @@ async function updateLibrary() {
       libraryGroup.appendChild(fragment);
     });
   });
+}
+
+/**
+ * Get active library filters
+ *
+ * @param {number} [page = 1] Page filter.
+ * @returns {object} Formatted filters object.
+ */
+async function getFilters(page = 1) {
+  // Build list of active tags
+  const tags = [];
+  document.querySelectorAll('.tag-clicked').forEach(tag => {
+    tags.push(tag);
+  });
+
+  // Build a list of active library item types
+  const types = [];
+  for (const filter in filters) {
+    if (filters[filter].classList.contains('active')) {
+      types.push(filter);
+    }
+  }
+
+  return {
+    type: types.join(','),
+    dir: document.getElementById('filter-dir').value,
+    tags: tags.join(','),
+    keywords: document.getElementById('filter-keywords').value,
+    page: page,
+  };
 }
