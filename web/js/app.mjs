@@ -217,6 +217,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     musicPlaylist.clear();
   });
 
+  // Rescan local music files
+  document.getElementById('library-rescan-btn').addEventListener('click', async () => {
+    musicLibrary.rescan();
+
+    //updateResults();
+  });
+
+  // Download music files
+  document.getElementById('library-download-btn').addEventListener('click', async () => {
+    const cond = await getFilters();
+
+    /*download_id.val();
+    download_type.val(cond.type);
+    download_dir.val(cond.dir);
+    download_tags.val(cond.tags);
+    download_keywords.val(cond.keywords);
+    download_form.submit();*/
+  });
+
+  // Delete selected music files
+  document.getElementById('library-delete-btn').addEventListener('click', async () => {
+    const data = await getFilters();
+    data.action = 'delete';
+
+    console.debug(data);
+
+    musicLibrary.removeItems(data);
+
+    updatePlaylist();
+    //updateResults();
+  });
+
   // Add music URL
   document.getElementById('add-music-url').querySelector('button').addEventListener('click', async () => {
     musicLibrary.addMusicByURL(musicUrlInput.value).then(() => {

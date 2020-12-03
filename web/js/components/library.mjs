@@ -33,6 +33,27 @@ export default class {
   }
 
   /**
+   * Remove selected items from library.
+   *
+   * @param {object} data ?
+   * @returns {Promise} Axios promise.
+   */
+  async removeItems(data) {
+    return this.#axios.post('library', data);
+  }
+
+  /**
+   * Rescan local music files.
+   *
+   * @returns {Promise} Axios promise.
+   */
+  async rescan() {
+    return this.#axios.post('post', {
+      action: 'rescan',
+    });
+  }
+
+  /**
    * Add music URL to library.
    *
    * @param {string} url HTTP(s) URL with any support service for youtube-dl (Python library).

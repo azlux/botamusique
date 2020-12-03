@@ -624,37 +624,6 @@ const download_dir = download_form.find('input[name=\'dir\']');
 const download_tags = download_form.find('input[name=\'tags\']');
 const download_keywords = download_form.find('input[name=\'keywords\']');
 
-document.getElementById('library-delete-btn').addEventListener('click', () => {
-  const data = getFilters();
-  data.action = 'delete';
-
-  console.log(data);
-
-  $.ajax({
-    type: 'POST',
-    url: 'library',
-    data: data,
-  });
-
-  checkForPlaylistUpdate();
-  updateResults();
-});
-
-document.getElementById('library-download-btn').addEventListener('click', () => {
-  const cond = getFilters();
-  download_id.val();
-  download_type.val(cond.type);
-  download_dir.val(cond.dir);
-  download_tags.val(cond.tags);
-  download_keywords.val(cond.keywords);
-  download_form.submit();
-});
-
-document.getElementById('library-rescan-btn').addEventListener('click', () => {
-  request('post', {action: 'rescan'});
-  updateResults();
-});
-
 function downloadId(id) {
   download_id.attr('value', id);
   download_type.attr('value', '');
@@ -1143,7 +1112,6 @@ function playheadDragged(event) {
 
 document.addEventListener('DOMContentLoaded', () => {
   updateResults();
-  updatePlaylist();
   updateLibraryControls();
 
   // Check the version of playlist to see if update is needed.
