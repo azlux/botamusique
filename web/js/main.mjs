@@ -1,19 +1,3 @@
-import 'jquery/src/jquery.js';
-import 'jquery-migrate/src/migrate.js';
-import Popper from 'popper.js/dist/esm/popper.js';
-import {
-  Modal,
-  Toast,
-  Tooltip,
-} from 'bootstrap/js/src/index.js';
-import {
-  getColor,
-  isOverflown,
-  setProgressBar,
-  secondsToStr,
-} from './lib/util.mjs';
-import {limitChars} from './lib/text.mjs';
-
 $('#uploadSelectFile').on('change', function() {
   // get the file name
   const fileName = $(this).val().replace('C:\\fakepath\\', ' ');
@@ -95,44 +79,6 @@ function request(_url, _data, refresh = false) {
   if (refresh) {
     location.reload(true);
   }
-}
-
-function addPlaylistItem(item) {
-  pl_id_element.val(item.id);
-  pl_index_element.html(item.index + 1);
-  pl_title_element.html(item.title);
-  pl_artist_element.html(item.artist);
-  pl_thumb_element.attr('src', item.thumbnail);
-  pl_thumb_element.attr('alt', limitChars(item.title));
-  pl_type_element.html(item.type);
-  pl_path_element.html(item.path);
-
-  const item_copy = pl_item_template.clone();
-  item_copy.attr('id', 'playlist-item-' + item.index);
-  item_copy.addClass('playlist-item').removeClass('d-none');
-
-  const tags = item_copy.find('.playlist-item-tags');
-  tags.empty();
-
-  const tag_edit_copy = pl_tag_edit_element.clone();
-  tag_edit_copy.click(function() {
-    addTagModalShow(item.id, item.title, item.tags);
-  });
-  tag_edit_copy.appendTo(tags);
-
-  if (item.tags.length > 0) {
-    item.tags.forEach(function(tag_tuple) {
-      const tag_copy = tag_element.clone();
-      tag_copy.html(tag_tuple[0]);
-      tag_copy.addClass('badge-' + tag_tuple[1]);
-      tag_copy.appendTo(tags);
-    });
-  } else {
-    const tag_copy = notag_element.clone();
-    tag_copy.appendTo(tags);
-  }
-
-  item_copy.appendTo(playlist_table);
 }
 
 function displayPlaylist(data) {
@@ -240,40 +186,6 @@ function updatePlaylist() {
   });
 }
 
-function checkForPlaylistUpdate() {
-  $.ajax({
-    type: 'POST',
-    url: 'post',
-    statusCode: {
-      200: function(data) {
-        if (data.ver !== playlist_ver) {
-          playlist_ver = data.ver;
-          playlist_range_from = 0;
-          playlist_range_to = 0;
-          updatePlaylist();
-        }
-        if (data.current_index !== playlist_current_index) {
-          if (data.current_index !== -1) {
-            if ((data.current_index > playlist_range_to || data.current_index < playlist_range_from)) {
-              playlist_range_from = 0;
-              playlist_range_to = 0;
-              updatePlaylist();
-            } else {
-              playlist_current_index = data.current_index;
-              updatePlayerInfo(playlist_items[data.current_index]);
-              displayActiveItem(data.current_index);
-            }
-          }
-        }
-        updateControls(data.empty, data.play, data.mode, data.volume);
-        if (!data.empty) {
-          updatePlayerPlayhead(data.playhead);
-        }
-      },
-    },
-  });
-}
-
 function bindPlaylistEvent() {
   $('.playlist-item-play').unbind().click(
       function(e) {
@@ -336,41 +248,13 @@ function updateControls(empty, play, mode, volume) {
     }
   }
 }
-}
 
 
 // ---------------------
 // ------ Browser ------
 // ---------------------
 
-const filter_dir = $('#filter-dir');
 const filter_keywords = $('#filter-keywords');
-
-// eslint-disable-next-line guard-for-in
-for (const filter in filters) {
-  filters[filter].on('click', (e) => {
-    setFilterType(e, filter);
-  });
-}
-
-function setFilterType(event, type) {
-  event.preventDefault();
-
-  if (filters[type].hasClass('active')) {
-    filters[type].removeClass('active btn-primary').addClass('btn-secondary');
-    filters[type].find('input[type=radio]').removeAttr('checked');
-  } else {
-    filters[type].removeClass('btn-secondary').addClass('active btn-primary');
-    filters[type].find('input[type=radio]').attr('checked', 'checked');
-  }
-
-  if (type === 'file') {
-    filter_dir.prop('disabled', !filters['file'].hasClass('active'));
-  }
-
-  updateResults();
-}
-
 
 filter_dir.change(function() {
   updateResults();
@@ -541,43 +425,6 @@ function displayLibraryControls(data) {
   } else {
     $('.filter-tag').remove();
   }
-}
-
-function addResultItem(item) {
-  id_element.val(item.id);
-  title_element.html(item.title);
-  artist_element.html(item.artist ? ('- ' + item.artist) : '');
-  thumb_element.attr('src', item.thumb);
-  thumb_element.attr('alt', limitChars(item.title));
-  type_element.html('[' + item.type + ']');
-  path_element.html(item.path);
-
-  const item_copy = item_template.clone();
-  item_copy.addClass('library-item-active');
-
-  const tags = item_copy.find('.library-item-tags');
-  tags.empty();
-
-  const tag_edit_copy = tag_edit_element.clone();
-  tag_edit_copy.click(function() {
-    addTagModalShow(item.id, item.title, item.tags);
-  });
-  tag_edit_copy.appendTo(tags);
-
-  if (item.tags.length > 0) {
-    item.tags.forEach(function(tag_tuple) {
-      const tag_copy = tag_element.clone();
-      tag_copy.html(tag_tuple[0]);
-      tag_copy.addClass('badge-' + tag_tuple[1]);
-      tag_copy.appendTo(tags);
-    });
-  } else {
-    const tag_copy = notag_element.clone();
-    tag_copy.appendTo(tags);
-  }
-
-  item_copy.appendTo(lib_group);
-  item_copy.show();
 }
 
 const lib_loading = $('#library-item-loading');
@@ -950,23 +797,6 @@ function uploadCancel() {
   areYouSureToCancelUploading = !areYouSureToCancelUploading;
 }
 
-//
-// URLS & Radio
-//
-
-const musicUrlInput = document.getElementById('music-url-input');
-const radioUrlInput = document.getElementById('radio-url-input');
-
-document.getElementById('add-music-url').querySelector('button').addEventListener('click', () => {
-  request('post', {add_url: musicUrlInput.value});
-  musicUrlInput.value = '';
-});
-
-document.getElementById('add-radio-url').querySelector('button').addEventListener('click', () => {
-  request('post', {add_radio: radioUrlInput.value});
-  radioUrlInput.value = '';
-});
-
 // ---------------------
 // ------  Player ------
 // ---------------------
@@ -1113,7 +943,4 @@ function playheadDragged(event) {
 document.addEventListener('DOMContentLoaded', () => {
   updateResults();
   updateLibraryControls();
-
-  // Check the version of playlist to see if update is needed.
-  setInterval(checkForPlaylistUpdate, 3000);
 });

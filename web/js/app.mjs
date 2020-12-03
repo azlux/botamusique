@@ -6,7 +6,6 @@ import {
   Toast,
   Tooltip,
 } from 'bootstrap/js/src/index.js';
-
 import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es.js';
 import {
   faTimesCircle, faPlus, faCheck, faUpload, faTimes, faTrash, faPlay, faPause, faFastForward, faPlayCircle, faLightbulb,
@@ -82,12 +81,14 @@ var playlistTable;
 var playlistItemTemplate;
 var libraryGroup;
 var libraryItemTemplate;
+var filterDir;
 
 document.addEventListener('DOMContentLoaded', async () => {
   playlistTable = document.getElementById('playlist-table');
   playlistItemTemplate = document.querySelector('.playlist-item-template');
   libraryGroup = document.getElementById('library-group');
   libraryItemTemplate = document.getElementById('library-item');
+  filterDir = document.getElementById('filter-dir');
   const musicUrlInput = document.getElementById('music-url-input');
   const radioUrlInput = document.getElementById('radio-url-input');
   const playPauseBtn = document.getElementById('play-pause-btn');
@@ -217,6 +218,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     musicPlaylist.clear();
   });
 
+  // Library filters
+  for (const filter in filters) {
+    filters[filter].addEventListener('click', e => {
+      e.preventDefault();
+
+      setFilterType(filter);
+    });
+  }
+
   // Rescan local music files
   document.getElementById('library-rescan-btn').addEventListener('click', async () => {
     musicLibrary.rescan();
@@ -272,6 +282,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (musicPlaylist.checkForUpdate()) {
       updatePlaylist();
     }
+    if (data.current_index !== playlist_current_index) {
+      if (data.current_index !== -1) {
+        if ((data.current_index > playlist_range_to || data.current_index < playlist_range_from)) {
+          playlist_range_from = 0;
+          playlist_range_to = 0;
+          updatePlaylist();
+        } else {
+          playlist_current_index = data.current_index;
+          updatePlayerInfo(playlist_items[data.current_index]);
+          displayActiveItem(data.current_index);
+        }
+      }
+    }
+    updateControls(data.empty, data.play, data.mode, data.volume);
+    if (!data.empty) {
+      updatePlayerPlayhead(data.playhead);
+    }
   }, 5000);*/
 });
 
@@ -284,11 +311,43 @@ async function updatePlaylist() {
       // Clone playlist item template
       const playlistItem = playlistItemTemplate.cloneNode(true);
 
-      // Set new element's ID
+      // Update item attributes
+      playlistItem.querySelector('.playlist-item-id').value = item.id;
+      playlistItem.querySelector('.playlist-item-index').innerHTML = item.index + 1;
+      playlistItem.querySelector('.playlist-item-title').innerHTML = item.title;
+      playlistItem.querySelector('.playlist-item-artist').innerHTML = item.arist;
+      playlistItem.querySelector('.playlist-item-thumbnail').setAttribute('src', item.thumbnail);
+      playlistItem.querySelector('.playlist-item-thumbnail').setAttribute('alt', limitChars(item.title));
+      playlistItem.querySelector('.playlist-item-type').innerHTML = item.type;
+      playlistItem.querySelector('.playlist-item-path').innerHTML = item.path;
+
+      // Update item ID
       playlistItem.id = 'playlist-item-' + item.index;
 
       // Update item class
       playlistItem.classList.add('playlist-item');
+
+      // Update item tags
+      /*const tags = item_copy.find('.playlist-item-tags');
+      tags.empty();
+
+      const tag_edit_copy = pl_tag_edit_element.clone();
+      tag_edit_copy.click(function() {
+        addTagModalShow(item.id, item.title, item.tags);
+      });
+      tag_edit_copy.appendTo(tags);
+
+      if (item.tags.length > 0) {
+        item.tags.forEach(function(tag_tuple) {
+          const tag_copy = tag_element.clone();
+          tag_copy.html(tag_tuple[0]);
+          tag_copy.addClass('badge-' + tag_tuple[1]);
+          tag_copy.appendTo(tags);
+        });
+      } else {
+        const tag_copy = notag_element.clone();
+        tag_copy.appendTo(tags);
+      }*/
 
       // Remove Bootstrap display:none class
       playlistItem.classList.remove('d-none');
@@ -322,6 +381,30 @@ async function updateLibrary() {
 
       // Update item styling
       libraryItem.classList.add('library-active-item');
+
+      // Update item tags
+      /*const tags = item_copy.find('.library-item-tags');
+      tags.empty();
+
+      const tag_edit_copy = tag_edit_element.clone();
+      tag_edit_copy.click(function() {
+        addTagModalShow(item.id, item.title, item.tags);
+      });
+      tag_edit_copy.appendTo(tags);
+
+      if (item.tags.length > 0) {
+        item.tags.forEach(function(tag_tuple) {
+          const tag_copy = tag_element.clone();
+          tag_copy.html(tag_tuple[0]);
+          tag_copy.addClass('badge-' + tag_tuple[1]);
+          tag_copy.appendTo(tags);
+        });
+      } else {
+        const tag_copy = notag_element.clone();
+        tag_copy.appendTo(tags);
+      }*/
+
+      // Remove display style property (showing element)
       libraryItem.style.removeProperty('display');
 
       // Create DocumentFragment
@@ -357,9 +440,34 @@ async function getFilters(page = 1) {
 
   return {
     type: types.join(','),
-    dir: document.getElementById('filter-dir').value,
+    dir: filterDir.value,
     tags: tags.join(','),
     keywords: document.getElementById('filter-keywords').value,
     page: page,
   };
+}
+
+/**
+ * Set active filter.
+ *
+ * @param {string} type Filter type.
+ */
+async function setFilterType(type) {
+  if (filters[type].classList.contains('active')) {
+    filters[type].classList.remove('active');
+    filters[type].classList.remove('btn-primary');
+    filters[type].classList.add('btn-secondary');
+    filters[type].querySelector('input[type=checkbox]').checked = false;
+  } else {
+    filters[type].classList.remove('btn-secondary');
+    filters[type].classList.add('active');
+    filters[type].classList.add('btn-primary');
+    filters[type].querySelector('input[type=checkbox]').checked = true;
+  }
+
+  if (type === 'file') {
+    filterDir.disabled = !filters['file'].classList.contains('active');
+  }
+
+  //updateResults();
 }
