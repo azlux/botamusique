@@ -194,7 +194,7 @@ class Condition:
 
 
 SETTING_DB_VERSION = 2
-MUSIC_DB_VERSION = 4
+MUSIC_DB_VERSION = 5
 
 
 class SettingsDatabase:
@@ -277,8 +277,9 @@ class SettingsDatabase:
 
 
 class MusicDatabase:
-    def __init__(self, db_path):
-        self.db_path = db_path
+    def __init__(self, db_dir):
+        self.db_dir = db_dir
+        self.db_path = os.path.join(db_dir, "music.db")
 
     def insert_music(self, music_dict, _conn=None):
         conn = sqlite3.connect(self.db_path) if _conn is None else _conn
@@ -505,9 +506,9 @@ class DatabaseMigration:
         self.music_table_migrate_func = {0: self.music_table_migrate_from_0_to_1,
                                          1: self.music_table_migrate_from_1_to_2,
                                          2: self.music_table_migrate_from_2_to_4,
-                                         3: self.music_table_migrate_from_2_to_4
+                                         3: self.music_table_migrate_from_2_to_4,
+                                         4: self.music_table_migrate_from_4_to_5
                                          }
-
 
     def migrate(self):
         self.settings_database_migrate()
@@ -568,7 +569,7 @@ class DatabaseMigration:
 
         else:
             log.info(f"database: no music table found. Creating music table version {MUSIC_DB_VERSION}.")
-            self.create_music_table_version_4(conn)
+            self.create_music_table_version_5(conn)
 
         conn.commit()
         conn.close()
@@ -611,7 +612,7 @@ class DatabaseMigration:
 
         conn.commit()
 
-    def create_music_table_version_4(self, conn):
+    def create_music_table_version_5(self, conn):
         self.create_music_table_version_1(conn)
 
     def settings_table_migrate_from_0_to_1(self, conn):
@@ -686,3 +687,29 @@ class DatabaseMigration:
         conn.commit()
 
         return 4  # return new version number
+
+    def music_table_migrate_from_4_to_5(self, conn):
+        import base64
+
+        items_to_update = self.music_db.query_music(Condition(), conn)
+        img_dir = os.path.join(self.music_db.db_dir, "images")
+        if not os.path.exists(img_dir):
+            os.makedirs(img_dir)
+
+        for item in items_to_update:
+            if 'thumbnail' in item:
+                if not item['thumbnail']:
+                    continue
+                if item['thumbnail'].endswith(".jpg"):
+                    continue
+
+                img = base64.b64decode(item['thumbnail'].encode("utf-8"))
+                img_path = f"images/{item['id']}-cover.jpg"
+                with open(os.path.join(self.music_db.db_dir, img_path), "wb") as f:
+                    f.write(img)
+                item['thumbnail'] = img_path
+
+            self.music_db.insert_music(item)
+        conn.commit()
+
+        return 5  # return new version number

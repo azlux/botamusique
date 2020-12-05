@@ -154,20 +154,20 @@ class FileItem(BaseItem):
                         im = Image.open(BytesIO(as_flac_picture.data))
 
             if im:
-                self.thumbnail = self._prepare_thumbnail(im)
+                self.thumbnail = self._save_thumbnail(im)
         except:
             pass
 
         if not self.title:
             self.title = os.path.basename(file_no_ext)
 
-    @staticmethod
-    def _prepare_thumbnail(im):
+    def _save_thumbnail(self, im):
         im.thumbnail((100, 100), Image.ANTIALIAS)
-        buffer = BytesIO()
-        im = im.convert('RGB')
-        im.save(buffer, format="JPEG")
-        return base64.b64encode(buffer.getvalue()).decode('utf-8')
+        img_path = os.path.join(var.music_db_path, f"images/{self.id}-cover.jpg")
+        with open(img_path) as f:
+            im = im.convert('RGB')
+            im.save(f, format="JPEG")
+        return img_path
 
     def to_dict(self):
         dict = super().to_dict()

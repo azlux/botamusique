@@ -642,8 +642,8 @@ def library():
                 for item in items:
                     result = {'id': item.id, 'title': item.title, 'type': item.display_type(),
                               'tags': [(tag, tag_color(tag)) for tag in item.tags]}
-                    if item.type != 'radio' and item.thumbnail:
-                        result['thumb'] = f"data:image/PNG;base64,{item.thumbnail}"
+                    if hasattr(item, "thumbnail") and item.thumbnail:
+                        result['thumb'] = "library/" + item.thumbnail
                     else:
                         result['thumb'] = "static/image/unknown-album.png"
 
@@ -676,6 +676,16 @@ def library():
 
     else:
         abort(400)
+
+
+@web.route("/library/images/<item>", methods=['GET'])
+@requires_auth
+def library_image(item):
+    img_path = os.path.join(var.music_db_path, f"images/{item}")
+    if img_path.endswith(".jpg") and os.path.exists(img_path):
+        return send_file(img_path)
+    else:
+        abort(404)
 
 
 @web.route('/upload', methods=["POST"])

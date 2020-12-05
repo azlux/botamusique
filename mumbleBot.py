@@ -729,7 +729,7 @@ if __name__ == '__main__':
     parser.add_argument("--db", dest='db', type=str,
                         default=None, help='Settings database file')
     parser.add_argument("--music-db", dest='music_db', type=str,
-                        default=None, help='Music library database file')
+                        default=None, help='Music library database path')
     parser.add_argument("--lang", dest='lang', type=str, default=None,
                         help='Preferred language. Support ' + ", ".join(supported_languages))
 
@@ -809,11 +809,31 @@ if __name__ == '__main__':
     var.settings_db_path = args.db if args.db is not None else util.solve_filepath(
         config.get("bot", "database_path", fallback=f"settings-{sanitized_username}.db"))
     var.music_db_path = args.music_db if args.music_db is not None else util.solve_filepath(
-        config.get("bot", "music_database_path", fallback="music.db"))
+        config.get("bot", "music_database_path", fallback="music_db/"))
 
     var.db = SettingsDatabase(var.settings_db_path)
 
     if var.config.get("bot", "save_music_library", fallback=True):
+        if os.path.exists(var.music_db_path):
+            # TODO: Remove this check in future version
+            if not os.path.isdir(var.music_db_path):
+                print(
+                    """ERROR: path to the music db should be a directory.\n
+                              Since 8.0, the bot uses a directory as its music\n
+                              library and separates some metadata out of the\n
+                               .db file, into other sub-directories.\n
+                              To migrate from old music db, please:\n
+                                1. Create a directory.\n
+                                2. Move the old .db file into it and rename it\n
+                                   into `music.db`.\n
+                                3. Change the path of music db into the new directory\n
+                                   configuration file (or the argument used to start\n
+                                   the bot).
+                                4. Restart the bot, the bot will do the rest of the\n
+                                   job automatically.""")
+                exit(1)
+        else:
+            os.makedirs(var.music_db_path)
         var.music_db = MusicDatabase(var.music_db_path)
     else:
         var.music_db = MusicDatabase(":memory:")
