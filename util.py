@@ -17,6 +17,8 @@ from sys import platform
 import traceback
 import requests
 from packaging import version
+import threading
+
 
 log = logging.getLogger("bot")
 
@@ -520,3 +522,15 @@ class VolumeHelper:
 
         # Some dirty trick to stretch the function, to make to be 0 when input is -35 dB
         return (10 ** (dB / 20) - 10 ** (-35 / 20)) / (1 - 10 ** (-35 / 20))
+
+
+class TaskHandle:
+    def __init__(self, name, handle):
+        self.name = name
+        self.handle = handle
+        thnm = f"Task{name.replace('task_', '').capitalize()}Thread"
+        self.thread = threading.Thread(
+                    target=handle, name=thnm)
+        self.thread.daemon = True
+
+

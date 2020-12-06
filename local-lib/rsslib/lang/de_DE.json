@@ -1,0 +1,11 @@
+{
+    "cli": {
+        "rsslib": {
+            "help": "<b>RSS feed</b>\n<ul>\n<li> <b>!getrss</b> - neueste RSS-Nachricht erhalten.</li>\n<li> <b>!subrss</b> - RSS-Feed abonnieren. <small> *für server registrierte nutzer</small></li>\n<li> <b>!unsubrss</b> - RSS-Feed abbestellen.<small> *für server registrierte nutzer</small></li>\n<li> <b>!setrss</b> {url} - RSS url einstellen.</li>\n<li> <b>!startrss</b> - Überwachung des RSS-Feeds starten.</li>\n</ul>"
+        }
+    },
+    "lib": {
+        "no_result": "Kein ergebnis...",
+        "read_more": "<b>Weiterlesen</b>"
+    }
+}
