@@ -265,68 +265,8 @@ filter_keywords.change(function() {
 
 const item_template = $('#library-item');
 
-function bindLibraryResultEvent() {
-  $('.library-thumb-col').unbind().hover(
-      function(e) {
-        $(e.currentTarget).find('.library-thumb-grp').addClass('library-thumb-grp-hover');
-      },
-      function(e) {
-        $(e.currentTarget).find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
-      },
-  );
 
-  $('.library-info-title').unbind().hover(
-      function(e) {
-        $(e.currentTarget).parent().find('.library-thumb-grp').addClass('library-thumb-grp-hover');
-      },
-      function(e) {
-        $(e.currentTarget).parent().find('.library-thumb-grp').removeClass('library-thumb-grp-hover');
-      },
-  );
 
-  $('.library-item-play').unbind().click(
-      function(e) {
-        request('post', {
-          'add_item_at_once': $(e.currentTarget).parent().parent().parent().find('.library-item-id').val(),
-        });
-      },
-  );
-
-  $('.library-item-trash').unbind().click(
-      function(e) {
-        request('post', {
-          'delete_item_from_library': $(e.currentTarget).parent().parent().find('.library-item-id').val(),
-        });
-        updateResults(active_page);
-      },
-  );
-
-  $('.library-item-download').unbind().click(
-      function(e) {
-        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-        // window.open('/download?id=' + id);
-        downloadId(id);
-      },
-  );
-
-  $('.library-item-add-next').unbind().click(
-      function(e) {
-        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-        request('post', {
-          'add_item_next': id,
-        });
-      },
-  );
-
-  $('.library-item-add-bottom').unbind().click(
-      function(e) {
-        const id = $(e.currentTarget).parent().parent().find('.library-item-id').val();
-        request('post', {
-          'add_item_bottom': id,
-        });
-      },
-  );
-}
 
 const lib_filter_tag_group = $('#filter-tags');
 const lib_filter_tag_element = $('.filter-tag');
