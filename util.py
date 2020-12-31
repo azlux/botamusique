@@ -27,6 +27,8 @@ def solve_filepath(path):
 
     if path[0] == '/':
         return path
+    elif os.path.exists(path):
+        return path
     else:
         mydir = os.path.dirname(os.path.realpath(__file__))
         return mydir + '/' + path
@@ -458,22 +460,24 @@ def set_logging_formatter(handler: logging.Handler, logging_level):
 
 def get_snapshot_version():
     import subprocess
+    wd = os.getcwd()
     root_dir = os.path.dirname(__file__)
+    os.chdir(root_dir)
+
+    ver = "unknown"
     if os.path.exists(os.path.join(root_dir, ".git")):
         try:
             ret = subprocess.check_output(["git", "describe"]).strip()
-            return ret.decode("utf-8")
+            ver = ret.decode("utf-8")
         except FileNotFoundError:
-            pass
+            try:
+                with open(os.path.join(root_dir, ".git/refs/heads/master")) as f:
+                    ver = "g" + f.read()[:7]
+            except FileNotFoundError:
+                pass
 
-        try:
-            with open(os.path.join(root_dir,".git/refs/heads/master")) as f:
-                ret = "g" + f.read()[:7]
-                return ret
-        except FileNotFoundError:
-            pass
-
-    return "unknown"
+    os.chdir(wd)
+    return ver
 
 
 class LoggerIOWrapper(io.TextIOWrapper):
