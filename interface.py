@@ -225,7 +225,8 @@ def get_all_dirs():
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    return open(f"templates/index.{var.language}.html", "r").read()
+    root_dir = os.path.dirname(__file__)
+    return open(os.path.join(root_dir, f"templates/index.{var.language}.html"), "r").read()
 
 
 @web.route("/playlist", methods=['GET'])
