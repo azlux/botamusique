@@ -63,7 +63,8 @@ class ReverseProxied(object):
         return self.app(environ, start_response)
 
 
-web = Flask(__name__)
+root_dir = os.path.dirname(__file__)
+web = Flask(__name__, template_folder=os.path.join(root_dir, "templates"))
 #web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
@@ -171,7 +172,8 @@ def requires_auth(f):
 
             return render_template(f'need_token.{var.language}.html',
                                    name=var.config.get('bot', 'username'),
-                                   command=f"{var.config.get('commands', 'command_symbol')[0]}{var.config.get('commands', 'requests_webinterface_access')}")
+                                   command=f"{var.config.get('commands', 'command_symbol')[0]}"
+                                           f"{var.config.get('commands', 'requests_webinterface_access')}")
 
         return f(*args, **kwargs)
 
@@ -225,7 +227,6 @@ def get_all_dirs():
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    root_dir = os.path.dirname(__file__)
     return open(os.path.join(root_dir, f"templates/index.{var.language}.html"), "r").read()
 
 
