@@ -467,7 +467,7 @@ def get_snapshot_version():
     ver = "unknown"
     if os.path.exists(os.path.join(root_dir, ".git")):
         try:
-            ret = subprocess.check_output(["git", "describe"]).strip()
+            ret = subprocess.check_output(["git", "describe", "--tags"]).strip()
             ver = ret.decode("utf-8")
         except FileNotFoundError:
             try:
