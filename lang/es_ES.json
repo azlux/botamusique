@@ -57,6 +57,7 @@
         "removed_tags_from_all": "Eliminadas las etiquetas <i>{tags}</i> de las canciones en la lista de reproducción.",
         "removing_item": "Eliminado {item} de la lista de reproducción.",
         "repeat": "Repetir {song} {n} veces.",
+        "report_version": "",
         "shortlist_instruction": "Use <i>!sl {índices}</i> para reproducir los elementos que usted desea.",
         "start_updating": "Empezando la actualización...",
         "stopped": "Música fue detenida.",

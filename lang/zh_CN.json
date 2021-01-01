@@ -57,6 +57,7 @@
         "removed_tags_from_all": "已将标签 <i>{tags}</i> 从播放列表的曲目中移除。",
         "removing_item": "已将 {item} 从播放列表中移除。",
         "repeat": "重复{song} {n}次。",
+        "report_version": "",
         "shortlist_instruction": "使用<i>!sl {indexes}</i>播放列表中的曲目。",
         "start_updating": "开始更新……",
         "stopped": "音乐停止。",
