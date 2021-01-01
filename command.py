@@ -73,6 +73,7 @@ def register_all_commands(bot):
     bot.register_command(commands('remove_webinterface_user'), cmd_web_user_remove, admin=True)
     bot.register_command(commands('list_webinterface_user'), cmd_web_user_list, admin=True)
     bot.register_command(commands('change_user_password'), cmd_user_password, no_partial_match=True)
+    bot.register_command(commands('version'), cmd_version, no_partial_match=True)
     # Just for debug use
     bot.register_command('rtrms', cmd_real_time_rms, True)
     # bot.register_command('loop', cmd_loop_state, True)
@@ -1235,6 +1236,10 @@ def cmd_web_user_list(bot, user, text, command, parameter):
         bot.send_msg(tr('web_user_list', users=", ".join(web_users)), text)
     else:
         bot.send_msg(tr('command_disabled', command=command), text)
+
+
+def cmd_version(bot, user, text, command, parameter):
+    bot.send_msg(tr('report_version', version=bot.get_version()), text)
 
 
 # Just for debug use

@@ -57,6 +57,7 @@
         "removed_tags_from_all": "Removed tags <i>{tags}</i> from songs on the playlist.",
         "removing_item": "Removed entry {item} from playlist.",
         "repeat": "Repeat {song} for {n} times.",
+        "report_version": "The current version of botamusique is <b>{version}</b>.",
         "shortlist_instruction": "Use <i>!sl {indexes}</i> to play the item you want.",
         "start_updating": "Start updating...",
         "stopped": "Music stopped.",
