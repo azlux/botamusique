@@ -57,7 +57,7 @@
         "removed_tags_from_all": "Tag <i>{tags}</i> rimossi dai brani nella playlist.",
         "removing_item": "Voce {item} rimossa dalla playlist.",
         "repeat": "Ripeti {song} per {n} volte.",
-        "report_version": "",
+        "report_version": "La versione attuale di Botamusique è <b>{version}</b>.",
         "shortlist_instruction": "Usa <i>!sl {indexes}</i> per riprodurre l'elemento desiderato.",
         "start_updating": "Inizio aggiornamento...",
         "stopped": "Riproduzione interrotta.",

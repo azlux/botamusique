@@ -57,7 +57,7 @@
         "removed_tags_from_all": "もう再生リストの全ての曲にタグ「<i>{tags}</i> 」を削除しました。",
         "removing_item": "もう再生リストに「{item}」を削除しました。",
         "repeat": "「{song}」を{n}回リピートするになります。",
-        "report_version": "",
+        "report_version": "現在のbotamusiqueバージョンは<b>{version}</b>です。",
         "shortlist_instruction": "<i>!sl {indexes}</i>を使ってこのリストの曲を再生する。",
         "start_updating": "更新しています…",
         "stopped": "再生停止。",
