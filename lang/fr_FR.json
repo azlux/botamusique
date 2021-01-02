@@ -57,7 +57,7 @@
         "removed_tags_from_all": "Suppression des tags <i>{tags}</i> des chansons de la playlist.",
         "removing_item": "Entrée {item} suprimée de la playlist.",
         "repeat": "Répète {song} {n} fois.",
-        "report_version": "",
+        "report_version": "La version actuelle de botamusique est <b>{version}{/b}.",
         "shortlist_instruction": "Utilisez <i>!sl {indexes}</i> pour jouer l'élément que vous voulez.",
         "start_updating": "Début de la mise à jour...",
         "stopped": "Musique arrêté.",
