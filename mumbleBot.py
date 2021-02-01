@@ -821,6 +821,9 @@ if __name__ == '__main__':
     DatabaseMigration(var.db, var.music_db).migrate()
 
     var.music_folder = util.solve_filepath(var.config.get('bot', 'music_folder'))
+    if not var.music_folder.endswith(os.sep):
+        # The file searching logic assumes that the music folder ends in a /
+        var.music_folder = var.music_folder + os.sep
     var.tmp_folder = util.solve_filepath(var.config.get('bot', 'tmp_folder'))
 
     # ======================

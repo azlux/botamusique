@@ -40,8 +40,6 @@ def get_recursive_file_list_sorted(path):
         relroot = root.replace(path, '', 1)
         if relroot != '' and relroot in var.config.get('bot', 'ignored_folders'):
             continue
-        if len(relroot):
-            relroot += '/'
         for file in files:
             if file in var.config.get('bot', 'ignored_files'):
                 continue
