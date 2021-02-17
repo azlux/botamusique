@@ -276,12 +276,10 @@ class MumbleBot:
 
             if not self.is_admin(user) and parameter:
                 input_url = util.get_url_from_input(parameter)
-                if input_url:
-                    for i in var.db.items("url_ban"):
-                        if input_url == i[0]:
-                            self.mumble.users[text.actor].send_text_message(
-                                tr('url_ban'))
-                            return
+                if input_url and var.db.has_option('url_ban', input_url):
+                    self.mumble.users[text.actor].send_text_message(
+                        tr('url_ban'))
+                    return
 
             command_exc = ""
             try:
@@ -408,13 +406,12 @@ class MumbleBot:
         # Function start if the next music isn't ready
         # Do nothing in case the next music is already downloaded
         self.log.debug("bot: Async download next asked ")
-        while var.playlist.next_item() and var.playlist.next_item().type in ['url', 'url_from_playlist']:
+        while var.playlist.next_item():
             # usually, all validation will be done when adding to the list.
             # however, for performance consideration, youtube playlist won't be validate when added.
             # the validation has to be done here.
             next = var.playlist.next_item()
             try:
-                next.validate()
                 if not next.is_ready():
                     self.async_download(next)
 
@@ -432,8 +429,7 @@ class MumbleBot:
         th.start()
         return th
 
-    def validate_and_start_download(self, item):
-        item.validate()
+    def start_download(self, item):
         if not item.is_ready():
             self.log.info("bot: current music isn't ready, start downloading.")
             self.async_download(item)
@@ -443,13 +439,23 @@ class MumbleBot:
     def _download(self, item):
         ver = item.version
         try:
+            item.validate()
+            if item.is_ready():
+                return True
+        except ValidationFailedError as e:
+            self.send_channel_msg(e.msg)
+            var.playlist.remove_by_id(item.id)
+            var.cache.free_and_delete(item.id)
+            return False
+
+        try:
             item.prepare()
+            if item.version > ver:
+                var.playlist.version += 1
+            return True
         except PreparationFailedError as e:
             self.send_channel_msg(e.msg)
             return False
-
-        if item.version > ver:
-            var.playlist.version += 1
 
     # =======================
     #          Loop
@@ -528,7 +534,7 @@ class MumbleBot:
                         current = var.playlist.current_item()
                         self.log.debug(f"bot: next into the song: {current.format_debug_string()}")
                         try:
-                            self.validate_and_start_download(current)
+                            self.start_download(current)
                             self.wait_for_ready = True
 
                             self.song_start_at = -1
@@ -640,7 +646,7 @@ class MumbleBot:
 
         current = var.playlist.current_item()
 
-        self.validate_and_start_download(current)
+        self.start_download(current)
         self.is_pause = False
         self.wait_for_ready = True
         self.song_start_at = -1
