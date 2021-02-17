@@ -15,6 +15,7 @@ import variables as var
 from media.item import BaseItem, item_builders, item_loaders, item_id_generators, ValidationFailedError, \
     PreparationFailedError
 import media.system
+from util import format_time
 
 log = logging.getLogger("bot")
 
@@ -74,36 +75,45 @@ class URLItem(BaseItem):
         return True
 
     def validate(self):
-        self.validating_lock.acquire()
-        if self.ready in ['yes', 'validated']:
+        try:
+            self.validating_lock.acquire()
+            if self.ready in ['yes', 'validated']:
+                return True
+
+            # if self.ready == 'failed':
+            #     self.validating_lock.release()
+            #     return False
+            #
+            if os.path.exists(self.path):
+                self.ready = "yes"
+                return True
+
+            # Check if this url is banned
+            if var.db.has_option('url_ban', self.url):
+                raise ValidationFailedError(tr('url_ban', url=self.url))
+
+            # avoid multiple process validating in the meantime
+            info = self._get_info_from_url()
+
+            if not info:
+                return False
+
+            # Check if the song is too long and is not whitelisted
+            max_duration = var.config.getint('bot', 'max_track_duration') * 60
+            if max_duration and \
+                    not var.db.has_option('url_whitelist', self.url) and \
+                    self.duration > max_duration:
+                log.info(
+                    "url: " + self.url + " has a duration of " + str(self.duration / 60) + " min -- too long")
+                raise ValidationFailedError(tr('too_long', song=self.format_title(),
+                                               duration=format_time(self.duration),
+                                               max_duration=format_time(max_duration)))
+            else:
+                self.ready = "validated"
+                self.version += 1  # notify wrapper to save me
+                return True
+        finally:
             self.validating_lock.release()
-            return True
-
-        # if self.ready == 'failed':
-        #     self.validating_lock.release()
-        #     return False
-        #
-        if os.path.exists(self.path):
-            self.validating_lock.release()
-            self.ready = "yes"
-            return True
-
-        # avoid multiple process validating in the meantime
-        info = self._get_info_from_url()
-        self.validating_lock.release()
-
-        if not info:
-            return False
-
-        if self.duration > var.config.getint('bot', 'max_track_duration') * 60 != 0:
-            # Check the length, useful in case of playlist, it wasn't checked before)
-            log.info(
-                "url: " + self.url + " has a duration of " + str(self.duration / 60) + " min -- too long")
-            raise ValidationFailedError(tr('too_long', song=self.title))
-        else:
-            self.ready = "validated"
-            self.version += 1  # notify wrapper to save me
-            return True
 
     # Run in a other thread
     def prepare(self):
@@ -126,8 +136,8 @@ class URLItem(BaseItem):
                 try:
                     info = ydl.extract_info(self.url, download=False)
                     self.duration = info['duration']
-                    self.title = info['title']
-                    self.keywords = info['title']
+                    self.title = info['title'].strip()
+                    self.keywords = self.title
                     succeed = True
                     return True
                 except youtube_dl.utils.DownloadError:
@@ -237,7 +247,7 @@ class URLItem(BaseItem):
         return display
 
     def format_title(self):
-        return self.title if self.title.strip() else self.url
+        return self.title if self.title else self.url
 
     def display_type(self):
         return tr("url")

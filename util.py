@@ -159,37 +159,6 @@ def update(current_version):
     return msg
 
 
-def user_ban(user):
-    var.db.set("user_ban", user, None)
-    res = "User " + user + " banned"
-    return res
-
-
-def user_unban(user):
-    var.db.remove_option("user_ban", user)
-    res = "Done"
-    return res
-
-
-def get_url_ban():
-    res = "List of ban:"
-    for i in var.db.items("url_ban"):
-        res += "<br/>" + i[0]
-    return res
-
-
-def url_ban(url):
-    var.db.set("url_ban", url, None)
-    res = "url " + url + " banned"
-    return res
-
-
-def url_unban(url):
-    var.db.remove_option("url_ban", url)
-    res = "Done"
-    return res
-
-
 def pipe_no_wait():
     """ Generate a non-block pipe used to fetch the STDERR of ffmpeg.
     """
@@ -337,14 +306,14 @@ def get_url_from_input(string):
         if res:
             string = res.group(1)
         else:
-            return False
+            return ""
 
     match = re.search("(http|https)://(\S*)?/(\S*)", string, flags=re.IGNORECASE)
     if match:
         url = match[1].lower() + "://" + match[2].lower() + "/" + match[3]
         return url
     else:
-        return False
+        return ""
 
 
 def youtube_search(query):
@@ -410,6 +379,14 @@ def parse_time(human):
             return float(match[3]) + 60 * int(match[2]) + 3600 * int(match[1])
     else:
         raise ValueError("Invalid time string given.")
+
+
+def format_time(seconds):
+    hours = seconds // 3600
+    seconds = seconds % 3600
+    minutes = seconds // 60
+    seconds = seconds % 60
+    return f"{hours:d}:{minutes:02d}:{seconds:02d}"
 
 
 def parse_file_size(human):

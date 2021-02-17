@@ -14,7 +14,7 @@ import util
 import variables as var
 from pyradios import RadioBrowser
 from database import SettingsDatabase, MusicDatabase, Condition
-from media.item import item_id_generators, dict_to_item, dicts_to_items
+from media.item import item_id_generators, dict_to_item, dicts_to_items, ValidationFailedError
 from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags, \
     get_cached_wrapper, get_cached_wrappers, get_cached_wrapper_from_dict, get_cached_wrappers_from_dicts
 from media.url_from_playlist import get_playlist_info
@@ -74,6 +74,9 @@ def register_all_commands(bot):
     bot.register_command(commands('url_ban'), cmd_url_ban, no_partial_match=True, admin=True)
     bot.register_command(commands('url_ban_list'), cmd_url_ban_list, no_partial_match=True, admin=True)
     bot.register_command(commands('url_unban'), cmd_url_unban, no_partial_match=True, admin=True)
+    bot.register_command(commands('url_unwhitelist'), cmd_url_unwhitelist, no_partial_match=True, admin=True)
+    bot.register_command(commands('url_whitelist'), cmd_url_whitelist, no_partial_match=True, admin=True)
+    bot.register_command(commands('url_whitelist_list'), cmd_url_whitelist_list, no_partial_match=True, admin=True)
     bot.register_command(commands('user_ban'), cmd_user_ban, no_partial_match=True, admin=True)
     bot.register_command(commands('user_unban'), cmd_user_unban, no_partial_match=True, admin=True)
 
@@ -149,46 +152,102 @@ def cmd_user_ban(bot, user, text, command, parameter):
     global log
 
     if parameter:
-        bot.mumble.users[text.actor].send_text_message(util.user_ban(parameter))
+        var.db.set("user_ban", parameter, None)
+        bot.send_msg(tr("user_ban_success", user=parameter), text)
     else:
-        bot.mumble.users[text.actor].send_text_message(util.get_user_ban())
+        ban_list = "<ul>"
+        for i in var.db.items("url_ban"):
+            ban_list += "<li>" + i[0] + "</li>"
+        ban_list += "</ul>"
+        bot.send_msg(tr("user_ban_list", list=ban_list), text)
 
 
 def cmd_user_unban(bot, user, text, command, parameter):
     global log
 
-    if parameter:
-        bot.mumble.users[text.actor].send_text_message(util.user_unban(parameter))
+    if parameter and var.db.has_option("user_ban", parameter):
+        var.db.remove_option("user_ban", parameter)
+        bot.send_msg(tr("user_unban_success", user=parameter), text)
 
 
 def cmd_url_ban(bot, user, text, command, parameter):
     global log
 
-    if parameter:
-        bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(parameter)))
-
-        id = item_id_generators['url'](url=parameter)
-        var.cache.free_and_delete(id)
-        var.playlist.remove_by_id(id)
+    url = util.get_url_from_input(parameter)
+    if url:
+        _id = item_id_generators['url'](url=url)
+        var.cache.free_and_delete(_id)
+        var.playlist.remove_by_id(_id)
     else:
         if var.playlist.current_item() and var.playlist.current_item().type == 'url':
             item = var.playlist.current_item().item()
-            bot.mumble.users[text.actor].send_text_message(util.url_ban(util.get_url_from_input(item.url)))
+            url = item.url
             var.cache.free_and_delete(item.id)
             var.playlist.remove_by_id(item.id)
         else:
             bot.send_msg(tr('bad_parameter', command=command), text)
+            return
+
+    # Remove from the whitelist first
+    if var.db.has_option('url_whitelist', url):
+        var.db.remove_option("url_whitelist", url)
+        bot.send_msg(tr("url_unwhitelist_success", url=url), text)
+
+    if not var.db.has_option('url_ban', url):
+        var.db.set("url_ban", url, None)
+    bot.send_msg(tr("url_ban_success", url=url), text)
 
 
 def cmd_url_ban_list(bot, user, text, command, parameter):
-    bot.mumble.users[text.actor].send_text_message(util.get_url_ban())
+    ban_list = "<ul>"
+    for i in var.db.items("url_ban"):
+        ban_list += "<li>" + i[0] + "</li>"
+    ban_list += "</ul>"
+
+    bot.send_msg(tr("url_ban_list", list=ban_list), text)
 
 
 def cmd_url_unban(bot, user, text, command, parameter):
-    global log
+    url = util.get_url_from_input(parameter)
+    if url:
+        var.db.remove_option("url_ban", url)
+        bot.send_msg(tr("url_unban_success", url=url), text)
+    else:
+        bot.send_msg(tr('bad_parameter', command=command), text)
 
-    if parameter:
-        bot.mumble.users[text.actor].send_text_message(util.url_unban(util.get_url_from_input(parameter)))
+
+def cmd_url_whitelist(bot, user, text, command, parameter):
+    url = util.get_url_from_input(parameter)
+    if url:
+        # Unban first
+        if var.db.has_option('url_ban', url):
+            var.db.remove_option("url_ban", url)
+            bot.send_msg(tr("url_unban_success"), text)
+
+        # Then add to whitelist
+        if not var.db.has_option('url_whitelist', url):
+            var.db.set("url_whitelist", url, None)
+        bot.send_msg(tr("url_whitelist_success", url=url), text)
+    else:
+        bot.send_msg(tr('bad_parameter', command=command), text)
+
+
+def cmd_url_whitelist_list(bot, user, text, command, parameter):
+    ban_list = "<ul>"
+    for i in var.db.items("url_whitelist"):
+        ban_list += "<li>" + i[0] + "</li>"
+    ban_list += "</ul>"
+
+    bot.send_msg(tr("url_whitelist_list", list=ban_list), text)
+
+
+def cmd_url_unwhitelist(bot, user, text, command, parameter):
+    url = util.get_url_from_input(parameter)
+    if url:
+        var.db.remove_option("url_whitelist", url)
+        bot.send_msg(tr("url_unwhitelist_success"), text)
+    else:
+        bot.send_msg(tr('bad_parameter', command=command), text)
 
 
 def cmd_play(bot, user, text, command, parameter):
@@ -338,6 +397,7 @@ def cmd_play_url(bot, user, text, command, parameter):
 
         log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
         send_item_added_message(bot, music_wrapper, len(var.playlist) - 1, text)
+
         if len(var.playlist) == 2:
             # If I am the second item on the playlist. (I am the next one!)
             bot.async_download_next()
