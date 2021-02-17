@@ -349,26 +349,34 @@ def get_url_from_input(string):
 
 def youtube_search(query):
     global log
+    import json
 
     try:
-        results = None
         r = requests.get("https://www.youtube.com/results", params={'search_query': query}, timeout=5)
-        results = re.findall(
-            r"(watch\?v=(?P<videoid>[^\"\r\n]*)\".*?title=\"(?P<title>[^\r\n\"]*)\".*?(?:user|channel)[^>]*"
-            r">(?P<uploader>[^<\"\n\r]*)<)|(\"videoId\":\"(?P<videoid2>[^\"]*)\").*?\"title\":{\"runs\":\[{"
-            r"\"text\":\"(?P<title2>[^\"]*)\".*?\"ownerText\":{\"runs\":\[{\"text\":\"(?P<uploader2>[^\"]*)"
-            r"\"", r.text)  # (catch1, id1, title1, uploader1, catch2, id2, title2, uploader2,)
+        result_json_match = re.findall(r">var ytInitialData = (.*?);</script>", r.text)
 
-        if len(results) > 0:
-            finalResults = None
-            finalResults = []
-            if results[0][0] != "":
-                for entry in results:
-                    finalResults.append([entry[1], entry[2], entry[3]])
-            else:
-                for entry in results:
-                    finalResults.append([entry[5], entry[6], entry[7]])
-            return finalResults
+        if not len(result_json_match):
+            log.error("util: can not interpret youtube search web page")
+            return False
+
+        result_big_json = json.loads(result_json_match[0])
+        results = []
+        try:
+            for item in result_big_json['contents']['twoColumnSearchResultsRenderer']\
+                    ['primaryContents']['sectionListRenderer']['contents'][0]\
+                    ['itemSectionRenderer']['contents']:
+                if 'videoRenderer' not in item:
+                    continue
+                video_info = item['videoRenderer']
+                title = video_info['title']['runs'][0]['text']
+                video_id = video_info['videoId']
+                uploader = video_info['ownerText']['runs'][0]['text']
+                results.append([video_id, title, uploader])
+        except (json.JSONDecodeError, KeyError):
+            log.error("util: can not interpret youtube search web page")
+            return False
+
+        return results
 
     except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout):
         error_traceback = traceback.format_exc().split("During")[0]
