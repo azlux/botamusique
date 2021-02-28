@@ -9,6 +9,7 @@ import glob
 from io import BytesIO
 import base64
 
+import util
 from constants import tr_cli as tr
 import media
 import variables as var
@@ -151,7 +152,7 @@ class URLItem(BaseItem):
             raise ValidationFailedError(tr('unable_download', item=self.format_title()))
 
     def _download(self):
-        media.system.clear_tmp_folder(var.tmp_folder, var.config.getint('bot', 'tmp_folder_max_size'))
+        util.clear_tmp_folder(var.tmp_folder, var.config.getint('bot', 'tmp_folder_max_size'))
 
         self.downloading = True
         base_path = var.tmp_folder + self.id
