@@ -24,10 +24,10 @@ from packaging import version
 import util
 import command
 import constants
+import media.playlist
 from constants import tr_cli as tr
 from database import SettingsDatabase, MusicDatabase, DatabaseMigration
 from media.item import ValidationFailedError, PreparationFailedError
-from media.playlist import BasePlaylist
 from media.cache import MusicCache
 
 
@@ -385,7 +385,7 @@ class MumbleBot:
             ffmpeg_debug = "warning"
 
         channels = 2 if self.stereo else 1
-        self.pcm_buffer_size = 960*channels
+        self.pcm_buffer_size = 960 * channels
 
         command = ("ffmpeg", '-v', ffmpeg_debug, '-nostdin', '-i',
                    uri, '-ss', f"{start_from:f}", '-ac', str(channels), '-f', 's16le', '-ar', '48000', '-')
@@ -591,7 +591,7 @@ class MumbleBot:
                     + self.volume_helper.ducking_volume_set
             else:
                 self.volume_helper.real_volume = self.volume_helper.volume_set - \
-                      (self.volume_helper.volume_set - self.volume_helper.real_volume) * math.exp(- delta / 0.5)
+                                                 (self.volume_helper.volume_set - self.volume_helper.real_volume) * math.exp(- delta / 0.5)
 
             self.last_volume_cycle_time = time.time()
 
@@ -615,7 +615,7 @@ class MumbleBot:
         pcm_data = bytearray(_pcm_data)
         if stereo:
             if not fadein:
-                mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 4))]
+                mask = [math.exp(-x / 60) for x in range(0, int(len(pcm_data) / 4))]
             else:
                 mask = [math.exp(-x / 60) for x in reversed(range(0, int(len(pcm_data) / 4)))]
 
@@ -625,7 +625,7 @@ class MumbleBot:
                 pcm_data[4 * i + 2:4 * i + 4] = struct.pack("<h", round(
                     struct.unpack("<h", pcm_data[4 * i + 2:4 * i + 4])[0] * mask[i]))
         else:
-            mask = [math.exp(-x/60) for x in range(0, int(len(pcm_data) / 2))]
+            mask = [math.exp(-x / 60) for x in range(0, int(len(pcm_data) / 2))]
             for i in range(int(len(pcm_data) / 2)):
                 pcm_data[2 * i:2 * i + 2] = struct.pack("<h",
                                                         round(struct.unpack("<h", pcm_data[2 * i:2 * i + 2])[0] * mask[i]))
