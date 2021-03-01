@@ -26,7 +26,6 @@ import command
 import constants
 from constants import tr_cli as tr
 from database import SettingsDatabase, MusicDatabase, DatabaseMigration
-import media.system
 from media.item import ValidationFailedError, PreparationFailedError
 from media.playlist import BasePlaylist
 from media.cache import MusicCache

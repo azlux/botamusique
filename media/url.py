@@ -15,7 +15,6 @@ import media
 import variables as var
 from media.item import BaseItem, item_builders, item_loaders, item_id_generators, ValidationFailedError, \
     PreparationFailedError
-import media.system
 from util import format_time
 
 log = logging.getLogger("bot")

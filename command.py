@@ -9,7 +9,6 @@ import pymumble_py3 as pymumble
 from constants import tr_cli as tr
 from constants import commands
 import interface
-import media.system
 import util
 import variables as var
 from pyradios import RadioBrowser
