@@ -170,11 +170,19 @@ class URLItem(BaseItem):
             'verbose': var.config.getboolean('debug', 'youtube_dl')
         }
 
+        cookie = var.config.get('youtube_dl', 'cookiefile', fallback=None)
+        if cookie:
+            ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookiefile', fallback=None)
+
+        user_agent = var.config.get('youtube_dl', 'user_agent', fallback=None)
+        if user_agent:
+            youtube_dl.utils.std_headers['User-Agent'] = var.config.get('youtube_dl', 'user_agent')
+
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             attempts = var.config.getint('bot', 'download_attempts', fallback=2)
             download_succeed = False
             for i in range(attempts):
-                self.log.info("bot: download attempts %d / %d" % (i+1, attempts))
+                self.log.info("bot: download attempts %d / %d" % (i + 1, attempts))
                 try:
                     ydl.extract_info(self.url)
                     download_succeed = True
@@ -232,9 +240,9 @@ class URLItem(BaseItem):
     def format_song_string(self, user):
         if self.ready in ['validated', 'yes']:
             return tr("url_item",
-                                title=self.title if self.title else "??",
-                                url=self.url,
-                                user=user)
+                      title=self.title if self.title else "??",
+                      url=self.url,
+                      user=user)
         return self.url
 
     def format_current_playing(self, user):
