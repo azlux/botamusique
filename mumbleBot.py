@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import re
 import threading
 import time
 import sys
@@ -238,7 +238,8 @@ class MumbleBot:
 
     # All text send to the chat is analysed by this function
     def message_received(self, text):
-        message = text.message.strip()
+        raw_message = text.message.strip()
+        message = re.sub(r'<.*?>', '', raw_message)
         user = self.mumble.users[text.actor]['name']
 
         if var.config.getboolean('commands', 'split_username_at_space'):
