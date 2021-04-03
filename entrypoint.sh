@@ -37,6 +37,10 @@ if [ -n "$BAM_CERTIFICATE" ]; then
     command+=( "--cert" "$BAM_CERTIFICATE" )
 fi
 
+if [ -n "$BAM_VERBOSE" ]; then
+    command+=( "--verbose" )
+fi
+
 if [ -n "$BAM_CONFIG_file" ]; then
     if [ ! -f "$BAM_CONFIG_file" ]; then
         cp "/botamusique/configuration.example.ini" "$BAM_CONFIG_file"

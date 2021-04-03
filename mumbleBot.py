@@ -751,7 +751,7 @@ if __name__ == '__main__':
     parser.add_argument("-P", "--password", dest="password",
                         type=str, help="Server password, if required")
     parser.add_argument("-T", "--tokens", dest="tokens",
-                        type=str, help="Server tokens, if required")
+                        type=str, help="Server tokens to enter a channel, if required (multiple entries separated with comma ','")
     parser.add_argument("-p", "--port", dest="port",
                         type=int, help="Port for the Mumble server")
     parser.add_argument("-c", "--channel", dest="channel",
