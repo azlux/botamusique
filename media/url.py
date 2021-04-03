@@ -166,7 +166,8 @@ class URLItem(BaseItem):
             'outtmpl': base_path,
             'noplaylist': True,
             'writethumbnail': True,
-            'updatetime': False
+            'updatetime': False,
+            'verbose': var.config.getboolean('debug', 'youtube_dl')
         }
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
