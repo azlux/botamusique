@@ -51,7 +51,7 @@ def get_recursive_file_list_sorted(path):
             try:
                 mime = magic.from_file(fullpath, mime=True)
                 if 'audio' in mime or 'audio' in magic.from_file(fullpath).lower() or 'video' in mime:
-                    filelist.append(relroot + file)
+                    filelist.append(os.path.join(relroot, file))
             except:
                 pass
 
