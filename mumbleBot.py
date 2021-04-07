@@ -129,7 +129,7 @@ class MumbleBot:
         # ====== Volume ======
         self.volume_helper = util.VolumeHelper()
 
-        _volume = var.config.getfloat('bot', 'volume', fallback=0.1)
+        _volume = var.config.getfloat('bot', 'volume', fallback=0.8)
         if var.db.has_option('bot', 'volume'):
             _volume = var.db.getfloat('bot', 'volume')
         self.volume_helper.set_volume(_volume)
@@ -140,7 +140,7 @@ class MumbleBot:
         self.last_volume_cycle_time = time.time()
 
         self._ducking_volume = 0
-        _ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.05)
+        _ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.50)
         _ducking_volume = var.db.getfloat("bot", "ducking_volume", fallback=_ducking_volume)
         self.volume_helper.set_ducking_volume(_ducking_volume)
 
