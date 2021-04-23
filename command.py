@@ -13,6 +13,7 @@ import util
 import variables as var
 from pyradios import RadioBrowser
 from database import SettingsDatabase, MusicDatabase, Condition
+import media.playlist
 from media.item import item_id_generators, dict_to_item, dicts_to_items, ValidationFailedError
 from media.cache import get_cached_wrapper_from_scrap, get_cached_wrapper_by_id, get_cached_wrappers_by_tags, \
     get_cached_wrapper, get_cached_wrappers, get_cached_wrapper_from_dict, get_cached_wrappers_from_dicts

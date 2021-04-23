@@ -321,7 +321,9 @@ def youtube_search(query):
     import json
 
     try:
-        r = requests.get("https://www.youtube.com/results", params={'search_query': query}, timeout=5)
+        cookie = json.loads(var.config.get('bot', 'youtube_query_cookie', default='{}'))
+        r = requests.get("https://www.youtube.com/results", cookie=cookie,
+                         params={'search_query': query}, timeout=5)
         result_json_match = re.findall(r">var ytInitialData = (.*?);</script>", r.text)
 
         if not len(result_json_match):
