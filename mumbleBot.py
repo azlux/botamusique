@@ -111,7 +111,7 @@ class MumbleBot:
         if args.bandwidth:
             self.bandwidth = args.bandwidth
         else:
-            self.bandwidth = var.config.get("bot", "bandwidth")
+            self.bandwidth = var.config.getint("bot", "bandwidth")
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       stereo=self.stereo,
