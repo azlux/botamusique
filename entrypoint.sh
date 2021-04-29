@@ -42,7 +42,7 @@ if [ -n "$BAM_VERBOSE" ]; then
 fi
 
 if [ -n "$BAM_BANDWIDTH" ]; then
-    command+=( "--bandwidth" )
+    command+=( "--bandwidth" "$BAM_BANDWIDTH")
 fi
 
 if [ -n "$BAM_CONFIG_file" ]; then
