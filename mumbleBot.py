@@ -108,6 +108,11 @@ class MumbleBot:
         else:
             self.username = var.config.get("bot", "username")
 
+        if args.bandwidth:
+            self.bandwidth = args.bandwidth
+        else:
+            self.bandwidth = var.config.getint("bot", "bandwidth")
+
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       stereo=self.stereo,
                                       debug=var.config.getboolean('debug', 'mumbleConnection'),
@@ -124,7 +129,7 @@ class MumbleBot:
         self.set_comment()
         self.mumble.users.myself.unmute()  # by sure the user is not muted
         self.join_channel()
-        self.mumble.set_bandwidth(200000)
+        self.mumble.set_bandwidth(self.bandwidth)
 
         # ====== Volume ======
         self.volume_helper = util.VolumeHelper()
@@ -759,6 +764,8 @@ if __name__ == '__main__':
                         type=str, help="Default channel for the bot")
     parser.add_argument("-C", "--cert", dest="certificate",
                         type=str, default=None, help="Certificate file")
+    parser.add_argument("-b", "--bandwidth", dest="bandwidth",
+                        type=int, help="Bandwidth used by the bot")
 
     args = parser.parse_args()
 
