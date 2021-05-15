@@ -142,7 +142,7 @@ class CachedItemWrapper:
         if self.id in self.lib:
             return self.lib[self.id]
         else:
-            raise ValueError(f"Uncached item of id {self.id}.")
+            raise ValueError(f"Uncached item of id {self.id}, type {self.type}.")
 
     def to_dict(self):
         dict = self.item().to_dict()
