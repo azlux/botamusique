@@ -252,7 +252,7 @@ class MumbleBot:
             # you want to split the username
             user = user.split()[0]
 
-        if message[0] in var.config.get('commands', 'command_symbol'):
+        if message.startswith(tuple(var.config.get('commands', 'command_symbol'))):
             # remove the symbol from the message
             message = message[1:].split(' ', 1)
 
