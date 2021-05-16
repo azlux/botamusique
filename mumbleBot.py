@@ -256,7 +256,7 @@ class MumbleBot:
         match = re.match(fr'^[{re.escape(command_symbols)}](?P<command>\S+)(?:\s(?P<argument>.*))?', message)
         if match:
             command = match.group("command").lower()
-            argument = match.group("argument")
+            argument = match.group("argument") or ""
 
             if not command:
                 return
