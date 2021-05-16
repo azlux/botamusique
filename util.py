@@ -2,6 +2,7 @@
 # coding=utf-8
 
 import hashlib
+import html
 import magic
 import os
 import io
@@ -311,7 +312,8 @@ def get_url_from_input(string):
     match = re.search("(http|https)://(\S*)?/(\S*)", string, flags=re.IGNORECASE)
     if match:
         url = match[1].lower() + "://" + match[2].lower() + "/" + match[3]
-        return url
+        # https://github.com/mumble-voip/mumble/issues/4999
+        return html.unescape(url)
     else:
         return ""
 
