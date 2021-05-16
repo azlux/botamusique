@@ -1,3 +1,4 @@
+import logging
 import youtube_dl
 from constants import tr_cli as tr
 import variables as var
@@ -5,8 +6,10 @@ from media.item import item_builders, item_loaders, item_id_generators
 from media.url import URLItem, url_item_id_generator
 
 
+log = logging.getLogger("bot")
+
+
 def get_playlist_info(url, start_index=0, user=""):
-    items = []
     ydl_opts = {
         'extract_flat': 'in_playlist',
         'verbose': var.config.getboolean('debug', 'youtube_dl')
@@ -23,6 +26,7 @@ def get_playlist_info(url, start_index=0, user=""):
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         attempts = var.config.getint('bot', 'download_attempts', fallback=2)
         for i in range(attempts):
+            items = []
             try:
                 info = ydl.extract_info(url, download=False)
                 # # if url is not a playlist but a video
@@ -55,10 +59,12 @@ def get_playlist_info(url, start_index=0, user=""):
                     }
 
                     items.append(music)
-            except:  # todo need to be specified
-                pass
 
-    return items
+            except Exception as ex:
+                log.exception(ex, exc_info=True)
+                continue
+
+            return items
 
 
 def playlist_url_item_builder(**kwargs):
