@@ -5,7 +5,8 @@ import random
 import time
 
 import variables as var
-from media.cache import CachedItemWrapper, get_cached_wrapper_from_dict, get_cached_wrapper_by_id
+from media.cache import (CachedItemWrapper, ItemNotCachedError,
+                         get_cached_wrapper_from_dict, get_cached_wrapper_by_id)
 from database import Condition
 from media.item import ValidationFailedError, PreparationFailedError
 
@@ -224,6 +225,15 @@ class BasePlaylist(list):
         self.validating_thread_lock.acquire()
         while len(self.pending_items) > 0:
             item = self.pending_items.pop()
+            try:
+                item.item()
+            except ItemNotCachedError:
+                # In some very subtle case, items are removed and freed from
+                # the playlist and the cache, before validation even starts,
+                # causes, freed items remain in pending_items.
+                # Simply ignore these items here.
+                continue
+
             self.log.debug("playlist: validating %s" % item.format_debug_string())
             ver = item.version
 
