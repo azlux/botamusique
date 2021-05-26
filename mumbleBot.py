@@ -246,6 +246,11 @@ class MumbleBot:
     def message_received(self, text):
         raw_message = text.message.strip()
         message = re.sub(r'<.*?>', '', raw_message)
+        if text.actor == 0:
+            # Some server will send a welcome message to the bot once connected.
+            # It doesn't have a valid "actor". Simply ignore it here.
+            return
+
         user = self.mumble.users[text.actor]['name']
 
         if var.config.getboolean('commands', 'split_username_at_space'):
