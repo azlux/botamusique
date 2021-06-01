@@ -22,11 +22,13 @@ def get_radio_server_description(url):
     url_icecast = base_url + '/status-json.xsl'
     url_shoutcast = base_url + '/stats?json=1'
     try:
-        r = requests.get(url_shoutcast, timeout=10)
-        data = r.json()
-        title_server = data['servertitle']
-        return title_server
-        # logging.info("TITLE FOUND SHOUTCAST: " + title_server)
+        response = requests.head(url_shoutcast, timeout=3)
+        if not response.headers.get('content-type', '').startswith(("audio/", "video/")):
+            response = requests.get(url_shoutcast, timeout=10)
+            data = response.json()
+            title_server = data['servertitle']
+            return title_server
+            # logging.info("TITLE FOUND SHOUTCAST: " + title_server)
     except (requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
@@ -38,16 +40,18 @@ def get_radio_server_description(url):
         return url
 
     try:
-        r = requests.get(url_icecast, timeout=10)
-        data = r.json()
-        source = data['icestats']['source']
-        if type(source) is list:
-            source = source[0]
-        title_server = source['server_name']
-        if 'server_description' in source:
-            title_server += ' - ' + source['server_description']
-        # logging.info("TITLE FOUND ICECAST: " + title_server)
-        return title_server
+        response = requests.head(url_shoutcast, timeout=3)
+        if not response.headers.get('content-type', '').startswith(("audio/", "video/")):
+            response = requests.get(url_icecast, timeout=10)
+            data = response.json()
+            source = data['icestats']['source']
+            if type(source) is list:
+                source = source[0]
+            title_server = source['server_name']
+            if 'server_description' in source:
+                title_server += ' - ' + source['server_description']
+            # logging.info("TITLE FOUND ICECAST: " + title_server)
+            return title_server
     except (requests.exceptions.ConnectionError,
             requests.exceptions.HTTPError,
             requests.exceptions.ReadTimeout,
