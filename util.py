@@ -164,7 +164,7 @@ def pipe_no_wait():
     """ Generate a non-block pipe used to fetch the STDERR of ffmpeg.
     """
 
-    if platform == "linux" or platform == "linux2" or platform == "darwin" or platform.startswith("openbsd"):
+    if platform == "linux" or platform == "linux2" or platform == "darwin" or platform.startswith("openbsd") or platform.startswith("freebsd"):
         import fcntl
         import os
 
