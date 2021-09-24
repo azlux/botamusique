@@ -87,14 +87,10 @@ class BasePlaylist(list):
         return item
 
     def extend(self, items):
-        print("extend to-enter")
         with self.playlist_lock:
-            print("extend enter")
             self.version += 1
             super().extend(items)
             self.pending_items.extend(items)
-
-        print("extend leave")
 
         self.async_validate()
         return items
