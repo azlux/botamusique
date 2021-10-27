@@ -1,5 +1,5 @@
 import logging
-import youtube_dl
+import yt_dlp as youtube_dl
 from constants import tr_cli as tr
 import variables as var
 from media.item import item_builders, item_loaders, item_id_generators

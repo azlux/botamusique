@@ -4,7 +4,7 @@ import os
 import hashlib
 import traceback
 from PIL import Image
-import youtube_dl
+import yt_dlp as youtube_dl
 import glob
 from io import BytesIO
 import base64

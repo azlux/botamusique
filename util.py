@@ -12,7 +12,7 @@ import zipfile
 import re
 import subprocess as sp
 import logging
-import youtube_dl
+import yt_dlp as youtube_dl
 from importlib import reload
 from sys import platform
 import traceback

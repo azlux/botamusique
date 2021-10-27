@@ -1,5 +1,5 @@
 flask
-youtube-dl
+yt-dlp
 python-magic
 Pillow
 mutagen

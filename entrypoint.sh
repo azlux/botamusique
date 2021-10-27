@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 command=( "${@}" )
 
+if [ "$1" == "bash" ] || [ "$1" == "sh" ]; then
+    exec "${@}"
+fi
+
 if [ -n "$BAM_DB" ]; then
     command+=( "--db" "$BAM_DB" )
 fi
