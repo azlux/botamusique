@@ -131,6 +131,8 @@ class MumbleBot:
         self.join_channel()
         self.mumble.set_bandwidth(self.bandwidth)
 
+        self._user_in_channel = self.get_user_count_in_channel()
+
         # ====== Volume ======
         self.volume_helper = util.VolumeHelper()
 
@@ -351,27 +353,33 @@ class MumbleBot:
             return False
 
     # =======================
-    #         Users changed
+    #   Other Mumble Events
     # =======================
 
-    def users_changed(self, user, message):
+    def get_user_count_in_channel(self):
         own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
+        return len(own_channel.get_users())
+
+    def users_changed(self, user, message):
         # only check if there is one more user currently in the channel
         # else when the music is paused and somebody joins, music would start playing again
-        if len(own_channel.get_users()) == 2:
+        user_count = self.get_user_count_in_channel()
+
+        if user_count > self._user_in_channel and user_count == 2:
             if var.config.get("bot", "when_nobody_in_channel") == "pause_resume":
                 self.resume()
             elif var.config.get("bot", "when_nobody_in_channel") == "pause" and self.is_pause:
                 self.send_channel_msg(tr("auto_paused"))
-
-        elif len(own_channel.get_users()) == 1 and len(var.playlist) != 0:
+        elif user_count == 1 and len(var.playlist) != 0:
             # if the bot is the only user left in the channel and the playlist isn't empty
-            self.log.info('bot: Other users in the channel left. Stopping music now.')
-
             if var.config.get("bot", "when_nobody_in_channel") == "stop":
+                self.log.info('bot: No user in my channel. Stop music now.')
                 self.clear()
             else:
+                self.log.info('bot: No user in my channel. Pause music now.')
                 self.pause()
+
+        self._user_in_channel = user_count
 
     # =======================
     #   Launch and Download
