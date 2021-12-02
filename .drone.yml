@@ -9,7 +9,7 @@ volumes:
 
 steps:
   - name: build-web
-    image: node
+    image: node:16
     commands:
       - (cd web && npm install && npm run build)
     when:
