@@ -103,6 +103,12 @@ class MumbleBot:
             tokens = var.config.get("server", "tokens")
             tokens = tokens.split(',')
 
+        if args.bots:
+            self.bots = set(args.bots)
+        else:
+            bots = var.config.get("server", "bots",fallback="")
+            self.bots = set(bots.split(','))
+
         if args.user:
             self.username = args.user
         else:
@@ -132,6 +138,7 @@ class MumbleBot:
         self.mumble.set_bandwidth(self.bandwidth)
 
         self._user_in_channel = self.get_user_count_in_channel()
+
 
         # ====== Volume ======
         self.volume_helper = util.VolumeHelper()
@@ -358,7 +365,8 @@ class MumbleBot:
 
     def get_user_count_in_channel(self):
         own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
-        return len(own_channel.get_users())
+        return len(set([user.get_property("name") for user in own_channel.get_users()]).difference(self.bots))
+
 
     def users_changed(self, user, message):
         # only check if there is one more user currently in the channel
@@ -776,6 +784,8 @@ if __name__ == '__main__':
                         type=str, default=None, help="Certificate file")
     parser.add_argument("-b", "--bandwidth", dest="bandwidth",
                         type=int, help="Bandwidth used by the bot")
+    parser.add_argument("-B", "--bots", dest="bots",
+                        type=str, help="List of usernames belonging to other bots. (multiple entries separated with comma ','")
 
     args = parser.parse_args()
 
