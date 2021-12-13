@@ -641,7 +641,11 @@ class MumbleBot:
                 pcm_data[4 * i + 2:4 * i + 4] = struct.pack("<h", round(
                     struct.unpack("<h", pcm_data[4 * i + 2:4 * i + 4])[0] * mask[i]))
         else:
-            mask = [math.exp(-x / 60) for x in range(0, int(len(pcm_data) / 2))]
+            if not fadein:
+                mask = [math.exp(-x / 60) for x in range(0, int(len(pcm_data) / 2))]
+            else:
+                mask = [math.exp(-x / 60) for x in reversed(range(0, int(len(pcm_data) / 2)))]
+
             for i in range(int(len(pcm_data) / 2)):
                 pcm_data[2 * i:2 * i + 2] = struct.pack("<h",
                                                         round(struct.unpack("<h", pcm_data[2 * i:2 * i + 2])[0] * mask[i]))
