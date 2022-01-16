@@ -536,15 +536,18 @@ function displayLibraryControls(data) {
     $('.library-delete').hide();
   }
 
-  const select = $('#filter-dir');
   const dataList = $('#upload-target-dirs');
-  select.find('option').remove();
-  dataList.find('option').remove();
+  const dirs = [];
+  filter_dir.find('option').each(function(i, dir_element){
+    dirs.push(dir_element.value);
+    });
   if (data.dirs.length > 0) {
     console.log(data.dirs);
     data.dirs.forEach(function(dir) {
-      $('<option value="' + dir + '">' + dir + '</option>').appendTo(select);
-      $('<option value="' + dir + '">').appendTo(dataList);
+      if(!dirs.includes(dir)) {
+        $('<option value="' + dir + '">' + dir + '</option>').appendTo(filter_dir);
+        $('<option value="' + dir + '">').appendTo(dataList);
+      }
     });
   }
 
