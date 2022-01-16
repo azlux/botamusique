@@ -1,6 +1,6 @@
 flask
 yt-dlp
-python-magic
+python-magic-bin
 Pillow
 mutagen
 requests
