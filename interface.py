@@ -439,7 +439,7 @@ def post():
 
         elif 'action' in payload:
             action = payload['action']
-            if action == "randomize":
+            if action == "random":
                 if var.playlist.mode != "random":
                     var.playlist = media.playlist.get_playlist("random", var.playlist)
                 else:
