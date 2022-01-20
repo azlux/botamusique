@@ -730,7 +730,7 @@ def start_web_interface(addr, port):
     werkzeug_logger = logging.getLogger('werkzeug')
     logfile = util.solve_filepath(var.config.get('webinterface', 'web_logfile'))
     if logfile:
-        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
+        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240, backupCount=3)  # Rotate after 10KB, leave 3 old logs
     else:
         handler = logging.StreamHandler()
 
@@ -813,7 +813,7 @@ if __name__ == '__main__':
     handler = None
     if logfile:
         print(f"Redirecting stdout and stderr to log file: {logfile}")
-        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240)  # Rotate after 10KB
+        handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240, backupCount=3)  # Rotate after 10KB, leave 3 old logs
         if var.config.getboolean("bot", "redirect_stderr", fallback=False):
             sys.stderr = util.LoggerIOWrapper(bot_logger, logging.INFO,
                                               fallback_io_buffer=sys.stderr.buffer)
