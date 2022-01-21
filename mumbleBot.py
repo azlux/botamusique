@@ -127,6 +127,7 @@ class MumbleBot:
             exit()
 
         self.set_comment()
+        self.set_avatar()
         self.mumble.users.myself.unmute()  # by sure the user is not muted
         self.join_channel()
         self.mumble.set_bandwidth(self.bandwidth)
@@ -232,6 +233,15 @@ class MumbleBot:
 
     def set_comment(self):
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
+
+    def set_avatar(self):
+        avatar_path = var.config.get('bot', 'avatar', fallback=None)
+
+        if avatar_path:
+            with open(avatar_path, 'rb') as avatar_file:
+                self.mumble.users.myself.texture(avatar_file.read())
+        else:
+            self.mumble.users.myself.texture(b'')
 
     def join_channel(self):
         if self.channel:
