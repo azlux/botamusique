@@ -252,7 +252,7 @@ For more information, see [#122](https://github.com/azlux/botamusique/issues/122
 If you ran into some problems in using the bot, or discovered bugs and want to talk to us, you may
 
  - Start a new issue,
- - Ask in #mumble at freenode.net (we are usually there to help)
+ - Ask in the Matrix channel of Mumble [#mumble:matrix.org](https://matrix.to/#/#mumble:matrix.org) (we are usually there to help).
 
 ## Contributors
 If you want to help us develop, you're welcome to fork and submit pull requests (fixes and new features).
