@@ -530,10 +530,9 @@ function displayLibraryControls(data) {
 
   if (data.delete_allowed) {
     $('#deleteAllowed').val('true');
-    $('.library-delete').show();
   } else {
-    $('#uploadDisabled').val('false');
-    $('.library-delete').hide();
+    $('#deleteAllowed').val('false');
+    $('.library-delete').remove();
   }
 
   const dataList = $('#upload-target-dirs');
