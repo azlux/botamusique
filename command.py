@@ -1148,6 +1148,11 @@ def cmd_shortlist(bot, user, text, command, parameter):
 
 def cmd_delete_from_library(bot, user, text, command, parameter):
     global song_shortlist, log
+
+    if not var.config.getboolean("bot", "delete_allowed", fallback=True):
+        bot.mumble.users[text.actor].send_text_message(tr('not_admin'))
+        return
+
     try:
         indexes = [int(i) for i in parameter.split(" ")]
     except ValueError:

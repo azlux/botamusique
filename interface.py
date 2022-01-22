@@ -563,8 +563,8 @@ def library_info():
 
     return jsonify(dict(
         dirs=get_all_dirs(),
-        upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True),
-        delete_allowed=var.config.getboolean("webinterface", "delete_allowed", fallback=True),
+        upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True) or var.bot.is_admin(user),
+        delete_allowed=var.config.getboolean("bot", "delete_allowed", fallback=True) or var.bot.is_admin(user),
         tags=tags,
         max_upload_file_size=max_upload_file_size
     ))
@@ -609,7 +609,7 @@ def library():
 
                 return redirect("./", code=302)
             elif payload['action'] == 'delete':
-                if var.config.getboolean("webinterface", "delete_allowed", fallback=True):
+                if var.config.getboolean("bot", "delete_allowed", fallback=True):
                     items = dicts_to_items(var.music_db.query_music(condition))
                     for item in items:
                         var.playlist.remove_by_id(item.id)
