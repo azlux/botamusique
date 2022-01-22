@@ -15,9 +15,9 @@ def get_playlist_info(url, start_index=0, user=""):
         'verbose': var.config.getboolean('debug', 'youtube_dl')
     }
 
-    cookie = var.config.get('youtube_dl', 'cookiefile', fallback=None)
+    cookie = var.config.get('youtube_dl', 'cookie_file', fallback=None)
     if cookie:
-        ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookiefile', fallback=None)
+        ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookie_file', fallback=None)
 
     user_agent = var.config.get('youtube_dl', 'user_agent', fallback=None)
     if user_agent:

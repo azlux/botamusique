@@ -115,7 +115,7 @@ class MumbleBot:
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       stereo=self.stereo,
-                                      debug=var.config.getboolean('debug', 'mumbleConnection'),
+                                      debug=var.config.getboolean('debug', 'mumble_connection'),
                                       certfile=certificate)
         self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_TEXTMESSAGERECEIVED, self.message_received)
 
@@ -798,11 +798,28 @@ if __name__ == '__main__':
     # ======================
 
     config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
+    default_config = configparser.ConfigParser(interpolation=None, allow_no_value=True)
     var.config = config
-    parsed_configs = config.read([util.solve_filepath('configuration.default.ini'), util.solve_filepath(args.config)],
-                                 encoding='utf-8')
-    if len(parsed_configs) == 0:
-        logging.error('Could not read configuration from file \"{}\"'.format(args.config))
+
+    if len(default_config.read(
+            util.solve_filepath('configuration.default.ini'),
+            encoding='utf-8')) == 0:
+        logging.error("Could not read default configuration file 'configuration.default.ini', please check"
+                      "your installation.")
+        sys.exit()
+
+    if len(config.read(
+            [util.solve_filepath('configuration.default.ini'), util.solve_filepath(args.config)],
+            encoding='utf-8')) == 0:
+        logging.error(f'Could not read configuration from file "{args.config}"')
+        sys.exit()
+
+    extra_configs = util.check_extra_config(config, default_config)
+    if extra_configs:
+        extra_str = ", ".join([f"'[{k}] {v}'" for (k, v) in extra_configs])
+        logging.error(f'Unexpected config items {extra_str} defined in your config file. '
+                      f'This is likely caused by a recent change in the names of config items, '
+                      f'or the removal of obsolete config items. Please refer to the changelog.')
         sys.exit()
 
     # ======================
@@ -845,9 +862,9 @@ if __name__ == '__main__':
 
     sanitized_username = "".join([x if x.isalnum() else "_" for x in username])
     var.settings_db_path = args.db if args.db is not None else util.solve_filepath(
-        config.get("bot", "database_path", fallback=f"settings-{sanitized_username}.db"))
+        config.get("bot", "database_path", fallback="") or f"settings-{sanitized_username}.db")
     var.music_db_path = args.music_db if args.music_db is not None else util.solve_filepath(
-        config.get("bot", "music_database_path", fallback="music.db"))
+        config.get("bot", "music_database_path", fallback="") or "music.db")
 
     var.db = SettingsDatabase(var.settings_db_path)
 

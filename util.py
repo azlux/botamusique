@@ -561,3 +561,16 @@ def clear_tmp_folder(path, size):
                         except (FileNotFoundError, OSError):
                             continue
                     return
+
+
+def check_extra_config(config, template):
+    extra = []
+
+    for key in config.sections():
+        if key in ['radio']:
+            continue
+        for opt in config.options(key):
+            if not template.has_option(key, opt):
+                extra.append((key, opt))
+
+    return extra
