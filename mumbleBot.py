@@ -40,12 +40,12 @@ class MumbleBot:
         signal.signal(signal.SIGINT, self.ctrl_caught)
         self.cmd_handle = {}
 
-        self.stereo = var.config.getboolean('bot', 'stereo', fallback=True)
+        self.stereo = var.config.getboolean('bot', 'stereo')
 
         if args.channel:
             self.channel = args.channel
         else:
-            self.channel = var.config.get("server", "channel", fallback=None)
+            self.channel = var.config.get("server", "channel")
 
         var.user = args.user
         var.is_proxified = var.config.getboolean(
@@ -137,7 +137,7 @@ class MumbleBot:
         # ====== Volume ======
         self.volume_helper = util.VolumeHelper()
 
-        _volume = var.config.getfloat('bot', 'volume', fallback=0.8)
+        _volume = var.config.getfloat('bot', 'volume')
         if var.db.has_option('bot', 'volume'):
             _volume = var.db.getfloat('bot', 'volume')
         self.volume_helper.set_volume(_volume)
@@ -148,14 +148,14 @@ class MumbleBot:
         self.last_volume_cycle_time = time.time()
 
         self._ducking_volume = 0
-        _ducking_volume = var.config.getfloat("bot", "ducking_volume", fallback=0.50)
+        _ducking_volume = var.config.getfloat("bot", "ducking_volume")
         _ducking_volume = var.db.getfloat("bot", "ducking_volume", fallback=_ducking_volume)
         self.volume_helper.set_ducking_volume(_ducking_volume)
 
-        self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold", fallback=5000)
+        self.ducking_threshold = var.config.getfloat("bot", "ducking_threshold")
         self.ducking_threshold = var.db.getfloat("bot", "ducking_threshold", fallback=self.ducking_threshold)
 
-        if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking", fallback=False) \
+        if not var.db.has_option("bot", "ducking") and var.config.getboolean("bot", "ducking") \
                 or var.config.getboolean("bot", "ducking"):
             self.is_ducking = True
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_SOUNDRECEIVED,
@@ -165,7 +165,7 @@ class MumbleBot:
         assert var.config.get("bot", "when_nobody_in_channel") in ['pause', 'pause_resume', 'stop', 'nothing', ''], \
             "Unknown action for when_nobody_in_channel"
 
-        if var.config.get("bot", "when_nobody_in_channel", fallback='') in ['pause', 'pause_resume', 'stop']:
+        if var.config.get("bot", "when_nobody_in_channel") in ['pause', 'pause_resume', 'stop']:
             user_change_callback = \
                 lambda user, action: threading.Thread(target=self.users_changed,
                                                       args=(user, action), daemon=True).start()
@@ -177,7 +177,7 @@ class MumbleBot:
         self._display_rms = False
         self._max_rms = 0
 
-        self.redirect_ffmpeg_log = var.config.getboolean('debug', 'redirect_ffmpeg_log', fallback=True)
+        self.redirect_ffmpeg_log = var.config.getboolean('debug', 'redirect_ffmpeg_log')
 
         if var.config.getboolean("bot", "auto_check_update"):
             def check_update():
@@ -202,8 +202,8 @@ class MumbleBot:
         self.log.info(
             "\nSIGINT caught, quitting, {} more to kill".format(2 - self.nb_exit))
 
-        if var.config.getboolean('bot', 'save_playlist', fallback=True) \
-                and var.config.get("bot", "save_music_library", fallback=True):
+        if var.config.getboolean('bot', 'save_playlist') \
+                and var.config.get("bot", "save_music_library"):
             self.log.info("bot: save playlist into database")
             var.playlist.save()
 
@@ -235,7 +235,7 @@ class MumbleBot:
         self.mumble.users.myself.comment(var.config.get('bot', 'comment'))
 
     def set_avatar(self):
-        avatar_path = var.config.get('bot', 'avatar', fallback=None)
+        avatar_path = var.config.get('bot', 'avatar')
 
         if avatar_path:
             with open(avatar_path, 'rb') as avatar_file:
@@ -598,8 +598,8 @@ class MumbleBot:
 
         if self.exit:
             self._loop_status = "exited"
-            if var.config.getboolean('bot', 'save_playlist', fallback=True) \
-                    and var.config.get("bot", "save_music_library", fallback=True):
+            if var.config.getboolean('bot', 'save_playlist') \
+                    and var.config.get("bot", "save_music_library"):
                 self.log.info("bot: save playlist into database")
                 var.playlist.save()
 
@@ -841,7 +841,7 @@ if __name__ == '__main__':
     if logfile:
         print(f"Redirecting stdout and stderr to log file: {logfile}")
         handler = logging.handlers.RotatingFileHandler(logfile, mode='a', maxBytes=10240, backupCount=3)  # Rotate after 10KB, leave 3 old logs
-        if var.config.getboolean("bot", "redirect_stderr", fallback=False):
+        if var.config.getboolean("bot", "redirect_stderr"):
             sys.stderr = util.LoggerIOWrapper(bot_logger, logging.INFO,
                                               fallback_io_buffer=sys.stderr.buffer)
     else:
@@ -862,13 +862,13 @@ if __name__ == '__main__':
 
     sanitized_username = "".join([x if x.isalnum() else "_" for x in username])
     var.settings_db_path = args.db if args.db is not None else util.solve_filepath(
-        config.get("bot", "database_path", fallback="") or f"settings-{sanitized_username}.db")
+        config.get("bot", "database_path") or f"settings-{sanitized_username}.db")
     var.music_db_path = args.music_db if args.music_db is not None else util.solve_filepath(
-        config.get("bot", "music_database_path", fallback="") or "music.db")
+        config.get("bot", "music_database_path"))
 
     var.db = SettingsDatabase(var.settings_db_path)
 
-    if var.config.get("bot", "save_music_library", fallback=True):
+    if var.config.get("bot", "save_music_library"):
         var.music_db = MusicDatabase(var.music_db_path)
     else:
         var.music_db = MusicDatabase(":memory:")
@@ -889,7 +889,7 @@ if __name__ == '__main__':
     if args.lang:
         lang = args.lang
     else:
-        lang = var.config.get('bot', 'language', fallback='en_US')
+        lang = var.config.get('bot', 'language')
 
     if lang not in supported_languages:
         raise KeyError(f"Unsupported language {lang}")
@@ -901,7 +901,7 @@ if __name__ == '__main__':
     # ======================
     var.cache = MusicCache(var.music_db)
 
-    if var.config.getboolean("bot", "refresh_cache_on_startup", fallback=True):
+    if var.config.getboolean("bot", "refresh_cache_on_startup"):
         var.cache.build_dir_cache()
 
     # ======================
@@ -911,7 +911,7 @@ if __name__ == '__main__':
     if var.db.has_option("playlist", "playback_mode"):
         playback_mode = var.db.get('playlist', 'playback_mode')
     else:
-        playback_mode = var.config.get('bot', 'playback_mode', fallback="one-shot")
+        playback_mode = var.config.get('bot', 'playback_mode')
 
     if playback_mode in ["one-shot", "repeat", "random", "autoplay"]:
         var.playlist = media.playlist.get_playlist(playback_mode)
@@ -925,7 +925,7 @@ if __name__ == '__main__':
     command.register_all_commands(var.bot)
 
     # load playlist
-    if var.config.getboolean('bot', 'save_playlist', fallback=True):
+    if var.config.getboolean('bot', 'save_playlist'):
         var.bot_logger.info("bot: load playlist from previous session")
         var.playlist.load()
 

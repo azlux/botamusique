@@ -15,16 +15,16 @@ def get_playlist_info(url, start_index=0, user=""):
         'verbose': var.config.getboolean('debug', 'youtube_dl')
     }
 
-    cookie = var.config.get('youtube_dl', 'cookie_file', fallback=None)
+    cookie = var.config.get('youtube_dl', 'cookie_file')
     if cookie:
-        ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookie_file', fallback=None)
+        ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookie_file')
 
-    user_agent = var.config.get('youtube_dl', 'user_agent', fallback=None)
+    user_agent = var.config.get('youtube_dl', 'user_agent')
     if user_agent:
         youtube_dl.utils.std_headers['User-Agent'] = var.config.get('youtube_dl', 'user_agent')
 
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        attempts = var.config.getint('bot', 'download_attempts', fallback=2)
+        attempts = var.config.getint('bot', 'download_attempts')
         for i in range(attempts):
             items = []
             try:

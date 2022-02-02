@@ -396,7 +396,7 @@ class AutoPlaylist(OneshotPlaylist):
         self.mode = "autoplay"
 
     def refresh(self):
-        dicts = var.music_db.query_random_music(var.config.getint("bot", "autoplay_length", fallback=5),
+        dicts = var.music_db.query_random_music(var.config.getint("bot", "autoplay_length"),
                                                 Condition().and_not_sub_condition(
                                                     Condition().and_like('tags', "%don't autoplay,%")))
 

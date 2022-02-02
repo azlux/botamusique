@@ -624,7 +624,7 @@ def cmd_help(bot, user, text, command, parameter):
 def cmd_stop(bot, user, text, command, parameter):
     global log
 
-    if var.config.getboolean("bot", "clear_when_stop_in_oneshot", fallback=False) \
+    if var.config.getboolean("bot", "clear_when_stop_in_oneshot") \
             and var.playlist.mode == 'one-shot':
         cmd_clear(bot, user, text, command, parameter)
     else:
@@ -1152,7 +1152,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
 def cmd_delete_from_library(bot, user, text, command, parameter):
     global song_shortlist, log
 
-    if not var.config.getboolean("bot", "delete_allowed", fallback=True):
+    if not var.config.getboolean("bot", "delete_allowed"):
         bot.mumble.users[text.actor].send_text_message(tr('not_admin'))
         return
 

@@ -163,7 +163,7 @@ def requires_auth(f):
                 bad_access_count[request.remote_addr] += 1
                 log.info(f"web: bad token from ip {request.remote_addr}, "
                          f"{bad_access_count[request.remote_addr]} attempts.")
-                if bad_access_count[request.remote_addr] > var.config.getint("webinterface", "max_attempts", fallback=10):
+                if bad_access_count[request.remote_addr] > var.config.getint("webinterface", "max_attempts"):
                     banned_ip.append(request.remote_addr)
                     log.info(f"web: access banned for {request.remote_addr}")
             else:
@@ -464,7 +464,7 @@ def post():
                 var.music_db.manage_special_tags()
                 log.info("web: Local file cache refreshed.")
             elif action == "stop":
-                if var.config.getboolean("bot", "clear_when_stop_in_oneshot", fallback=False) \
+                if var.config.getboolean("bot", "clear_when_stop_in_oneshot") \
                         and var.playlist.mode == 'one-shot':
                     var.bot.clear()
                 else:
@@ -559,12 +559,12 @@ def library_info():
         time.sleep(0.1)
 
     tags = var.music_db.query_all_tags()
-    max_upload_file_size = util.parse_file_size(var.config.get("webinterface", "max_upload_file_size", fallback="30MB"))
+    max_upload_file_size = util.parse_file_size(var.config.get("webinterface", "max_upload_file_size"))
 
     return jsonify(dict(
         dirs=get_all_dirs(),
-        upload_enabled=var.config.getboolean("webinterface", "upload_enabled", fallback=True) or var.bot.is_admin(user),
-        delete_allowed=var.config.getboolean("bot", "delete_allowed", fallback=True) or var.bot.is_admin(user),
+        upload_enabled=var.config.getboolean("webinterface", "upload_enabled") or var.bot.is_admin(user),
+        delete_allowed=var.config.getboolean("bot", "delete_allowed") or var.bot.is_admin(user),
         tags=tags,
         max_upload_file_size=max_upload_file_size
     ))
@@ -609,7 +609,7 @@ def library():
 
                 return redirect("./", code=302)
             elif payload['action'] == 'delete':
-                if var.config.getboolean("bot", "delete_allowed", fallback=True):
+                if var.config.getboolean("bot", "delete_allowed"):
                     items = dicts_to_items(var.music_db.query_music(condition))
                     for item in items:
                         var.playlist.remove_by_id(item.id)
@@ -685,7 +685,7 @@ def library():
 def upload():
     global log
 
-    if not var.config.getboolean("webinterface", "upload_enabled", fallback=True):
+    if not var.config.getboolean("webinterface", "upload_enabled"):
         abort(403)
 
     file = request.files['file']
