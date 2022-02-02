@@ -167,7 +167,12 @@ class URLItem(BaseItem):
             'noplaylist': True,
             'writethumbnail': True,
             'updatetime': False,
-            'verbose': var.config.getboolean('debug', 'youtube_dl')
+            'verbose': var.config.getboolean('debug', 'youtube_dl'),
+            'postprocessors': [{
+                'key': 'FFmpegThumbnailsConvertor',
+                'format': 'jpg',
+                'when': 'before_dl'
+            }]
         }
 
         cookie = var.config.get('youtube_dl', 'cookie_file', fallback=None)
