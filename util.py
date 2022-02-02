@@ -323,8 +323,8 @@ def youtube_search(query):
     import json
 
     try:
-        cookie_json = var.config.get('bot', 'youtube_query_cookie')
-        cookie = json.loads(cookie_json if cookie_json else '{}')
+        cookie_file =  var.config.get('youtube_dl', 'cookie_file')
+        cookie = parse_cookie_file(cookie_file) if cookie_file else {}
         r = requests.get("https://www.youtube.com/results", cookies=cookie,
                          params={'search_query': query}, timeout=5)
         result_json_match = re.findall(r">var ytInitialData = (.*?);</script>", r.text)
@@ -575,3 +575,15 @@ def check_extra_config(config, template):
                 extra.append((key, opt))
 
     return extra
+
+
+def parse_cookie_file(cookiefile):
+    # https://stackoverflow.com/a/54659484/1584825
+
+    cookies = {}
+    with open (cookiefile, 'r') as fp:
+        for line in fp:
+            if not re.match(r'^#', line):
+                lineFields = line.strip().split('\t')
+                cookies[lineFields[5]] = lineFields[6]
+    return cookies
