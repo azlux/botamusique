@@ -19,7 +19,7 @@ RUN apt update && \
     apt install -y opus-tools ffmpeg libmagic-dev curl tar && \
     rm -rf /var/lib/apt/lists/*
 COPY --from=python-builder /botamusique /botamusique
-
+WORKDIR /botamusique
 RUN chmod +x entrypoint.sh
 
 ENTRYPOINT [ "/botamusique/entrypoint.sh" ]
