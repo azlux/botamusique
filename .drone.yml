@@ -1,6 +1,6 @@
 kind: pipeline
 type: docker
-name: deployement
+name: deployement-local
 
 volumes:
   - name: repo
@@ -50,21 +50,6 @@ steps:
         - master
       event:
         - push
-  
-  - name: docker-testing
-    image: plugins/docker
-    settings:
-      repo: azlux/botamusique
-      username:
-        from_secret: docker_username
-      password:
-        from_secret: docker_password
-      tags: testing
-    when:
-      branch:
-        - master
-      event:
-        - push
 
   - name: deploy-stable
     image: debian
@@ -89,10 +74,80 @@ steps:
       event:
         - tag
 
-  - name: docker-stable
-    image: plugins/docker
+node:
+  location: local
+
+trigger:
+  event:
+    exclude:
+      - cron
+
+---
+kind: pipeline
+type: docker
+name: deployement-docker
+
+steps:
+  - name: build-web
+    image: node:16
+    commands:
+      - (cd web && npm install && npm run build)
+    when:
+      event:
+        - push
+        - tag
+
+  - name: translate-html
+    image: python:3
+    commands:
+      - pip3 install jinja2
+      - ./scripts/translate_templates.py --lang-dir lang/ --template-dir templates/
+    when:
+      event:
+        - push
+        - tag
+        
+  - name: config-testing
+    image: debian
+    commands:
+      - sed -i 's/target_version = git/target_version = testing/' configuration.default.ini
+    when:
+      branch:
+        - master
+      event:
+        - push
+        
+  - name: docker-testing
+    image: thegeeklab/drone-docker-buildx
+    privileged: true
     settings:
       repo: azlux/botamusique
+      platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags: testing
+    when:
+      branch:
+        - master
+      event:
+        - push
+
+  - name: config-stable
+    image: debian
+    commands:
+      - sed -i 's/target_version = git/target_version = stable/' configuration.default.ini
+    when:
+      event:
+        - tag
+
+  - name: docker-stable
+    image: thegeeklab/drone-docker-buildx
+    privileged: true
+    settings:
+      repo: azlux/botamusique
+      platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6
       username:
         from_secret: docker_username
       password:
@@ -103,7 +158,7 @@ steps:
         - tag
 
 node:
-  location: local
+  location: external
 
 trigger:
   event:
