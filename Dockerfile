@@ -1,19 +1,24 @@
-FROM python:slim
+FROM python:3-slim-bullseye AS python-builder
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /botamusique
+
+RUN apt-get update \
+    && apt-get install -y gcc g++ ffmpeg libjpeg-dev libmagic-dev opus-tools zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+COPY . /botamusique
+
+RUN python3 -m venv venv \
+    && venv/bin/pip install wheel \
+    && venv/bin/pip install -r requirements.txt
+
+
+FROM python:3-slim-bullseye
 ENV DEBIAN_FRONTEND noninteractive
-
 EXPOSE 8181
-
 RUN apt update && \
     apt install -y opus-tools ffmpeg libmagic-dev curl tar && \
     rm -rf /var/lib/apt/lists/*
-
-COPY . /botamusique
-
-WORKDIR /botamusique
-
-RUN python3 -m venv venv && \
-    venv/bin/pip install wheel && \
-    venv/bin/pip install -r requirements.txt
+COPY --from=python-builder /botamusique /botamusique
 
 RUN chmod +x entrypoint.sh
 
