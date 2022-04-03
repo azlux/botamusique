@@ -129,6 +129,15 @@ class URLItem(BaseItem):
         ydl_opts = {
             'noplaylist': True
         }
+
+        cookie = var.config.get('youtube_dl', 'cookie_file')
+        if cookie:
+            ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookie_file')
+
+        user_agent = var.config.get('youtube_dl', 'user_agent')
+        if user_agent:
+            youtube_dl.utils.std_headers['User-Agent'] = var.config.get('youtube_dl', 'user_agent')\
+
         succeed = False
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             attempts = var.config.getint('bot', 'download_attempts')
