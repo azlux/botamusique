@@ -697,7 +697,7 @@ def cmd_max_volume(bot, user, text, command, parameter):
         max_vol = float(parameter) / 100.0
         var.db.set('bot', 'max_volume', float(parameter) / 100.0)
         bot.send_msg(tr('change_max_volume', max=parameter, user=bot.mumble.users[text.actor]['name']), text)
-        if int(bot.volume_helper.plain_volume_set * 100) > max_vol:
+        if int(bot.volume_helper.plain_volume_set) > max_vol:
             bot.volume_helper.set_volume(max_vol)
         log.info(f'cmd: max volume set to {max_vol}')
     else:
