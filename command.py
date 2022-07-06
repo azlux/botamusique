@@ -675,7 +675,7 @@ def cmd_volume(bot, user, text, command, parameter):
 
     # The volume is a percentage
     max_vol = min(int(var.config.getfloat('bot', 'max_volume') * 100), 100.0)
-    if var.db.getfloat('bot', 'max_volume') * 100.0:
+    if var.db.has_option('bot', 'max_volume'):
         max_vol = float(var.db.get('bot', 'max_volume')) * 100.0
     if parameter and parameter.isdigit() and 0 <= int(parameter) <= 100:
         if int(parameter) <= max_vol:
@@ -702,7 +702,7 @@ def cmd_max_volume(bot, user, text, command, parameter):
         log.info(f'cmd: max volume set to {max_vol}')
     else:
         max_vol = var.config.getfloat('bot', 'max_volume') * 100.0
-        if float(var.db.getfloat('bot', 'max_volume')):
+        if var.db.has_option('bot', 'max_volume'):
             max_vol = var.db.getfloat('bot', 'max_volume') * 100.0
         bot.send_msg(tr('current_max_volume', max=int(max_vol)), text)
         
