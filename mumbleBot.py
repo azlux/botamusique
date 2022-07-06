@@ -137,9 +137,13 @@ class MumbleBot:
         # ====== Volume ======
         self.volume_helper = util.VolumeHelper()
 
+        max_vol = var.config.getfloat('bot', 'max_volume')
+        if var.db.has_option('bot', 'max_volume'):
+            max_vol = var.db.getfloat('bot', 'max_volume')                
         _volume = var.config.getfloat('bot', 'volume')
         if var.db.has_option('bot', 'volume'):
             _volume = var.db.getfloat('bot', 'volume')
+        _volume = min(_volume, max_vol)
         self.volume_helper.set_volume(_volume)
 
         self.is_ducking = False
