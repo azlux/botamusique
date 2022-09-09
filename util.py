@@ -457,7 +457,7 @@ def get_snapshot_version():
         try:
             ret = subprocess.check_output(["git", "describe", "--tags"]).strip()
             ver = ret.decode("utf-8")
-        except FileNotFoundError:
+        except (FileNotFoundError, subprocess.CalledProcessError):
             try:
                 with open(os.path.join(root_dir, ".git/refs/heads/master")) as f:
                     ver = "g" + f.read()[:7]
