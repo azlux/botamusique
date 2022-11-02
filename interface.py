@@ -335,7 +335,7 @@ def status():
 def post():
     global log
 
-    payload = request.form if request.form else request.json
+    payload = request.get_json() if request.is_json else request.form
     if payload:
         log.debug("web: Post request from %s: %s" % (request.remote_addr, str(payload)))
 
