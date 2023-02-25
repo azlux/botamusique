@@ -764,7 +764,8 @@ def start_web_interface(addr, port, **kwargs):
     interface.web.secret_key = var.config.get('webinterface', 'flask_secret')
     if sslkey in kwargs.items() and sslcert in kwargs.items():
         interface.web.run(port=port, host=addr, ssl_context=(sslcert, sslkey))
-    interface.web.run(port=port, host=addr)
+    else:
+        interface.web.run(port=port, host=addr)
 
 
 if __name__ == '__main__':
