@@ -112,6 +112,14 @@ class MumbleBot:
             self.bandwidth = args.bandwidth
         else:
             self.bandwidth = var.config.getint("bot", "bandwidth")
+        
+        if args.websslkey and args.websslcert:
+            if str(args.websslkey) and str(args.websslcert):
+                self.websslkey = args.websslkey
+                self.websslcert = args.websslcert
+                self.sslenabled = True
+        else:
+            self.sslenabled = False
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       stereo=self.stereo,
@@ -737,7 +745,7 @@ class MumbleBot:
         self.pause_at_id = ""
 
 
-def start_web_interface(addr, port):
+def start_web_interface(addr, port, **kwargs):
     global formatter
     import interface
 
@@ -754,6 +762,8 @@ def start_web_interface(addr, port):
     interface.init_proxy()
     interface.web.env = 'development'
     interface.web.secret_key = var.config.get('webinterface', 'flask_secret')
+    if sslkey in kwargs.items() and sslcert in kwargs.items():
+        interface.web.run(port=port, host=addr, ssl_context=(sslcert, sslkey))
     interface.web.run(port=port, host=addr)
 
 
@@ -940,8 +950,12 @@ if __name__ == '__main__':
     if var.config.getboolean("webinterface", "enabled"):
         wi_addr = var.config.get("webinterface", "listening_addr")
         wi_port = var.config.getint("webinterface", "listening_port")
-        tt = threading.Thread(
-            target=start_web_interface, name="WebThread", args=(wi_addr, wi_port))
+        if self.sslenabled:
+            tt = threading.Thread(
+                target=start_web_interface, name="WebThread", args=(wi_addr, wi_port, sslcert=self.websslcert, sslkey=self.websslkey))
+        else:
+            tt = threading.Thread(
+                target=start_web_interface, name="WebThread", args=(wi_addr, wi_port))
         tt.daemon = True
         bot_logger.info('Starting web interface on {}:{}'.format(wi_addr, wi_port))
         tt.start()
