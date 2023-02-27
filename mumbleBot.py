@@ -32,7 +32,7 @@ from media.cache import MusicCache
 
 
 class MumbleBot:
-    version = '7.2.2'
+    version = 'git'
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
@@ -112,7 +112,6 @@ class MumbleBot:
             self.bandwidth = args.bandwidth
         else:
             self.bandwidth = var.config.getint("bot", "bandwidth")
-        
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       stereo=self.stereo,
