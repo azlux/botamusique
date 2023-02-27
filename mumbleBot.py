@@ -947,7 +947,7 @@ if __name__ == '__main__':
             wi_ssl_cert = var.config.get("webinterface", "ssl_cert")
             wi_ssl_key = var.config.get("webinterface", "ssl_key")
             tt = threading.Thread(
-                target=start_web_interface, name="WebThread", kwargs={'sslcert': wi_ssl_cert, 'sslkey': wi_ssl_key}, args=(wi_addr, wi_port))
+                target=start_web_interface, name="WebThread", args=(wi_addr, wi_port), kwargs={'sslcert': wi_ssl_cert, 'sslkey': wi_ssl_key})
         else:
             tt = threading.Thread(
                 target=start_web_interface, name="WebThread", args=(wi_addr, wi_port))
