@@ -32,7 +32,7 @@ from media.cache import MusicCache
 
 
 class MumbleBot:
-    version = 'git'
+    version = '7.2.2'
 
     def __init__(self, args):
         self.log = logging.getLogger("bot")
@@ -113,13 +113,6 @@ class MumbleBot:
         else:
             self.bandwidth = var.config.getint("bot", "bandwidth")
         
-        if args.websslkey and args.websslcert:
-            if str(args.websslkey) and str(args.websslcert):
-                self.websslkey = args.websslkey
-                self.websslcert = args.websslcert
-                self.sslenabled = True
-        else:
-            self.sslenabled = False
 
         self.mumble = pymumble.Mumble(host, user=self.username, port=port, password=password, tokens=tokens,
                                       stereo=self.stereo,
@@ -762,7 +755,7 @@ def start_web_interface(addr, port, **kwargs):
     interface.init_proxy()
     interface.web.env = 'development'
     interface.web.secret_key = var.config.get('webinterface', 'flask_secret')
-    if sslkey in kwargs.items() and sslcert in kwargs.items():
+    if var.config.getboolean("webinterface", "ssl_enabled"):
         interface.web.run(port=port, host=addr, ssl_context=(sslcert, sslkey))
     else:
         interface.web.run(port=port, host=addr)
@@ -951,9 +944,11 @@ if __name__ == '__main__':
     if var.config.getboolean("webinterface", "enabled"):
         wi_addr = var.config.get("webinterface", "listening_addr")
         wi_port = var.config.getint("webinterface", "listening_port")
-        if self.sslenabled:
+        if var.config.getboolean("webinterface", "ssl_enabled"):
+            wi_ssl_cert = var.config.get("webinterface", "ssl_cert")
+            wi_ssl_key = var.config.get("webinterface", "ssl_key")
             tt = threading.Thread(
-                target=start_web_interface, name="WebThread", args=(wi_addr, wi_port, sslcert=self.websslcert, sslkey=self.websslkey))
+                target=start_web_interface, name="WebThread", kwargs={'sslcert': wi_ssl_cert, 'sslkey': wi_ssl_key}, args=(wi_addr, wi_port))
         else:
             tt = threading.Thread(
                 target=start_web_interface, name="WebThread", args=(wi_addr, wi_port))
