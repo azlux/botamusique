@@ -756,7 +756,7 @@ def start_web_interface(addr, port, **kwargs):
     interface.web.env = 'development'
     interface.web.secret_key = var.config.get('webinterface', 'flask_secret')
     if var.config.getboolean("webinterface", "ssl_enabled"):
-        interface.web.run(port=port, host=addr, ssl_context=(sslcert, sslkey))
+        interface.web.run(port=port, host=addr, ssl_context=(kwargs.get('sslcert'), kwargs.get('sslkey')))
     else:
         interface.web.run(port=port, host=addr)
 
