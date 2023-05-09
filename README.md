@@ -50,7 +50,7 @@ Predicted functionalities will be those people would expect from any classic mus
 ### Docker
 See https://github.com/azlux/botamusique/wiki/Docker-install
 
-Both stable and nightly (developing) build are available!
+Both stable and nightly (developing) builds are available!
 
 ### Manual install
 
