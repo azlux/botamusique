@@ -50,7 +50,7 @@ Predicted functionalities will be those people would expect from any classic mus
 ### Docker
 See https://github.com/azlux/botamusique/wiki/Docker-install
 
-Both stable and nightly (developing) build are available!
+Both stable and nightly (developing) builds are available!
 
 ### Manual install
 
@@ -120,7 +120,7 @@ host = 127.0.0.1
 port = 64738
 ```
 
-2. You need to specify a folder that stores your music files. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
+2. You need to specify a folder that stores your music files. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music file downloads from URLs.
 ```
 [bot]
 music_folder = music_folder/
@@ -200,7 +200,7 @@ The web interface can be used if you'd like an intuitive way of interacting with
 
 ## Update
 
-If you enable `audo_check_update`, the bot will check for updates every time it starts.
+If you enable `auto_check_update`, the bot will check for updates every time it starts.
 If you are using the recommended install, you can send `!update` to the bot (command by default).
 
 If you are using git, you need to update manually:
