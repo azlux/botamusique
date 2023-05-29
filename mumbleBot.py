@@ -195,12 +195,14 @@ class MumbleBot:
             th.start()
 
         last_startup_version = var.db.get("bot", "version", fallback=None)
-        if self.version != "git":
+        try:
             if not last_startup_version or version.parse(last_startup_version) < version.parse(self.version):
                 var.db.set("bot", "version", self.version)
                 if var.config.getboolean("bot", "auto_check_update"):
                     changelog = util.fetch_changelog()
                     self.send_channel_msg(tr("update_successful", version=self.version, changelog=changelog))
+        except version.InvalidVersion:
+            var.db.set("bot", "version", self.version)
 
     # Set the CTRL+C shortcut
     def ctrl_caught(self, signal, frame):
