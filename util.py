@@ -547,6 +547,8 @@ def clear_tmp_folder(path, size):
             all_files = ""
             for (path, dirs, files) in os.walk(path):
                 all_files = [os.path.join(path, file) for file in files]
+                # exclude invalid symlinks (linux)
+                all_files = [file for file in all_files if os.path.exists(file)]
                 all_files.sort(key=lambda x: os.path.getmtime(x))
             size_tp = 0
             for idx, file in enumerate(all_files):
