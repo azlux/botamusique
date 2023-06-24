@@ -364,8 +364,17 @@ class MumbleBot:
     # =======================
 
     def get_user_count_in_channel(self):
+        # Get the channel, based on the channel id
         own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
-        return len(set([user.get_property("name") for user in own_channel.get_users()]).difference(self.bots))
+
+        # Build set of unique usernames
+        users = set([user.get_property("name") for user in own_channel.get_users()])
+
+        # Exclude all bots from the set of usernames
+        users = users.difference(self.bots)
+
+        # Return the number of elements in the set, as the final user count
+        return len(users)
 
 
     def users_changed(self, user, message):
