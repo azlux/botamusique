@@ -129,9 +129,18 @@ class URLItem(BaseItem):
         ydl_opts = {
             'noplaylist': True
         }
+
+        cookie = var.config.get('youtube_dl', 'cookie_file')
+        if cookie:
+            ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookie_file')
+
+        user_agent = var.config.get('youtube_dl', 'user_agent')
+        if user_agent:
+            youtube_dl.utils.std_headers['User-Agent'] = var.config.get('youtube_dl', 'user_agent')\
+
         succeed = False
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            attempts = var.config.getint('bot', 'download_attempts', fallback=2)
+            attempts = var.config.getint('bot', 'download_attempts')
             for i in range(attempts):
                 try:
                     info = ydl.extract_info(self.url, download=False)
@@ -167,19 +176,24 @@ class URLItem(BaseItem):
             'noplaylist': True,
             'writethumbnail': True,
             'updatetime': False,
-            'verbose': var.config.getboolean('debug', 'youtube_dl')
+            'verbose': var.config.getboolean('debug', 'youtube_dl'),
+            'postprocessors': [{
+                'key': 'FFmpegThumbnailsConvertor',
+                'format': 'jpg',
+                'when': 'before_dl'
+            }]
         }
 
-        cookie = var.config.get('youtube_dl', 'cookiefile', fallback=None)
+        cookie = var.config.get('youtube_dl', 'cookie_file')
         if cookie:
-            ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookiefile', fallback=None)
+            ydl_opts['cookiefile'] = var.config.get('youtube_dl', 'cookie_file')
 
-        user_agent = var.config.get('youtube_dl', 'user_agent', fallback=None)
+        user_agent = var.config.get('youtube_dl', 'user_agent')
         if user_agent:
             youtube_dl.utils.std_headers['User-Agent'] = var.config.get('youtube_dl', 'user_agent')
 
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            attempts = var.config.getint('bot', 'download_attempts', fallback=2)
+            attempts = var.config.getint('bot', 'download_attempts')
             download_succeed = False
             for i in range(attempts):
                 self.log.info("bot: download attempts %d / %d" % (i + 1, attempts))

@@ -180,7 +180,6 @@
                         <label for="filter-dir">{{ tr('directory') }}</label>
                         <div id="filter-path" class="input-group mb-2">
                             <select class="form-control form-control-sm" id="filter-dir" disabled>
-                                <option value="">.</option>
                             </select>
                         </div>
 
@@ -270,7 +269,7 @@
                             </button>
                             <button class="library-item-trash btn btn-danger btn-sm btn-space library-delete" type="button"
                                                                                                aria-label="{{ tr('remove_song_from_library') }}">
-                                <i class="fas fa-trash-alt"></i>
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>

@@ -50,7 +50,7 @@ Predicted functionalities will be those people would expect from any classic mus
 ### Docker
 See https://github.com/azlux/botamusique/wiki/Docker-install
 
-Both stable and nightly (developing) build are available!
+Both stable and nightly (developing) builds are available!
 
 ### Manual install
 
@@ -120,7 +120,7 @@ host = 127.0.0.1
 port = 64738
 ```
 
-2. You need to specify a folder that stores your music files. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music files download from URLs.
+2. You need to specify a folder that stores your music files. The bot will look for music and upload files into that folder. You also need to specify a temporary folder to store music file downloads from URLs.
 ```
 [bot]
 music_folder = music_folder/
@@ -200,7 +200,7 @@ The web interface can be used if you'd like an intuitive way of interacting with
 
 ## Update
 
-If you enable `audo_check_update`, the bot will check for updates every time it starts.
+If you enable `auto_check_update`, the bot will check for updates every time it starts.
 If you are using the recommended install, you can send `!update` to the bot (command by default).
 
 If you are using git, you need to update manually:
@@ -225,12 +225,23 @@ Exception: Could not find opus library. Make sure it is installed.
 ```
 You need to install the opus codec (not embedded in all system): `apt install libopus0`
 
-3. If you have a large amount of music files (>1000), it may take some time for the bot to boot, since
+3. MacOS Users may encounter the following error:
+```
+ImportError: failed to find libmagic.  Check your installation
+```
+This is caused by missing `libmagic` binaries and can be solved by
+```bash
+brew install libmagic
+
+```
+One may also install `python-magic-bin` instead of `python-magic`.
+
+5. If you have a large amount of music files (>1000), it may take some time for the bot to boot, since
 it will build up the cache for the music library on booting. You may want to disable this auto-scanning by
 setting ``refresh_cache_on_startup=False`` in `[bot]` section and control the scanning manually by
 ``!rescan`` command and the *Rescan Files* button on the web interface.
 
-4. Alpine Linux requires some extra dependencies during the installation (in order to compile Pillow):
+6. Alpine Linux requires some extra dependencies during the installation (in order to compile Pillow):
 ```
 python3-dev musl-lib libmagic jpeg-dev zlib-dev gcc
 ```
@@ -241,7 +252,7 @@ For more information, see [#122](https://github.com/azlux/botamusique/issues/122
 If you ran into some problems in using the bot, or discovered bugs and want to talk to us, you may
 
  - Start a new issue,
- - Ask in #mumble at freenode.net (we are usually there to help)
+ - Ask in the Matrix channel of Mumble [#mumble:matrix.org](https://matrix.to/#/#mumble:matrix.org) (we are usually there to help).
 
 ## Contributors
 If you want to help us develop, you're welcome to fork and submit pull requests (fixes and new features).
