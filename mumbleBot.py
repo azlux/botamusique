@@ -812,8 +812,6 @@ if __name__ == '__main__':
                         type=str, default=None, help="Certificate file")
     parser.add_argument("-b", "--bandwidth", dest="bandwidth",
                         type=int, help="Bandwidth used by the bot")
-    parser.add_argument("-B", "--bots", dest="bots",
-                        type=str, help="List of usernames belonging to other bots. (multiple entries separated with comma ','")
 
     args = parser.parse_args()
 
