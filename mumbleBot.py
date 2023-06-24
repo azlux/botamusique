@@ -178,7 +178,7 @@ class MumbleBot:
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, user_change_callback)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, user_change_callback)
 
-        bots = var.config.get("bot", "when_nobody_in_channel",fallback="")
+        bots = var.config.get("bot", "when_nobody_in_channel_ignore",fallback="")
         self.bots = set(bots.split(','))
 
         # Debug use
