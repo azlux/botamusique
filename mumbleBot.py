@@ -103,11 +103,6 @@ class MumbleBot:
             tokens = var.config.get("server", "tokens")
             tokens = tokens.split(',')
 
-        if args.bots:
-            self.bots = set(args.bots)
-        else:
-            bots = var.config.get("server", "bots",fallback="")
-            self.bots = set(bots.split(','))
 
         if args.user:
             self.username = args.user
@@ -182,6 +177,9 @@ class MumbleBot:
                                                       args=(user, action), daemon=True).start()
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERREMOVED, user_change_callback)
             self.mumble.callbacks.set_callback(pymumble.constants.PYMUMBLE_CLBK_USERUPDATED, user_change_callback)
+
+        bots = var.config.get("bot", "when_nobody_in_channel",fallback="")
+        self.bots = set(bots.split(','))
 
         # Debug use
         self._loop_status = 'Idle'
