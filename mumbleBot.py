@@ -103,6 +103,7 @@ class MumbleBot:
             tokens = var.config.get("server", "tokens")
             tokens = tokens.split(',')
 
+
         if args.user:
             self.username = args.user
         else:
@@ -132,7 +133,10 @@ class MumbleBot:
         self.join_channel()
         self.mumble.set_bandwidth(self.bandwidth)
 
+        bots = var.config.get("bot", "when_nobody_in_channel_ignore",fallback="")
+        self.bots = set(bots.split(','))
         self._user_in_channel = self.get_user_count_in_channel()
+
 
         # ====== Volume ======
         self.volume_helper = util.VolumeHelper()
@@ -374,8 +378,18 @@ class MumbleBot:
     # =======================
 
     def get_user_count_in_channel(self):
+        # Get the channel, based on the channel id
         own_channel = self.mumble.channels[self.mumble.users.myself['channel_id']]
-        return len(own_channel.get_users())
+
+        # Build set of unique usernames
+        users = set([user.get_property("name") for user in own_channel.get_users()])
+
+        # Exclude all bots from the set of usernames
+        users = users.difference(self.bots)
+
+        # Return the number of elements in the set, as the final user count
+        return len(users)
+
 
     def users_changed(self, user, message):
         # only check if there is one more user currently in the channel
