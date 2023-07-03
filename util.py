@@ -12,12 +12,14 @@ import zipfile
 import re
 import subprocess as sp
 import logging
-import yt_dlp as youtube_dl
 from importlib import reload
 from sys import platform
 import traceback
 import requests
 from packaging import version
+
+import yt_dlp as youtube_dl
+YT_PKG_NAME = 'yt-dlp'
 
 log = logging.getLogger("bot")
 
@@ -137,7 +139,7 @@ def update(current_version):
     new_version = new_release_version(target)
     msg = ""
     if target == "git":
-        msg = "git install, I do nothing"
+        msg = "git install, I do nothing<br/>"
 
     elif (target == "stable" and version.parse(new_version) > version.parse(current_version)) or \
             (target == "testing" and version.parse(new_version) != version.parse(current_version)):
@@ -146,17 +148,17 @@ def update(current_version):
         log.debug(tp)
         log.info('update: update pip libraries dependencies')
         sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', '-r', 'requirements.txt']).decode()
-        msg = "New version installed, please restart the bot."
+        msg = "New version installed, please restart the bot.<br/>"
 
-    log.info('update: starting update youtube-dl via pip3')
-    tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', 'youtube-dl']).decode()
-    if "Requirement already up-to-date" in tp:
-        msg += "Youtube-dl is up-to-date"
-    else:
+    log.info(f'update: starting update {YT_PKG_NAME} via pip3')
+    tp = sp.check_output([var.config.get('bot', 'pip3_path'), 'install', '--upgrade', YT_PKG_NAME]).decode()
+    if f"Collecting {YT_PKG_NAME}" in tp.splitlines():
         msg += "Update done: " + tp.split('Successfully installed')[1]
+    else:
+        msg += YT_PKG_NAME.capitalize() + " is up-to-date"
 
     reload(youtube_dl)
-    msg += "<br/> Youtube-dl reloaded"
+    msg += "<br/>" + YT_PKG_NAME.capitalize() + " reloaded"
     return msg
 
 
