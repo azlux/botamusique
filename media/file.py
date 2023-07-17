@@ -84,17 +84,20 @@ class FileItem(BaseItem):
         return True
 
     def _get_info_from_tag(self):
-        match = re.search(r"(.+)\.(.+)", self.uri())
+        match = re.search(r"(.+)\/(.+)\.(.+)", self.uri())
         assert match is not None
 
-        file_no_ext = match[1]
-        ext = match[2]
+        file_path = match[1] + '/'
+        file_name = match[2]
+        ext = match[3]
 
         try:
             im = None
-            path_thumbnail = file_no_ext + ".jpg"
+            path_thumbnail = file_path + file_name + ".jpg"
             if os.path.isfile(path_thumbnail):
                 im = Image.open(path_thumbnail)
+            elif os.path.isfile(file_path + "cover.jpg"):
+                im = Image.open(file_path + "cover.jpg")
 
             if ext == "mp3":
                 # title: TIT2
@@ -159,7 +162,7 @@ class FileItem(BaseItem):
             pass
 
         if not self.title:
-            self.title = os.path.basename(file_no_ext)
+            self.title = os.path.basename(file_path + file_name)
 
     @staticmethod
     def _prepare_thumbnail(im):
