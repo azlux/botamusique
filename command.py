@@ -1172,6 +1172,7 @@ def cmd_shortlist(bot, user, text, command, parameter):
 
     bot.send_msg(tr('bad_parameter', command=command), text)
 
+
 def cmd_delete_from_library(bot, user, text, command, parameter):
     global song_shortlist, log
 
