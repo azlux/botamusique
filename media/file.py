@@ -84,22 +84,23 @@ class FileItem(BaseItem):
         return True
 
     def _get_info_from_tag(self):
-        match = re.search(r"(.+)\/(.+)\.(.+)", self.uri())
-        assert match is not None
+        path, file_name_ext = os.path.split(self.uri())
+        file_name, ext = os.path.splitext(file_name_ext)
 
-        file_path = match[1] + '/'
-        file_name = match[2]
-        ext = match[3]
+        assert path is not None and file_name is not None
 
         try:
             im = None
-            path_thumbnail = file_path + file_name + ".jpg"
+            path_thumbnail = os.path.join(path, file_name + ".jpg")
+
             if os.path.isfile(path_thumbnail):
                 im = Image.open(path_thumbnail)
-            elif os.path.isfile(file_path + "cover.jpg"):
-                im = Image.open(file_path + "cover.jpg")
+            else:
+                path_thumbnail = os.path.join(path, "cover.jpg")
+                if os.path.isfile(path_thumbnail):
+                    im = Image.open(path_thumbnail)
 
-            if ext == "mp3":
+            if ext == ".mp3":
                 # title: TIT2
                 # artist: TPE1, TPE2
                 # album: TALB
@@ -114,7 +115,7 @@ class FileItem(BaseItem):
                     if "APIC:" in tags:
                         im = Image.open(BytesIO(tags["APIC:"].data))
 
-            elif ext == "m4a" or ext == "m4b" or ext == "mp4" or ext == "m4p":
+            elif ext == ".m4a" or ext == ".m4b" or ext == ".mp4" or ext == ".m4p":
                 # title: ©nam (\xa9nam)
                 # artist: ©ART
                 # album: ©alb
@@ -129,7 +130,7 @@ class FileItem(BaseItem):
                     if "covr" in tags:
                         im = Image.open(BytesIO(tags["covr"][0]))
 
-            elif ext == "opus":
+            elif ext == ".opus":
                 # title: 'title'
                 # artist: 'artist'
                 # album: 'album'
@@ -162,7 +163,7 @@ class FileItem(BaseItem):
             pass
 
         if not self.title:
-            self.title = os.path.basename(file_path + file_name)
+            self.title = file_name
 
     @staticmethod
     def _prepare_thumbnail(im):
