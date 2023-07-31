@@ -567,7 +567,7 @@ def cmd_yt_search(bot, user, text, command, parameter):
                 song_shortlist = [{'type': 'url',
                                    'url': "https://www.youtube.com/watch?v=" + result[0],
                                    'title': result[1]
-                                   } for result in yt_last_result[yt_last_page * item_per_page: item_per_page]]
+                                   } for result in yt_last_result[yt_last_page * item_per_page: (yt_last_page * item_per_page) + item_per_page]]
                 msg = _yt_format_result(yt_last_result, yt_last_page * item_per_page, item_per_page)
                 bot.send_msg(tr('yt_result', result_table=msg), text)
             else:
