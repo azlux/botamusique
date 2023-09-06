@@ -64,7 +64,7 @@ class ReverseProxied(object):
 
 
 root_dir = os.path.dirname(__file__)
-web = Flask(__name__, template_folder=os.path.join(root_dir, "templates"))
+web = Flask(__name__, template_folder=os.path.join(root_dir, "web/templates"))
 #web.config['TEMPLATES_AUTO_RELOAD'] = True
 log = logging.getLogger("bot")
 user = 'Remote Control'
@@ -227,7 +227,7 @@ def get_all_dirs():
 @web.route("/", methods=['GET'])
 @requires_auth
 def index():
-    return open(os.path.join(root_dir, f"templates/index.{var.language}.html"), "r").read()
+    return open(os.path.join(root_dir, f"web/templates/index.{var.language}.html"), "r").read()
 
 
 @web.route("/playlist", methods=['GET'])

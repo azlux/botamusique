@@ -21,7 +21,7 @@ steps:
     image: python:3
     commands:
       - pip3 install jinja2
-      - ./scripts/translate_templates.py --lang-dir lang/ --template-dir templates/
+      - ./scripts/translate_templates.py --lang-dir lang/ --template-dir web/templates/
     when:
       event:
         - push
@@ -101,7 +101,7 @@ steps:
     image: python:3
     commands:
       - pip3 install jinja2
-      - ./scripts/translate_templates.py --lang-dir lang/ --template-dir templates/
+      - ./scripts/translate_templates.py --lang-dir lang/ --template-dir web/templates/
     when:
       event:
         - push

@@ -33,7 +33,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /botamusique
 COPY --from=python-builder /botamusique .
 COPY --from=node-builder /botamusique/templates templates
-RUN venv/bin/python scripts/translate_templates.py --lang-dir /botamusique/lang --template-dir /botamusique/templates
+RUN venv/bin/python scripts/translate_templates.py --lang-dir /botamusique/lang --template-dir /botamusique/web/templates
 
 
 FROM ${ARCH}python:3-slim-bullseye

@@ -7,11 +7,11 @@ module.exports = {
   devtool: 'source-map',
   entry: {
     main: [
-      './js/app.mjs',
-      './sass/app.scss',
+      './web/js/app.mjs',
+      './web/sass/app.scss',
     ],
     dark: [
-      './sass/app-dark.scss',
+      './web/sass/app-dark.scss',
     ],
   },
   output: {
