@@ -167,7 +167,7 @@ class FileItem(BaseItem):
 
     @staticmethod
     def _prepare_thumbnail(im):
-        im.thumbnail((100, 100), Image.ANTIALIAS)
+        im.thumbnail((100, 100), Image.LANCZOS)
         buffer = BytesIO()
         im = im.convert('RGB')
         im.save(buffer, format="JPEG")
