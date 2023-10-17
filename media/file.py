@@ -157,6 +157,22 @@ class FileItem(BaseItem):
                         as_flac_picture = mutagen.flac.Picture(base64.b64decode(pic_as_base64))
                         im = Image.open(BytesIO(as_flac_picture.data))
 
+            elif ext == ".flac":
+                # title: 'title'
+                # artist: 'artist'
+                # album: 'album'
+                # cover artwork: tags.pictures
+                tags = mutagen.File(self.uri())
+                if 'title' in tags:
+                    self.title = tags['title'][0]
+                if 'artist' in tags:
+                    self.artist = tags['artist'][0]
+
+                if im is None:
+                    for flac_picture in tags.pictures:
+                        if flac_picture.type == 3:
+                            im = Image.open(BytesIO(flac_picture.data))
+
             if im:
                 self.thumbnail = self._prepare_thumbnail(im)
         except:
@@ -167,7 +183,7 @@ class FileItem(BaseItem):
 
     @staticmethod
     def _prepare_thumbnail(im):
-        im.thumbnail((100, 100), Image.ANTIALIAS)
+        im.thumbnail((100, 100), Image.LANCZOS)
         buffer = BytesIO()
         im = im.convert('RGB')
         im.save(buffer, format="JPEG")
