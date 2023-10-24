@@ -12,7 +12,7 @@ RUN python3 -m venv venv \
     && venv/bin/pip install -r requirements.txt
 
 
-FROM python:3-slim-bullseye
+FROM python:3.11-slim-bullseye
 ENV DEBIAN_FRONTEND noninteractive
 EXPOSE 8181
 RUN apt update && \
