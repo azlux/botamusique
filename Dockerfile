@@ -17,7 +17,7 @@ EXPOSE 8181
 RUN apt update && \
     apt install --no-install-recommends -y opus-tools ffmpeg libmagic-dev curl tar && \
     rm -rf /var/lib/apt/lists/*
-COPY --from=template-builder /botamusique /botamusique
+COPY --from=python-builder /botamusique /botamusique
 WORKDIR /botamusique
 RUN chmod +x entrypoint.sh
 
