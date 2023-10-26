@@ -11,20 +11,6 @@ RUN python3 -m venv venv \
     && venv/bin/pip install wheel \
     && venv/bin/pip install -r requirements.txt
 
-FROM ${ARCH}node:14-bullseye-slim AS node-builder
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /botamusique/web
-COPY --from=python-builder /botamusique /botamusique
-RUN npm install
-RUN npm run build
-
-FROM ${ARCH}python:3-slim-bullseye AS template-builder
-ENV DEBIAN_FRONTEND=noninteractive
-WORKDIR /botamusique
-COPY --from=node-builder /botamusique /botamusique
-RUN venv/bin/python scripts/translate_templates.py --lang-dir /botamusique/lang --template-dir /botamusique/web/templates
-
-
 FROM python:3.11-slim-bullseye
 ENV DEBIAN_FRONTEND noninteractive
 EXPOSE 8181
