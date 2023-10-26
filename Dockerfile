@@ -1,5 +1,5 @@
 ARG ARCH=
-FROM python:3-slim-bullseye AS python-builder
+FROM python:3.11-slim-bullseye AS python-builder
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /botamusique
 
