@@ -36,6 +36,7 @@ def register_all_commands(bot):
     bot.register_command(commands('help'), cmd_help, no_partial_match=False, access_outside_channel=True)
     bot.register_command(commands('joinme'), cmd_joinme, access_outside_channel=True)
     bot.register_command(commands('last'), cmd_last)
+    bot.register_command(commands('library_play'), cmd_library_play)
     bot.register_command(commands('list_file'), cmd_list_file)
     bot.register_command(commands('mode'), cmd_mode)
     bot.register_command(commands('pause'), cmd_pause)
@@ -1348,3 +1349,23 @@ def cmd_loop_state(bot, user, text, command, parameter):
 
 def cmd_item(bot, user, text, command, parameter):
     var.playlist._debug_print()
+
+def cmd_library_play(bot, user, text, command, parameter):
+    if not parameter:
+        bot.send_msg(tr('bad_parameter', command=command), text)
+        return
+
+    msgs = [tr('multiple_file_found') + "<ul>"]
+    count = 0
+
+    keywords = parameter.split(" ")
+
+    music_dicts = var.music_db.query_music_by_keywords(keywords)
+    if music_dicts:
+        items = dicts_to_items(music_dicts)
+        music_wrapper = get_cached_wrapper(items[0], user)
+        var.playlist.append(music_wrapper)
+        log.info("cmd: add to playlist: " + music_wrapper.format_debug_string())
+        send_item_added_message(bot, music_wrapper, len(var.playlist) - 1, text)
+    else:
+        bot.send_msg(tr("no_file"), text)
