@@ -1,3 +1,29 @@
+# Important Announcement
+
+Hello everyone,
+
+First, let's look at the problems:
+1. I don't use mumble anymore, working on a bot you don't use produces a leak of testing and motivation.
+2. I don't code like before, my hobbies have changed, I maintain stuff I still use, but no real coding anymore.
+3. Botamusique is monolitique
+
+I've been trying to make a POC to change the monolitique part, to have a fully modulable bot, with asyncio and and feature/backend as plugins. But asyncio was blocking for me, especially to make the bot with fastapi, discord api / pymumble. It's 2 async loop and I don't have the knowledge to make it work.
+To be transparent, botamusique was the biggest project I've done, one of the funniest. Thanks @TerryGeng for joining the adventure.
+
+I don't think I will be looking for a maintainer, the monolithic part of this project is not something that needs to be maintained.
+
+**This projet will be archived.**
+
+BUT If someone want to rewrite a bot, I'm ready to help with the projet : what to do, Errors to avoid, Design/architecture help (but no code). I think **_8 years_** on this projet (have start with [this small projet](https://github.com/azlux/MumbleRadioPlayer/commit/56ca276c5519fcb0e1af043beb043202e65c2cca)) can help someone.
+
+It was really funny, thank all, for your support !
+
+See you in space cowboy.
+
+-- Azlux
+
+-----
+
 <div align="center">
 <img src="static/image/logo.png" alt="botamusique" width="200px" />
 <h1>botamusique</h1>
